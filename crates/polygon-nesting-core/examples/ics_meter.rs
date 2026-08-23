@@ -34,8 +34,9 @@
 use std::collections::BTreeMap;
 
 use polygon_nesting_core::search::overlap_ics_meter::currency::{
-    calibrate, timings_from_rows, transfer_check, BiteProfileRow, CellWall, Currency, FixtureCell,
-    WorkTerms,
+    calibrate, calibrate_prime, timings_from_rows, transfer_check, transfer_check_prime,
+    BiteProfileRow, CellWall, Currency, FixtureCell, FixtureCellPrime, FixtureTimingInput,
+    WorkTerms, WorkTermsPrime,
 };
 use serde_json::{json, Value};
 
@@ -93,6 +94,21 @@ fn read_cell(fixture: &str, path: &str) -> Result<(Vec<BiteProfileRow>, CellWall
             exact_calls: u64_at(profile, "exactCalls"),
             repair_rows: u64_at(profile, "repairRows"),
             disruption_moves: u64_at(profile, "disruptionMoves"),
+            // **`U'`'s per-bite counter (rider (i)).** It is a sibling of
+            // `profile`, not a field of it, because it is not a phase timer and
+            // never was: `BiteRecord::published` is the trajectory's own
+            // publication record, emitted as a bool per bite by every build the
+            // campaign has ever run, at no clock cost and inside the whole-
+            // document two-process bit comparison. `published_bites.py` proves
+            // the vector bit-identical across two processes on all three
+            // fixed-work cells **before** `P` is fitted; nothing here would be
+            // more instrumented for having been re-counted a second time
+            // somewhere else.
+            published_bites: u64::from(
+                bite.get("published")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
+            ),
         });
     }
     if rows.is_empty() {
@@ -119,6 +135,54 @@ fn terms_of(rows: &[BiteProfileRow]) -> WorkTerms {
         });
     }
     terms
+}
+
+/// `U'`'s counted terms for one fixture. `repair_rows` has no field to go in.
+fn terms_prime_of(rows: &[BiteProfileRow]) -> WorkTermsPrime {
+    let mut terms = WorkTermsPrime::default();
+    for row in rows {
+        terms.add(&WorkTermsPrime {
+            sample_evaluations: row.sample_evaluations,
+            master_batches: row.iterations,
+            exact_checkpoint_calls: row.exact_calls,
+            published_bites: row.published_bites,
+            disruption_moves: row.disruption_moves,
+        });
+    }
+    terms
+}
+
+/// One fixture's summed timings, as `calibrate_prime` reads them. Every field
+/// is a sum over that fixture's bites except `search_ns`, which is the driver's
+/// own wall around the phases and is the only number here the engine did not
+/// produce.
+fn timing_input_of(fixture: &str, rows: &[BiteProfileRow], wall: &CellWall) -> FixtureTimingInput {
+    let sum = |pick: fn(&BiteProfileRow) -> u64| -> u64 {
+        rows.iter().fold(0u64, |acc, row| acc.saturating_add(pick(row)))
+    };
+    // The per-batch overhead `B` prices: everything in the barrier that is not
+    // a worker sweep and not the exact region.
+    let overhead = sum(|row| {
+        row.prep_ns
+            .saturating_add(row.dispatch_ns)
+            .saturating_add(row.merge_gls_ns)
+            .saturating_add(row.band_fold_ns)
+            .saturating_add(row.snapshot_ns)
+            .saturating_add(row.residual_ns)
+    });
+    FixtureTimingInput {
+        fixture: fixture.to_owned(),
+        sweep_critical_ns: sum(|row| row.sweep_critical_ns),
+        batch_overhead_ns: overhead,
+        exact_ns: sum(|row| row.exact_ns),
+        barrier_to_barrier_ns: sum(|row| row.barrier_to_barrier_ns),
+        search_ns: wall.search_ns,
+        sample_evaluations: sum(|row| row.sample_evaluations),
+        iterations: sum(|row| row.iterations),
+        exact_checkpoint_calls: sum(|row| row.exact_calls),
+        published_bites: sum(|row| row.published_bites),
+        disruption_moves: sum(|row| row.disruption_moves),
+    }
 }
 
 fn fail(document: Value, out: Option<&str>, status: i32) -> ! {
@@ -160,6 +224,8 @@ fn main() {
     let mut rows = Vec::new();
     let mut walls = Vec::new();
     let mut fixture_cells = Vec::new();
+    let mut prime_cells = Vec::new();
+    let mut prime_inputs = Vec::new();
     let mut sources = Vec::new();
     for fixture in FIXTURES {
         let Some(path) = cells.get(fixture) else {
@@ -180,12 +246,22 @@ fn main() {
                     terms: terms_of(&cell_rows),
                     seconds,
                 });
+                let prime_terms = terms_prime_of(&cell_rows);
                 sources.push(json!({
                     "fixture": fixture,
                     "path": path,
                     "bites": cell_rows.len(),
                     "searchSeconds": seconds,
+                    // Rider (i)'s counter, per cell, beside the bite count that
+                    // bounds it.
+                    "publishedBites": prime_terms.published_bites,
                 }));
+                prime_cells.push(FixtureCellPrime {
+                    fixture: fixture.to_owned(),
+                    terms: prime_terms,
+                    seconds,
+                });
+                prime_inputs.push(timing_input_of(fixture, &cell_rows, &wall));
                 rows.extend(cell_rows);
                 walls.push(wall);
             }
@@ -250,10 +326,59 @@ fn main() {
         ),
     };
 
+    // ------------------------------------------------------------ `U'` --
+    //
+    // docs/currency-amendment.md, three signatures. The amended currency is
+    // calibrated and checked **beside** the signed one, never instead of it:
+    // `U` was rejected by a committed measurement and has to stay exactly the
+    // thing that was rejected, so its two documents above do not move by one
+    // field. The exit status carries `U'`'s verdict, because `U'` is the
+    // currency this wave was funded to measure, and `EXIT_MEANS` says so in
+    // the document rather than leaving a reader to infer it.
+    let prime_calibration = match calibrate_prime(&prime_inputs, &FIXTURES) {
+        Ok(calibration) => calibration,
+        Err(error) => fail(
+            json!({
+                "experiment": "overlap-ics",
+                "battery": "economics-round-currency",
+                "cellSources": sources,
+                "harness": report,
+                "calibration": calibration,
+                "u1": check,
+                "u0": u0.ok(),
+                "primeTimingInputs": prime_inputs,
+                "error": format!("U' calibration: {error}"),
+            }),
+            out,
+            2,
+        ),
+    };
+    let prime_check = match transfer_check_prime(&prime_calibration.currency, &prime_cells) {
+        Ok(prime_check) => prime_check,
+        Err(error) => fail(
+            json!({
+                "experiment": "overlap-ics",
+                "battery": "economics-round-currency",
+                "cellSources": sources,
+                "calibration": calibration,
+                "u1": check,
+                "u0": u0.ok(),
+                "calibrationPrime": prime_calibration,
+                "error": format!("U' transfer check: {error}"),
+            }),
+            out,
+            2,
+        ),
+    };
+
     let document = json!({
         "experiment": "overlap-ics",
         "battery": "economics-round-currency",
         "spec": "docs/economics-round-spec.md, funded change 3",
+        "amendment": "docs/currency-amendment.md: U' = sample_evaluations + B*master_batches \
+                      + E*exact_checkpoint_calls + P*published_bites + D*disruption_moves; R is \
+                      DROPPED absolutely; same derivation, same >10% reject rule verbatim, \
+                      still a stop.",
         "cellSources": sources,
         "cells": fixture_cells,
         "harness": report,
@@ -265,7 +390,19 @@ fn main() {
         "summary": calibration.currency.summary(),
         "CURRENCY_ACCEPTED": check.accepted,
         "WORST_RELATIVE_ERROR": check.worst_relative_error,
+
+        "primeTimingInputs": prime_inputs,
+        "cellsPrime": prime_cells,
+        "calibrationPrime": prime_calibration,
+        "u2": prime_check,
+        "summaryPrime": prime_calibration.currency.summary(),
+        "CURRENCY_PRIME_ACCEPTED": prime_check.accepted,
+        "WORST_RELATIVE_ERROR_PRIME": prime_check.worst_relative_error,
+        "EXIT_MEANS": "0 iff U' (the amended currency) transfers within 10% on every ordered \
+                       fixture pair; 1 iff it is REJECTED by the amendment's own rule; 2 iff \
+                       the check could not run. U1's verdict is CURRENCY_ACCEPTED and is \
+                       reported, not exited on.",
     });
-    let accepted = check.accepted;
+    let accepted = prime_check.accepted;
     fail(document, out, i32::from(!accepted));
 }

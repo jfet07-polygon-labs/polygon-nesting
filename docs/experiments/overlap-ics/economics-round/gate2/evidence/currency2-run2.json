@@ -1,0 +1,882 @@
+{
+  "experiment": "overlap-ics",
+  "battery": "economics-round-currency-calibration",
+  "spec": "docs/economics-round-spec.md, funded change 3: \"REJECT the currency if wall-prediction error >10% on any transfer fixture.\"",
+  "profileBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+  "profileBinarySha256": "115776bbfa50fd7a137a5336d56d444edcfc7129459678261bb9f4b3627a6dec",
+  "meterBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/ics_meter",
+  "meterBinarySha256": "9cc5ea5c3ba3df7287706239002840e434319654a0f9737ab53f3b2149d6eab7",
+  "machine": {
+    "platform": "Linux-6.18.38-x86_64-with-glibc2.42",
+    "cpus": 16,
+    "loadBefore": [
+      "0.93",
+      "0.97",
+      "1.14"
+    ],
+    "loadAfter": [
+      "1.35",
+      "1.06",
+      "1.16"
+    ]
+  },
+  "cellShape": {
+    "seed": 0,
+    "workers": 8,
+    "mode": "fixed",
+    "bites": 30,
+    "attempts": 3,
+    "iters": 120,
+    "compressBites": 4
+  },
+  "cells": [
+    {
+      "fixture": "mixed-61",
+      "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-mixed-61.json",
+      "sourceSha256": "834cbbb18ae8f523abfe69d2b52f822a06b10503e1138ba50c0efcfcc68829bc",
+      "command": [
+        "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+        "--cell=cutclose",
+        "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+        "--edge=5",
+        "--pair=5",
+        "--mode=fixed",
+        "--workers=8",
+        "--seed=0",
+        "--bites=30",
+        "--attempts=3",
+        "--iters=120",
+        "--compressbites=4"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "driverWallSeconds": 4.8756440540309995,
+      "searchSeconds": 2.567143473,
+      "bites": 26,
+      "publications": 24,
+      "depthMm": 179.00635042173,
+      "terms": {
+        "sampleEvaluations": 6977140,
+        "masterBatches": 514,
+        "exactCalls": 50,
+        "repairRows": 20,
+        "disruptionMoves": 8
+      },
+      "profileMeasured": true
+    },
+    {
+      "fixture": "shapes-17",
+      "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-shapes-17.json",
+      "sourceSha256": "f32b4c283618c3b80a7eb553cd976d7280832b81c61c0e6ed4567891bd331f0e",
+      "command": [
+        "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+        "--cell=cutclose",
+        "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/shapes-17/2000x2700-compact/request.json",
+        "--edge=5",
+        "--pair=5",
+        "--mode=fixed",
+        "--workers=8",
+        "--seed=0",
+        "--bites=30",
+        "--attempts=3",
+        "--iters=120",
+        "--compressbites=4"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "driverWallSeconds": 2.1721571990055963,
+      "searchSeconds": 0.601591377,
+      "bites": 5,
+      "publications": 0,
+      "depthMm": 200.34937729570953,
+      "terms": {
+        "sampleEvaluations": 1418260,
+        "masterBatches": 840,
+        "exactCalls": 0,
+        "repairRows": 0,
+        "disruptionMoves": 4
+      },
+      "profileMeasured": true
+    },
+    {
+      "fixture": "triangle-20",
+      "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-triangle-20.json",
+      "sourceSha256": "8279f7ab19f96e196c88ce555cdbd6cb60090ffa3aad891f48e379cd4a05a35f",
+      "command": [
+        "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+        "--cell=cutclose",
+        "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+        "--edge=5",
+        "--pair=5",
+        "--mode=fixed",
+        "--workers=8",
+        "--seed=0",
+        "--bites=30",
+        "--attempts=3",
+        "--iters=120",
+        "--compressbites=4"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "driverWallSeconds": 0.0367488490883261,
+      "searchSeconds": 0.005783353,
+      "bites": 34,
+      "publications": 34,
+      "depthMm": 71.1990561493186,
+      "terms": {
+        "sampleEvaluations": 45364,
+        "masterBatches": 5,
+        "exactCalls": 34,
+        "repairRows": 0,
+        "disruptionMoves": 0
+      },
+      "profileMeasured": true
+    }
+  ],
+  "meterCommand": [
+    "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/ics_meter",
+    "--out=/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-meter.json",
+    "--cell=mixed-61=/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-mixed-61.json",
+    "--cell=shapes-17=/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-shapes-17.json",
+    "--cell=triangle-20=/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-triangle-20.json"
+  ],
+  "meterExit": 1,
+  "meterStderr": "",
+  "meter": {
+    "CURRENCY_ACCEPTED": false,
+    "CURRENCY_PRIME_ACCEPTED": false,
+    "EXIT_MEANS": "0 iff U' (the amended currency) transfers within 10% on every ordered fixture pair; 1 iff it is REJECTED by the amendment's own rule; 2 iff the check could not run. U1's verdict is CURRENCY_ACCEPTED and is reported, not exited on.",
+    "WORST_RELATIVE_ERROR": 2.6041372905382096,
+    "WORST_RELATIVE_ERROR_PRIME": 3.01470565024373,
+    "amendment": "docs/currency-amendment.md: U' = sample_evaluations + B*master_batches + E*exact_checkpoint_calls + P*published_bites + D*disruption_moves; R is DROPPED absolutely; same derivation, same >10% reject rule verbatim, still a stop.",
+    "battery": "economics-round-currency",
+    "calibration": {
+      "currency": {
+        "coefficients": {
+          "bMasterBatch": 639,
+          "dDisruptionMove": 1028,
+          "ePublicationCall": 323,
+          "measured": {
+            "bMasterBatch": 638.2706449760238,
+            "baseNsPerSampleEvaluation": 339.14335621751775,
+            "dDisruptionMove": 1027.0170227855078,
+            "ePublicationCall": 322.0899500581883,
+            "rRepairRow": 154.16931819966254
+          },
+          "rRepairRow": 155,
+          "rounding": "conservative-ceil"
+        },
+        "version": "U1-weighted-vector"
+      },
+      "fixtures": [
+        "mixed-61",
+        "shapes-17",
+        "triangle-20"
+      ],
+      "selected": [
+        {
+          "cheapestNanosEach": 63.554801163918526,
+          "dearestNanosEach": 341.1242179460352,
+          "fixtures": [
+            "mixed-61",
+            "shapes-17",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 339.14335621751775,
+          "rounded": 1,
+          "sampleEvaluationEquivalents": 1.0,
+          "term": "sample-evaluation"
+        },
+        {
+          "cheapestNanosEach": 144788.83095238096,
+          "dearestNanosEach": 415426.4,
+          "fixtures": [
+            "mixed-61",
+            "shapes-17",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 216465.24871228845,
+          "rounded": 639,
+          "sampleEvaluationEquivalents": 638.2706449760238,
+          "term": "master-batch"
+        },
+        {
+          "cheapestNanosEach": 16766.20588235294,
+          "dearestNanosEach": 172113.22,
+          "fixtures": [
+            "mixed-61",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 109234.66666666667,
+          "rounded": 323,
+          "sampleEvaluationEquivalents": 322.0899500581883,
+          "term": "publication-attempt-call"
+        },
+        {
+          "cheapestNanosEach": 52285.5,
+          "dearestNanosEach": 52285.5,
+          "fixtures": [
+            "mixed-61"
+          ],
+          "pooledNanosEach": 52285.5,
+          "rounded": 155,
+          "sampleEvaluationEquivalents": 154.16931819966254,
+          "term": "repair-row"
+        },
+        {
+          "cheapestNanosEach": 73563.25,
+          "dearestNanosEach": 485677.375,
+          "fixtures": [
+            "mixed-61",
+            "shapes-17"
+          ],
+          "pooledNanosEach": 348306.0,
+          "rounded": 1028,
+          "sampleEvaluationEquivalents": 1027.0170227855078,
+          "term": "disruption-move"
+        }
+      ]
+    },
+    "calibrationPrime": {
+      "collinearity": {
+        "collinear": false,
+        "cosine": 0.9362638360739937,
+        "cosineBar": 0.9995,
+        "exactCheckpointCalls": [
+          50,
+          0,
+          34
+        ],
+        "fixtures": [
+          "mixed-61",
+          "shapes-17",
+          "triangle-20"
+        ],
+        "publishedBites": [
+          24,
+          0,
+          34
+        ],
+        "ratioBar": 1.05,
+        "ratioMaxOverMin": 2.0833333333333335,
+        "ratios": [
+          [
+            "mixed-61",
+            2.0833333333333335
+          ],
+          [
+            "triangle-20",
+            1.0
+          ]
+        ]
+      },
+      "currency": {
+        "coefficients": {
+          "bMasterBatch": 639,
+          "combinedEAndP": false,
+          "dDisruptionMove": 1054,
+          "eExactCheckpointCall": 467,
+          "measured": {
+            "bMasterBatch": 638.2706449760238,
+            "baseNsPerSampleEvaluation": 339.14335621751775,
+            "dDisruptionMove": 1053.0414988678447,
+            "eExactCheckpointCall": 466.1659806677618,
+            "pPublishedBite": 56.66546927730951
+          },
+          "pPublishedBite": 57,
+          "rounding": "conservative-ceil"
+        },
+        "version": "U2-per-bite-vector"
+      },
+      "fixtures": [
+        "mixed-61",
+        "shapes-17",
+        "triangle-20"
+      ],
+      "notes": [
+        "R is ABSENT (docs/currency-amendment.md). The 16 um repair's wall is inside exactNs and is therefore charged to E; dropping a term does not delete its cost.",
+        "P and D are split out of the search wall the barriers did not claim - the only region that contains the cut, the pose install, the publication commit, the row rebuild and the disruption. No timer exists around any of them, so this is a two-term fit and not two direct readings; `residualSplit` prints the design matrix and the per-fixture miss.",
+        "RIDER (ii) DID NOT FIRE: the E and P design vectors are separable (ratio spread Some(2.0833333333333335) against a 1.05 bar, cosine 0.936264 against a 0.9995 bar), so two prices were fitted."
+      ],
+      "residualSplit": [
+        {
+          "directSingleTermNs": null,
+          "disruptionMoves": 8,
+          "fittedNs": 3318281.4436752675,
+          "fixture": "mixed-61",
+          "outsideNs": 3885419,
+          "publishedBites": 24,
+          "residualNs": 567137.5563247325
+        },
+        {
+          "directSingleTermNs": 73563.25,
+          "disruptionMoves": 4,
+          "fittedNs": 1428528.112649465,
+          "fixture": "shapes-17",
+          "outsideNs": 294253,
+          "publishedBites": 0,
+          "residualNs": -1134275.112649465
+        },
+        {
+          "directSingleTermNs": 7443.235294117647,
+          "disruptionMoves": 0,
+          "fittedNs": 653402.3926998111,
+          "fixture": "triangle-20",
+          "outsideNs": 253070,
+          "publishedBites": 34,
+          "residualNs": -400332.39269981114
+        }
+      ],
+      "selected": [
+        {
+          "cheapestNanosEach": 63.554801163918526,
+          "dearestNanosEach": 341.1242179460352,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall, never sweepTotalNs) over the all-workers sampleEvaluations",
+          "fixtures": [
+            "mixed-61",
+            "shapes-17",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 339.14335621751775,
+          "rounded": 1,
+          "sampleEvaluationEquivalents": 1.0,
+          "term": "sample-evaluation"
+        },
+        {
+          "cheapestNanosEach": 144788.83095238096,
+          "dearestNanosEach": 415426.4,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual, over master iterations",
+          "fixtures": [
+            "mixed-61",
+            "shapes-17",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 216465.24871228845,
+          "rounded": 639,
+          "sampleEvaluationEquivalents": 638.2706449760238,
+          "term": "master-batch"
+        },
+        {
+          "cheapestNanosEach": 16766.20588235294,
+          "dearestNanosEach": 254202.1,
+          "derivation": "direct: exactNs over exactCheckpointCalls. With R absent this region has one term in it, so no split runs and the repair's wall is charged to E.",
+          "fixtures": [
+            "mixed-61",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 158097.09523809524,
+          "rounded": 467,
+          "sampleEvaluationEquivalents": 466.1659806677618,
+          "term": "exact-checkpoint-call"
+        },
+        {
+          "cheapestNanosEach": 7443.235294117647,
+          "dearestNanosEach": 19217.71743234739,
+          "derivation": "fitted: non-negative least squares of the unclaimed search wall on (publishedBites, disruptionMoves), one row per fixture",
+          "fixtures": [
+            "mixed-61",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 19217.71743234739,
+          "rounded": 57,
+          "sampleEvaluationEquivalents": 56.66546927730951,
+          "term": "published-bite"
+        },
+        {
+          "cheapestNanosEach": 73563.25,
+          "dearestNanosEach": 357132.02816236624,
+          "derivation": "fitted: the same non-negative least squares. U priced D as the WHOLE unclaimed residual and called it an upper bound; U' takes the per-bite work out of it first, so this D is smaller and tighter.",
+          "fixtures": [
+            "mixed-61",
+            "shapes-17"
+          ],
+          "pooledNanosEach": 357132.02816236624,
+          "rounded": 1054,
+          "sampleEvaluationEquivalents": 1053.0414988678447,
+          "term": "disruption-move"
+        }
+      ],
+      "skipped": [
+        {
+          "fixture": "shapes-17",
+          "reason": "the cell never reached exact geometry: no call to price",
+          "term": "publication-attempt-call"
+        }
+      ]
+    },
+    "cellSources": [
+      {
+        "bites": 26,
+        "fixture": "mixed-61",
+        "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-mixed-61.json",
+        "publishedBites": 24,
+        "searchSeconds": 2.567143473
+      },
+      {
+        "bites": 5,
+        "fixture": "shapes-17",
+        "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-shapes-17.json",
+        "publishedBites": 0,
+        "searchSeconds": 0.601591377
+      },
+      {
+        "bites": 34,
+        "fixture": "triangle-20",
+        "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency-triangle-20.json",
+        "publishedBites": 34,
+        "searchSeconds": 0.005783353
+      }
+    ],
+    "cells": [
+      {
+        "fixture": "mixed-61",
+        "seconds": 2.567143473,
+        "terms": {
+          "actualPublicationAttemptCalls": 50,
+          "disruptionMoves": 8,
+          "masterBatches": 514,
+          "repairRows": 20,
+          "sampleEvaluations": 6977140
+        }
+      },
+      {
+        "fixture": "shapes-17",
+        "seconds": 0.601591377,
+        "terms": {
+          "actualPublicationAttemptCalls": 0,
+          "disruptionMoves": 4,
+          "masterBatches": 840,
+          "repairRows": 0,
+          "sampleEvaluations": 1418260
+        }
+      },
+      {
+        "fixture": "triangle-20",
+        "seconds": 0.005783353,
+        "terms": {
+          "actualPublicationAttemptCalls": 34,
+          "disruptionMoves": 0,
+          "masterBatches": 5,
+          "repairRows": 0,
+          "sampleEvaluations": 45364
+        }
+      }
+    ],
+    "cellsPrime": [
+      {
+        "fixture": "mixed-61",
+        "seconds": 2.567143473,
+        "terms": {
+          "disruptionMoves": 8,
+          "exactCheckpointCalls": 50,
+          "masterBatches": 514,
+          "publishedBites": 24,
+          "sampleEvaluations": 6977140
+        }
+      },
+      {
+        "fixture": "shapes-17",
+        "seconds": 0.601591377,
+        "terms": {
+          "disruptionMoves": 4,
+          "exactCheckpointCalls": 0,
+          "masterBatches": 840,
+          "publishedBites": 0,
+          "sampleEvaluations": 1418260
+        }
+      },
+      {
+        "fixture": "triangle-20",
+        "seconds": 0.005783353,
+        "terms": {
+          "disruptionMoves": 0,
+          "exactCheckpointCalls": 34,
+          "masterBatches": 5,
+          "publishedBites": 34,
+          "sampleEvaluations": 45364
+        }
+      }
+    ],
+    "experiment": "overlap-ics",
+    "harness": {
+      "skipped": [
+        {
+          "fixture": "shapes-17",
+          "reason": "the cell never reached exact geometry: no call to price",
+          "term": "publication-attempt-call"
+        },
+        {
+          "fixture": "shapes-17",
+          "reason": "the cell never reached exact geometry, so it never repaired",
+          "term": "repair-row"
+        },
+        {
+          "fixture": "triangle-20",
+          "reason": "the cell repaired no row",
+          "term": "repair-row"
+        },
+        {
+          "fixture": "triangle-20",
+          "reason": "the cell disrupted nothing",
+          "term": "disruption-move"
+        }
+      ],
+      "timings": [
+        {
+          "count": 6977140,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall) over the bite's own all-workers sampleEvaluations",
+          "fixture": "mixed-61",
+          "nanos": 2380071426,
+          "term": "sample-evaluation"
+        },
+        {
+          "count": 514,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual",
+          "fixture": "mixed-61",
+          "nanos": 170476523,
+          "term": "master-batch"
+        },
+        {
+          "count": 50,
+          "derivation": "fitted: non-negative least squares of exactNs on (calls, repairRows)",
+          "fixture": "mixed-61",
+          "nanos": 8605661,
+          "term": "publication-attempt-call"
+        },
+        {
+          "count": 20,
+          "derivation": "fitted: non-negative least squares of exactNs on (calls, repairRows)",
+          "fixture": "mixed-61",
+          "nanos": 1045710,
+          "term": "repair-row"
+        },
+        {
+          "count": 8,
+          "derivation": "UPPER BOUND: the whole search wall the separations' own barrier-to-barrier accounting did not claim - which also contains the pool restore, the pose installation, the cut and the publication commit. No timer exists around `disrupt::disrupt`, because adding one means editing search/overlap_ics/mod.rs. If the transfer check rejects, this bound is the first suspect.",
+          "fixture": "mixed-61",
+          "nanos": 3885419,
+          "term": "disruption-move"
+        },
+        {
+          "count": 1418260,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall) over the bite's own all-workers sampleEvaluations",
+          "fixture": "shapes-17",
+          "nanos": 479674506,
+          "term": "sample-evaluation"
+        },
+        {
+          "count": 840,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual",
+          "fixture": "shapes-17",
+          "nanos": 121622618,
+          "term": "master-batch"
+        },
+        {
+          "count": 4,
+          "derivation": "UPPER BOUND: the whole search wall the separations' own barrier-to-barrier accounting did not claim - which also contains the pool restore, the pose installation, the cut and the publication commit. No timer exists around `disrupt::disrupt`, because adding one means editing search/overlap_ics/mod.rs. If the transfer check rejects, this bound is the first suspect.",
+          "fixture": "shapes-17",
+          "nanos": 294253,
+          "term": "disruption-move"
+        },
+        {
+          "count": 45364,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall) over the bite's own all-workers sampleEvaluations",
+          "fixture": "triangle-20",
+          "nanos": 2883100,
+          "term": "sample-evaluation"
+        },
+        {
+          "count": 5,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual",
+          "fixture": "triangle-20",
+          "nanos": 2077132,
+          "term": "master-batch"
+        },
+        {
+          "count": 34,
+          "derivation": "direct: exactNs over the calls, on a cell that never repaired",
+          "fixture": "triangle-20",
+          "nanos": 570051,
+          "term": "publication-attempt-call"
+        }
+      ]
+    },
+    "primeTimingInputs": [
+      {
+        "barrierToBarrierNs": 2563258054,
+        "batchOverheadNs": 170476523,
+        "disruptionMoves": 8,
+        "exactCheckpointCalls": 50,
+        "exactNs": 12710105,
+        "fixture": "mixed-61",
+        "iterations": 514,
+        "publishedBites": 24,
+        "sampleEvaluations": 6977140,
+        "searchNs": 2567143473,
+        "sweepCriticalNs": 2380071426
+      },
+      {
+        "barrierToBarrierNs": 601297124,
+        "batchOverheadNs": 121622618,
+        "disruptionMoves": 4,
+        "exactCheckpointCalls": 0,
+        "exactNs": 0,
+        "fixture": "shapes-17",
+        "iterations": 840,
+        "publishedBites": 0,
+        "sampleEvaluations": 1418260,
+        "searchNs": 601591377,
+        "sweepCriticalNs": 479674506
+      },
+      {
+        "barrierToBarrierNs": 5530283,
+        "batchOverheadNs": 2077132,
+        "disruptionMoves": 0,
+        "exactCheckpointCalls": 34,
+        "exactNs": 570051,
+        "fixture": "triangle-20",
+        "iterations": 5,
+        "publishedBites": 34,
+        "sampleEvaluations": 45364,
+        "searchNs": 5783353,
+        "sweepCriticalNs": 2883100
+      }
+    ],
+    "spec": "docs/economics-round-spec.md, funded change 3",
+    "summary": "U1-weighted-vector B=639 E=323 R=155 D=1028",
+    "summaryPrime": "U2-per-bite-vector B=639 E=467 P=57 D=1054",
+    "u0": {
+      "accepted": false,
+      "currency": {
+        "coefficients": null,
+        "version": "U0-sample-evaluations"
+      },
+      "predictions": [
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.601591377,
+          "predictedSeconds": 0.5218294175001476,
+          "relativeError": 0.13258494478030464,
+          "transferFixture": "shapes-17",
+          "units": 1418260,
+          "unitsPerSecond": 2717861.340194756,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.005783353,
+          "predictedSeconds": 0.01669106489323304,
+          "relativeError": 1.8860532796862033,
+          "transferFixture": "triangle-20",
+          "units": 45364,
+          "unitsPerSecond": 2717861.340194756,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 2.567143473,
+          "predictedSeconds": 2.9595329912158417,
+          "relativeError": 0.15285063820655492,
+          "transferFixture": "mixed-61",
+          "units": 6977140,
+          "unitsPerSecond": 2357513.84448451,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 0.005783353,
+          "predictedSeconds": 0.019242304814510735,
+          "relativeError": 2.32718836538436,
+          "transferFixture": "triangle-20",
+          "units": 45364,
+          "unitsPerSecond": 2357513.84448451,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 2.567143473,
+          "predictedSeconds": 0.8894996814747376,
+          "relativeError": 0.6535060502733586,
+          "transferFixture": "mixed-61",
+          "units": 6977140,
+          "unitsPerSecond": 7843892.634601416,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 0.601591377,
+          "predictedSeconds": 0.18081073595317873,
+          "relativeError": 0.6994459314645749,
+          "transferFixture": "shapes-17",
+          "units": 1418260,
+          "unitsPerSecond": 7843892.634601416,
+          "withinTolerance": false
+        }
+      ],
+      "rejectedBy": "mixed-61 -> shapes-17",
+      "tolerance": 0.1,
+      "worstRelativeError": 2.32718836538436
+    },
+    "u1": {
+      "accepted": false,
+      "currency": {
+        "coefficients": {
+          "bMasterBatch": 639,
+          "dDisruptionMove": 1028,
+          "ePublicationCall": 323,
+          "measured": {
+            "bMasterBatch": 638.2706449760238,
+            "baseNsPerSampleEvaluation": 339.14335621751775,
+            "dDisruptionMove": 1027.0170227855078,
+            "ePublicationCall": 322.0899500581883,
+            "rRepairRow": 154.16931819966254
+          },
+          "rRepairRow": 155,
+          "rounding": "conservative-ceil"
+        },
+        "version": "U1-weighted-vector"
+      },
+      "predictions": [
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.601591377,
+          "predictedSeconds": 0.6858491443606675,
+          "relativeError": 0.14005813677190967,
+          "transferFixture": "shapes-17",
+          "units": 1959132,
+          "unitsPerSecond": 2856505.7142795697,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.005783353,
+          "predictedSeconds": 0.020843998211646026,
+          "relativeError": 2.6041372905382096,
+          "transferFixture": "triangle-20",
+          "units": 59541,
+          "unitsPerSecond": 2856505.7142795697,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 2.567143473,
+          "predictedSeconds": 2.251765405814218,
+          "relativeError": 0.12285174962084473,
+          "transferFixture": "mixed-61",
+          "units": 7333060,
+          "unitsPerSecond": 3256582.582299879,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 0.005783353,
+          "predictedSeconds": 0.01828327656225155,
+          "relativeError": 2.161362718521859,
+          "transferFixture": "triangle-20",
+          "units": 59541,
+          "unitsPerSecond": 3256582.582299879,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 2.567143473,
+          "predictedSeconds": 0.7122768268954166,
+          "relativeError": 0.7225410911439866,
+          "transferFixture": "mixed-61",
+          "units": 7333060,
+          "unitsPerSecond": 10295238.76547048,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 0.601591377,
+          "predictedSeconds": 0.19029495523414117,
+          "relativeError": 0.6836807133388463,
+          "transferFixture": "shapes-17",
+          "units": 1959132,
+          "unitsPerSecond": 10295238.76547048,
+          "withinTolerance": false
+        }
+      ],
+      "rejectedBy": "mixed-61 -> shapes-17",
+      "tolerance": 0.1,
+      "worstRelativeError": 2.6041372905382096
+    },
+    "u2": {
+      "accepted": false,
+      "currency": {
+        "coefficients": null,
+        "version": "U0-sample-evaluations"
+      },
+      "predictions": [
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.601591377,
+          "predictedSeconds": 0.6853550678845277,
+          "relativeError": 0.1392368542618385,
+          "transferFixture": "shapes-17",
+          "units": 1959236,
+          "unitsPerSecond": 2858716.732113087,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.005783353,
+          "predictedSeconds": 0.023218459966454028,
+          "relativeError": 3.01470565024373,
+          "transferFixture": "triangle-20",
+          "units": 66375,
+          "unitsPerSecond": 2858716.732113087,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 2.567143473,
+          "predictedSeconds": 2.2533887166627564,
+          "relativeError": 0.12221940831790955,
+          "transferFixture": "mixed-61",
+          "units": 7338736,
+          "unitsPerSecond": 3256755.457118196,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 0.005783353,
+          "predictedSeconds": 0.020380713527300948,
+          "relativeError": 2.5240307011003735,
+          "transferFixture": "triangle-20",
+          "units": 66375,
+          "unitsPerSecond": 3256755.457118196,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 2.567143473,
+          "predictedSeconds": 0.6394350412325122,
+          "relativeError": 0.7509157365150069,
+          "transferFixture": "mixed-61",
+          "units": 7338736,
+          "unitsPerSecond": 11476906.216860704,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 0.601591377,
+          "predictedSeconds": 0.17071116230972505,
+          "relativeError": 0.7162340272212295,
+          "transferFixture": "shapes-17",
+          "units": 1959236,
+          "unitsPerSecond": 11476906.216860704,
+          "withinTolerance": false
+        }
+      ],
+      "rejectedBy": "mixed-61 -> shapes-17",
+      "tolerance": 0.1,
+      "worstRelativeError": 3.01470565024373
+    }
+  },
+  "CURRENCY_ACCEPTED": false,
+  "WORST_RELATIVE_ERROR": 2.6041372905382096,
+  "CURRENCY_PRIME_ACCEPTED": false,
+  "WORST_RELATIVE_ERROR_PRIME": 3.01470565024373
+}

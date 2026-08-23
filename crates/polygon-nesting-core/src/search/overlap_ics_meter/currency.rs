@@ -544,59 +544,107 @@ pub struct PublicationCell {
 /// collinear - because then the two prices are not separable and any split is
 /// an invention.
 pub fn split_publication_cost(cells: &[PublicationCell]) -> Result<(f64, f64), String> {
-    let mut sum_cc = 0.0f64;
-    let mut sum_cw = 0.0f64;
-    let mut sum_ww = 0.0f64;
-    let mut sum_ct = 0.0f64;
-    let mut sum_wt = 0.0f64;
+    let rows: Vec<(u64, u64, u64)> = cells
+        .iter()
+        .map(|cell| (cell.calls, cell.repair_rows, cell.exact_ns))
+        .collect();
+    two_term_nnls(
+        &rows,
+        "no publication cell has a call or a repair row",
+        "no repair row was ever observed; `R` cannot be priced from these cells",
+        "no publication call was ever observed; `E` cannot be priced",
+        "calls and repair rows are collinear across the cells; the split is not identifiable",
+        "the publication split is not finite",
+    )
+}
+
+/// **The same two-parameter non-negative least squares, over the residual the
+/// separations did not claim.**
+///
+/// `U'` prices two different things out of one unaccounted region: the per-bite
+/// work of a bite that published (`P` - the cut, the pose install, the
+/// publication commit, the row rebuild) and the disruption (`D`). They share a
+/// region for exactly the reason `E` and `R` do - nobody put a timer between
+/// them - and they are separable for exactly the same reason: the campaign's
+/// fixtures spend them in different proportions. triangle-20 publishes 34 bites
+/// and disrupts nothing, shapes-17 disrupts and publishes nothing, mixed-61
+/// spends both. That is a design matrix, not a coincidence, and it is printed
+/// beside the fit so a reader can see the support each price has.
+///
+/// One row per **fixture**, not per bite: `outside_ns` is a cell-level residual
+/// (the driver's search wall minus the sum of that cell's barriers), and there
+/// is no per-bite version of it to fit. Three rows, two unknowns.
+pub fn split_residual_cost(rows: &[(u64, u64, u64)]) -> Result<(f64, f64), String> {
+    two_term_nnls(
+        rows,
+        "no cell published a bite or moved a piece",
+        "no disruption move was ever observed; `D` cannot be priced from these cells",
+        "no published bite was ever observed; `P` cannot be priced",
+        "published bites and disruption moves are collinear across the cells; the split is \
+         not identifiable",
+        "the residual split is not finite",
+    )
+}
+
+/// The arithmetic both splits share: `t ≈ a·x + b·y`, non-negative, solved
+/// unconstrained and re-solved with one price pinned at zero if either comes
+/// out negative. The messages are the callers', because the terms have names
+/// and an error that named the wrong one would be worse than a duplicated
+/// twenty lines.
+fn two_term_nnls(
+    rows: &[(u64, u64, u64)],
+    empty: &str,
+    no_y: &str,
+    no_x: &str,
+    collinear: &str,
+    not_finite: &str,
+) -> Result<(f64, f64), String> {
+    let mut sum_xx = 0.0f64;
+    let mut sum_xy = 0.0f64;
+    let mut sum_yy = 0.0f64;
+    let mut sum_xt = 0.0f64;
+    let mut sum_yt = 0.0f64;
     let mut any = false;
-    for cell in cells {
-        if cell.calls == 0 && cell.repair_rows == 0 {
+    for (x, y, t) in rows {
+        if *x == 0 && *y == 0 {
             continue;
         }
         any = true;
-        let c = cell.calls as f64;
-        let w = cell.repair_rows as f64;
-        let t = cell.exact_ns as f64;
-        sum_cc += c * c;
-        sum_cw += c * w;
-        sum_ww += w * w;
-        sum_ct += c * t;
-        sum_wt += w * t;
+        let x = *x as f64;
+        let y = *y as f64;
+        let t = *t as f64;
+        sum_xx += x * x;
+        sum_xy += x * y;
+        sum_yy += y * y;
+        sum_xt += x * t;
+        sum_yt += y * t;
     }
     if !any {
-        return Err("no publication cell has a call or a repair row".to_owned());
+        return Err(empty.to_owned());
     }
-    if sum_ww <= 0.0 {
-        return Err(
-            "no repair row was ever observed; `R` cannot be priced from these cells".to_owned(),
-        );
+    if sum_yy <= 0.0 {
+        return Err(no_y.to_owned());
     }
-    if sum_cc <= 0.0 {
-        return Err("no publication call was ever observed; `E` cannot be priced".to_owned());
+    if sum_xx <= 0.0 {
+        return Err(no_x.to_owned());
     }
-    let determinant = sum_cc * sum_ww - sum_cw * sum_cw;
-    // Collinear within a relative epsilon: `calls` and `rows` moved together on
-    // every cell, so the fit cannot tell the two prices apart.
-    if !determinant.is_finite() || determinant.abs() <= 1e-9 * sum_cc * sum_ww {
-        return Err(
-            "calls and repair rows are collinear across the cells; the split is not identifiable"
-                .to_owned(),
-        );
+    let determinant = sum_xx * sum_yy - sum_xy * sum_xy;
+    if !determinant.is_finite() || determinant.abs() <= 1e-9 * sum_xx * sum_yy {
+        return Err(collinear.to_owned());
     }
-    let e = (sum_ww * sum_ct - sum_cw * sum_wt) / determinant;
-    let r = (sum_cc * sum_wt - sum_cw * sum_ct) / determinant;
-    let (e, r) = if e < 0.0 {
-        (0.0, sum_wt / sum_ww)
-    } else if r < 0.0 {
-        (sum_ct / sum_cc, 0.0)
+    let a = (sum_yy * sum_xt - sum_xy * sum_yt) / determinant;
+    let b = (sum_xx * sum_yt - sum_xy * sum_xt) / determinant;
+    let (a, b) = if a < 0.0 {
+        (0.0, sum_yt / sum_yy)
+    } else if b < 0.0 {
+        (sum_xt / sum_xx, 0.0)
     } else {
-        (e, r)
+        (a, b)
     };
-    if !e.is_finite() || !r.is_finite() {
-        return Err("the publication split is not finite".to_owned());
+    if !a.is_finite() || !b.is_finite() {
+        return Err(not_finite.to_owned());
     }
-    Ok((e, r))
+    Ok((a, b))
 }
 
 // -------------------------------------------------------------- the harness --
@@ -629,6 +677,16 @@ pub struct BiteProfileRow {
     pub exact_calls: u64,
     pub repair_rows: u64,
     pub disruption_moves: u64,
+    /// **`U'`'s per-bite term, and the one counter on this row that is not a
+    /// `profile` field.** `1` when this bite published and `0` when it did not,
+    /// read from the trajectory record's own `published` flag - the same field
+    /// every committed cell document has carried in every build since the
+    /// campaign began, at no clock cost and inside the two-process bit
+    /// comparison. Additive: a document written before `U'` deserialises with
+    /// `0`, and a currency that prices a term at zero occurrences refuses
+    /// rather than prices it free.
+    #[serde(default)]
+    pub published_bites: u64,
 }
 
 /// One fixture's whole search wall, measured by the driver around the phases.
@@ -938,6 +996,758 @@ pub fn transfer_check(currency: &Currency, cells: &[FixtureCell]) -> Result<Tran
     let rejected = predictions.iter().find(|row| !row.within_tolerance);
     Ok(TransferCheck {
         currency: *currency,
+        tolerance: WALL_PREDICTION_TOLERANCE,
+        worst_relative_error: worst,
+        accepted: rejected.is_none(),
+        rejected_by: rejected
+            .map(|row| format!("{} -> {}", row.calibrated_on, row.transfer_fixture)),
+        predictions,
+    })
+}
+
+// ============================================================================
+//  `U'` - the amended currency (docs/currency-amendment.md, three signatures)
+// ============================================================================
+//
+// > `U' = sample_evaluations + B·master_batches + E·exact_checkpoint_calls
+// > + P·published_bites + D·disruption_moves`
+// > - `R` is DROPPED absolutely … restorable only in a FUTURE funding under a
+// >   pre-written rule.
+// > - Same derivation (timing-only, three fixtures, conservative rounding),
+// >   same >10% reject rule verbatim, still a stop.
+//
+// Everything below is **additive**. `WorkTerms`, `Currency`, `Coefficients`,
+// `calibrate` and `transfer_check` above are the signed `U`, and the amendment
+// changes the currency rather than editing it: the rejected `U` has to stay
+// exactly the thing that was rejected, or the three committed runs that
+// rejected it stop being reproducible. `CurrencyVersion` in
+// `search/overlap_ics/icscal.rs` is **not** extended either - a `U'` plan is
+// never written, because a currency is not writable until it passes the rule
+// that this section exists to apply to it.
+//
+// # The three changes, and what each one costs
+//
+// * **`R` is absent.** `E` is therefore a *direct* reading - `exactNs` over
+//   `exactCheckpointCalls` - on every fixture that reached exact geometry, and
+//   no least-squares split runs inside the timed publication region at all.
+//   The 16 µm repair's wall does not disappear: it is inside `exactNs`, so it
+//   is now charged to `E`. That is what dropping a term means and it is said
+//   here rather than discovered later.
+// * **`E` is named for what it counts.** The audit's F4 split gave the record
+//   `exactCheckpointCalls`; `PhaseProfile::exact_calls` is that counter, and
+//   `U`'s `actual_publication_attempt_calls` was the same number under an
+//   older name.
+// * **`P` is new.** It prices the per-bite work the meter named when `U` was
+//   rejected - cut, pose install, publication commit, row rebuild - out of the
+//   one region no timer covers: the search wall the barriers did not claim.
+//   `D` comes out of the same region, which is why the two are split rather
+//   than each taking the whole residual as `U`'s `D` did.
+
+/// The five counted terms of `U'`. `repair_rows` is **gone**, not zeroed: a
+/// currency that carried a term priced at zero would be pricing the repair
+/// free, and the amendment drops the term rather than its price.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkTermsPrime {
+    /// The base unit. Implicit coefficient 1, never calibrated.
+    pub sample_evaluations: u64,
+    /// Master batches, i.e. eight-worker tournaments. `B`.
+    pub master_batches: u64,
+    /// The audit's F4 counter: times the exact authorities were actually
+    /// asked, not band entries. `E`.
+    pub exact_checkpoint_calls: u64,
+    /// Bites that published. `P`. **Rider (i)**: an instrumented, deterministic
+    /// counter, proven bit-identical across two processes before this
+    /// coefficient is fitted.
+    pub published_bites: u64,
+    /// Pieces an Algorithm-12 disruption moved, followers included. `D`.
+    pub disruption_moves: u64,
+}
+
+impl WorkTermsPrime {
+    pub fn add(&mut self, other: &Self) {
+        self.sample_evaluations = self
+            .sample_evaluations
+            .saturating_add(other.sample_evaluations);
+        self.master_batches = self.master_batches.saturating_add(other.master_batches);
+        self.exact_checkpoint_calls = self
+            .exact_checkpoint_calls
+            .saturating_add(other.exact_checkpoint_calls);
+        self.published_bites = self.published_bites.saturating_add(other.published_bites);
+        self.disruption_moves = self.disruption_moves.saturating_add(other.disruption_moves);
+    }
+}
+
+/// One of `U'`'s terms, as a timing addresses it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum TermPrime {
+    SampleEvaluation,
+    MasterBatch,
+    ExactCheckpointCall,
+    PublishedBite,
+    DisruptionMove,
+    /// `E` and `P` fitted as **one** term, when rider (ii) fires.
+    CombinedCheckpointAndBite,
+}
+
+impl TermPrime {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::SampleEvaluation => "sample-evaluation",
+            Self::MasterBatch => "master-batch",
+            Self::ExactCheckpointCall => "exact-checkpoint-call",
+            Self::PublishedBite => "published-bite",
+            Self::DisruptionMove => "disruption-move",
+            Self::CombinedCheckpointAndBite => "combined-checkpoint-and-bite",
+        }
+    }
+}
+
+/// `B`, `E`, `P`, `D`, and the unrounded prices they were ceil'd from.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CoefficientsPrime {
+    pub b_master_batch: u64,
+    pub e_exact_checkpoint_call: u64,
+    pub p_published_bite: u64,
+    pub d_disruption_move: u64,
+    pub measured: MeasuredPricesPrime,
+    pub rounding: Rounding,
+    /// **Rider (ii).** `true` when the `E` and `P` design vectors were collinear
+    /// within rounding and one combined price was fitted and written into both
+    /// coefficients. `false` when they were separable and two were.
+    pub combined_e_and_p: bool,
+}
+
+/// The unrounded exchange rates of `U'`, in sample-evaluation equivalents.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MeasuredPricesPrime {
+    pub b_master_batch: f64,
+    pub e_exact_checkpoint_call: f64,
+    pub p_published_bite: f64,
+    pub d_disruption_move: f64,
+    pub base_ns_per_sample_evaluation: f64,
+}
+
+/// `U'`. Version string is a constant of this module and deliberately **not** a
+/// [`CurrencyVersion`]: that enum keys `icscal` files, and no `icscal` file may
+/// be written in a currency that has not passed the reject rule.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CurrencyPrime {
+    pub version: String,
+    pub coefficients: Option<CoefficientsPrime>,
+}
+
+/// The name `U'` is reported under, in every document.
+pub const U_PRIME_VERSION: &str = "U2-per-bite-vector";
+
+impl CurrencyPrime {
+    pub fn new(coefficients: CoefficientsPrime) -> Self {
+        Self {
+            version: U_PRIME_VERSION.to_owned(),
+            coefficients: Some(coefficients),
+        }
+    }
+
+    /// **`U'`.** Saturating, for the same reason [`Currency::units`] is.
+    pub fn units(&self, terms: &WorkTermsPrime) -> u64 {
+        let Some(coefficients) = self.coefficients.as_ref() else {
+            return terms.sample_evaluations;
+        };
+        let mut units = terms.sample_evaluations;
+        for (count, price) in [
+            (terms.master_batches, coefficients.b_master_batch),
+            (
+                terms.exact_checkpoint_calls,
+                coefficients.e_exact_checkpoint_call,
+            ),
+            (terms.published_bites, coefficients.p_published_bite),
+            (terms.disruption_moves, coefficients.d_disruption_move),
+        ] {
+            units = units.saturating_add(count.saturating_mul(price));
+        }
+        units
+    }
+
+    pub fn summary(&self) -> String {
+        match self.coefficients.as_ref() {
+            None => format!("{} U'=sampleEvaluations", self.version),
+            Some(c) => format!(
+                "{} B={} E={} P={} D={}{}",
+                self.version,
+                c.b_master_batch,
+                c.e_exact_checkpoint_call,
+                c.p_published_bite,
+                c.d_disruption_move,
+                if c.combined_e_and_p {
+                    " (E,P fitted as ONE combined term: rider (ii))"
+                } else {
+                    ""
+                }
+            ),
+        }
+    }
+}
+
+/// **Rider (ii), as a computation rather than a judgement.**
+///
+/// > since the corrected `E`-counter and bites plausibly co-move (triangle-20
+/// > reads 34/34), the two vectors must be reported side by side, and if they
+/// > are proportional within rounding, fit **one** term.
+///
+/// The criterion is written here, once, and it is pre-committed in
+/// `gate2/README.md` before any number was measured: the vectors are
+/// **collinear** iff the per-fixture ratio `E_f / P_f`, over the fixtures where
+/// both are non-zero, has `max/min <= 1.05` **and** the cosine of the angle
+/// between the whole vectors is `>= 0.9995`. Two measures rather than one,
+/// because either alone has a shape it cannot see: a cosine is insensitive to a
+/// fixture with a tiny norm, and a ratio spread says nothing about a fixture
+/// where one of the two is zero.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CollinearityReport {
+    pub fixtures: Vec<String>,
+    /// `E`'s design vector, fixture by fixture, in `fixtures` order.
+    pub exact_checkpoint_calls: Vec<u64>,
+    /// `P`'s design vector, fixture by fixture, in the same order.
+    pub published_bites: Vec<u64>,
+    /// `E_f / P_f` wherever both are non-zero, with the fixture named.
+    pub ratios: Vec<(String, f64)>,
+    pub ratio_max_over_min: Option<f64>,
+    pub cosine: f64,
+    pub ratio_bar: f64,
+    pub cosine_bar: f64,
+    /// The verdict. `true` fits **one** combined term.
+    pub collinear: bool,
+}
+
+/// The pre-committed bars of [`CollinearityReport`]. Constants, so the document
+/// and the decision cannot disagree.
+pub const COLLINEARITY_RATIO_BAR: f64 = 1.05;
+pub const COLLINEARITY_COSINE_BAR: f64 = 0.9995;
+
+pub fn collinearity(cells: &[FixtureCellPrime]) -> CollinearityReport {
+    let fixtures: Vec<String> = cells.iter().map(|row| row.fixture.clone()).collect();
+    let e: Vec<u64> = cells
+        .iter()
+        .map(|row| row.terms.exact_checkpoint_calls)
+        .collect();
+    let p: Vec<u64> = cells.iter().map(|row| row.terms.published_bites).collect();
+    let mut ratios = Vec::new();
+    for (index, name) in fixtures.iter().enumerate() {
+        if e[index] > 0 && p[index] > 0 {
+            ratios.push((name.clone(), e[index] as f64 / p[index] as f64));
+        }
+    }
+    let spread = if ratios.is_empty() {
+        None
+    } else {
+        let values: Vec<f64> = ratios.iter().map(|row| row.1).collect();
+        let low = values.iter().copied().fold(f64::INFINITY, f64::min);
+        let high = values.iter().copied().fold(0.0f64, f64::max);
+        if low > 0.0 {
+            Some(high / low)
+        } else {
+            None
+        }
+    };
+    let dot: f64 = e
+        .iter()
+        .zip(&p)
+        .map(|(a, b)| *a as f64 * *b as f64)
+        .sum::<f64>();
+    let norm_e = e.iter().map(|a| (*a as f64).powi(2)).sum::<f64>().sqrt();
+    let norm_p = p.iter().map(|a| (*a as f64).powi(2)).sum::<f64>().sqrt();
+    let cosine = if norm_e > 0.0 && norm_p > 0.0 {
+        dot / (norm_e * norm_p)
+    } else {
+        0.0
+    };
+    let collinear = spread.map(|s| s <= COLLINEARITY_RATIO_BAR).unwrap_or(false)
+        && cosine >= COLLINEARITY_COSINE_BAR;
+    CollinearityReport {
+        fixtures,
+        exact_checkpoint_calls: e,
+        published_bites: p,
+        ratios,
+        ratio_max_over_min: spread,
+        cosine,
+        ratio_bar: COLLINEARITY_RATIO_BAR,
+        cosine_bar: COLLINEARITY_COSINE_BAR,
+        collinear,
+    }
+}
+
+/// One fixture's whole `U'` cell.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixtureCellPrime {
+    pub fixture: String,
+    pub terms: WorkTermsPrime,
+    pub seconds: f64,
+}
+
+/// One `U'` term's pooled price, with the spread the pooling hides.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TermPricePrime {
+    pub term: TermPrime,
+    pub fixtures: Vec<String>,
+    pub pooled_nanos_each: f64,
+    pub cheapest_nanos_each: f64,
+    pub dearest_nanos_each: f64,
+    pub sample_evaluation_equivalents: f64,
+    pub rounded: u64,
+    pub derivation: String,
+}
+
+/// The residual split's own design matrix, printed so the support of `P` and
+/// `D` is a table rather than a claim.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResidualSplitRow {
+    pub fixture: String,
+    pub published_bites: u64,
+    pub disruption_moves: u64,
+    /// The driver's search wall minus that cell's summed barrier-to-barrier.
+    pub outside_ns: u64,
+    /// What the fitted prices say this fixture's residual should have been.
+    pub fitted_ns: f64,
+    /// `outside_ns - fitted_ns`. A large one is where the fit is lying.
+    pub residual_ns: f64,
+    /// `outside_ns / published_bites` where the fixture disrupted nothing, and
+    /// `outside_ns / disruption_moves` where it published nothing: the direct
+    /// single-term readings the two-term fit is checked against.
+    pub direct_single_term_ns: Option<f64>,
+}
+
+/// What [`calibrate_prime`] produced.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CalibrationPrime {
+    pub currency: CurrencyPrime,
+    pub fixtures: Vec<String>,
+    pub selected: Vec<TermPricePrime>,
+    pub collinearity: CollinearityReport,
+    pub residual_split: Vec<ResidualSplitRow>,
+    /// Terms a fixture could not price, and why. A skip is not a zero.
+    pub skipped: Vec<SkippedTiming>,
+    /// The amendment's own sentence about what dropping `R` costs.
+    pub notes: Vec<String>,
+}
+
+/// One fixture's summed profile row, as [`calibrate_prime`] needs it.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FixtureTimingInput {
+    pub fixture: String,
+    pub sweep_critical_ns: u64,
+    pub batch_overhead_ns: u64,
+    pub exact_ns: u64,
+    pub barrier_to_barrier_ns: u64,
+    pub search_ns: u64,
+    pub sample_evaluations: u64,
+    pub iterations: u64,
+    pub exact_checkpoint_calls: u64,
+    pub published_bites: u64,
+    pub disruption_moves: u64,
+}
+
+impl FixtureTimingInput {
+    /// The wall the barriers did not claim: cut, pose install, publication
+    /// commit, row rebuild, pool restore and the disruption itself.
+    pub fn outside_ns(&self) -> u64 {
+        self.search_ns.saturating_sub(self.barrier_to_barrier_ns)
+    }
+}
+
+/// **`U'`'s derivation, in one function - the same shape as [`calibrate`].**
+///
+/// * base unit: pooled `sweepCriticalNs` over pooled `sampleEvaluations`;
+/// * `B`: pooled batch overhead over pooled iterations;
+/// * `E`: pooled `exactNs` over pooled `exactCheckpointCalls`, **direct**,
+///   because with `R` absent nothing else is charged to that region;
+/// * `P` and `D`: the two-term non-negative least squares of the unaccounted
+///   residual on `(published_bites, disruption_moves)`, one row per fixture;
+/// * quotients over the base, rounded **up** ([`Rounding::ConservativeCeil`]).
+///
+/// Rider (ii) is applied before the two prices are written: if `E` and `P` are
+/// collinear within rounding, **one** price is fitted from the two regions
+/// pooled and written into both coefficients, and `combined_e_and_p` says so.
+///
+/// Refuses rather than guesses, exactly as [`calibrate`] does: a term with no
+/// occurrence anywhere is an `Err`, not a zero.
+pub fn calibrate_prime(
+    inputs: &[FixtureTimingInput],
+    required_fixtures: &[&str],
+) -> Result<CalibrationPrime, String> {
+    let mut fixtures: Vec<String> = inputs.iter().map(|row| row.fixture.clone()).collect();
+    fixtures.sort();
+    fixtures.dedup();
+    for required in required_fixtures {
+        if !fixtures.iter().any(|seen| seen == required) {
+            return Err(format!(
+                "the amendment calibrates on all three fixtures; `{required}` has no timing"
+            ));
+        }
+    }
+    let mut skipped: Vec<SkippedTiming> = Vec::new();
+    let total = |pick: fn(&FixtureTimingInput) -> u64| -> u64 {
+        inputs.iter().fold(0u64, |acc, row| acc + pick(row))
+    };
+
+    // ---- the base unit, and the two direct prices ----
+    let base_count = total(|row| row.sample_evaluations);
+    let base_nanos = total(|row| row.sweep_critical_ns);
+    if base_count == 0 || base_nanos == 0 {
+        return Err("no sample-evaluation timing: `U'` has no base unit".to_owned());
+    }
+    let base_ns = base_nanos as f64 / base_count as f64;
+
+    let per_fixture = |pick_ns: fn(&FixtureTimingInput) -> u64,
+                       pick_count: fn(&FixtureTimingInput) -> u64|
+     -> (f64, f64, f64, Vec<String>) {
+        let mut cheapest = f64::INFINITY;
+        let mut dearest = 0.0f64;
+        let mut names = Vec::new();
+        let mut nanos = 0u128;
+        let mut count = 0u128;
+        for row in inputs {
+            if pick_count(row) == 0 {
+                continue;
+            }
+            let each = pick_ns(row) as f64 / pick_count(row) as f64;
+            cheapest = cheapest.min(each);
+            dearest = dearest.max(each);
+            names.push(row.fixture.clone());
+            nanos += pick_ns(row) as u128;
+            count += pick_count(row) as u128;
+        }
+        names.sort();
+        let pooled = if count == 0 {
+            f64::NAN
+        } else {
+            nanos as f64 / count as f64
+        };
+        (pooled, cheapest, dearest, names)
+    };
+
+    let (base_pooled, base_cheapest, base_dearest, base_fixtures) = per_fixture(
+        |row| row.sweep_critical_ns,
+        |row| row.sample_evaluations,
+    );
+    let mut selected = vec![TermPricePrime {
+        term: TermPrime::SampleEvaluation,
+        fixtures: base_fixtures,
+        pooled_nanos_each: base_pooled,
+        cheapest_nanos_each: base_cheapest,
+        dearest_nanos_each: base_dearest,
+        sample_evaluation_equivalents: 1.0,
+        rounded: 1,
+        derivation: "direct: sweepCriticalNs (the sweeps' wall, never sweepTotalNs) over the \
+                     all-workers sampleEvaluations"
+            .to_owned(),
+    }];
+
+    let (b_ns, b_cheap, b_dear, b_fixtures) =
+        per_fixture(|row| row.batch_overhead_ns, |row| row.iterations);
+    if !b_ns.is_finite() || b_ns <= 0.0 {
+        return Err("`B` has no timing; `U'` may not price a term nobody measured".to_owned());
+    }
+    selected.push(TermPricePrime {
+        term: TermPrime::MasterBatch,
+        fixtures: b_fixtures,
+        pooled_nanos_each: b_ns,
+        cheapest_nanos_each: b_cheap,
+        dearest_nanos_each: b_dear,
+        sample_evaluation_equivalents: b_ns / base_ns,
+        rounded: Rounding::ConservativeCeil.apply(b_ns / base_ns),
+        derivation: "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual, over \
+                     master iterations"
+            .to_owned(),
+    });
+
+    let (e_ns, e_cheap, e_dear, e_fixtures) =
+        per_fixture(|row| row.exact_ns, |row| row.exact_checkpoint_calls);
+    for row in inputs {
+        if row.exact_checkpoint_calls == 0 {
+            skipped.push(SkippedTiming {
+                fixture: row.fixture.clone(),
+                term: Term::PublicationAttemptCall,
+                reason: "the cell never reached exact geometry: no call to price".to_owned(),
+            });
+        }
+    }
+    if !e_ns.is_finite() || e_ns <= 0.0 {
+        return Err(
+            "`E` has no timing on any fixture; `U'` may not price a term nobody measured"
+                .to_owned(),
+        );
+    }
+
+    // ---- `P` and `D`, out of the one region no timer covers ----
+    let rows: Vec<(u64, u64, u64)> = inputs
+        .iter()
+        .map(|row| (row.published_bites, row.disruption_moves, row.outside_ns()))
+        .collect();
+    let (p_ns, d_ns) = split_residual_cost(&rows)?;
+    let residual_split: Vec<ResidualSplitRow> = inputs
+        .iter()
+        .map(|row| {
+            let fitted = p_ns * row.published_bites as f64 + d_ns * row.disruption_moves as f64;
+            let direct = if row.disruption_moves == 0 && row.published_bites > 0 {
+                Some(row.outside_ns() as f64 / row.published_bites as f64)
+            } else if row.published_bites == 0 && row.disruption_moves > 0 {
+                Some(row.outside_ns() as f64 / row.disruption_moves as f64)
+            } else {
+                None
+            };
+            ResidualSplitRow {
+                fixture: row.fixture.clone(),
+                published_bites: row.published_bites,
+                disruption_moves: row.disruption_moves,
+                outside_ns: row.outside_ns(),
+                fitted_ns: fitted,
+                residual_ns: row.outside_ns() as f64 - fitted,
+                direct_single_term_ns: direct,
+            }
+        })
+        .collect();
+    if p_ns <= 0.0 {
+        return Err(
+            "`P` priced at or below zero by the residual split; `U'` will not carry a term it \
+             cannot see"
+                .to_owned(),
+        );
+    }
+    if d_ns <= 0.0 {
+        return Err(
+            "`D` priced at or below zero by the residual split; `U'` will not carry a term it \
+             cannot see"
+                .to_owned(),
+        );
+    }
+
+    // ---- rider (ii), decided before the prices are written ----
+    let cells: Vec<FixtureCellPrime> = inputs
+        .iter()
+        .map(|row| FixtureCellPrime {
+            fixture: row.fixture.clone(),
+            terms: WorkTermsPrime {
+                sample_evaluations: row.sample_evaluations,
+                master_batches: row.iterations,
+                exact_checkpoint_calls: row.exact_checkpoint_calls,
+                published_bites: row.published_bites,
+                disruption_moves: row.disruption_moves,
+            },
+            seconds: row.search_ns as f64 / 1e9,
+        })
+        .collect();
+    let collinear = collinearity(&cells);
+
+    let mut notes = vec![
+        "R is ABSENT (docs/currency-amendment.md). The 16 um repair's wall is inside exactNs \
+         and is therefore charged to E; dropping a term does not delete its cost."
+            .to_owned(),
+        "P and D are split out of the search wall the barriers did not claim - the only region \
+         that contains the cut, the pose install, the publication commit, the row rebuild and \
+         the disruption. No timer exists around any of them, so this is a two-term fit and not \
+         two direct readings; `residualSplit` prints the design matrix and the per-fixture \
+         miss."
+            .to_owned(),
+    ];
+
+    let (e_equivalents, p_equivalents) = if collinear.collinear {
+        // One region, one price: the two timed regions pooled over the two
+        // counts pooled. Written into both coefficients so `units` need not
+        // know which branch ran.
+        let nanos = total(|row| row.exact_ns) as f64
+            + inputs
+                .iter()
+                .map(|row| p_ns * row.published_bites as f64)
+                .sum::<f64>();
+        let count = total(|row| row.exact_checkpoint_calls) + total(|row| row.published_bites);
+        if count == 0 {
+            return Err("the combined E,P term has no occurrences".to_owned());
+        }
+        let combined = nanos / count as f64 / base_ns;
+        notes.push(format!(
+            "RIDER (ii) FIRED: the E and P design vectors are collinear within rounding \
+             (ratio spread {:?}, cosine {:.6}), so ONE combined price of {:.3} \
+             sample-evaluation equivalents was fitted and written into both coefficients.",
+            collinear.ratio_max_over_min, collinear.cosine, combined
+        ));
+        selected.push(TermPricePrime {
+            term: TermPrime::CombinedCheckpointAndBite,
+            fixtures: fixtures.clone(),
+            pooled_nanos_each: combined * base_ns,
+            cheapest_nanos_each: combined * base_ns,
+            dearest_nanos_each: combined * base_ns,
+            sample_evaluation_equivalents: combined,
+            rounded: Rounding::ConservativeCeil.apply(combined),
+            derivation: "rider (ii): exactNs + the residual split's published-bite share, over \
+                         calls + published bites, as ONE term"
+                .to_owned(),
+        });
+        (combined, combined)
+    } else {
+        notes.push(format!(
+            "RIDER (ii) DID NOT FIRE: the E and P design vectors are separable (ratio spread \
+             {:?} against a {} bar, cosine {:.6} against a {} bar), so two prices were fitted.",
+            collinear.ratio_max_over_min,
+            COLLINEARITY_RATIO_BAR,
+            collinear.cosine,
+            COLLINEARITY_COSINE_BAR
+        ));
+        let e_equivalents = e_ns / base_ns;
+        let p_equivalents = p_ns / base_ns;
+        selected.push(TermPricePrime {
+            term: TermPrime::ExactCheckpointCall,
+            fixtures: e_fixtures.clone(),
+            pooled_nanos_each: e_ns,
+            cheapest_nanos_each: e_cheap,
+            dearest_nanos_each: e_dear,
+            sample_evaluation_equivalents: e_equivalents,
+            rounded: Rounding::ConservativeCeil.apply(e_equivalents),
+            derivation: "direct: exactNs over exactCheckpointCalls. With R absent this region \
+                         has one term in it, so no split runs and the repair's wall is charged \
+                         to E."
+                .to_owned(),
+        });
+        let p_direct: Vec<f64> = residual_split
+            .iter()
+            .filter(|row| row.published_bites > 0)
+            .filter_map(|row| row.direct_single_term_ns)
+            .collect();
+        selected.push(TermPricePrime {
+            term: TermPrime::PublishedBite,
+            fixtures: residual_split
+                .iter()
+                .filter(|row| row.published_bites > 0)
+                .map(|row| row.fixture.clone())
+                .collect(),
+            pooled_nanos_each: p_ns,
+            cheapest_nanos_each: p_direct.iter().copied().fold(p_ns, f64::min),
+            dearest_nanos_each: p_direct.iter().copied().fold(p_ns, f64::max),
+            sample_evaluation_equivalents: p_equivalents,
+            rounded: Rounding::ConservativeCeil.apply(p_equivalents),
+            derivation: "fitted: non-negative least squares of the unclaimed search wall on \
+                         (publishedBites, disruptionMoves), one row per fixture"
+                .to_owned(),
+        });
+        (e_equivalents, p_equivalents)
+    };
+
+    let d_equivalents = d_ns / base_ns;
+    let d_direct: Vec<f64> = residual_split
+        .iter()
+        .filter(|row| row.disruption_moves > 0)
+        .filter_map(|row| row.direct_single_term_ns)
+        .collect();
+    selected.push(TermPricePrime {
+        term: TermPrime::DisruptionMove,
+        fixtures: residual_split
+            .iter()
+            .filter(|row| row.disruption_moves > 0)
+            .map(|row| row.fixture.clone())
+            .collect(),
+        pooled_nanos_each: d_ns,
+        cheapest_nanos_each: d_direct.iter().copied().fold(d_ns, f64::min),
+        dearest_nanos_each: d_direct.iter().copied().fold(d_ns, f64::max),
+        sample_evaluation_equivalents: d_equivalents,
+        rounded: Rounding::ConservativeCeil.apply(d_equivalents),
+        derivation: "fitted: the same non-negative least squares. U priced D as the WHOLE \
+                     unclaimed residual and called it an upper bound; U' takes the per-bite \
+                     work out of it first, so this D is smaller and tighter."
+            .to_owned(),
+    });
+
+    let coefficients = CoefficientsPrime {
+        b_master_batch: Rounding::ConservativeCeil.apply(b_ns / base_ns),
+        e_exact_checkpoint_call: Rounding::ConservativeCeil.apply(e_equivalents),
+        p_published_bite: Rounding::ConservativeCeil.apply(p_equivalents),
+        d_disruption_move: Rounding::ConservativeCeil.apply(d_equivalents),
+        measured: MeasuredPricesPrime {
+            b_master_batch: b_ns / base_ns,
+            e_exact_checkpoint_call: e_equivalents,
+            p_published_bite: p_equivalents,
+            d_disruption_move: d_equivalents,
+            base_ns_per_sample_evaluation: base_ns,
+        },
+        rounding: Rounding::ConservativeCeil,
+        combined_e_and_p: collinear.collinear,
+    };
+    Ok(CalibrationPrime {
+        currency: CurrencyPrime::new(coefficients),
+        fixtures,
+        selected,
+        collinearity: collinear,
+        residual_split,
+        skipped,
+        notes,
+    })
+}
+
+/// The `U'` transfer check. **The reject rule is the same sentence, verbatim**,
+/// against the same [`WALL_PREDICTION_TOLERANCE`]: leave one fixture out, price
+/// a rate on it, predict every other fixture's wall, and reject on any pair
+/// over 10 %.
+pub fn transfer_check_prime(
+    currency: &CurrencyPrime,
+    cells: &[FixtureCellPrime],
+) -> Result<TransferCheck, String> {
+    if cells.len() < 2 {
+        return Err(format!(
+            "a transfer check needs at least two fixtures, not {}",
+            cells.len()
+        ));
+    }
+    for cell in cells {
+        if !cell.seconds.is_finite() || cell.seconds <= 0.0 {
+            return Err(format!(
+                "{}: {} seconds is not a wall a rate can be priced against",
+                cell.fixture, cell.seconds
+            ));
+        }
+        if currency.units(&cell.terms) == 0 {
+            return Err(format!("{}: zero units, so no rate exists", cell.fixture));
+        }
+    }
+    let mut predictions = Vec::new();
+    for source in cells {
+        let units_per_second = currency.units(&source.terms) as f64 / source.seconds;
+        for target in cells {
+            if target.fixture == source.fixture {
+                continue;
+            }
+            let units = currency.units(&target.terms);
+            let predicted = units as f64 / units_per_second;
+            let error = (predicted - target.seconds).abs() / target.seconds;
+            predictions.push(WallPrediction {
+                calibrated_on: source.fixture.clone(),
+                transfer_fixture: target.fixture.clone(),
+                units,
+                units_per_second,
+                predicted_seconds: predicted,
+                observed_seconds: target.seconds,
+                relative_error: error,
+                within_tolerance: error <= WALL_PREDICTION_TOLERANCE,
+            });
+        }
+    }
+    let worst = predictions
+        .iter()
+        .map(|row| row.relative_error)
+        .fold(0.0f64, f64::max);
+    let rejected = predictions.iter().find(|row| !row.within_tolerance);
+    Ok(TransferCheck {
+        // `TransferCheck` is the signed `U`'s type and carries a `Currency`.
+        // `U'` reports its own currency beside the check rather than inside it,
+        // so that the frozen document shape of the rejected `U` does not move.
+        currency: Currency::U0,
         tolerance: WALL_PREDICTION_TOLERANCE,
         worst_relative_error: worst,
         accepted: rejected.is_none(),
@@ -1332,6 +2142,10 @@ mod tests {
             exact_calls: calls,
             repair_rows: rows,
             disruption_moves: moves,
+            // `U`'s harness never reads this field; it is `U'`'s term, and a
+            // synthetic `U` row leaves it at the value a pre-`U'` document
+            // deserialises to.
+            published_bites: 0,
         }
     }
 
@@ -1556,5 +2370,289 @@ mod tests {
         assert_eq!(parsed, calibration);
         assert!(text.contains("U1-weighted-vector"));
         assert!(text.contains("conservative-ceil"));
+    }
+
+    // ------------------------------------------------------------- `U'` --
+    //
+    // The amended currency's own vectors. `ics_meter` prints what these
+    // functions return, so a driver that agreed with a copy of the rule would
+    // still have to disagree with these.
+
+    #[allow(clippy::too_many_arguments)]
+    fn prime_input(
+        fixture: &str,
+        sweep: u64,
+        overhead: u64,
+        exact: u64,
+        barriers: u64,
+        search: u64,
+        samples: u64,
+        iterations: u64,
+        calls: u64,
+        published: u64,
+        moves: u64,
+    ) -> FixtureTimingInput {
+        FixtureTimingInput {
+            fixture: fixture.to_owned(),
+            sweep_critical_ns: sweep,
+            batch_overhead_ns: overhead,
+            exact_ns: exact,
+            barrier_to_barrier_ns: barriers,
+            search_ns: search,
+            sample_evaluations: samples,
+            iterations,
+            exact_checkpoint_calls: calls,
+            published_bites: published,
+            disruption_moves: moves,
+        }
+    }
+
+    /// `U'` prices the four terms over the base, and the ceil is the only
+    /// rounding. One sample evaluation is 100 ns by construction here, so
+    /// every coefficient below is readable by hand.
+    #[test]
+    fn u_prime_prices_every_term_over_the_base() {
+        // base: 1_000_000 ns of sweep over 10_000 evaluations = 100 ns each.
+        // B:       50_000 ns of overhead over 100 iterations  =   500 ns ->   5
+        // E:       30_000 ns of exact over 10 calls           = 3_000 ns ->  30
+        let inputs = [
+            // `alpha` spends both residual terms and can separate neither
+            // alone: 60 000 ns of residual is 4 bites and 2 moves at the same
+            // 10 000 ns each that the other two fixtures read directly.
+            prime_input(
+                "alpha", 1_000_000, 50_000, 30_000, 800_000, 860_000, 10_000, 100, 10, 4, 2,
+            ),
+            // `beta` publishes nothing and disrupts: it prices `D` alone.
+            prime_input(
+                "beta", 1_000_000, 50_000, 0, 500_000, 560_000, 10_000, 100, 0, 0, 6,
+            ),
+            // `gamma` disrupts nothing and publishes: it prices `P` alone. Its
+            // 5 calls against alpha's 10, on the same 4 published bites, are
+            // what keeps rider (ii) from firing on this vector.
+            prime_input(
+                "gamma", 1_000_000, 50_000, 15_000, 500_000, 540_000, 10_000, 100, 5, 4, 0,
+            ),
+        ];
+        let calibration = calibrate_prime(&inputs, &["alpha", "beta", "gamma"]).unwrap();
+        let coefficients = calibration.currency.coefficients.unwrap();
+        assert_eq!(coefficients.b_master_batch, 5);
+        assert_eq!(coefficients.e_exact_checkpoint_call, 30);
+        // gamma: 40_000 ns over 4 published bites = 10_000 ns -> 100 equivalents
+        assert_eq!(coefficients.p_published_bite, 100);
+        // beta: 60_000 ns over 6 moves = 10_000 ns -> 100 equivalents
+        assert_eq!(coefficients.d_disruption_move, 100);
+        assert!(!coefficients.combined_e_and_p);
+        assert_eq!(coefficients.rounding, Rounding::ConservativeCeil);
+        // The design matrix is printed, not claimed.
+        assert_eq!(calibration.residual_split.len(), 3);
+        let alpha = &calibration.residual_split[0];
+        assert_eq!(alpha.outside_ns, 60_000);
+        assert_eq!(alpha.published_bites, 4);
+        assert_eq!(alpha.disruption_moves, 2);
+        assert!(alpha.direct_single_term_ns.is_none());
+        // An exactly-consistent design leaves nothing over, and the document
+        // says so rather than making the reader take the fit on trust.
+        assert!(alpha.residual_ns.abs() < 1e-6, "{}", alpha.residual_ns);
+    }
+
+    /// **Rider (ii) end to end.** When the two vectors *are* proportional the
+    /// calibration fits ONE price and writes it into both coefficients, so no
+    /// document can carry two collinear prices with units on them.
+    #[test]
+    fn u_prime_fits_one_term_when_the_vectors_co_move() {
+        let inputs = [
+            prime_input(
+                "alpha", 1_000_000, 50_000, 30_000, 800_000, 900_000, 10_000, 100, 10, 4, 2,
+            ),
+            prime_input(
+                "beta", 1_000_000, 50_000, 0, 500_000, 560_000, 10_000, 100, 0, 0, 6,
+            ),
+            // 10 calls to 4 published bites on both: exactly proportional.
+            prime_input(
+                "gamma", 1_000_000, 50_000, 30_000, 500_000, 540_000, 10_000, 100, 10, 4, 0,
+            ),
+        ];
+        let calibration = calibrate_prime(&inputs, &["alpha", "beta", "gamma"]).unwrap();
+        assert!(calibration.collinearity.collinear, "{:?}", calibration.collinearity);
+        let coefficients = calibration.currency.coefficients.unwrap();
+        assert!(coefficients.combined_e_and_p);
+        assert_eq!(
+            coefficients.e_exact_checkpoint_call, coefficients.p_published_bite,
+            "one price, written into both"
+        );
+        assert!(calibration
+            .selected
+            .iter()
+            .any(|row| row.term == TermPrime::CombinedCheckpointAndBite));
+        assert!(!calibration
+            .selected
+            .iter()
+            .any(|row| row.term == TermPrime::ExactCheckpointCall));
+        assert!(calibration
+            .notes
+            .iter()
+            .any(|note| note.contains("RIDER (ii) FIRED")));
+    }
+
+    /// `units` is the amended formula and nothing else, and it is
+    /// `sample_evaluations` when there are no coefficients.
+    #[test]
+    fn u_prime_units_are_the_amended_formula() {
+        let terms = WorkTermsPrime {
+            sample_evaluations: 1_000,
+            master_batches: 7,
+            exact_checkpoint_calls: 3,
+            published_bites: 2,
+            disruption_moves: 5,
+        };
+        let currency = CurrencyPrime::new(CoefficientsPrime {
+            b_master_batch: 10,
+            e_exact_checkpoint_call: 100,
+            p_published_bite: 1_000,
+            d_disruption_move: 10_000,
+            measured: MeasuredPricesPrime {
+                b_master_batch: 10.0,
+                e_exact_checkpoint_call: 100.0,
+                p_published_bite: 1_000.0,
+                d_disruption_move: 10_000.0,
+                base_ns_per_sample_evaluation: 1.0,
+            },
+            rounding: Rounding::ConservativeCeil,
+            combined_e_and_p: false,
+        });
+        assert_eq!(
+            currency.units(&terms),
+            1_000 + 7 * 10 + 3 * 100 + 2 * 1_000 + 5 * 10_000
+        );
+        let bare = CurrencyPrime {
+            version: U_PRIME_VERSION.to_owned(),
+            coefficients: None,
+        };
+        assert_eq!(bare.units(&terms), 1_000);
+    }
+
+    /// **`R` is absent, and absent is not zero.** `WorkTermsPrime` has no
+    /// repair field at all, so no arrangement of repair rows can change a `U'`
+    /// reading - which is the whole of "R is DROPPED absolutely".
+    #[test]
+    fn u_prime_has_no_repair_term_to_price() {
+        let text = serde_json::to_string(&WorkTermsPrime::default()).unwrap();
+        assert!(!text.contains("repair"), "{text}");
+    }
+
+    /// **Rider (ii)**, both branches, at the pre-committed bars.
+    #[test]
+    fn rider_two_fires_only_on_proportional_vectors() {
+        let cell = |fixture: &str, calls: u64, published: u64| FixtureCellPrime {
+            fixture: fixture.to_owned(),
+            terms: WorkTermsPrime {
+                sample_evaluations: 1,
+                master_batches: 0,
+                exact_checkpoint_calls: calls,
+                published_bites: published,
+                disruption_moves: 0,
+            },
+            seconds: 1.0,
+        };
+        // Exactly proportional: 2x on both fixtures.
+        let proportional = [cell("a", 50, 25), cell("b", 34, 17)];
+        let report = collinearity(&proportional);
+        assert!(report.collinear, "{report:?}");
+        assert!((report.cosine - 1.0).abs() < 1e-12);
+        assert!((report.ratio_max_over_min.unwrap() - 1.0).abs() < 1e-12);
+        // The campaign's own shape: 50/24 against 34/34.
+        let campaign = [cell("mixed-61", 50, 24), cell("triangle-20", 34, 34)];
+        let report = collinearity(&campaign);
+        assert!(!report.collinear, "{report:?}");
+        assert!(report.ratio_max_over_min.unwrap() > COLLINEARITY_RATIO_BAR);
+        assert!(report.cosine < COLLINEARITY_COSINE_BAR);
+        assert_eq!(report.exact_checkpoint_calls, vec![50, 34]);
+        assert_eq!(report.published_bites, vec![24, 34]);
+    }
+
+    /// The residual split separates the two terms when the fixtures spend them
+    /// in different proportions, and refuses when they do not.
+    #[test]
+    fn the_residual_split_is_identifiable_or_it_refuses() {
+        // 1_000 ns per published bite, 10_000 ns per move.
+        let rows = [(4u64, 2u64, 24_000u64), (0, 6, 60_000), (4, 0, 4_000)];
+        let (p, d) = split_residual_cost(&rows).unwrap();
+        assert!((p - 1_000.0).abs() < 1e-6, "{p}");
+        assert!((d - 10_000.0).abs() < 1e-6, "{d}");
+        // Perfectly co-moving counts: not identifiable, and it says so.
+        let collinear = [(2u64, 4u64, 10_000u64), (4, 8, 20_000), (6, 12, 30_000)];
+        assert!(split_residual_cost(&collinear)
+            .unwrap_err()
+            .contains("collinear"));
+    }
+
+    /// A negative price is a fit reading noise, and the non-negativity
+    /// constraint pins it rather than shipping `P = -3`.
+    #[test]
+    fn the_residual_split_never_ships_a_negative_price() {
+        let rows = [(1u64, 1u64, 100u64), (0, 1, 10_000), (1, 0, 5)];
+        let (p, d) = split_residual_cost(&rows).unwrap();
+        assert!(p >= 0.0 && d >= 0.0, "p={p} d={d}");
+    }
+
+    /// **The reject rule is the same sentence.** A currency that transfers
+    /// inside 10 % is accepted; one that does not is rejected and names the
+    /// pair, and the `U'` check reads the same tolerance constant as `U`'s.
+    #[test]
+    fn u_prime_reject_rule_is_the_same_ten_percent() {
+        let currency = CurrencyPrime {
+            version: U_PRIME_VERSION.to_owned(),
+            coefficients: None,
+        };
+        let cell = |fixture: &str, samples: u64, seconds: f64| FixtureCellPrime {
+            fixture: fixture.to_owned(),
+            terms: WorkTermsPrime {
+                sample_evaluations: samples,
+                ..WorkTermsPrime::default()
+            },
+            seconds,
+        };
+        // Same rate on both: transfers exactly.
+        let check =
+            transfer_check_prime(&currency, &[cell("a", 1_000, 1.0), cell("b", 2_000, 2.0)])
+                .unwrap();
+        assert!(check.accepted, "{check:?}");
+        assert_eq!(check.tolerance, WALL_PREDICTION_TOLERANCE);
+        // 20 % off: rejected, and the pair is named.
+        let check =
+            transfer_check_prime(&currency, &[cell("a", 1_000, 1.0), cell("b", 2_400, 2.0)])
+                .unwrap();
+        assert!(!check.accepted);
+        assert!(check.rejected_by.is_some());
+        assert!(check.worst_relative_error > 0.10);
+    }
+
+    /// A term nobody counted is a refusal, not a free price - and "on all
+    /// three fixtures" is a refusal too.
+    #[test]
+    fn u_prime_refuses_a_term_with_no_occurrence() {
+        let none_published = [
+            prime_input(
+                "alpha", 1_000_000, 50_000, 30_000, 800_000, 900_000, 10_000, 100, 10, 0, 2,
+            ),
+            prime_input(
+                "beta", 1_000_000, 50_000, 0, 500_000, 560_000, 10_000, 100, 0, 0, 6,
+            ),
+            prime_input(
+                "gamma", 1_000_000, 50_000, 30_000, 500_000, 540_000, 10_000, 100, 10, 0, 3,
+            ),
+        ];
+        assert!(calibrate_prime(&none_published, &["alpha", "beta", "gamma"]).is_err());
+        let two = [
+            prime_input(
+                "alpha", 1_000_000, 50_000, 30_000, 800_000, 900_000, 10_000, 100, 10, 4, 2,
+            ),
+            prime_input(
+                "beta", 1_000_000, 50_000, 0, 500_000, 560_000, 10_000, 100, 0, 0, 6,
+            ),
+        ];
+        assert!(calibrate_prime(&two, &["alpha", "beta", "gamma"])
+            .unwrap_err()
+            .contains("gamma"));
     }
 }

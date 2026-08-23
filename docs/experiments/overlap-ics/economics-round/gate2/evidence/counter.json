@@ -1,0 +1,401 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-published-bites-counter",
+ "rider": "docs/currency-amendment.md, ox-alpha rider (i): \"published_bites proven bit-identical across runs BEFORE fitting P\".",
+ "counterSource": "BiteRecord::published, emitted per bite as `published` by overlap_ics_benchmark in every build. No engine code was edited to create it: it is the trajectory's own publication record, it costs no clock read, and no engine decision reads it.",
+ "profileBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+ "profileBinarySha256": "115776bbfa50fd7a137a5336d56d444edcfc7129459678261bb9f4b3627a6dec",
+ "plainBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+ "plainBinarySha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+ "machine": {
+  "platform": "Linux-6.18.38-x86_64-with-glibc2.42",
+  "cpus": 16,
+  "loadBefore": [
+   "1.04",
+   "0.94",
+   "1.15"
+  ],
+  "loadAfter": [
+   "1.49",
+   "1.06",
+   "1.18"
+  ]
+ },
+ "cellShape": {
+  "seed": 0,
+  "workers": 8,
+  "mode": "fixed",
+  "bites": 30,
+  "attempts": 3,
+  "iters": 120,
+  "compressBites": 4
+ },
+ "fixtures": [
+  {
+   "fixture": "mixed-61",
+   "processes": [
+    {
+     "fixture": "mixed-61",
+     "process": "profile-a",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-mixed-61-profile-a.json",
+     "sourceSha256": "40ef6f97f3ae233491baf701883ee8668d50946b2b8f223fa39f51de756ecda1",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 4.8879174049943686
+    },
+    {
+     "fixture": "mixed-61",
+     "process": "profile-b",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-mixed-61-profile-b.json",
+     "sourceSha256": "2b02751f64ade6b82b3bc6259aec9e16f7baf9d708fe42cc81790ae6fe96608e",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 4.893878739909269
+    },
+    {
+     "fixture": "mixed-61",
+     "process": "plain",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-mixed-61-plain.json",
+     "sourceSha256": "931bab3c3c68701c28c11a61ec71ff7f5d9dc5e52c970fa4b28432ed0b1a0066",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 4.879445794038475
+    }
+   ],
+   "counter": {
+    "publishedVector": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     false,
+     true,
+     false,
+     true,
+     true
+    ],
+    "publishedBites": 24,
+    "bites": 26,
+    "publicationCount": 24,
+    "depthMm": 179.00635042173
+   },
+   "twoProcessIdentical": true,
+   "crossBuildCounterIdentical": true,
+   "crossBuildDepthIdentical": true,
+   "crossBuildDocumentIdentical": true,
+   "publicationCountReconciles": true,
+   "wholeDocumentIdentical": true,
+   "documentDigest": "8cb970a8d15424874cbad36c06569767afd6851d4f5f74a6f3f641e21e2178ab",
+   "counterDigest": "9593167b66ac891da31a58c5bf3f406a313907a8c7a3a4ecd9fc9686b75af77f",
+   "walls": {
+    "profileA": 4.8879174049943686,
+    "profileB": 4.893878739909269,
+    "plain": 4.879445794038475
+   }
+  },
+  {
+   "fixture": "shapes-17",
+   "processes": [
+    {
+     "fixture": "shapes-17",
+     "process": "profile-a",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-shapes-17-profile-a.json",
+     "sourceSha256": "f296fb60d82c716d9169ae4652f00572ab59a25546d2a90ebc8ccc06fdacbbbc",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/shapes-17/2000x2700-compact/request.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 2.1785190139198676
+    },
+    {
+     "fixture": "shapes-17",
+     "process": "profile-b",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-shapes-17-profile-b.json",
+     "sourceSha256": "7003fa09a278660d49a2651ca20546fb8186ad52a6075e3ccfbada2609506b94",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/shapes-17/2000x2700-compact/request.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 2.1696057530352846
+    },
+    {
+     "fixture": "shapes-17",
+     "process": "plain",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-shapes-17-plain.json",
+     "sourceSha256": "f815b670948edc20cec2f01841c9d4fa51b0a5ad137989a79d3a4ecb4cbdcdf1",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/shapes-17/2000x2700-compact/request.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 2.162160368054174
+    }
+   ],
+   "counter": {
+    "publishedVector": [
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "publishedBites": 0,
+    "bites": 5,
+    "publicationCount": 0,
+    "depthMm": 200.34937729570953
+   },
+   "twoProcessIdentical": true,
+   "crossBuildCounterIdentical": true,
+   "crossBuildDepthIdentical": true,
+   "crossBuildDocumentIdentical": true,
+   "publicationCountReconciles": true,
+   "wholeDocumentIdentical": true,
+   "documentDigest": "031482a23e184fcbfd9cc770ee62e2587a8a5390e433d3a16a31188c9fd67c7b",
+   "counterDigest": "b571c3c56a3edf68a4edffce58915f43af182035878386f2d3563317e844d39a",
+   "walls": {
+    "profileA": 2.1785190139198676,
+    "profileB": 2.1696057530352846,
+    "plain": 2.162160368054174
+   }
+  },
+  {
+   "fixture": "triangle-20",
+   "processes": [
+    {
+     "fixture": "triangle-20",
+     "process": "profile-a",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-triangle-20-profile-a.json",
+     "sourceSha256": "e5a1e67907a622f1f0c7be9cb77634eac50122a83414f255969dc4d398c60b23",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 0.03056082990951836
+    },
+    {
+     "fixture": "triangle-20",
+     "process": "profile-b",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-triangle-20-profile-b.json",
+     "sourceSha256": "c7a48eb5704e859d7ecfdbc22ab21f8dc6d6a5c6775b92d5d056462080d1444b",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/profile-build/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 0.02953025500755757
+    },
+    {
+     "fixture": "triangle-20",
+     "process": "plain",
+     "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+     "path": "/var/lib/t3/tmp/overlapics/gate2/counter/counter-triangle-20-plain.json",
+     "sourceSha256": "bddf01b0c179ab43513a41361456f19d8e7add667bcdf18c2137c4e6ef3afbf8",
+     "command": [
+      "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+      "--cell=cutclose",
+      "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+      "--edge=5",
+      "--pair=5",
+      "--mode=fixed",
+      "--workers=8",
+      "--seed=0",
+      "--bites=30",
+      "--attempts=3",
+      "--iters=120",
+      "--compressbites=4"
+     ],
+     "exit": 0,
+     "stderr": "",
+     "driverWallSeconds": 0.035577640985138714
+    }
+   ],
+   "counter": {
+    "publishedVector": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "publishedBites": 34,
+    "bites": 34,
+    "publicationCount": 34,
+    "depthMm": 71.1990561493186
+   },
+   "twoProcessIdentical": true,
+   "crossBuildCounterIdentical": true,
+   "crossBuildDepthIdentical": true,
+   "crossBuildDocumentIdentical": true,
+   "publicationCountReconciles": true,
+   "wholeDocumentIdentical": true,
+   "documentDigest": "fa4a472c1fe448baf945f3dc6b061f1d99a3d198dcdc15e7a5625fda8787bd07",
+   "counterDigest": "aa65856a678d95ed1dc6340cb9cf03a7e34e74ed4e32db62f7ce140bb66c7c4a",
+   "walls": {
+    "profileA": 0.03056082990951836,
+    "profileB": 0.02953025500755757,
+    "plain": 0.035577640985138714
+   }
+  }
+ ],
+ "designVector": {
+  "mixed-61": 24,
+  "shapes-17": 0,
+  "triangle-20": 34
+ },
+ "COUNTER_BIT_IDENTICAL": true,
+ "consequence": "rider (i) is satisfied: P may be fitted"
+}

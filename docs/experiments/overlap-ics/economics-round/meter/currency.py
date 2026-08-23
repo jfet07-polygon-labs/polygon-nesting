@@ -229,12 +229,25 @@ def main():
     document['meter'] = meter
     document['CURRENCY_ACCEPTED'] = bool(meter.get('CURRENCY_ACCEPTED'))
     document['WORST_RELATIVE_ERROR'] = meter.get('WORST_RELATIVE_ERROR')
+    # **The amended currency, beside the signed one.**
+    # docs/currency-amendment.md replaced `U` with `U'` rather than editing it,
+    # so this driver reports both and exits on the amendment's: `U` was
+    # rejected by a committed measurement and has to stay exactly the thing
+    # that was rejected. `meterExit` is `U'`'s verdict, and `ics_meter`'s own
+    # `EXIT_MEANS` field says so in the document it writes.
+    document['CURRENCY_PRIME_ACCEPTED'] = bool(
+        meter.get('CURRENCY_PRIME_ACCEPTED'))
+    document['WORST_RELATIVE_ERROR_PRIME'] = meter.get(
+        'WORST_RELATIVE_ERROR_PRIME')
     with open(f'{out}/currency.json', 'w') as handle:
         json.dump(document, handle, indent=2)
     print(json.dumps({
         'CURRENCY_ACCEPTED': document['CURRENCY_ACCEPTED'],
         'WORST_RELATIVE_ERROR': document['WORST_RELATIVE_ERROR'],
+        'CURRENCY_PRIME_ACCEPTED': document['CURRENCY_PRIME_ACCEPTED'],
+        'WORST_RELATIVE_ERROR_PRIME': document['WORST_RELATIVE_ERROR_PRIME'],
         'summary': meter.get('summary'),
+        'summaryPrime': meter.get('summaryPrime'),
         'error': meter.get('error'),
         'document': f'{out}/currency.json',
     }, indent=2))

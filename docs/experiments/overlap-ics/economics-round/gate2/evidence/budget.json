@@ -1,0 +1,156 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-gate2-fallback-budget",
+ "label": "single-fixture work plan, no transfer claim",
+ "why": "docs/currency-amendment.md: U' failed its own reject rule, so the transferring pacer is closed and the gate runs on a mixed-61-only shelf-probed work budget. Final per rider (iii).",
+ "fixture": "mixed-61",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+ "binarySha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+ "gateBudgetSeconds": 10.0,
+ "safetyFactor": 0.8,
+ "shelfProbe": {
+  "path": "/var/lib/t3/tmp/overlapics/gate2/budget/shelf-probe.json",
+  "sourceSha256": "254c8d8ee272f50148287e6425af1e1b41cd248c37b9caad92a63305e9ac0d71",
+  "command": [
+   "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+   "--cell=spawntax",
+   "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+   "--edge=5",
+   "--pair=5",
+   "--workers=8",
+   "--prefixworkers=8",
+   "--seed=0",
+   "--shelfbites=21",
+   "--prefixiters=400",
+   "--probeiters=400"
+  ],
+  "prefixAllPublished": true,
+  "prefixBites": 21,
+  "prefixDepthMm": 179.16566573285345,
+  "shelfPublished": false,
+  "shelfIterations": 400,
+  "shelfDepthMm": 179.16566573285345,
+  "probeSampleEvaluations": 6605800,
+  "probeSeconds": 2.410017445,
+  "constructorSeconds": 2.310938027,
+  "measuredUnitsPerSecond": 2740976.0098230327,
+  "writersOwnPlanNotUsed": null,
+  "writersOwnPlanRejectedBecause": "shelf_work_plan's non-profile branch divides the CUMULATIVE work vector by the probe's own wall, which reads fast rather than slow. See this file's module docs."
+ },
+ "compressCalibration": {
+  "path": "/var/lib/t3/tmp/overlapics/gate2/budget/compress-calibration.json",
+  "sourceSha256": "48e8f3ca6557ad198f583af6d9eb8f758fc588016d296a1456c396ceb8c04e5a",
+  "command": [
+   "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+   "--cell=cutclose",
+   "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+   "--edge=5",
+   "--pair=5",
+   "--mode=wall",
+   "--wall=30.0",
+   "--workers=8",
+   "--seed=0",
+   "--icscal=/var/lib/t3/tmp/overlapics/gate2/budget/compress-calibration.icscal.json"
+  ],
+  "compressBites": 48,
+  "exploreBites": 120,
+  "phase": {
+   "derivation": "the compress phase of the same wall trajectory: 48 bites, over searchSeconds - exploreSeconds",
+   "measuredUnitsPerSecond": 1464184.2787160347,
+   "observedSeconds": 5.51354916,
+   "observedUnits": 8072852,
+   "phase": "compress",
+   "safeUnitsPerSecond": 1171347.422972828,
+   "safetyFactor": 0.8
+  },
+  "blendedExplorePhase_NOT_USED": {
+   "derivation": "the explore phase of one wall trajectory: 120 bites, sampleEvaluations charged per bite by PhaseProfile, over the loop's own exploreSeconds",
+   "measuredUnitsPerSecond": 2235468.253889778,
+   "observedSeconds": 22.165187501,
+   "observedUnits": 49549573,
+   "phase": "explore",
+   "safeUnitsPerSecond": 1788374.6031118226,
+   "safetyFactor": 0.8
+  },
+  "shelfOverBlendedExploreRate": 1.2261305903376873
+ },
+ "plan": {
+  "schema": "icscal/v1",
+  "key": {
+   "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+   "currencyVersion": "U0-sample-evaluations",
+   "binaryKey": {
+    "executableSha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+    "features": [
+     "overlap-ics"
+    ]
+   },
+   "workers": 8,
+   "executor": "ephemeral-scope"
+  },
+  "phases": [
+   {
+    "phase": "explore",
+    "safeUnitsPerSecond": 2192780.807858426,
+    "measuredUnitsPerSecond": 2740976.0098230327,
+    "safetyFactor": 0.8,
+    "observedUnits": 6605800,
+    "observedSeconds": 2.410017445,
+    "derivation": "single-fixture work plan, no transfer claim. THE SHELF PROBE: bite 22 (the 179 shelf) alone, 400 master iterations, the probe bite's own sampleEvaluations over the probe's own searchSeconds, measured on this binary. NOT the cheap 0.1 % prefix: spec defect (3). NOT the writer's own non-profile plan, which divides the cumulative work vector by the probe's wall."
+   },
+   {
+    "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 48 bites, over searchSeconds - exploreSeconds",
+    "measuredUnitsPerSecond": 1464184.2787160347,
+    "observedSeconds": 5.51354916,
+    "observedUnits": 8072852,
+    "phase": "compress",
+    "safeUnitsPerSecond": 1171347.422972828,
+    "safetyFactor": 0.8
+   }
+  ],
+  "provenance": "docs/experiments/overlap-ics/economics-round/gate2/budget.py - the declared fallback of docs/currency-amendment.md. single-fixture work plan, no transfer claim: both rates are mixed-61's own and this plan makes no claim about any other fixture. Explore from the shelf probe (/var/lib/t3/tmp/overlapics/gate2/budget/shelf-probe.json), compress from one wall calibration (/var/lib/t3/tmp/overlapics/gate2/budget/compress-calibration.json)."
+ },
+ "planPath": "/var/lib/t3/tmp/overlapics/gate2/budget/gate2.icscal.json",
+ "planSha256": "d83e22d1dcd4e9f22243a189d19567caec3718e14b231c8487c93a82ff641fe3",
+ "budget": {
+  "frame": "request-relative, like every \u00a70 clause: the budget is the search's share of a 10.000 s request, and the constructor is charged and uncapped by the spec.",
+  "gateBudgetSeconds": 10.0,
+  "pinnedConstructorSeconds": 2.310938027,
+  "searchBudgetSeconds": 7.689061972999999,
+  "exploreRatio": 0.8,
+  "exploreAllocationUnits": 13488342,
+  "compressAllocationUnits": 1801312,
+  "retuned": false,
+  "rule": "set before any gate cell ran; NOT retuned after seeing p95, per docs/currency-amendment.md",
+  "searchBudgetSecondsByBudget": {
+   "3.0": 0.6890619729999998,
+   "10.0": 7.689061972999999,
+   "30.0": 27.689061973,
+   "60.0": 57.689061973
+  }
+ },
+ "planHitCheck": {
+  "path": "/var/lib/t3/tmp/overlapics/gate2/budget/plan-hit-check.json",
+  "sourceSha256": "8b90d24ef2f998e0e419a7dd405dbab2b420eccde13e6d6ff56b4e0fd4eec87e",
+  "command": [
+   "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+   "--cell=cutclose",
+   "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+   "--edge=5",
+   "--pair=5",
+   "--mode=calibrated",
+   "--plan=/var/lib/t3/tmp/overlapics/gate2/budget/gate2.icscal.json",
+   "--currency=U0",
+   "--wall=0.05",
+   "--workers=8",
+   "--seed=0"
+  ],
+  "exit": 0,
+  "stderr": "",
+  "match": "hit",
+  "summary": "icscal/v1 U0-sample-evaluations workers=8 executor=ephemeral-scope explore=2192781u/s compress=1171347u/s",
+  "planSha256AsRead": "d83e22d1dcd4e9f22243a189d19567caec3718e14b231c8487c93a82ff641fe3"
+ },
+ "PLAN_WRITTEN": true
+}

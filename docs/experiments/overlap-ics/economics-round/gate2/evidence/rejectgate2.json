@@ -1,0 +1,1379 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-amended-currency-reject-gate",
+ "amendment": "docs/currency-amendment.md: \"U' = sample_evaluations + B*master_batches + E*exact_checkpoint_calls + P*published_bites + D*disruption_moves \u2026 Same derivation (timing-only, three fixtures, conservative rounding), same >10% reject rule verbatim, still a stop.\"",
+ "rule": ">10% wall-prediction error on ANY transfer reading (3 runs x ordered pairs, all three fixtures) rejects U'. No charity, no reweighing, no dropping fixtures.",
+ "tolerance": 0.1,
+ "runs": [
+  {
+   "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run1/currency.json",
+   "sourceSha256": "a78112e14a6693d6c0c948ccfab6e47e24c4fcb73ff846dee64d1a7620bd1cfe",
+   "currencyExit": 1,
+   "exitMeans": "0 iff U' (the amended currency) transfers within 10% on every ordered fixture pair; 1 iff it is REJECTED by the amendment's own rule; 2 iff the check could not run. U1's verdict is CURRENCY_ACCEPTED and is reported, not exited on.",
+   "loadBefore": [
+    "0.63",
+    "0.89",
+    "1.12"
+   ],
+   "loadAfter": [
+    "1.38",
+    "1.04",
+    "1.17"
+   ],
+   "searchSeconds": {
+    "mixed-61": 2.5576487180000003,
+    "shapes-17": 0.597461124,
+    "triangle-20": 0.00579791
+   },
+   "terms": {
+    "mixed-61": {
+     "disruptionMoves": 8,
+     "exactCheckpointCalls": 50,
+     "masterBatches": 514,
+     "publishedBites": 24,
+     "sampleEvaluations": 6977140
+    },
+    "shapes-17": {
+     "disruptionMoves": 4,
+     "exactCheckpointCalls": 0,
+     "masterBatches": 840,
+     "publishedBites": 0,
+     "sampleEvaluations": 1418260
+    },
+    "triangle-20": {
+     "disruptionMoves": 0,
+     "exactCheckpointCalls": 34,
+     "masterBatches": 5,
+     "publishedBites": 34,
+     "sampleEvaluations": 45364
+    }
+   },
+   "coefficients": {
+    "bMasterBatch": 623,
+    "combinedEAndP": false,
+    "dDisruptionMove": 985,
+    "eExactCheckpointCall": 436,
+    "pPublishedBite": 51
+   },
+   "measuredCoefficients": {
+    "bMasterBatch": 622.2437273141194,
+    "baseNsPerSampleEvaluation": 338.606383734932,
+    "dDisruptionMove": 984.194101496578,
+    "eExactCheckpointCall": 435.0750533738163,
+    "pPublishedBite": 50.43330590684325
+   },
+   "collinearity": {
+    "collinear": false,
+    "cosine": 0.9362638360739937,
+    "cosineBar": 0.9995,
+    "exactCheckpointCalls": [
+     50,
+     0,
+     34
+    ],
+    "fixtures": [
+     "mixed-61",
+     "shapes-17",
+     "triangle-20"
+    ],
+    "publishedBites": [
+     24,
+     0,
+     34
+    ],
+    "ratioBar": 1.05,
+    "ratioMaxOverMin": 2.0833333333333335,
+    "ratios": [
+     [
+      "mixed-61",
+      2.0833333333333335
+     ],
+     [
+      "triangle-20",
+      1.0
+     ]
+    ]
+   },
+   "residualSplit": [
+    {
+     "directSingleTermNs": null,
+     "disruptionMoves": 8,
+     "fittedNs": 3075884.188797986,
+     "fixture": "mixed-61",
+     "outsideNs": 3596793,
+     "publishedBites": 24,
+     "residualNs": 520908.81120201387
+    },
+    {
+     "directSingleTermNs": 72800.0,
+     "disruptionMoves": 4,
+     "fittedNs": 1333017.6224040277,
+     "fixture": "shapes-17",
+     "outsideNs": 291200,
+     "publishedBites": 0,
+     "residualNs": -1041817.6224040277
+    },
+    {
+     "directSingleTermNs": 6262.323529411765,
+     "disruptionMoves": 0,
+     "fittedNs": 580619.3373190685,
+     "fixture": "triangle-20",
+     "outsideNs": 212919,
+     "publishedBites": 34,
+     "residualNs": -367700.3373190685
+    }
+   ],
+   "notes": [
+    "R is ABSENT (docs/currency-amendment.md). The 16 um repair's wall is inside exactNs and is therefore charged to E; dropping a term does not delete its cost.",
+    "P and D are split out of the search wall the barriers did not claim - the only region that contains the cut, the pose install, the publication commit, the row rebuild and the disruption. No timer exists around any of them, so this is a two-term fit and not two direct readings; `residualSplit` prints the design matrix and the per-fixture miss.",
+    "RIDER (ii) DID NOT FIRE: the E and P design vectors are separable (ratio spread Some(2.0833333333333335) against a 1.05 bar, cosine 0.936264 against a 0.9995 bar), so two prices were fitted."
+   ],
+   "currencies": {
+    "u0": {
+     "version": "U0-sample-evaluations",
+     "coefficients": null,
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.2960490753324376,
+      "worstPair": "shapes-17 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.14918603245976403,
+      "worstPair": "shapes-17 -> mixed-61",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.12981887026632258,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5198993958542727,
+       "observedSeconds": 0.597461124
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 1.8681597080304233,
+       "withinTolerance": false,
+       "predictedSeconds": 0.016629331852786672,
+       "observedSeconds": 0.00579791
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.14918603245976403,
+       "withinTolerance": false,
+       "predictedSeconds": 2.939214182664222,
+       "observedSeconds": 2.5576487180000003
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.2960490753324376,
+       "withinTolerance": false,
+       "predictedSeconds": 0.019110195894360693,
+       "observedSeconds": 0.00579791
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.6513443804401311,
+       "withinTolerance": false,
+       "predictedSeconds": 0.8917385983907945,
+       "observedSeconds": 2.5576487180000003
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.696606459083398,
+       "withinTolerance": false,
+       "predictedSeconds": 0.18126584597037299,
+       "observedSeconds": 0.597461124
+      }
+     ]
+    },
+    "u1": {
+     "version": "U1-weighted-vector",
+     "coefficients": null,
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.537322732339635,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.1373992273141966,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.1373992273141966,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6795518207878714,
+       "observedSeconds": 0.597461124
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.537322732339635,
+       "withinTolerance": false,
+       "predictedSeconds": 0.020509078843059293,
+       "observedSeconds": 0.00579791
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.12080123145383599,
+       "withinTolerance": false,
+       "predictedSeconds": 2.2486816032392754,
+       "observedSeconds": 2.5576487180000003
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.1100097902233586,
+       "withinTolerance": false,
+       "predictedSeconds": 0.018031556862833913,
+       "observedSeconds": 0.00579791
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7173003212690786,
+       "withinTolerance": false,
+       "predictedSeconds": 0.7230464708851532,
+       "observedSeconds": 2.5576487180000003
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.6784576038494783,
+       "withinTolerance": false,
+       "predictedSeconds": 0.19210908141774394,
+       "observedSeconds": 0.597461124
+      }
+     ]
+    },
+    "u2": {
+     "version": "U2-per-bite-vector",
+     "coefficients": {
+      "bMasterBatch": 623,
+      "combinedEAndP": false,
+      "dDisruptionMove": 985,
+      "eExactCheckpointCall": 436,
+      "pPublishedBite": 51
+     },
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.914972370203054,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.13649026252128077,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.13649026252128077,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6790087496610194,
+       "observedSeconds": 0.597461124
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.914972370203054,
+       "withinTolerance": false,
+       "predictedSeconds": 0.022698657454923988,
+       "observedSeconds": 0.00579791
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.1200980483708499,
+       "withinTolerance": false,
+       "predictedSeconds": 2.250480098549994,
+       "observedSeconds": 2.5576487180000003
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.4447918291158666,
+       "withinTolerance": false,
+       "predictedSeconds": 0.019972592993949174,
+       "observedSeconds": 0.00579791
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.744570355691135,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6532993023057644,
+       "observedSeconds": 2.5576487180000003
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7097066964837008,
+       "withinTolerance": false,
+       "predictedSeconds": 0.1734389634085213,
+       "observedSeconds": 0.597461124
+      }
+     ]
+    }
+   }
+  },
+  {
+   "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run2/currency.json",
+   "sourceSha256": "44151b0e3ca6fa87ed62f77d9f1913abf5837b3a01502c6cfa6f6f274eec2820",
+   "currencyExit": 1,
+   "exitMeans": "0 iff U' (the amended currency) transfers within 10% on every ordered fixture pair; 1 iff it is REJECTED by the amendment's own rule; 2 iff the check could not run. U1's verdict is CURRENCY_ACCEPTED and is reported, not exited on.",
+   "loadBefore": [
+    "0.93",
+    "0.97",
+    "1.14"
+   ],
+   "loadAfter": [
+    "1.35",
+    "1.06",
+    "1.16"
+   ],
+   "searchSeconds": {
+    "mixed-61": 2.567143473,
+    "shapes-17": 0.601591377,
+    "triangle-20": 0.005783353
+   },
+   "terms": {
+    "mixed-61": {
+     "disruptionMoves": 8,
+     "exactCheckpointCalls": 50,
+     "masterBatches": 514,
+     "publishedBites": 24,
+     "sampleEvaluations": 6977140
+    },
+    "shapes-17": {
+     "disruptionMoves": 4,
+     "exactCheckpointCalls": 0,
+     "masterBatches": 840,
+     "publishedBites": 0,
+     "sampleEvaluations": 1418260
+    },
+    "triangle-20": {
+     "disruptionMoves": 0,
+     "exactCheckpointCalls": 34,
+     "masterBatches": 5,
+     "publishedBites": 34,
+     "sampleEvaluations": 45364
+    }
+   },
+   "coefficients": {
+    "bMasterBatch": 639,
+    "combinedEAndP": false,
+    "dDisruptionMove": 1054,
+    "eExactCheckpointCall": 467,
+    "pPublishedBite": 57
+   },
+   "measuredCoefficients": {
+    "bMasterBatch": 638.2706449760238,
+    "baseNsPerSampleEvaluation": 339.14335621751775,
+    "dDisruptionMove": 1053.0414988678447,
+    "eExactCheckpointCall": 466.1659806677618,
+    "pPublishedBite": 56.66546927730951
+   },
+   "collinearity": {
+    "collinear": false,
+    "cosine": 0.9362638360739937,
+    "cosineBar": 0.9995,
+    "exactCheckpointCalls": [
+     50,
+     0,
+     34
+    ],
+    "fixtures": [
+     "mixed-61",
+     "shapes-17",
+     "triangle-20"
+    ],
+    "publishedBites": [
+     24,
+     0,
+     34
+    ],
+    "ratioBar": 1.05,
+    "ratioMaxOverMin": 2.0833333333333335,
+    "ratios": [
+     [
+      "mixed-61",
+      2.0833333333333335
+     ],
+     [
+      "triangle-20",
+      1.0
+     ]
+    ]
+   },
+   "residualSplit": [
+    {
+     "directSingleTermNs": null,
+     "disruptionMoves": 8,
+     "fittedNs": 3318281.4436752675,
+     "fixture": "mixed-61",
+     "outsideNs": 3885419,
+     "publishedBites": 24,
+     "residualNs": 567137.5563247325
+    },
+    {
+     "directSingleTermNs": 73563.25,
+     "disruptionMoves": 4,
+     "fittedNs": 1428528.112649465,
+     "fixture": "shapes-17",
+     "outsideNs": 294253,
+     "publishedBites": 0,
+     "residualNs": -1134275.112649465
+    },
+    {
+     "directSingleTermNs": 7443.235294117647,
+     "disruptionMoves": 0,
+     "fittedNs": 653402.3926998111,
+     "fixture": "triangle-20",
+     "outsideNs": 253070,
+     "publishedBites": 34,
+     "residualNs": -400332.39269981114
+    }
+   ],
+   "notes": [
+    "R is ABSENT (docs/currency-amendment.md). The 16 um repair's wall is inside exactNs and is therefore charged to E; dropping a term does not delete its cost.",
+    "P and D are split out of the search wall the barriers did not claim - the only region that contains the cut, the pose install, the publication commit, the row rebuild and the disruption. No timer exists around any of them, so this is a two-term fit and not two direct readings; `residualSplit` prints the design matrix and the per-fixture miss.",
+    "RIDER (ii) DID NOT FIRE: the E and P design vectors are separable (ratio spread Some(2.0833333333333335) against a 1.05 bar, cosine 0.936264 against a 0.9995 bar), so two prices were fitted."
+   ],
+   "currencies": {
+    "u0": {
+     "version": "U0-sample-evaluations",
+     "coefficients": null,
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.32718836538436,
+      "worstPair": "shapes-17 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.15285063820655492,
+      "worstPair": "shapes-17 -> mixed-61",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.13258494478030464,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5218294175001476,
+       "observedSeconds": 0.601591377
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 1.8860532796862033,
+       "withinTolerance": false,
+       "predictedSeconds": 0.01669106489323304,
+       "observedSeconds": 0.005783353
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.15285063820655492,
+       "withinTolerance": false,
+       "predictedSeconds": 2.9595329912158417,
+       "observedSeconds": 2.567143473
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.32718836538436,
+       "withinTolerance": false,
+       "predictedSeconds": 0.019242304814510735,
+       "observedSeconds": 0.005783353
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.6535060502733586,
+       "withinTolerance": false,
+       "predictedSeconds": 0.8894996814747376,
+       "observedSeconds": 2.567143473
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.6994459314645749,
+       "withinTolerance": false,
+       "predictedSeconds": 0.18081073595317873,
+       "observedSeconds": 0.601591377
+      }
+     ]
+    },
+    "u1": {
+     "version": "U1-weighted-vector",
+     "coefficients": null,
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.6041372905382096,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.14005813677190967,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.14005813677190967,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6858491443606675,
+       "observedSeconds": 0.601591377
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.6041372905382096,
+       "withinTolerance": false,
+       "predictedSeconds": 0.020843998211646026,
+       "observedSeconds": 0.005783353
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.12285174962084473,
+       "withinTolerance": false,
+       "predictedSeconds": 2.251765405814218,
+       "observedSeconds": 2.567143473
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.161362718521859,
+       "withinTolerance": false,
+       "predictedSeconds": 0.01828327656225155,
+       "observedSeconds": 0.005783353
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7225410911439866,
+       "withinTolerance": false,
+       "predictedSeconds": 0.7122768268954166,
+       "observedSeconds": 2.567143473
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.6836807133388463,
+       "withinTolerance": false,
+       "predictedSeconds": 0.19029495523414117,
+       "observedSeconds": 0.601591377
+      }
+     ]
+    },
+    "u2": {
+     "version": "U2-per-bite-vector",
+     "coefficients": {
+      "bMasterBatch": 639,
+      "combinedEAndP": false,
+      "dDisruptionMove": 1054,
+      "eExactCheckpointCall": 467,
+      "pPublishedBite": 57
+     },
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 3.01470565024373,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.1392368542618385,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.1392368542618385,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6853550678845277,
+       "observedSeconds": 0.601591377
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 3.01470565024373,
+       "withinTolerance": false,
+       "predictedSeconds": 0.023218459966454028,
+       "observedSeconds": 0.005783353
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.12221940831790955,
+       "withinTolerance": false,
+       "predictedSeconds": 2.2533887166627564,
+       "observedSeconds": 2.567143473
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.5240307011003735,
+       "withinTolerance": false,
+       "predictedSeconds": 0.020380713527300948,
+       "observedSeconds": 0.005783353
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7509157365150069,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6394350412325122,
+       "observedSeconds": 2.567143473
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7162340272212295,
+       "withinTolerance": false,
+       "predictedSeconds": 0.17071116230972505,
+       "observedSeconds": 0.601591377
+      }
+     ]
+    }
+   }
+  },
+  {
+   "path": "/var/lib/t3/tmp/overlapics/gate2/currency-run3/currency.json",
+   "sourceSha256": "c7242dddd0f395fd56b5bb1000a78a8052c73fe6ecf8abadfeb1104e2948384e",
+   "currencyExit": 1,
+   "exitMeans": "0 iff U' (the amended currency) transfers within 10% on every ordered fixture pair; 1 iff it is REJECTED by the amendment's own rule; 2 iff the check could not run. U1's verdict is CURRENCY_ACCEPTED and is reported, not exited on.",
+   "loadBefore": [
+    "0.96",
+    "0.99",
+    "1.14"
+   ],
+   "loadAfter": [
+    "0.97",
+    "0.99",
+    "1.13"
+   ],
+   "searchSeconds": {
+    "mixed-61": 2.562476157,
+    "shapes-17": 0.589929434,
+    "triangle-20": 0.004800479
+   },
+   "terms": {
+    "mixed-61": {
+     "disruptionMoves": 8,
+     "exactCheckpointCalls": 50,
+     "masterBatches": 514,
+     "publishedBites": 24,
+     "sampleEvaluations": 6977140
+    },
+    "shapes-17": {
+     "disruptionMoves": 4,
+     "exactCheckpointCalls": 0,
+     "masterBatches": 840,
+     "publishedBites": 0,
+     "sampleEvaluations": 1418260
+    },
+    "triangle-20": {
+     "disruptionMoves": 0,
+     "exactCheckpointCalls": 34,
+     "masterBatches": 5,
+     "publishedBites": 34,
+     "sampleEvaluations": 45364
+    }
+   },
+   "coefficients": {
+    "bMasterBatch": 624,
+    "combinedEAndP": false,
+    "dDisruptionMove": 1129,
+    "eExactCheckpointCall": 474,
+    "pPublishedBite": 54
+   },
+   "measuredCoefficients": {
+    "bMasterBatch": 623.0521576096016,
+    "baseNsPerSampleEvaluation": 338.00592849178105,
+    "dDisruptionMove": 1128.640549831387,
+    "eExactCheckpointCall": 473.1414264136076,
+    "pPublishedBite": 53.735747593832194
+   },
+   "collinearity": {
+    "collinear": false,
+    "cosine": 0.9362638360739937,
+    "cosineBar": 0.9995,
+    "exactCheckpointCalls": [
+     50,
+     0,
+     34
+    ],
+    "fixtures": [
+     "mixed-61",
+     "shapes-17",
+     "triangle-20"
+    ],
+    "publishedBites": [
+     24,
+     0,
+     34
+    ],
+    "ratioBar": 1.05,
+    "ratioMaxOverMin": 2.0833333333333335,
+    "ratios": [
+     [
+      "mixed-61",
+      2.0833333333333335
+     ],
+     [
+      "triangle-20",
+      1.0
+     ]
+    ]
+   },
+   "residualSplit": [
+    {
+     "directSingleTermNs": null,
+     "disruptionMoves": 8,
+     "fittedNs": 3487809.6060415357,
+     "fixture": "mixed-61",
+     "outsideNs": 4124556,
+     "publishedBites": 24,
+     "residualNs": 636746.3939584643
+    },
+    {
+     "directSingleTermNs": 63114.0,
+     "disruptionMoves": 4,
+     "fittedNs": 1525948.787916929,
+     "fixture": "shapes-17",
+     "outsideNs": 252456,
+     "publishedBites": 0,
+     "residualNs": -1273492.787916929
+    },
+    {
+     "directSingleTermNs": 4943.35294117647,
+     "disruptionMoves": 0,
+     "fittedNs": 617542.0427942101,
+     "fixture": "triangle-20",
+     "outsideNs": 168074,
+     "publishedBites": 34,
+     "residualNs": -449468.04279421014
+    }
+   ],
+   "notes": [
+    "R is ABSENT (docs/currency-amendment.md). The 16 um repair's wall is inside exactNs and is therefore charged to E; dropping a term does not delete its cost.",
+    "P and D are split out of the search wall the barriers did not claim - the only region that contains the cut, the pose install, the publication commit, the row rebuild and the disruption. No timer exists around any of them, so this is a two-term fit and not two direct readings; `residualSplit` prints the design matrix and the per-fixture miss.",
+    "RIDER (ii) DID NOT FIRE: the E and P design vectors are separable (ratio spread Some(2.0833333333333335) against a 1.05 bar, cosine 0.936264 against a 0.9995 bar), so two prices were fitted."
+   ],
+   "currencies": {
+    "u0": {
+     "version": "U0-sample-evaluations",
+     "coefficients": null,
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.9307097737561416,
+      "worstPair": "shapes-17 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.13256155498184227,
+      "worstPair": "shapes-17 -> mixed-61",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.11704578386820454,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5208806809705437,
+       "observedSeconds": 0.589929434
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.470636767128442,
+       "withinTolerance": false,
+       "predictedSeconds": 0.016660718917227976,
+       "observedSeconds": 0.004800479
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.13256155498184227,
+       "withinTolerance": false,
+       "predictedSeconds": 2.9021619809758152,
+       "observedSeconds": 2.562476157
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.9307097737561416,
+       "withinTolerance": false,
+       "predictedSeconds": 0.01886928972401111,
+       "observedSeconds": 0.004800479
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7118684359390952,
+       "withinTolerance": false,
+       "predictedSeconds": 0.7383302629851864,
+       "observedSeconds": 2.562476157
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7455930207117757,
+       "withinTolerance": false,
+       "predictedSeconds": 0.15008216529715193,
+       "observedSeconds": 0.589929434
+      }
+     ]
+    },
+    "u1": {
+     "version": "U1-weighted-vector",
+     "coefficients": null,
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 3.338155000039881,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.15433659291816093,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.15433659291816093,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6809771329056991,
+       "observedSeconds": 0.589929434
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 3.338155000039881,
+       "withinTolerance": false,
+       "predictedSeconds": 0.020825221976436447,
+       "observedSeconds": 0.004800479
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.1337015510597289,
+       "withinTolerance": false,
+       "predictedSeconds": 2.2198691202555265,
+       "observedSeconds": 2.562476157
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.758136947797031,
+       "withinTolerance": false,
+       "predictedSeconds": 0.018040857497023742,
+       "observedSeconds": 0.004800479
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7694872589866413,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5906834027314476,
+       "observedSeconds": 2.562476157
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7339107079144132,
+       "withinTolerance": false,
+       "predictedSeconds": 0.15697390547351092,
+       "observedSeconds": 0.589929434
+      }
+     ]
+    },
+    "u2": {
+     "version": "U2-per-bite-vector",
+     "coefficients": {
+      "bMasterBatch": 624,
+      "combinedEAndP": false,
+      "dDisruptionMove": 1129,
+      "eExactCheckpointCall": 474,
+      "pPublishedBite": 54
+     },
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 3.836842717963968,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.15343911064161422,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.15343911064161422,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6804476816942708,
+       "observedSeconds": 0.589929434
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 3.836842717963968,
+       "withinTolerance": false,
+       "predictedSeconds": 0.02321916189388895,
+       "observedSeconds": 0.004800479
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.13302749076738174,
+       "withinTolerance": false,
+       "predictedSeconds": 2.2215963836830466,
+       "observedSeconds": 2.562476157
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 3.193409667956739,
+       "withinTolerance": false,
+       "predictedSeconds": 0.020130375049423298,
+       "observedSeconds": 0.004800479
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7932535626420074,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5297828162745499,
+       "observedSeconds": 2.562476157
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7615305731654748,
+       "withinTolerance": false,
+       "predictedSeconds": 0.14068013399879584,
+       "observedSeconds": 0.589929434
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "termsIdenticalAcrossRuns": true,
+ "terms": {
+  "mixed-61": {
+   "disruptionMoves": 8,
+   "exactCheckpointCalls": 50,
+   "masterBatches": 514,
+   "publishedBites": 24,
+   "sampleEvaluations": 6977140
+  },
+  "shapes-17": {
+   "disruptionMoves": 4,
+   "exactCheckpointCalls": 0,
+   "masterBatches": 840,
+   "publishedBites": 0,
+   "sampleEvaluations": 1418260
+  },
+  "triangle-20": {
+   "disruptionMoves": 0,
+   "exactCheckpointCalls": 34,
+   "masterBatches": 5,
+   "publishedBites": 34,
+   "sampleEvaluations": 45364
+  }
+ },
+ "publishedBitesPerRun": [
+  {
+   "mixed-61": 24,
+   "shapes-17": 0,
+   "triangle-20": 34
+  },
+  {
+   "mixed-61": 24,
+   "shapes-17": 0,
+   "triangle-20": 34
+  },
+  {
+   "mixed-61": 24,
+   "shapes-17": 0,
+   "triangle-20": 34
+  }
+ ],
+ "publishedBitesIdenticalAcrossRuns": true,
+ "currencies": {
+  "u0": {
+   "version": "U0-sample-evaluations",
+   "runs": 3,
+   "acceptedOnEveryRun": false,
+   "rejectedOnEveryRun": true,
+   "worstRelativeErrorPerRun": [
+    2.2960490753324376,
+    2.32718836538436,
+    2.9307097737561416
+   ],
+   "worstPairPerRun": [
+    "shapes-17 -> triangle-20",
+    "shapes-17 -> triangle-20",
+    "shapes-17 -> triangle-20"
+   ],
+   "pairsOverTolerancePerRun": [
+    6,
+    6,
+    6
+   ],
+   "everyReadingPerRun": [
+    {
+     "mixed-61 -> shapes-17": 0.12981887026632258,
+     "mixed-61 -> triangle-20": 1.8681597080304233,
+     "shapes-17 -> mixed-61": 0.14918603245976403,
+     "shapes-17 -> triangle-20": 2.2960490753324376,
+     "triangle-20 -> mixed-61": 0.6513443804401311,
+     "triangle-20 -> shapes-17": 0.696606459083398
+    },
+    {
+     "mixed-61 -> shapes-17": 0.13258494478030464,
+     "mixed-61 -> triangle-20": 1.8860532796862033,
+     "shapes-17 -> mixed-61": 0.15285063820655492,
+     "shapes-17 -> triangle-20": 2.32718836538436,
+     "triangle-20 -> mixed-61": 0.6535060502733586,
+     "triangle-20 -> shapes-17": 0.6994459314645749
+    },
+    {
+     "mixed-61 -> shapes-17": 0.11704578386820454,
+     "mixed-61 -> triangle-20": 2.470636767128442,
+     "shapes-17 -> mixed-61": 0.13256155498184227,
+     "shapes-17 -> triangle-20": 2.9307097737561416,
+     "triangle-20 -> mixed-61": 0.7118684359390952,
+     "triangle-20 -> shapes-17": 0.7455930207117757
+    }
+   ],
+   "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+    "note": "a diagnostic, never the verdict: the amended rule drops no fixture",
+    "worstRelativeErrorPerRun": [
+     0.14918603245976403,
+     0.15285063820655492,
+     0.13256155498184227
+    ],
+    "errorsPerRun": [
+     {
+      "mixed-61 -> shapes-17": 0.12981887026632258,
+      "shapes-17 -> mixed-61": 0.14918603245976403
+     },
+     {
+      "mixed-61 -> shapes-17": 0.13258494478030464,
+      "shapes-17 -> mixed-61": 0.15285063820655492
+     },
+     {
+      "mixed-61 -> shapes-17": 0.11704578386820454,
+      "shapes-17 -> mixed-61": 0.13256155498184227
+     }
+    ]
+   }
+  },
+  "u1": {
+   "version": "U1-weighted-vector",
+   "runs": 3,
+   "acceptedOnEveryRun": false,
+   "rejectedOnEveryRun": true,
+   "worstRelativeErrorPerRun": [
+    2.537322732339635,
+    2.6041372905382096,
+    3.338155000039881
+   ],
+   "worstPairPerRun": [
+    "mixed-61 -> triangle-20",
+    "mixed-61 -> triangle-20",
+    "mixed-61 -> triangle-20"
+   ],
+   "pairsOverTolerancePerRun": [
+    6,
+    6,
+    6
+   ],
+   "everyReadingPerRun": [
+    {
+     "mixed-61 -> shapes-17": 0.1373992273141966,
+     "mixed-61 -> triangle-20": 2.537322732339635,
+     "shapes-17 -> mixed-61": 0.12080123145383599,
+     "shapes-17 -> triangle-20": 2.1100097902233586,
+     "triangle-20 -> mixed-61": 0.7173003212690786,
+     "triangle-20 -> shapes-17": 0.6784576038494783
+    },
+    {
+     "mixed-61 -> shapes-17": 0.14005813677190967,
+     "mixed-61 -> triangle-20": 2.6041372905382096,
+     "shapes-17 -> mixed-61": 0.12285174962084473,
+     "shapes-17 -> triangle-20": 2.161362718521859,
+     "triangle-20 -> mixed-61": 0.7225410911439866,
+     "triangle-20 -> shapes-17": 0.6836807133388463
+    },
+    {
+     "mixed-61 -> shapes-17": 0.15433659291816093,
+     "mixed-61 -> triangle-20": 3.338155000039881,
+     "shapes-17 -> mixed-61": 0.1337015510597289,
+     "shapes-17 -> triangle-20": 2.758136947797031,
+     "triangle-20 -> mixed-61": 0.7694872589866413,
+     "triangle-20 -> shapes-17": 0.7339107079144132
+    }
+   ],
+   "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+    "note": "a diagnostic, never the verdict: the amended rule drops no fixture",
+    "worstRelativeErrorPerRun": [
+     0.1373992273141966,
+     0.14005813677190967,
+     0.15433659291816093
+    ],
+    "errorsPerRun": [
+     {
+      "mixed-61 -> shapes-17": 0.1373992273141966,
+      "shapes-17 -> mixed-61": 0.12080123145383599
+     },
+     {
+      "mixed-61 -> shapes-17": 0.14005813677190967,
+      "shapes-17 -> mixed-61": 0.12285174962084473
+     },
+     {
+      "mixed-61 -> shapes-17": 0.15433659291816093,
+      "shapes-17 -> mixed-61": 0.1337015510597289
+     }
+    ]
+   }
+  },
+  "u2": {
+   "version": "U2-per-bite-vector",
+   "runs": 3,
+   "acceptedOnEveryRun": false,
+   "rejectedOnEveryRun": true,
+   "worstRelativeErrorPerRun": [
+    2.914972370203054,
+    3.01470565024373,
+    3.836842717963968
+   ],
+   "worstPairPerRun": [
+    "mixed-61 -> triangle-20",
+    "mixed-61 -> triangle-20",
+    "mixed-61 -> triangle-20"
+   ],
+   "pairsOverTolerancePerRun": [
+    6,
+    6,
+    6
+   ],
+   "everyReadingPerRun": [
+    {
+     "mixed-61 -> shapes-17": 0.13649026252128077,
+     "mixed-61 -> triangle-20": 2.914972370203054,
+     "shapes-17 -> mixed-61": 0.1200980483708499,
+     "shapes-17 -> triangle-20": 2.4447918291158666,
+     "triangle-20 -> mixed-61": 0.744570355691135,
+     "triangle-20 -> shapes-17": 0.7097066964837008
+    },
+    {
+     "mixed-61 -> shapes-17": 0.1392368542618385,
+     "mixed-61 -> triangle-20": 3.01470565024373,
+     "shapes-17 -> mixed-61": 0.12221940831790955,
+     "shapes-17 -> triangle-20": 2.5240307011003735,
+     "triangle-20 -> mixed-61": 0.7509157365150069,
+     "triangle-20 -> shapes-17": 0.7162340272212295
+    },
+    {
+     "mixed-61 -> shapes-17": 0.15343911064161422,
+     "mixed-61 -> triangle-20": 3.836842717963968,
+     "shapes-17 -> mixed-61": 0.13302749076738174,
+     "shapes-17 -> triangle-20": 3.193409667956739,
+     "triangle-20 -> mixed-61": 0.7932535626420074,
+     "triangle-20 -> shapes-17": 0.7615305731654748
+    }
+   ],
+   "restrictedToMixed61AndShapes17_DIAGNOSTIC": {
+    "note": "a diagnostic, never the verdict: the amended rule drops no fixture",
+    "worstRelativeErrorPerRun": [
+     0.13649026252128077,
+     0.1392368542618385,
+     0.15343911064161422
+    ],
+    "errorsPerRun": [
+     {
+      "mixed-61 -> shapes-17": 0.13649026252128077,
+      "shapes-17 -> mixed-61": 0.1200980483708499
+     },
+     {
+      "mixed-61 -> shapes-17": 0.1392368542618385,
+      "shapes-17 -> mixed-61": 0.12221940831790955
+     },
+     {
+      "mixed-61 -> shapes-17": 0.15343911064161422,
+      "shapes-17 -> mixed-61": 0.13302749076738174
+     }
+    ]
+   }
+  }
+ },
+ "riderTwo": {
+  "criterion": "collinear iff per-fixture ratio max/min <= ratioBar AND cosine >= cosineBar; both bars are constants in search::overlap_ics_meter::currency",
+  "designVectors": {
+   "fixtures": [
+    "mixed-61",
+    "shapes-17",
+    "triangle-20"
+   ],
+   "E_exactCheckpointCalls": [
+    50,
+    0,
+    34
+   ],
+   "P_publishedBites": [
+    24,
+    0,
+    34
+   ]
+  },
+  "ratios": [
+   [
+    "mixed-61",
+    2.0833333333333335
+   ],
+   [
+    "triangle-20",
+    1.0
+   ]
+  ],
+  "ratioMaxOverMin": 2.0833333333333335,
+  "ratioBar": 1.05,
+  "cosine": 0.9362638360739937,
+  "cosineBar": 0.9995,
+  "collinear": false,
+  "identicalAcrossRuns": true,
+  "consequence": "two separate prices were fitted"
+ },
+ "coefficientSpread": {
+  "bMasterBatch": {
+   "values": [
+    623,
+    639,
+    624
+   ],
+   "min": 623,
+   "max": 639,
+   "ratio": 1.0256821829855538,
+   "median": 624
+  },
+  "dDisruptionMove": {
+   "values": [
+    985,
+    1054,
+    1129
+   ],
+   "min": 985,
+   "max": 1129,
+   "ratio": 1.1461928934010153,
+   "median": 1054
+  },
+  "eExactCheckpointCall": {
+   "values": [
+    436,
+    467,
+    474
+   ],
+   "min": 436,
+   "max": 474,
+   "ratio": 1.0871559633027523,
+   "median": 467
+  },
+  "pPublishedBite": {
+   "values": [
+    51,
+    57,
+    54
+   ],
+   "min": 51,
+   "max": 57,
+   "ratio": 1.1176470588235294,
+   "median": 54
+  }
+ },
+ "pSpreadUnderFutureRRule": {
+  "note": "the amendment's rule for restoring R in a FUTURE funding, applied to P as a report. It decides nothing today.",
+  "rule": "spread <= 1.5x across three runs AND support on >= 2 fixtures",
+  "spreadRatio": 1.1176470588235294,
+  "fixturesWithSupport": 2,
+  "wouldPass": true
+ },
+ "CURRENCY_PRIME_ACCEPTED": false,
+ "BUDGET_PATH": "DECLARED FALLBACK: mixed-61-only shelf-probed work budget, labelled \"single-fixture work plan, no transfer claim\". Final per rider (iii).",
+ "SECTION0_CLAUSES": "clauses (1)(2)(3)(4)(6) bind unchanged; clause (5) p95<=10.000s STILL BINDS as a claim and the budget is not retuned after seeing p95; the 30 s shapes-17/triangle-20 equal-work clause is inevaluable and recorded NOT-RUN"
+}
