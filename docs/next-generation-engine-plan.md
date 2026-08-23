@@ -8380,3 +8380,33 @@ across the two attempts, which is the independent evidence that the corrected
 comment changed nothing executable. Evidence, drivers, the pre-committed
 reading and the full seven-item caveat list:
 `docs/experiments/overlap-ics/gate0-pivot-rerun/`.
+
+## The verdict stands: Gate0-stopped, the member falsified, the family's next move is the owner's
+
+Sol 16 and Grok 11, each auditing the pivot round under the reading they
+themselves pre-committed, confirm: nothing reopens C175. The 2.223 s wall
+slip is extra wall not less, the census-arming correction is documentation,
+the residual ascent population is max-subgradient structure with no second
+coordinate mismatch. Two language corrections adopted: the terminal state is
+a reproducible ATTRACTION BAND, not a certified fixed point; and the
+opposite-sides-zero census row does not by itself prove no single-piece move
+exists. The precise falsification both sign: the Round-1 solver member
+(one-piece strict-decrease SE(2) proposals on an aggregated subgradient,
+GLS one-row escalation, one strip/ball jump) recovers S1's 0.5 mm/2°
+perturbation but cannot legalize the one-shot 6.714 mm affine compression —
+it lands, from three different entries, in a band ~1.60 mm infeasible, and
+in 2,879,688 proposals the publication path was never called. The rankings
+converge on STOP as the single recommended action; shock-reduction is
+corpse-rescue under both (the 10% was frozen by name; the spec's small
+bites are legal-to-legal, and C175 never produced a legal child); a new
+solver member is fundable only as an explicit new project with the same
+frozen gate — Grok names chain/component Y-compaction as the only operator
+that can address the attractor's shape while betting against it (C168 shows
+the same shape at 7x the scale); Sol names true two-endpoint PGS (joint
+pair projection, no per-piece strict-decrease veto) at cost M with a
+no-further-ladder clause. The engine's sound parts are parked as artifacts:
+the exact signed-gap geometry, the S0-pinned FAST tier, the dual-valid
+publication pipeline, and four autopsy-grade instrument corrections. The
+overlap-ICS line closes as Gate0-stopped; docs/shipped-surface.md carries
+the row. Reviews verbatim: docs/sol-review-16-the-verdict-stands.md,
+docs/grok-review-11-the-verdict-stands.md.
