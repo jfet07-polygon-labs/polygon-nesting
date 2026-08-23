@@ -1,0 +1,557 @@
+{
+  "experiment": "overlap-ics",
+  "battery": "economics-round-currency-calibration",
+  "spec": "docs/economics-round-spec.md, funded change 3: \"REJECT the currency if wall-prediction error >10% on any transfer fixture.\"",
+  "profileBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/target/profile-build/release/examples/overlap_ics_benchmark",
+  "profileBinarySha256": "c541066ccb84817d6360ee5c871ba41abf3ac555f24df9b8117e8dcc6eba30ce",
+  "meterBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/target/release/examples/ics_meter",
+  "meterBinarySha256": "821715e44d24e59349f9924dd8b89a08d8124f3d0a9a0068864699b1fef8fe9c",
+  "machine": {
+    "platform": "Linux-6.18.38-x86_64-with-glibc2.42",
+    "cpus": 16,
+    "loadBefore": [
+      "1.02",
+      "1.69",
+      "1.93"
+    ],
+    "loadAfter": [
+      "1.01",
+      "1.67",
+      "1.92"
+    ]
+  },
+  "cellShape": {
+    "seed": 0,
+    "workers": 8,
+    "mode": "fixed",
+    "bites": 30,
+    "attempts": 3,
+    "iters": 120,
+    "compressBites": 4
+  },
+  "cells": [
+    {
+      "fixture": "mixed-61",
+      "path": "/var/lib/t3/tmp/overlapics/w4currency-1/currency-mixed-61.json",
+      "sourceSha256": "d537848c7a8c3ef9fa5cd0b2f9814515dfa8a3746efb6e2175a6464140a0036b",
+      "command": [
+        "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/target/profile-build/release/examples/overlap_ics_benchmark",
+        "--cell=cutclose",
+        "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+        "--edge=5",
+        "--pair=5",
+        "--mode=fixed",
+        "--workers=8",
+        "--seed=0",
+        "--bites=30",
+        "--attempts=3",
+        "--iters=120",
+        "--compressbites=4"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "driverWallSeconds": 4.907221487024799,
+      "searchSeconds": 2.564059499,
+      "bites": 26,
+      "publications": 24,
+      "depthMm": 179.00635042173,
+      "terms": {
+        "sampleEvaluations": 6977140,
+        "masterBatches": 514,
+        "exactCalls": 50,
+        "repairRows": 20,
+        "disruptionMoves": 8
+      },
+      "profileMeasured": true
+    },
+    {
+      "fixture": "shapes-17",
+      "path": "/var/lib/t3/tmp/overlapics/w4currency-1/currency-shapes-17.json",
+      "sourceSha256": "f4e1d438c5997a2affc5303b7b706c60e287a74b72f93f77a8ec3070dc8b4063",
+      "command": [
+        "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/target/profile-build/release/examples/overlap_ics_benchmark",
+        "--cell=cutclose",
+        "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/tests/fixtures/shapes-17/2000x2700-compact/request.json",
+        "--edge=5",
+        "--pair=5",
+        "--mode=fixed",
+        "--workers=8",
+        "--seed=0",
+        "--bites=30",
+        "--attempts=3",
+        "--iters=120",
+        "--compressbites=4"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "driverWallSeconds": 2.1909835789119825,
+      "searchSeconds": 0.611435721,
+      "bites": 5,
+      "publications": 0,
+      "depthMm": 200.34937729570953,
+      "terms": {
+        "sampleEvaluations": 1418260,
+        "masterBatches": 840,
+        "exactCalls": 0,
+        "repairRows": 0,
+        "disruptionMoves": 4
+      },
+      "profileMeasured": true
+    },
+    {
+      "fixture": "triangle-20",
+      "path": "/var/lib/t3/tmp/overlapics/w4currency-1/currency-triangle-20.json",
+      "sourceSha256": "0d1271b277eb04ec980f8e710b7b8b9a99b447c156408d22bc5d0e39deaec365",
+      "command": [
+        "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/target/profile-build/release/examples/overlap_ics_benchmark",
+        "--cell=cutclose",
+        "--request=/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/tests/fixtures/triangle-20/2000x2700-compact/request.json",
+        "--edge=5",
+        "--pair=5",
+        "--mode=fixed",
+        "--workers=8",
+        "--seed=0",
+        "--bites=30",
+        "--attempts=3",
+        "--iters=120",
+        "--compressbites=4"
+      ],
+      "exit": 0,
+      "stderr": "",
+      "driverWallSeconds": 0.030682534910738468,
+      "searchSeconds": 0.006240303,
+      "bites": 34,
+      "publications": 34,
+      "depthMm": 71.1990561493186,
+      "terms": {
+        "sampleEvaluations": 45364,
+        "masterBatches": 5,
+        "exactCalls": 34,
+        "repairRows": 0,
+        "disruptionMoves": 0
+      },
+      "profileMeasured": true
+    }
+  ],
+  "meterCommand": [
+    "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/target/release/examples/ics_meter",
+    "--out=/var/lib/t3/tmp/overlapics/w4currency-1/currency-meter.json",
+    "--cell=mixed-61=/var/lib/t3/tmp/overlapics/w4currency-1/currency-mixed-61.json",
+    "--cell=shapes-17=/var/lib/t3/tmp/overlapics/w4currency-1/currency-shapes-17.json",
+    "--cell=triangle-20=/var/lib/t3/tmp/overlapics/w4currency-1/currency-triangle-20.json"
+  ],
+  "meterExit": 1,
+  "meterStderr": "",
+  "meter": {
+    "CURRENCY_ACCEPTED": false,
+    "WORST_RELATIVE_ERROR": 2.368970768988887,
+    "battery": "economics-round-currency",
+    "calibration": {
+      "currency": {
+        "coefficients": {
+          "bMasterBatch": 630,
+          "dDisruptionMove": 1052,
+          "ePublicationCall": 340,
+          "measured": {
+            "bMasterBatch": 629.5522691780675,
+            "baseNsPerSampleEvaluation": 340.3627997418243,
+            "dDisruptionMove": 1051.640338695968,
+            "ePublicationCall": 339.50331148615277,
+            "rRepairRow": 18.152101242222805
+          },
+          "rRepairRow": 19,
+          "rounding": "conservative-ceil"
+        },
+        "version": "U1-weighted-vector"
+      },
+      "fixtures": [
+        "mixed-61",
+        "shapes-17",
+        "triangle-20"
+      ],
+      "selected": [
+        {
+          "cheapestNanosEach": 99.77180142844546,
+          "dearestNanosEach": 343.60246287704655,
+          "fixtures": [
+            "mixed-61",
+            "shapes-17",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 340.3627997418243,
+          "rounded": 1,
+          "sampleEvaluationEquivalents": 1.0,
+          "term": "sample-evaluation"
+        },
+        {
+          "cheapestNanosEach": 147436.40952380953,
+          "dearestNanosEach": 323523.29571984435,
+          "fixtures": [
+            "mixed-61",
+            "shapes-17",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 214276.17292126565,
+          "rounded": 630,
+          "sampleEvaluationEquivalents": 629.5522691780675,
+          "term": "master-batch"
+        },
+        {
+          "cheapestNanosEach": 13253.882352941177,
+          "dearestNanosEach": 185118.58,
+          "fixtures": [
+            "mixed-61",
+            "triangle-20"
+          ],
+          "pooledNanosEach": 115554.29761904762,
+          "rounded": 340,
+          "sampleEvaluationEquivalents": 339.50331148615277,
+          "term": "publication-attempt-call"
+        },
+        {
+          "cheapestNanosEach": 6178.3,
+          "dearestNanosEach": 6178.3,
+          "fixtures": [
+            "mixed-61"
+          ],
+          "pooledNanosEach": 6178.3,
+          "rounded": 19,
+          "sampleEvaluationEquivalents": 18.152101242222805,
+          "term": "repair-row"
+        },
+        {
+          "cheapestNanosEach": 67877.0,
+          "dearestNanosEach": 502970.375,
+          "fixtures": [
+            "mixed-61",
+            "shapes-17"
+          ],
+          "pooledNanosEach": 357939.25,
+          "rounded": 1052,
+          "sampleEvaluationEquivalents": 1051.640338695968,
+          "term": "disruption-move"
+        }
+      ]
+    },
+    "cellSources": [
+      {
+        "bites": 26,
+        "fixture": "mixed-61",
+        "path": "/var/lib/t3/tmp/overlapics/w4currency-1/currency-mixed-61.json",
+        "searchSeconds": 2.564059499
+      },
+      {
+        "bites": 5,
+        "fixture": "shapes-17",
+        "path": "/var/lib/t3/tmp/overlapics/w4currency-1/currency-shapes-17.json",
+        "searchSeconds": 0.611435721
+      },
+      {
+        "bites": 34,
+        "fixture": "triangle-20",
+        "path": "/var/lib/t3/tmp/overlapics/w4currency-1/currency-triangle-20.json",
+        "searchSeconds": 0.006240303
+      }
+    ],
+    "cells": [
+      {
+        "fixture": "mixed-61",
+        "seconds": 2.564059499,
+        "terms": {
+          "actualPublicationAttemptCalls": 50,
+          "disruptionMoves": 8,
+          "masterBatches": 514,
+          "repairRows": 20,
+          "sampleEvaluations": 6977140
+        }
+      },
+      {
+        "fixture": "shapes-17",
+        "seconds": 0.611435721,
+        "terms": {
+          "actualPublicationAttemptCalls": 0,
+          "disruptionMoves": 4,
+          "masterBatches": 840,
+          "repairRows": 0,
+          "sampleEvaluations": 1418260
+        }
+      },
+      {
+        "fixture": "triangle-20",
+        "seconds": 0.006240303,
+        "terms": {
+          "actualPublicationAttemptCalls": 34,
+          "disruptionMoves": 0,
+          "masterBatches": 5,
+          "repairRows": 0,
+          "sampleEvaluations": 45364
+        }
+      }
+    ],
+    "experiment": "overlap-ics",
+    "harness": {
+      "skipped": [
+        {
+          "fixture": "shapes-17",
+          "reason": "the cell never reached exact geometry: no call to price",
+          "term": "publication-attempt-call"
+        },
+        {
+          "fixture": "shapes-17",
+          "reason": "the cell never reached exact geometry, so it never repaired",
+          "term": "repair-row"
+        },
+        {
+          "fixture": "triangle-20",
+          "reason": "the cell repaired no row",
+          "term": "repair-row"
+        },
+        {
+          "fixture": "triangle-20",
+          "reason": "the cell disrupted nothing",
+          "term": "disruption-move"
+        }
+      ],
+      "timings": [
+        {
+          "count": 6977140,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall) over the bite's own all-workers sampleEvaluations",
+          "fixture": "mixed-61",
+          "nanos": 2381078390,
+          "term": "sample-evaluation"
+        },
+        {
+          "count": 514,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual",
+          "fixture": "mixed-61",
+          "nanos": 166290974,
+          "term": "master-batch"
+        },
+        {
+          "count": 50,
+          "derivation": "fitted: non-negative least squares of exactNs on (calls, repairRows)",
+          "fixture": "mixed-61",
+          "nanos": 9255929,
+          "term": "publication-attempt-call"
+        },
+        {
+          "count": 20,
+          "derivation": "fitted: non-negative least squares of exactNs on (calls, repairRows)",
+          "fixture": "mixed-61",
+          "nanos": 123566,
+          "term": "repair-row"
+        },
+        {
+          "count": 8,
+          "derivation": "UPPER BOUND: the whole search wall the separations' own barrier-to-barrier accounting did not claim - which also contains the pool restore, the pose installation, the cut and the publication commit. No timer exists around `disrupt::disrupt`, because adding one means editing search/overlap_ics/mod.rs. If the transfer check rejects, this bound is the first suspect.",
+          "fixture": "mixed-61",
+          "nanos": 4023763,
+          "term": "disruption-move"
+        },
+        {
+          "count": 1418260,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall) over the bite's own all-workers sampleEvaluations",
+          "fixture": "shapes-17",
+          "nanos": 487317629,
+          "term": "sample-evaluation"
+        },
+        {
+          "count": 840,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual",
+          "fixture": "shapes-17",
+          "nanos": 123846584,
+          "term": "master-batch"
+        },
+        {
+          "count": 4,
+          "derivation": "UPPER BOUND: the whole search wall the separations' own barrier-to-barrier accounting did not claim - which also contains the pool restore, the pose installation, the cut and the publication commit. No timer exists around `disrupt::disrupt`, because adding one means editing search/overlap_ics/mod.rs. If the transfer check rejects, this bound is the first suspect.",
+          "fixture": "shapes-17",
+          "nanos": 271508,
+          "term": "disruption-move"
+        },
+        {
+          "count": 45364,
+          "derivation": "direct: sweepCriticalNs (the sweeps' wall) over the bite's own all-workers sampleEvaluations",
+          "fixture": "triangle-20",
+          "nanos": 4526048,
+          "term": "sample-evaluation"
+        },
+        {
+          "count": 5,
+          "derivation": "direct: prep + dispatch + mergeGls + bandFold + snapshot + residual",
+          "fixture": "triangle-20",
+          "nanos": 1063761,
+          "term": "master-batch"
+        },
+        {
+          "count": 34,
+          "derivation": "direct: exactNs over the calls, on a cell that never repaired",
+          "fixture": "triangle-20",
+          "nanos": 450632,
+          "term": "publication-attempt-call"
+        }
+      ]
+    },
+    "spec": "docs/economics-round-spec.md, funded change 3",
+    "summary": "U1-weighted-vector B=630 E=340 R=19 D=1052",
+    "u0": {
+      "accepted": false,
+      "currency": {
+        "coefficients": null,
+        "version": "U0-sample-evaluations"
+      },
+      "predictions": [
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.611435721,
+          "predictedSeconds": 0.5212025307005077,
+          "relativeError": 0.14757592204772788,
+          "transferFixture": "shapes-17",
+          "units": 1418260,
+          "unitsPerSecond": 2721130.3024446703,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.006240303,
+          "predictedSeconds": 0.01667101349731208,
+          "relativeError": 1.6715070561977647,
+          "transferFixture": "triangle-20",
+          "units": 45364,
+          "unitsPerSecond": 2721130.3024446703,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 2.564059499,
+          "predictedSeconds": 3.007962310449382,
+          "relativeError": 0.1731250041672227,
+          "transferFixture": "mixed-61",
+          "units": 6977140,
+          "unitsPerSecond": 2319556.9890493853,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 0.006240303,
+          "predictedSeconds": 0.019557182778506058,
+          "relativeError": 2.1340117264347676,
+          "transferFixture": "triangle-20",
+          "units": 45364,
+          "unitsPerSecond": 2319556.9890493853,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 2.564059499,
+          "predictedSeconds": 0.9597801709157041,
+          "relativeError": 0.6256794464831941,
+          "transferFixture": "mixed-61",
+          "units": 6977140,
+          "unitsPerSecond": 7269518.803814494,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 0.611435721,
+          "predictedSeconds": 0.19509681978617407,
+          "relativeError": 0.6809201473098525,
+          "transferFixture": "shapes-17",
+          "units": 1418260,
+          "unitsPerSecond": 7269518.803814494,
+          "withinTolerance": false
+        }
+      ],
+      "rejectedBy": "mixed-61 -> shapes-17",
+      "tolerance": 0.1,
+      "worstRelativeError": 2.1340117264347676
+    },
+    "u1": {
+      "accepted": false,
+      "currency": {
+        "coefficients": {
+          "bMasterBatch": 630,
+          "dDisruptionMove": 1052,
+          "ePublicationCall": 340,
+          "measured": {
+            "bMasterBatch": 629.5522691780675,
+            "baseNsPerSampleEvaluation": 340.3627997418243,
+            "dDisruptionMove": 1051.640338695968,
+            "ePublicationCall": 339.50331148615277,
+            "rRepairRow": 18.152101242222805
+          },
+          "rRepairRow": 19,
+          "rounding": "conservative-ceil"
+        },
+        "version": "U1-weighted-vector"
+      },
+      "predictions": [
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.611435721,
+          "predictedSeconds": 0.6830025285807706,
+          "relativeError": 0.11704714841279384,
+          "transferFixture": "shapes-17",
+          "units": 1951668,
+          "unitsPerSecond": 2857482.8325385908,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "mixed-61",
+          "observedSeconds": 0.006240303,
+          "predictedSeconds": 0.021023398396633655,
+          "relativeError": 2.368970768988887,
+          "transferFixture": "triangle-20",
+          "units": 60074,
+          "unitsPerSecond": 2857482.8325385908,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 2.564059499,
+          "predictedSeconds": 2.2953905774194565,
+          "relativeError": 0.10478263928170388,
+          "transferFixture": "mixed-61",
+          "units": 7326756,
+          "unitsPerSecond": 3191943.0497257453,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "shapes-17",
+          "observedSeconds": 0.006240303,
+          "predictedSeconds": 0.018820511225963638,
+          "relativeError": 2.0159611201513195,
+          "transferFixture": "triangle-20",
+          "units": 60074,
+          "unitsPerSecond": 3191943.0497257453,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 2.564059499,
+          "predictedSeconds": 0.7610809576034224,
+          "relativeError": 0.7031734412168481,
+          "transferFixture": "mixed-61",
+          "units": 7326756,
+          "unitsPerSecond": 9626776.135710077,
+          "withinTolerance": false
+        },
+        {
+          "calibratedOn": "triangle-20",
+          "observedSeconds": 0.611435721,
+          "predictedSeconds": 0.20273329019882144,
+          "relativeError": 0.6684307389380977,
+          "transferFixture": "shapes-17",
+          "units": 1951668,
+          "unitsPerSecond": 9626776.135710077,
+          "withinTolerance": false
+        }
+      ],
+      "rejectedBy": "mixed-61 -> shapes-17",
+      "tolerance": 0.1,
+      "worstRelativeError": 2.368970768988887
+    }
+  },
+  "CURRENCY_ACCEPTED": false,
+  "WORST_RELATIVE_ERROR": 2.368970768988887
+}

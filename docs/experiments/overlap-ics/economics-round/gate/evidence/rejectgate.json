@@ -1,0 +1,749 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-currency-reject-gate",
+ "spec": "docs/economics-round-spec.md, funded change 3: \"B/E/R/D from timing-only microbenchmarks on all three fixtures, conservative rounding; REJECT the currency if wall-prediction error >10% on any transfer fixture.\"",
+ "tolerance": 0.1,
+ "runs": [
+  {
+   "path": "docs/experiments/overlap-ics/economics-round/gate/evidence/currency-run1.json",
+   "currencyExit": 1,
+   "loadBefore": [
+    "1.02",
+    "1.69",
+    "1.93"
+   ],
+   "loadAfter": [
+    "1.01",
+    "1.67",
+    "1.92"
+   ],
+   "searchSeconds": {
+    "mixed-61": 2.564059499,
+    "shapes-17": 0.611435721,
+    "triangle-20": 0.006240303
+   },
+   "terms": {
+    "mixed-61": {
+     "sampleEvaluations": 6977140,
+     "masterBatches": 514,
+     "exactCalls": 50,
+     "repairRows": 20,
+     "disruptionMoves": 8
+    },
+    "shapes-17": {
+     "sampleEvaluations": 1418260,
+     "masterBatches": 840,
+     "exactCalls": 0,
+     "repairRows": 0,
+     "disruptionMoves": 4
+    },
+    "triangle-20": {
+     "sampleEvaluations": 45364,
+     "masterBatches": 5,
+     "exactCalls": 34,
+     "repairRows": 0,
+     "disruptionMoves": 0
+    }
+   },
+   "currencies": {
+    "u0": {
+     "version": "U0-sample-evaluations",
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.1340117264347676,
+      "worstPair": "shapes-17 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.1731250041672227,
+      "worstPair": "shapes-17 -> mixed-61",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.14757592204772788,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5212025307005077,
+       "observedSeconds": 0.611435721
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 1.6715070561977647,
+       "withinTolerance": false,
+       "predictedSeconds": 0.01667101349731208,
+       "observedSeconds": 0.006240303
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.1731250041672227,
+       "withinTolerance": false,
+       "predictedSeconds": 3.007962310449382,
+       "observedSeconds": 2.564059499
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.1340117264347676,
+       "withinTolerance": false,
+       "predictedSeconds": 0.019557182778506058,
+       "observedSeconds": 0.006240303
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.6256794464831941,
+       "withinTolerance": false,
+       "predictedSeconds": 0.9597801709157041,
+       "observedSeconds": 2.564059499
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.6809201473098525,
+       "withinTolerance": false,
+       "predictedSeconds": 0.19509681978617407,
+       "observedSeconds": 0.611435721
+      }
+     ]
+    },
+    "u1": {
+     "version": "U1-weighted-vector",
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.368970768988887,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.11704714841279384,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.11704714841279384,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6830025285807706,
+       "observedSeconds": 0.611435721
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.368970768988887,
+       "withinTolerance": false,
+       "predictedSeconds": 0.021023398396633655,
+       "observedSeconds": 0.006240303
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.10478263928170388,
+       "withinTolerance": false,
+       "predictedSeconds": 2.2953905774194565,
+       "observedSeconds": 2.564059499
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.0159611201513195,
+       "withinTolerance": false,
+       "predictedSeconds": 0.018820511225963638,
+       "observedSeconds": 0.006240303
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7031734412168481,
+       "withinTolerance": false,
+       "predictedSeconds": 0.7610809576034224,
+       "observedSeconds": 2.564059499
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.6684307389380977,
+       "withinTolerance": false,
+       "predictedSeconds": 0.20273329019882144,
+       "observedSeconds": 0.611435721
+      }
+     ]
+    }
+   },
+   "coefficients": {
+    "bMasterBatch": 630,
+    "dDisruptionMove": 1052,
+    "ePublicationCall": 340,
+    "rRepairRow": 19,
+    "rounding": "conservative-ceil"
+   },
+   "measuredCoefficients": {
+    "bMasterBatch": 629.5522691780675,
+    "baseNsPerSampleEvaluation": 340.3627997418243,
+    "dDisruptionMove": 1051.640338695968,
+    "ePublicationCall": 339.50331148615277,
+    "rRepairRow": 18.152101242222805
+   }
+  },
+  {
+   "path": "docs/experiments/overlap-ics/economics-round/gate/evidence/currency-run2.json",
+   "currencyExit": 1,
+   "loadBefore": [
+    "0.86",
+    "1.60",
+    "1.89"
+   ],
+   "loadAfter": [
+    "1.35",
+    "1.69",
+    "1.92"
+   ],
+   "searchSeconds": {
+    "mixed-61": 2.568257692,
+    "shapes-17": 0.617464021,
+    "triangle-20": 0.005547428
+   },
+   "terms": {
+    "mixed-61": {
+     "sampleEvaluations": 6977140,
+     "masterBatches": 514,
+     "exactCalls": 50,
+     "repairRows": 20,
+     "disruptionMoves": 8
+    },
+    "shapes-17": {
+     "sampleEvaluations": 1418260,
+     "masterBatches": 840,
+     "exactCalls": 0,
+     "repairRows": 0,
+     "disruptionMoves": 4
+    },
+    "triangle-20": {
+     "sampleEvaluations": 45364,
+     "masterBatches": 5,
+     "exactCalls": 34,
+     "repairRows": 0,
+     "disruptionMoves": 0
+    }
+   },
+   "currencies": {
+    "u0": {
+     "version": "U0-sample-evaluations",
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.560208804611525,
+      "worstPair": "shapes-17 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.18275459038584171,
+      "worstPair": "shapes-17 -> mixed-61",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.15451606941235638,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5220559074715313,
+       "observedSeconds": 0.617464021
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.0100993338356883,
+       "withinTolerance": false,
+       "predictedSeconds": 0.016698309327301444,
+       "observedSeconds": 0.005547428
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.18275459038584171,
+       "withinTolerance": false,
+       "predictedSeconds": 3.037618574506747,
+       "observedSeconds": 2.568257692
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.560208804611525,
+       "withinTolerance": false,
+       "predictedSeconds": 0.0197500020085485,
+       "observedSeconds": 0.005547428
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.6677850498954375,
+       "withinTolerance": false,
+       "predictedSeconds": 0.8532136010034388,
+       "observedSeconds": 2.568257692
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7191175981856166,
+       "withinTolerance": false,
+       "predictedSeconds": 0.17343477725244688,
+       "observedSeconds": 0.617464021
+      }
+     ]
+    },
+    "u1": {
+     "version": "U1-weighted-vector",
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.8095067075416003,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.1184159330964213,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.1184159330964213,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6905815992001832,
+       "observedSeconds": 0.617464021
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.8095067075416003,
+       "withinTolerance": false,
+       "predictedSeconds": 0.021132964175604084,
+       "observedSeconds": 0.005547428
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.10587826012866043,
+       "withinTolerance": false,
+       "predictedSeconds": 2.296335036008991,
+       "observedSeconds": 2.568257692
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.406162765398635,
+       "withinTolerance": false,
+       "predictedSeconds": 0.018895442697329817,
+       "observedSeconds": 0.005547428
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7374988215612481,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6741706706843891,
+       "observedSeconds": 2.568257692
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7064144995775131,
+       "withinTolerance": false,
+       "predictedSeconds": 0.18127848359816595,
+       "observedSeconds": 0.617464021
+      }
+     ]
+    }
+   },
+   "coefficients": {
+    "bMasterBatch": 657,
+    "dDisruptionMove": 1008,
+    "ePublicationCall": 346,
+    "rRepairRow": 85,
+    "rounding": "conservative-ceil"
+   },
+   "measuredCoefficients": {
+    "bMasterBatch": 656.5609971014044,
+    "baseNsPerSampleEvaluation": 340.03714213547494,
+    "dDisruptionMove": 1007.4073511951475,
+    "ePublicationCall": 345.4840725012982,
+    "rRepairRow": 84.44945107955064
+   }
+  },
+  {
+   "path": "docs/experiments/overlap-ics/economics-round/gate/evidence/currency-run3.json",
+   "currencyExit": 1,
+   "loadBefore": [
+    "0.92",
+    "1.55",
+    "1.86"
+   ],
+   "loadAfter": [
+    "1.49",
+    "1.65",
+    "1.89"
+   ],
+   "searchSeconds": {
+    "mixed-61": 2.5671428450000002,
+    "shapes-17": 0.604145708,
+    "triangle-20": 0.005114888
+   },
+   "terms": {
+    "mixed-61": {
+     "sampleEvaluations": 6977140,
+     "masterBatches": 514,
+     "exactCalls": 50,
+     "repairRows": 20,
+     "disruptionMoves": 8
+    },
+    "shapes-17": {
+     "sampleEvaluations": 1418260,
+     "masterBatches": 840,
+     "exactCalls": 0,
+     "repairRows": 0,
+     "disruptionMoves": 4
+    },
+    "triangle-20": {
+     "sampleEvaluations": 45364,
+     "masterBatches": 5,
+     "exactCalls": 34,
+     "repairRows": 0,
+     "disruptionMoves": 0
+    }
+   },
+   "currencies": {
+    "u0": {
+     "version": "U0-sample-evaluations",
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 2.777992169046464,
+      "worstPair": "shapes-17 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.15774587543631013,
+      "worstPair": "shapes-17 -> mixed-61",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.13625259116285915,
+       "withinTolerance": false,
+       "predictedSeconds": 0.5218292898450799,
+       "observedSeconds": 0.604145708
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.2632309466208924,
+       "withinTolerance": false,
+       "predictedSeconds": 0.016691060810099842,
+       "observedSeconds": 0.005114888
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.15774587543631013,
+       "withinTolerance": false,
+       "predictedSeconds": 2.972099040454585,
+       "observedSeconds": 2.5671428450000002
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.777992169046464,
+       "withinTolerance": false,
+       "predictedSeconds": 0.01932400680954973,
+       "observedSeconds": 0.005114888
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.693555247434905,
+       "withinTolerance": false,
+       "predictedSeconds": 0.7866874539352791,
+       "observedSeconds": 2.5671428450000002
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7353091390201605,
+       "withinTolerance": false,
+       "predictedSeconds": 0.1599118476077947,
+       "observedSeconds": 0.604145708
+      }
+     ]
+    },
+    "u1": {
+     "version": "U1-weighted-vector",
+     "allThreeFixtures": {
+      "pairs": 6,
+      "accepted": false,
+      "worstRelativeError": 3.005169067799688,
+      "worstPair": "mixed-61 -> triangle-20",
+      "pairsOverTolerance": 6,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "restrictedToMixed61AndShapes17": {
+      "pairs": 2,
+      "accepted": false,
+      "worstRelativeError": 0.13120633376150853,
+      "worstPair": "mixed-61 -> shapes-17",
+      "pairsOverTolerance": 2,
+      "rejectedBy": "mixed-61 -> shapes-17"
+     },
+     "predictions": [
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.13120633376150853,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6834134514044309,
+       "observedSeconds": 0.604145708
+      },
+      {
+       "calibratedOn": "mixed-61",
+       "transferFixture": "triangle-20",
+       "relativeError": 3.005169067799688,
+       "withinTolerance": false,
+       "predictedSeconds": 0.02048599120285981,
+       "observedSeconds": 0.005114888
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.11598797659240369,
+       "withinTolerance": false,
+       "predictedSeconds": 2.2693851407847836,
+       "observedSeconds": 2.5671428450000002
+      },
+      {
+       "calibratedOn": "shapes-17",
+       "transferFixture": "triangle-20",
+       "relativeError": 2.540617611715119,
+       "withinTolerance": false,
+       "predictedSeconds": 0.01810986253475032,
+       "observedSeconds": 0.005114888
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "mixed-61",
+       "relativeError": 0.7503226497878234,
+       "withinTolerance": false,
+       "predictedSeconds": 0.6409574231557486,
+       "observedSeconds": 2.5671428450000002
+      },
+      {
+       "calibratedOn": "triangle-20",
+       "transferFixture": "shapes-17",
+       "relativeError": 0.7175634000431954,
+       "withinTolerance": false,
+       "predictedSeconds": 0.1706328596460165,
+       "observedSeconds": 0.604145708
+      }
+     ]
+    }
+   },
+   "coefficients": {
+    "bMasterBatch": 628,
+    "dDisruptionMove": 1162,
+    "ePublicationCall": 293,
+    "rRepairRow": 131,
+    "rounding": "conservative-ceil"
+   },
+   "measuredCoefficients": {
+    "bMasterBatch": 627.7964391762334,
+    "baseNsPerSampleEvaluation": 339.9017485857915,
+    "dDisruptionMove": 1161.9919137710592,
+    "ePublicationCall": 292.71189727102427,
+    "rRepairRow": 130.1295159087303
+   }
+  }
+ ],
+ "termsIdenticalAcrossRuns": true,
+ "terms": {
+  "mixed-61": {
+   "sampleEvaluations": 6977140,
+   "masterBatches": 514,
+   "exactCalls": 50,
+   "repairRows": 20,
+   "disruptionMoves": 8
+  },
+  "shapes-17": {
+   "sampleEvaluations": 1418260,
+   "masterBatches": 840,
+   "exactCalls": 0,
+   "repairRows": 0,
+   "disruptionMoves": 4
+  },
+  "triangle-20": {
+   "sampleEvaluations": 45364,
+   "masterBatches": 5,
+   "exactCalls": 34,
+   "repairRows": 0,
+   "disruptionMoves": 0
+  }
+ },
+ "currencies": {
+  "u0": {
+   "version": "U0-sample-evaluations",
+   "runs": 3,
+   "acceptedOnEveryRun": false,
+   "rejectedOnEveryRun": true,
+   "worstRelativeErrorPerRun": [
+    2.1340117264347676,
+    2.560208804611525,
+    2.777992169046464
+   ],
+   "rejectedByPerRun": [
+    "mixed-61 -> shapes-17",
+    "mixed-61 -> shapes-17",
+    "mixed-61 -> shapes-17"
+   ],
+   "restrictedToMixed61AndShapes17": {
+    "acceptedOnEveryRun": false,
+    "rejectedOnEveryRun": true,
+    "worstRelativeErrorPerRun": [
+     0.1731250041672227,
+     0.18275459038584171,
+     0.15774587543631013
+    ],
+    "errorsPerRun": [
+     {
+      "mixed-61 -> shapes-17": 0.14757592204772788,
+      "shapes-17 -> mixed-61": 0.1731250041672227
+     },
+     {
+      "mixed-61 -> shapes-17": 0.15451606941235638,
+      "shapes-17 -> mixed-61": 0.18275459038584171
+     },
+     {
+      "mixed-61 -> shapes-17": 0.13625259116285915,
+      "shapes-17 -> mixed-61": 0.15774587543631013
+     }
+    ]
+   }
+  },
+  "u1": {
+   "version": "U1-weighted-vector",
+   "runs": 3,
+   "acceptedOnEveryRun": false,
+   "rejectedOnEveryRun": true,
+   "worstRelativeErrorPerRun": [
+    2.368970768988887,
+    2.8095067075416003,
+    3.005169067799688
+   ],
+   "rejectedByPerRun": [
+    "mixed-61 -> shapes-17",
+    "mixed-61 -> shapes-17",
+    "mixed-61 -> shapes-17"
+   ],
+   "restrictedToMixed61AndShapes17": {
+    "acceptedOnEveryRun": false,
+    "rejectedOnEveryRun": true,
+    "worstRelativeErrorPerRun": [
+     0.11704714841279384,
+     0.1184159330964213,
+     0.13120633376150853
+    ],
+    "errorsPerRun": [
+     {
+      "mixed-61 -> shapes-17": 0.11704714841279384,
+      "shapes-17 -> mixed-61": 0.10478263928170388
+     },
+     {
+      "mixed-61 -> shapes-17": 0.1184159330964213,
+      "shapes-17 -> mixed-61": 0.10587826012866043
+     },
+     {
+      "mixed-61 -> shapes-17": 0.13120633376150853,
+      "shapes-17 -> mixed-61": 0.11598797659240369
+     }
+    ]
+   }
+  }
+ },
+ "coefficientSpread": {
+  "bMasterBatch": {
+   "values": [
+    630,
+    657,
+    628
+   ],
+   "min": 628,
+   "max": 657,
+   "ratio": 1.0461783439490446,
+   "median": 630
+  },
+  "dDisruptionMove": {
+   "values": [
+    1052,
+    1008,
+    1162
+   ],
+   "min": 1008,
+   "max": 1162,
+   "ratio": 1.1527777777777777,
+   "median": 1052
+  },
+  "ePublicationCall": {
+   "values": [
+    340,
+    346,
+    293
+   ],
+   "min": 293,
+   "max": 346,
+   "ratio": 1.180887372013652,
+   "median": 340
+  },
+  "rRepairRow": {
+   "values": [
+    19,
+    85,
+    131
+   ],
+   "min": 19,
+   "max": 131,
+   "ratio": 6.894736842105263,
+   "median": 85
+  }
+ },
+ "CURRENCY_ACCEPTED": false,
+ "SECTION0_GATE_LICENSED": false,
+ "consequence": "REJECTED on every run and under both readings. \u00a70's budget is a \"10 s calibrated-work\" plan; a calibrated-work plan denominated in a currency the spec rejects is the \"silently inventing another exchange rate\" Sol review 19 \u00a75 forbids, so the six \u00a70 clauses are not answered by this wave and no gate number is produced."
+}
