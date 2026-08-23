@@ -1504,7 +1504,20 @@ impl PoolEntry {
         }
     }
 
-    /// Puts the weights back after the rows have been rebuilt from the poses.
+    /// Puts **this entry's own** weights back, after the rows have been rebuilt
+    /// from its poses.
+    ///
+    /// This is a difference from the source and it is deliberate. Their
+    /// `tracker.rs::restore_but_keep_weights` keeps whatever weights the tracker
+    /// currently holds; ours restores the landscape the pooled layout was
+    /// standing in when it was pooled, which is the reading Sol review 17 Round
+    /// 2 §5 gives the explore-fail path ("reset weights for the restored pool
+    /// state"). The two rules coincide for the *rollback inside* a separation -
+    /// which [`restore_keeping_weights`] implements theirs for, because Grok
+    /// review 12 Round 2 §6.4 is explicit that weights persist across a rollback
+    /// inside a width - and diverge only here, where a different layout is being
+    /// restored and pairing it with a landscape learned on a different one would
+    /// rank rows by pressure they never carried.
     fn restore_weights(&self, state: &mut IcsState) {
         for (row, weight) in state.pair_rows.iter_mut().zip(&self.pair_weights) {
             row.weight = *weight;
