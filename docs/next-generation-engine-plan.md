@@ -8367,6 +8367,16 @@ and on one with it compiled — 206.869 / `8a7737381238fa4d`,
 `WHOLE_DOCUMENT_IDENTITY: true` on all four, and the `base` binary is
 **byte-identical to the previous two rounds'** (`61befdc544b4135a…`), which is
 the check that matters after a round that changed the move set: the default
-build did not move one byte. FAST tier green, EXIT=0, ten stages. Evidence,
-drivers, the pre-committed reading and the full six-item caveat list:
+build did not move one byte. Five suites, 0 failures, no flake: 1293, 1357, 20,
+**1345**, **1155** — suites 1–3 unchanged from all three previous rounds and
+suites 4 and 5 each exactly **+3** against 1342 and 1152, which is the three
+pivot vectors and nothing else. FAST tier green, EXIT=0, ten stages.
+
+That battery is the *second* attempt and the round says so: the first was
+stopped after two suites because I corrected an arithmetic slip in one of my
+own doc comments while it was running, and a round boundary that straddles an
+edit is not a round boundary. Both binaries then rebuilt byte-identically
+across the two attempts, which is the independent evidence that the corrected
+comment changed nothing executable. Evidence, drivers, the pre-committed
+reading and the full seven-item caveat list:
 `docs/experiments/overlap-ics/gate0-pivot-rerun/`.
