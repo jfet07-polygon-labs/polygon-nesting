@@ -276,10 +276,10 @@ impl RelocateOutcome {
 
 /// One candidate in the pool, with the provenance the counters are keyed on.
 #[derive(Clone, Copy, Debug)]
-struct Candidate {
-    pose: Pose,
-    eval: SampleEval,
-    origin: SampleOrigin,
+pub struct Candidate {
+    pub pose: Pose,
+    pub eval: SampleEval,
+    pub origin: SampleOrigin,
 }
 
 /// The `n` best **unique** samples, worst-evictable, with the acceptance upper
@@ -293,15 +293,15 @@ struct Candidate {
 /// wrap-around blind spot from the sign of the remainder, and our `theta_deg`
 /// is documented to accumulate over the whole circle, so the raw remainder
 /// would call `359.5°` and `0.5°` distinct.
-struct BestSamples {
+pub struct BestSamples {
     size: usize,
     translation_threshold_mm: f64,
     angle_threshold_deg: f64,
-    samples: Vec<Candidate>,
+    pub samples: Vec<Candidate>,
 }
 
 impl BestSamples {
-    fn new(size: usize, translation_threshold_mm: f64, angle_threshold_deg: f64) -> Self {
+    pub fn new(size: usize, translation_threshold_mm: f64, angle_threshold_deg: f64) -> Self {
         Self {
             size,
             translation_threshold_mm,
@@ -310,14 +310,14 @@ impl BestSamples {
         }
     }
 
-    fn upper_bound(&self) -> SampleEval {
+    pub fn upper_bound(&self) -> SampleEval {
         match self.samples.get(self.size.saturating_sub(1)) {
             Some(candidate) => candidate.eval,
             None => SampleEval::INVALID,
         }
     }
 
-    fn similar(&self, left: Pose, right: Pose) -> bool {
+    pub fn similar(&self, left: Pose, right: Pose) -> bool {
         if (left.tx_mm - right.tx_mm).abs() >= self.translation_threshold_mm
             || (left.ty_mm - right.ty_mm).abs() >= self.translation_threshold_mm
         {
@@ -326,7 +326,7 @@ impl BestSamples {
         angle_gap_deg(left.theta_deg, right.theta_deg) < self.angle_threshold_deg
     }
 
-    fn report(&mut self, candidate: Candidate) -> bool {
+    pub fn report(&mut self, candidate: Candidate) -> bool {
         if eval_cmp(candidate.eval, self.upper_bound()) != Ordering::Less {
             return false;
         }
@@ -357,12 +357,12 @@ impl BestSamples {
         true
     }
 
-    fn best(&self) -> Option<Candidate> {
+    pub fn best(&self) -> Option<Candidate> {
         self.samples.first().copied()
     }
 }
 
-fn poses_are_similar(left: Pose, right: Pose, translation_mm: f64, angle_deg: f64) -> bool {
+pub fn poses_are_similar(left: Pose, right: Pose, translation_mm: f64, angle_deg: f64) -> bool {
     (left.tx_mm - right.tx_mm).abs() < translation_mm
         && (left.ty_mm - right.ty_mm).abs() < translation_mm
         && angle_gap_deg(left.theta_deg, right.theta_deg) < angle_deg

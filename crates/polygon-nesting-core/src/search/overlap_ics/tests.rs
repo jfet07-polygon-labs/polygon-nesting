@@ -859,27 +859,6 @@ fn one_piece(ring: &[[f64; 2]]) -> Fixture {
     }
 }
 
-/// The same state builder as [`state_of`], at an explicit pose.
-fn state_at(fixture: &Fixture, pose: Pose, target: f64) -> (Vec<PieceSource>, Contract, IcsState) {
-    let settings = test_settings();
-    let contract = Contract::from_settings(settings);
-    let pieces = fixture.pieces();
-    let sources = super::state::piece_sources(&pieces).expect("sources");
-    let poses = sources.iter().map(|_| pose).collect::<Vec<_>>();
-    let geometry = build_geometry(&sources, &poses);
-    let count = poses.len();
-    let mut state = IcsState {
-        poses,
-        geometry,
-        pair_rows: vec![PairRow::default(); pair_count(count)],
-        edge_rows: vec![[EdgeRow::default(); 4]; count],
-        target_depth_mm: target,
-    };
-    let mut work = WorkVector::default();
-    rebuild_all(&mut state, &contract, &mut work);
-    (sources, contract, state)
-}
-
 /// The invariant the previous two tests are two consequences of: a proposal
 /// with `dt = 0` leaves the transformed centroid exactly where it was.
 ///
@@ -940,4 +919,936 @@ fn a_pure_rotation_proposal_leaves_the_transformed_centroid_where_it_was() {
     // The invariance is exact-to-round-off, not merely inside the band. If this
     // ever reads micrometres the composition has stopped being rigid.
     assert!(worst < 1e-12, "worst centroid excursion {worst} mm");
+}
+
+// ==================================================== the CutCloseRelocate ===
+//
+// The member's own vectors. Grok review 12 Round 2 §6.9 and the wave-1 task
+// list them: sample uniqueness, accept-equal, a container commit beyond the old
+// `ladder_top` on a distant-vacancy fixture, the coordinate descent's wiggle
+// pivot, wiggle only when the piece may rotate, the Algorithm-8 schedule, the
+// interior witness on both campaign fixtures, and the swap-with-followers map.
+
+use super::disrupt::{
+    carry, closest_feasible_angle, disrupt, is_distinct_enough, large_pieces, point_in_ring,
+    transformed_witness,
+};
+use super::relocate::{
+    angle_gap_deg, cd_accepts, colliding_permutation, coord_descent, eval_cmp, relocate,
+    transformed_centroid, wiggle_pose, BestSamples, Candidate, RelocateConfig, RelocateKey,
+    SampleEval, SampleOrigin,
+};
+
+/// A fixture whose pieces carry an explicit rotation permission, so the two
+/// wiggle vectors can be the same geometry with the flag flipped.
+fn pieces_of(fixture: &Fixture, allow_rotation: bool) -> Vec<GeneralFastPiece<'_>> {
+    fixture
+        .ids
+        .iter()
+        .zip(&fixture.polygons)
+        .map(|(id, polygon)| GeneralFastPiece {
+            id,
+            polygon,
+            allow_rotation,
+            allow_mirror: false,
+        })
+        .collect()
+}
+
+/// A state built from an explicit pose per piece.
+fn state_of_poses(
+    fixture: &Fixture,
+    poses: Vec<Pose>,
+    target: f64,
+) -> (Vec<PieceSource>, Contract, IcsState) {
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let geometry = build_geometry(&sources, &poses);
+    let count = poses.len();
+    let mut state = IcsState {
+        poses,
+        geometry,
+        pair_rows: vec![PairRow::default(); pair_count(count)],
+        edge_rows: vec![[EdgeRow::default(); 4]; count],
+        target_depth_mm: target,
+    };
+    let mut work = WorkVector::default();
+    rebuild_all(&mut state, &contract, &mut work);
+    (sources, contract, state)
+}
+
+fn pose_at(tx: f64, ty: f64) -> Pose {
+    Pose {
+        tx_mm: tx,
+        ty_mm: ty,
+        theta_deg: 0.0,
+        mirrored: false,
+    }
+}
+
+fn collision(weighted: f64) -> SampleEval {
+    SampleEval {
+        raw: weighted,
+        weighted,
+    }
+}
+
+const CLEAR: SampleEval = SampleEval {
+    raw: 0.0,
+    weighted: 0.0,
+};
+
+// ------------------------------------------------------------ the ordering ---
+
+/// The lexicographic sample order, and the accept-equal rule it feeds.
+///
+/// `Clear` beats every collision however small, two clears compare **equal**,
+/// and below that the order is the weighted incident Φ. The equality is the
+/// load-bearing half: Sparrow's `SampleEval::Clear` carries no payload, and
+/// `coord_descent.rs::tell` adopts anything `!worse`. `if after < before` -
+/// the line Grok review 12 Round 2 §6.3 deletes by name - is precisely the
+/// negation of `cd_accepts` on an equal evaluation.
+#[test]
+fn the_sample_order_is_lexicographic_and_the_descent_accepts_an_equal() {
+    assert_eq!(eval_cmp(CLEAR, collision(1e-12)), std::cmp::Ordering::Less);
+    assert_eq!(eval_cmp(CLEAR, CLEAR), std::cmp::Ordering::Equal);
+    assert_eq!(
+        eval_cmp(collision(1.0), collision(2.0)),
+        std::cmp::Ordering::Less
+    );
+    assert_eq!(
+        eval_cmp(collision(1.0), SampleEval::INVALID),
+        std::cmp::Ordering::Less
+    );
+
+    // The rule itself: not-worse is accepted.
+    assert!(cd_accepts(collision(2.0), collision(1.0)), "better");
+    assert!(cd_accepts(collision(2.0), collision(2.0)), "EQUAL");
+    assert!(cd_accepts(CLEAR, CLEAR), "two clears are equal, and accepted");
+    assert!(!cd_accepts(collision(1.0), collision(2.0)), "worse");
+    assert!(!cd_accepts(CLEAR, collision(1e-12)), "clear is never left");
+}
+
+/// **Accept-equal, walked rather than asserted.**
+///
+/// One piece alone in the middle of a strip: every pose the coarse coordinate
+/// descent can reach is collision-free, so every candidate compares *equal* to
+/// the current one and a strict-decrease rule would refuse all of them and
+/// return the start pose untouched. Accept-equal crosses the plateau instead.
+///
+/// The walk still terminates, and quickly: equal is not `better`, so every step
+/// halves its axis and re-draws.
+#[test]
+fn the_coordinate_descent_crosses_a_plateau_of_equal_evaluations() {
+    let fixture = Fixture::squares(1, 20.0);
+    let start = pose_at(90.0, 90.0);
+    let (sources, contract, mut state) = state_of_poses(&fixture, vec![start], 300.0);
+    assert_eq!(fold(&state).raw, 0.0, "the fixture must be clear");
+
+    let config = RelocateConfig::default();
+    let mut work = WorkVector::default();
+    let (pose, eval) = coord_descent(
+        &mut state,
+        &sources,
+        &contract,
+        0,
+        start,
+        CLEAR,
+        config.coarse,
+        &config,
+        true,
+        99,
+        &mut work,
+    );
+    assert!(eval.is_clear(), "the walk never left the clear plateau: {eval:?}");
+    assert!(work.sample_evaluations >= 2, "the walk evaluated candidates");
+    let travelled = libm::hypot(pose.tx_mm - start.tx_mm, pose.ty_mm - start.ty_mm);
+    assert!(
+        travelled > 0.0 || pose.theta_deg != start.theta_deg,
+        "a strict-decrease rule returns the start pose; accept-equal must move: \
+         {start:?} -> {pose:?}"
+    );
+}
+
+// ------------------------------------------------------------- uniqueness ---
+
+/// **The three finalists are three *different* poses.**
+///
+/// `sample/best_samples.rs`'s rule, on our poses: a sample similar to one
+/// already held is accepted only if it beats **all** the samples it is similar
+/// to, and then it evicts them. Without it, 75 draws that happen to cluster
+/// would spend all three coordinate descents in one basin, and the container
+/// half of the pool would be paid for and thrown away.
+#[test]
+fn the_finalist_pool_holds_three_poses_no_two_of_which_are_the_same_sample() {
+    let threshold = 1.0;
+    let mut pool = BestSamples::new(3, threshold, 1.0);
+    // Four well-separated poses, improving: the fourth evicts the worst.
+    for (index, weighted) in [(0usize, 9.0), (1, 7.0), (2, 5.0), (3, 3.0)] {
+        assert!(
+            pool.report(Candidate {
+                pose: pose_at(index as f64 * 10.0, 0.0),
+                eval: collision(weighted),
+                origin: SampleOrigin::Container,
+            }),
+            "a distinct improving sample is accepted"
+        );
+    }
+    assert_eq!(pool.samples.len(), 3, "the pool is bounded");
+    for (index, left) in pool.samples.iter().enumerate() {
+        for right in &pool.samples[index + 1..] {
+            assert!(
+                !pool.similar(left.pose, right.pose),
+                "two finalists are the same sample: {:?} vs {:?}",
+                left.pose,
+                right.pose
+            );
+        }
+    }
+    // A *worse* near-duplicate of the current best is refused outright, even
+    // though its score would otherwise have earned a slot.
+    let best = pool.best().expect("a best sample");
+    assert!(
+        !pool.report(Candidate {
+            pose: pose_at(best.pose.tx_mm + threshold / 2.0, best.pose.ty_mm),
+            eval: collision(best.eval.weighted + 1.0),
+            origin: SampleOrigin::Container,
+        }),
+        "a worse near-duplicate must not take a coordinate descent's slot"
+    );
+    // A *better* near-duplicate replaces it, and does not sit beside it.
+    let held = pool.samples.len();
+    assert!(pool.report(Candidate {
+        pose: pose_at(best.pose.tx_mm + threshold / 2.0, best.pose.ty_mm),
+        eval: collision(best.eval.weighted - 1.0),
+        origin: SampleOrigin::Container,
+    }));
+    assert_eq!(pool.samples.len(), held, "the similar sample was evicted");
+
+    // The angular half of the rule, on the accumulated degree coordinate.
+    assert!((angle_gap_deg(359.5, 0.5) - 1.0).abs() < 1e-12, "the wrap is closed");
+    assert!((angle_gap_deg(-0.5, 720.5) - 1.0).abs() < 1e-12, "and so is a full turn");
+    let mut turned = pose_at(0.0, 0.0);
+    turned.theta_deg = 0.5;
+    assert!(pool.similar(pose_at(0.0, 0.0), turned), "half a degree is one sample");
+    turned.theta_deg = 1.5;
+    assert!(
+        !pool.similar(pose_at(0.0, 0.0), turned),
+        "a degree and a half is two"
+    );
+}
+
+// ---------------------------------------------- the neutered-relocate wire ---
+
+/// **The pre-named defect's tripwire.**
+///
+/// Both consultants named the same most-likely implementation failure: the 50
+/// container-wide samples are drawn and evaluated, and then a leftover strict
+/// filter or step cap rejects every one of them, so only local refinement ever
+/// commits. Grok review 12 §6.3.1 writes the vector as counters plus a
+/// distance, and this is it verbatim: `containerSamples >= 50`,
+/// `focusedSamples >= 25`, `containerCommits >= 1`, and a committed
+/// displacement **greater than the old `ladder_top`** - the exact radius the
+/// retired backtracking ladder could not leave.
+///
+/// The fixture is the minimum that can distinguish the two behaviours: two
+/// identical squares in the *same* pose, in a strip with room for a hundred of
+/// them. Every focused sample is inside the piece's own overlapping AABB and
+/// cannot be collision-free; a container sample almost anywhere is. A neutered
+/// relocate reports the samples and stays put.
+#[test]
+fn a_relocate_commits_a_container_pose_far_beyond_the_old_ladder_top() {
+    let fixture = Fixture::squares(2, 20.0);
+    let stacked = pose_at(10.0, 10.0);
+    let (sources, contract, mut state) = state_of_poses(&fixture, vec![stacked, stacked], 300.0);
+    let entry = fold(&state);
+    assert!(entry.raw > 0.0, "the two pieces must overlap: {entry:?}");
+
+    let ladder_top_mm = DescentConfig::derive(&contract, &sources, 0).ladder_top_mm;
+    assert!(
+        (ladder_top_mm - 1.25).abs() < 1e-12,
+        "the retired ladder's top rung {ladder_top_mm}"
+    );
+
+    let config = RelocateConfig::default();
+    let mut work = WorkVector::default();
+    let outcome = relocate(
+        &mut state,
+        &sources,
+        &contract,
+        &[true, true],
+        1,
+        &config,
+        RelocateKey::default(),
+        &mut work,
+    );
+
+    assert!(outcome.ran, "a colliding piece is in the colliding set");
+    assert!(
+        work.focused_samples >= 25,
+        "focusedSamples {}",
+        work.focused_samples
+    );
+    assert!(
+        work.container_samples >= 50,
+        "containerSamples {}",
+        work.container_samples
+    );
+    assert_eq!(
+        outcome.origin,
+        SampleOrigin::Container,
+        "the vacancy is container-wide and nothing focused can reach it"
+    );
+    assert!(
+        work.container_commits >= 1,
+        "containerCommits {} - the container half of the pool was evaluated and \
+         then refused; look at the commit filter, not the sampler",
+        work.container_commits
+    );
+    assert!(
+        outcome.displacement_mm > ladder_top_mm,
+        "committed displacement {} mm is inside the retired ladder's {} mm \
+         neighbourhood: this is PGS in a sampling costume",
+        outcome.displacement_mm,
+        ladder_top_mm
+    );
+    assert!(
+        outcome.after.is_clear(),
+        "the strip has a vacancy and the relocate must find it: {:?}",
+        outcome.after
+    );
+    // The whole pool was actually paid for: 1 current pose + 25 + 50, plus the
+    // four coordinate-descent walks.
+    assert!(
+        outcome.sample_evaluations > 76,
+        "sampleEvaluations {} - the coordinate descents did not run",
+        outcome.sample_evaluations
+    );
+    assert!(
+        work.sample_evaluations_per_relocate() > 76.0,
+        "sampleEvaluationsPerRelocate {}",
+        work.sample_evaluations_per_relocate()
+    );
+    println!(
+        "neutered-relocate tripwire: focusedSamples={} containerSamples={} \
+         containerCommits={} sampleEvaluations={} displacement={:.3} mm against \
+         ladderTop={:.3} mm",
+        work.focused_samples,
+        work.container_samples,
+        work.container_commits,
+        outcome.sample_evaluations,
+        outcome.displacement_mm,
+        ladder_top_mm
+    );
+}
+
+/// A relocate never runs on a piece that is not in the colliding set, and never
+/// touches it. Their `ct.get_loss(pk) > 0.0` filter.
+#[test]
+fn a_clear_piece_is_not_in_the_colliding_set() {
+    let fixture = Fixture::squares(2, 20.0);
+    let apart = vec![pose_at(20.0, 20.0), pose_at(120.0, 120.0)];
+    let (sources, contract, mut state) = state_of_poses(&fixture, apart.clone(), 300.0);
+    assert_eq!(fold(&state).raw, 0.0);
+
+    let mut order = Vec::new();
+    colliding_permutation(&state, RelocateKey::default(), &mut order);
+    assert!(order.is_empty(), "nothing collides: {order:?}");
+
+    let mut work = WorkVector::default();
+    let outcome = relocate(
+        &mut state,
+        &sources,
+        &contract,
+        &[true, true],
+        0,
+        &RelocateConfig::default(),
+        RelocateKey::default(),
+        &mut work,
+    );
+    assert!(!outcome.ran);
+    assert_eq!(work.sample_evaluations, 0, "nothing was sampled");
+    assert_eq!(work.relocates, 0);
+    assert_eq!(state.poses[0], apart[0], "and the pose is untouched");
+}
+
+// ----------------------------------------------------------- the CD pivot ---
+
+/// **The wiggle turns the piece about its transformed centroid.**
+///
+/// The same invariant the retired ladder's pivot vectors were consequences of,
+/// now at the coordinate descent's own use site. A wiggle that composed about
+/// the pose origin would slide the piece by `|c − t| · dtheta` while claiming to
+/// be testing an angle - which on both campaign fixtures is at least as large as
+/// the rotation it is modelling, and is the defect `gate0-rerun/README.md` §2.2
+/// named.
+///
+/// The ring here sits 141 mm from its own pose origin, ten circumradii, so an
+/// origin pivot would be off by tens of millimetres rather than by round-off.
+#[test]
+fn the_relocate_wiggle_turns_about_the_transformed_centroid() {
+    let fixture = one_piece(&square(90.0, 90.0, 20.0));
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let offset = libm::hypot(sources[0].centroid[0], sources[0].centroid[1]);
+    assert!(
+        (offset - 141.42135623730951).abs() < 1e-9,
+        "centroid offset {offset}"
+    );
+
+    let mut worst = 0.0f64;
+    for mirrored in [false, true] {
+        for theta_deg in [0.0, 17.5, -123.75, 359.0] {
+            let pose = Pose {
+                tx_mm: 31.5,
+                ty_mm: -87.25,
+                theta_deg,
+                mirrored,
+            };
+            let before = transformed_centroid(&sources[0], pose);
+            for dtheta_deg in [0.05, 0.5, 5.0, -5.0, 90.0, -270.0] {
+                let turned = wiggle_pose(&sources[0], pose, dtheta_deg);
+                assert_eq!(
+                    turned.theta_deg.to_bits(),
+                    (theta_deg + dtheta_deg).to_bits(),
+                    "the angle coordinate is the plain sum, in degrees"
+                );
+                assert_eq!(turned.mirrored, mirrored, "a wiggle never mirrors");
+                let after = transformed_centroid(&sources[0], turned);
+                let moved = libm::hypot(after[0] - before[0], after[1] - before[1]);
+                worst = worst.max(moved);
+            }
+        }
+    }
+    assert!(
+        worst < 1e-9,
+        "the wiggle moved the transformed centroid by {worst} mm; it is turning \
+         about the pose origin, not the centroid"
+    );
+}
+
+/// **The wiggle axis exists only when the piece may rotate**, and so do the 16
+/// sampled orientations.
+///
+/// Two assertions on the same geometry with the flag flipped: a frozen piece's
+/// angle is bit-identical after a coordinate descent *and* after a whole
+/// relocate, and a rotatable one's is not. `sample/search.rs::prerefine_cd_config`
+/// enables the wiggle only for `RotationRange::Continuous`;
+/// `uniform_sampler.rs` gives a `RotationRange::None` item the single angle 0,
+/// and our analogue of "the piece's allowed set" for a frozen piece is the angle
+/// it already has.
+#[test]
+fn a_frozen_piece_keeps_its_angle_through_the_whole_member() {
+    let fixture = Fixture::squares(2, 20.0);
+    let stacked = pose_at(10.0, 10.0);
+
+    for allow_rotation in [false, true] {
+        let (sources, contract, mut state) =
+            state_of_poses(&fixture, vec![stacked, stacked], 300.0);
+        let mut work = WorkVector::default();
+        let outcome = relocate(
+            &mut state,
+            &sources,
+            &contract,
+            &[allow_rotation, allow_rotation],
+            1,
+            &RelocateConfig::default(),
+            RelocateKey::default(),
+            &mut work,
+        );
+        assert!(outcome.ran);
+        if allow_rotation {
+            assert!(
+                state.poses[1].theta_deg != stacked.theta_deg,
+                "a rotatable piece must be able to turn: the 16 orientations and \
+                 the wiggle axis are the rotation half of the operator"
+            );
+        } else {
+            assert_eq!(
+                state.poses[1].theta_deg.to_bits(),
+                stacked.theta_deg.to_bits(),
+                "a frozen piece turned by {} deg",
+                outcome.rotation_deg
+            );
+        }
+    }
+
+    // And directly on the walk, where the axis is drawn.
+    let pieces = pieces_of(&fixture, false);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let (_, contract, mut state) = state_of_poses(&fixture, vec![stacked, stacked], 300.0);
+    let config = RelocateConfig::default();
+    let mut work = WorkVector::default();
+    let (pose, _) = coord_descent(
+        &mut state,
+        &sources,
+        &contract,
+        1,
+        stacked,
+        collision(1.0),
+        config.coarse,
+        &config,
+        false,
+        7,
+        &mut work,
+    );
+    assert_eq!(
+        pose.theta_deg.to_bits(),
+        stacked.theta_deg.to_bits(),
+        "the wiggle axis must not be drawable for a frozen piece"
+    );
+}
+
+// -------------------------------------------------------------------- GLS ---
+
+/// **Algorithm 8's schedule, one dialect, all rows.**
+///
+/// Four claims in one fixture, because they are one rule: the inactive decay
+/// has a floor at 1, the active multiplier is `1.2 + 0.8 v/v_max` so the worst
+/// row gets exactly 2 and a half-pressure row exactly 1.6, the guided fold is
+/// `Σ w v²` with no second term anywhere, and the cap holds.
+#[test]
+fn the_gls_schedule_is_the_published_one_and_the_only_one() {
+    let fixture = Fixture::squares(3, 20.0);
+    let (_, _, mut state) = state_of_poses(
+        &fixture,
+        vec![pose_at(10.0, 10.0), pose_at(60.0, 60.0), pose_at(110.0, 110.0)],
+        300.0,
+    );
+    // A hand-built row set: one row at the worst violation, one at half of it,
+    // one clear and already carrying weight, one clear at the floor.
+    for row in &mut state.pair_rows {
+        row.violation_mm = 0.0;
+        row.weight = 1.0;
+    }
+    for rows in &mut state.edge_rows {
+        for row in rows {
+            row.violation_mm = 0.0;
+            row.weight = 1.0;
+        }
+    }
+    state.pair_rows[0].violation_mm = 4.0;
+    state.pair_rows[1].violation_mm = 2.0;
+    state.pair_rows[2].weight = 2.0;
+    state.edge_rows[0][0].weight = 1.0;
+
+    let active = super::energy::gls_update(&mut state);
+    assert_eq!(active, 2, "exactly two rows carry a violation");
+    assert!(
+        (state.pair_rows[0].weight - 2.0).abs() < 1e-12,
+        "the worst row takes the maximum ratio: {}",
+        state.pair_rows[0].weight
+    );
+    assert!(
+        (state.pair_rows[1].weight - 1.6).abs() < 1e-12,
+        "a half-pressure row takes 1.2 + 0.8/2: {}",
+        state.pair_rows[1].weight
+    );
+    assert!(
+        (state.pair_rows[2].weight - 1.9).abs() < 1e-12,
+        "an inactive row decays by 0.95: {}",
+        state.pair_rows[2].weight
+    );
+    assert!(
+        (state.edge_rows[0][0].weight - 1.0).abs() < 1e-12,
+        "and never below the floor: {}",
+        state.edge_rows[0][0].weight
+    );
+
+    // One dialect: the guided fold is `Σ w v²` and nothing else. There is no
+    // integer penalty left to add a second term.
+    let totals = fold(&state);
+    let mut expected_raw = 0.0;
+    let mut expected_guided = 0.0;
+    for row in &state.pair_rows {
+        if row.violation_mm > 0.0 {
+            expected_raw += row.violation_mm * row.violation_mm;
+            expected_guided += row.weight * row.violation_mm * row.violation_mm;
+        }
+    }
+    for rows in &state.edge_rows {
+        for row in rows {
+            if row.violation_mm > 0.0 {
+                expected_raw += row.violation_mm * row.violation_mm;
+                expected_guided += row.weight * row.violation_mm * row.violation_mm;
+            }
+        }
+    }
+    assert_eq!(totals.raw.to_bits(), expected_raw.to_bits());
+    assert_eq!(totals.guided.to_bits(), expected_guided.to_bits());
+
+    // The cap, and the reset.
+    for _ in 0..200 {
+        super::energy::gls_update(&mut state);
+    }
+    assert!(
+        state.pair_rows[0].weight <= super::energy::GLS_WEIGHT_CAP,
+        "weight {} above the 2^20 cap",
+        state.pair_rows[0].weight
+    );
+    assert!(
+        (state.pair_rows[0].weight - super::energy::GLS_WEIGHT_CAP).abs() < 1e-6,
+        "200 maximum-ratio passes must reach the cap: {}",
+        state.pair_rows[0].weight
+    );
+    super::energy::reset_weights(&mut state);
+    for row in &state.pair_rows {
+        assert_eq!(row.weight, 1.0);
+    }
+    for rows in &state.edge_rows {
+        for row in rows {
+            assert_eq!(row.weight, 1.0);
+        }
+    }
+}
+
+/// A sweep runs the Algorithm-8 pass exactly once, over every row, whether or
+/// not it improved anything - and the stall hook runs no second one.
+#[test]
+fn every_sweep_runs_exactly_one_weight_pass_and_the_stall_hook_runs_none() {
+    let fixture = Fixture::squares(3, 20.0);
+    let stacked = pose_at(10.0, 10.0);
+    let (sources, contract, mut state) =
+        state_of_poses(&fixture, vec![stacked, stacked, stacked], 300.0);
+    let config = DescentConfig::derive(&contract, &sources, 0);
+    let mut descent = super::descent::Descent::new(config, vec![true, true, true]);
+    let mut work = WorkVector::default();
+
+    descent.sweep(&mut state, &sources, &contract, &mut work);
+    assert_eq!(work.weight_updates, 1);
+    descent.sweep(&mut state, &sources, &contract, &mut work);
+    assert_eq!(work.weight_updates, 2);
+
+    let before = state.pair_rows[0].weight;
+    let jump = descent.on_stalled_sweep(&mut state, &sources, &contract, &mut work);
+    assert!(!jump.attempted, "there is no topology jump any more");
+    assert_eq!(work.weight_updates, 2, "and no second weight dialect");
+    assert_eq!(state.pair_rows[0].weight.to_bits(), before.to_bits());
+}
+
+/// A sweep advances the work quota by one per piece however small the colliding
+/// set is, so a converged trajectory reaches its budget instead of spinning.
+#[test]
+fn a_sweep_advances_the_quota_by_one_per_piece() {
+    let fixture = Fixture::squares(4, 20.0);
+    let apart = vec![
+        pose_at(20.0, 20.0),
+        pose_at(120.0, 20.0),
+        pose_at(20.0, 120.0),
+        pose_at(120.0, 120.0),
+    ];
+    let (sources, contract, mut state) = state_of_poses(&fixture, apart, 300.0);
+    assert_eq!(fold(&state).raw, 0.0, "a converged state");
+    let config = DescentConfig::derive(&contract, &sources, 0);
+    let mut descent = super::descent::Descent::new(config, vec![true; 4]);
+    let mut work = WorkVector::default();
+    let outcome = descent.sweep(&mut state, &sources, &contract, &mut work);
+    assert_eq!(outcome.relocated, 0, "nothing was in the colliding set");
+    assert_eq!(descent.proposals, 4, "and the quota still advanced");
+    assert_eq!(work.sample_evaluations, 0);
+}
+
+// -------------------------------------------------------- interior witness ---
+
+/// **Every piece of both campaign fixtures has a witness inside its own
+/// material.**
+///
+/// Arbitration 1's whole content, measured on the two request populations the
+/// campaign runs: mixed-61's 61 source pieces and triangle-20's 20. The
+/// assertion is the even-odd containment test the disruption itself uses, so a
+/// witness that passed here and failed there would be impossible.
+///
+/// The comparison arm is the point of the arbitration: for each piece the area
+/// centroid is measured with the same predicate, and the count of centroids
+/// that fall *outside* their own material is reported. On a population where
+/// that count is zero the arbitration costs nothing; where it is not, this test
+/// is the evidence for it.
+#[test]
+fn every_fixture_piece_has_an_interior_witness_inside_its_own_material() {
+    for (label, path) in [
+        (
+            "mixed-61",
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../tests/fixtures/mixed-61/mixed61-request-exact-clearance.json"
+            ),
+        ),
+        (
+            "triangle-20",
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../../tests/fixtures/triangle-20/2000x2700-compact/request.json"
+            ),
+        ),
+    ] {
+        let bytes = std::fs::read(path).unwrap_or_else(|error| panic!("{label}: {error}"));
+        let document: serde_json::Value =
+            serde_json::from_slice(&bytes).unwrap_or_else(|error| panic!("{label}: {error}"));
+        let sag = document
+            .pointer("/options/irregularSettings/geometry/flatteningSagToleranceMm")
+            .or_else(|| document.pointer("/settings/geometry/flatteningSagToleranceMm"))
+            .and_then(serde_json::Value::as_f64)
+            .unwrap_or(0.0);
+        let imported: Vec<crate::domain::ImportedPiece> = serde_json::from_value(
+            document
+                .get("sourcePieces")
+                .cloned()
+                .unwrap_or_else(|| panic!("{label}: no sourcePieces")),
+        )
+        .unwrap_or_else(|error| panic!("{label}: {error}"));
+        assert!(!imported.is_empty(), "{label}: no pieces");
+
+        let mut centroids_outside = 0usize;
+        for piece in &imported {
+            let polygon =
+                crate::geometry::general_source::polygon_set_from_imported_piece(piece, sag)
+                    .unwrap_or_else(|error| panic!("{label} {}: {error:?}", piece.id.0));
+            let source = PieceSource::of(&piece.id.0, &polygon)
+                .unwrap_or_else(|error| panic!("{label} {}: {error}", piece.id.0));
+            let ring = &source.decomposition.ring;
+            assert!(
+                point_in_ring(source.interior_witness, ring),
+                "{label} {}: the interior witness {:?} is outside its own ring",
+                piece.id.0,
+                source.interior_witness
+            );
+            if !point_in_ring(source.centroid, ring) {
+                centroids_outside += 1;
+            }
+            assert!(
+                source.convex_hull_area_mm2 >= source.area_mm2 - 1e-6,
+                "{label} {}: hull area {} below ring area {}",
+                piece.id.0,
+                source.convex_hull_area_mm2,
+                source.area_mm2
+            );
+            assert!(
+                source.diameter_mm > 0.0 && source.min_bbox_dim_mm > 0.0,
+                "{label} {}: degenerate scale",
+                piece.id
+            );
+        }
+        // Reported, not asserted: the arbitration is about what an area
+        // centroid *can* do, not about what it happens to do here. On both of
+        // these populations the count is **zero** - every piece is convex or
+        // mildly nonconvex enough that its area centroid is interior too - so
+        // the arbitration buys nothing measurable on mixed-61 or triangle-20
+        // and is taken for the guarantee, not for the fixture.
+        println!("{label}: {centroids_outside} area centroids outside their own material");
+    }
+}
+
+// ------------------------------------------------------------- disruption ---
+
+/// **The swap and the rigid follow.**
+///
+/// Three pieces: two large ones far apart, and a small one sitting inside the
+/// first. After a disruption the two large pieces have exchanged poses, and the
+/// small one has been carried by exactly the rigid map that took its host from
+/// its old pose to its new one - so its position *relative to its host* is
+/// unchanged to round-off, which is the whole content of "move it to the empty
+/// space the swap created".
+#[test]
+fn a_disruption_swaps_two_large_pieces_and_carries_their_interior_followers() {
+    // A big square, a big rectangle of clearly different area and diameter, and
+    // a small square that lives inside the big one.
+    let fixture = Fixture {
+        polygons: vec![
+            polygon(&square(0.0, 0.0, 80.0)),
+            polygon(&[[0.0, 0.0], [40.0, 0.0], [40.0, 100.0], [0.0, 100.0]]),
+            polygon(&square(0.0, 0.0, 6.0)),
+        ],
+        ids: vec![
+            "big-square".to_owned(),
+            "tall-bar".to_owned(),
+            "passenger".to_owned(),
+        ],
+    };
+    let poses = vec![
+        pose_at(20.0, 20.0),
+        pose_at(140.0, 200.0),
+        // Inside the big square's footprint, which spans (20,20)-(100,100).
+        pose_at(50.0, 50.0),
+    ];
+    let (sources, contract, mut state) = state_of_poses(&fixture, poses.clone(), 380.0);
+
+    // The large set and the distinctness rule, before anything moves.
+    let large = large_pieces(&sources);
+    assert!(large.contains(&0) && large.contains(&1), "large set {large:?}");
+    assert!(
+        !large.contains(&2),
+        "a 36 mm² piece is not in the top 75 % of hull area: {large:?}"
+    );
+    assert!(
+        is_distinct_enough(&sources[0], &sources[1]),
+        "6400 mm² / 113 mm diameter against 4000 mm² / 107.7 mm"
+    );
+    assert!(
+        !is_distinct_enough(&sources[0], &sources[0]),
+        "a piece is never distinct from itself"
+    );
+
+    // The passenger's witness really is inside the big square's ring.
+    let witness = transformed_witness(&sources[2], state.poses[2]);
+    assert!(
+        point_in_ring(witness, state.geometry.ring_slice(0)),
+        "witness {witness:?} is not inside the host ring"
+    );
+
+    let mut work = WorkVector::default();
+    let outcome = disrupt(
+        &mut state,
+        &sources,
+        &contract,
+        &[true, true, true],
+        0,
+        0,
+        0,
+        &mut work,
+    );
+    assert!(outcome.fired);
+    let (first, second) = outcome.swapped.expect("a swapped pair");
+    assert!(outcome.distinct, "both large pieces pass the AND filter");
+    assert_eq!(
+        [first.min(second), first.max(second)],
+        [0, 1],
+        "the two large pieces are the ones that swapped"
+    );
+    assert_eq!(work.disruptions, 1);
+
+    // The swap itself.
+    assert_eq!(state.poses[first].tx_mm, poses[second].tx_mm);
+    assert_eq!(state.poses[first].ty_mm, poses[second].ty_mm);
+    assert_eq!(state.poses[second].tx_mm, poses[first].tx_mm);
+    assert_eq!(state.poses[second].ty_mm, poses[first].ty_mm);
+
+    // The follow: the passenger moved, and by the host's own rigid map.
+    assert_eq!(outcome.followers, vec![2], "followers {:?}", outcome.followers);
+    let expected = carry(poses[2], poses[0], state.poses[0]);
+    assert!(
+        (state.poses[2].tx_mm - expected.tx_mm).abs() < 1e-9
+            && (state.poses[2].ty_mm - expected.ty_mm).abs() < 1e-9
+            && (state.poses[2].theta_deg - expected.theta_deg).abs() < 1e-9,
+        "the passenger went to {:?}, not to {expected:?}",
+        state.poses[2]
+    );
+    let before = libm::hypot(poses[2].tx_mm - poses[0].tx_mm, poses[2].ty_mm - poses[0].ty_mm);
+    let after = libm::hypot(
+        state.poses[2].tx_mm - state.poses[0].tx_mm,
+        state.poses[2].ty_mm - state.poses[0].ty_mm,
+    );
+    assert!(
+        (after - before).abs() < 1e-9,
+        "the map is rigid: {before} mm from its host before, {after} mm after"
+    );
+
+    // Every cache is consistent on return, so the caller can separate at once.
+    let incremental = fold(&state);
+    let mut cold = state.clone();
+    rebuild_all(&mut cold, &contract, &mut work);
+    assert_eq!(incremental.raw.to_bits(), fold(&cold).raw.to_bits());
+}
+
+/// The rigid map itself, and the angle it maps through the receiving piece's
+/// allowed set.
+#[test]
+fn the_disruption_map_is_rigid_and_respects_a_frozen_angle() {
+    let from = Pose {
+        tx_mm: 10.0,
+        ty_mm: 20.0,
+        theta_deg: 0.0,
+        mirrored: false,
+    };
+    let to = Pose {
+        tx_mm: 200.0,
+        ty_mm: -30.0,
+        theta_deg: 90.0,
+        mirrored: false,
+    };
+    let follower = Pose {
+        tx_mm: 40.0,
+        ty_mm: 20.0,
+        theta_deg: 15.0,
+        mirrored: true,
+    };
+    let carried = carry(follower, from, to);
+    // A 30 mm arm along +x, turned by 90°, is a 30 mm arm along +y.
+    assert!((carried.tx_mm - 200.0).abs() < 1e-9, "{carried:?}");
+    assert!((carried.ty_mm - 0.0).abs() < 1e-9, "{carried:?}");
+    assert!((carried.theta_deg - 105.0).abs() < 1e-12, "{carried:?}");
+    assert!(carried.mirrored, "a rigid follow never mirrors");
+    // Distance to the host is preserved exactly.
+    let before = libm::hypot(follower.tx_mm - from.tx_mm, follower.ty_mm - from.ty_mm);
+    let after = libm::hypot(carried.tx_mm - to.tx_mm, carried.ty_mm - to.ty_mm);
+    assert!((after - before).abs() < 1e-9);
+
+    assert_eq!(closest_feasible_angle(true, 33.0, 7.0), 33.0);
+    assert_eq!(closest_feasible_angle(false, 33.0, 7.0), 7.0);
+}
+
+/// The follower cap: a disruption can move at most the layout.
+#[test]
+fn a_disruption_never_moves_more_pieces_than_the_layout_has() {
+    let fixture = Fixture::squares(5, 20.0);
+    let poses = (0..5)
+        .map(|index| pose_at(30.0 + index as f64 * 25.0, 30.0))
+        .collect::<Vec<_>>();
+    let (sources, contract, mut state) = state_of_poses(&fixture, poses, 300.0);
+    let mut work = WorkVector::default();
+    let outcome = disrupt(
+        &mut state,
+        &sources,
+        &contract,
+        &[true; 5],
+        3,
+        1,
+        2,
+        &mut work,
+    );
+    assert!(outcome.fired);
+    assert!(
+        work.disruption_moves <= state.poses.len() as u64,
+        "moved {} of {} pieces",
+        work.disruption_moves,
+        state.poses.len()
+    );
+}
+
+// -------------------------------------------------------- the sample stream ---
+
+/// The permutation and the sample stream are functions of the key alone, and
+/// two workers on the same master state get two different orders.
+#[test]
+fn the_sweep_permutation_is_a_function_of_its_key() {
+    let fixture = Fixture::squares(6, 20.0);
+    let stacked = (0..6).map(|_| pose_at(10.0, 10.0)).collect::<Vec<_>>();
+    let (_, _, state) = state_of_poses(&fixture, stacked, 300.0);
+
+    let mut first = Vec::new();
+    let mut again = Vec::new();
+    let mut other_worker = Vec::new();
+    let key = RelocateKey {
+        seed: 4,
+        bite: 2,
+        iteration: 9,
+        worker: 0,
+    };
+    colliding_permutation(&state, key, &mut first);
+    colliding_permutation(&state, key, &mut again);
+    colliding_permutation(
+        &state,
+        RelocateKey { worker: 1, ..key },
+        &mut other_worker,
+    );
+    assert_eq!(first, again, "the same key is the same order");
+    assert_eq!(first.len(), 6, "every piece collides");
+    assert_ne!(
+        first, other_worker,
+        "two Algorithm-10 workers must sweep in different orders"
+    );
+    let mut sorted = other_worker.clone();
+    sorted.sort_unstable();
+    assert_eq!(sorted, (0..6).collect::<Vec<_>>(), "it is a permutation");
 }
