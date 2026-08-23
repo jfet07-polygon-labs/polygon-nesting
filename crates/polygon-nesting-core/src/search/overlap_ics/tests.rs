@@ -1505,9 +1505,16 @@ fn the_gls_schedule_is_the_published_one_and_the_only_one() {
 }
 
 /// A sweep runs the Algorithm-8 pass exactly once, over every row, whether or
-/// not it improved anything - and the stall hook runs no second one.
+/// not it improved anything - and **a worker sweep runs none at all.**
+///
+/// The second clause is the Algorithm-10 half. Eight workers clone one master
+/// and each runs `worker_sweep`; only the master then runs `gls_update`. A
+/// worker that updated its own weights would be descending a landscape none of
+/// its rivals could see, which is a different algorithm and not the one either
+/// consultant signed. The old stall hook - which this clause replaces - is gone
+/// with the jump seam it belonged to.
 #[test]
-fn every_sweep_runs_exactly_one_weight_pass_and_the_stall_hook_runs_none() {
+fn every_sweep_runs_exactly_one_weight_pass_and_a_worker_sweep_runs_none() {
     let fixture = Fixture::squares(3, 20.0);
     let stacked = pose_at(10.0, 10.0);
     let (sources, contract, mut state) =
@@ -1521,11 +1528,15 @@ fn every_sweep_runs_exactly_one_weight_pass_and_the_stall_hook_runs_none() {
     descent.sweep(&mut state, &sources, &contract, &mut work);
     assert_eq!(work.weight_updates, 2);
 
-    let before = state.pair_rows[0].weight;
-    let jump = descent.on_stalled_sweep(&mut state, &sources, &contract, &mut work);
-    assert!(!jump.attempted, "there is no topology jump any more");
-    assert_eq!(work.weight_updates, 2, "and no second weight dialect");
-    assert_eq!(state.pair_rows[0].weight.to_bits(), before.to_bits());
+    let before: Vec<u64> = state.pair_rows.iter().map(|row| row.weight.to_bits()).collect();
+    let outcome = descent.worker_sweep(&mut state, &sources, &contract, &mut work);
+    assert_eq!(
+        work.weight_updates, 2,
+        "a worker sweep charges no weight pass"
+    );
+    assert_eq!(outcome.active_rows, 0, "and reports none");
+    let after: Vec<u64> = state.pair_rows.iter().map(|row| row.weight.to_bits()).collect();
+    assert_eq!(before, after, "every weight is untouched, to the bit");
 }
 
 /// A sweep advances the work quota by one per piece however small the colliding
@@ -1873,4 +1884,772 @@ fn the_sweep_permutation_is_a_function_of_its_key() {
     let mut sorted = other_worker.clone();
     sorted.sort_unstable();
     assert_eq!(sorted, (0..6).collect::<Vec<_>>(), "it is a permutation");
+}
+
+// ============================================== the schedule's unit vectors ===
+//
+// The five vectors docs/cutclose-relocate-spec.md names for the schedule wave,
+// plus the two counter-derived draws the regime depends on:
+//
+//   * cut-close bits: far-side `t_y += delta` to the bit, near side untouched
+//     to the bit, `t_x` and `theta` frozen;
+//   * a refused publication does not advance `W` - including the Phi = 0 case,
+//     which is a *failed separation* and not a converged one;
+//   * the exact parent: a forced-nonzero-repair publication is installed whole,
+//     every cache is rebuilt from it, and the next bite's `D` is the published
+//     raw depth;
+//   * the eight-worker tournament is a function of its key - same winner
+//     ordinals, same master fingerprints, whatever the operating system did
+//     with the threads;
+//   * the TimeBased step against a fake elapsed.
+
+use super::homotopy::{
+    compress_bite, compress_width_mm, explore_bite, normal_biased_rank, split_and_close,
+    time_based_step, uniform_cut_mm, COMPRESS_SHRINK_RANGE, EXPLORE_SHRINK_STEP,
+    EXPLORE_TIME_RATIO,
+};
+use super::{state_fingerprint, Budget, Phase, ScheduleConfig, ScheduleOutcome, SeparateLimits};
+
+/// The four poses the cut-close vector splits: two below the cut and two above
+/// it, all four with an angle and a translation nothing may touch.
+fn cut_close_poses() -> Vec<Pose> {
+    vec![
+        Pose { tx_mm: 30.5, ty_mm: 12.25, theta_deg: 17.0, mirrored: false },
+        Pose { tx_mm: 60.125, ty_mm: 30.0, theta_deg: -5.5, mirrored: false },
+        Pose { tx_mm: 30.75, ty_mm: 120.0, theta_deg: 91.25, mirrored: false },
+        Pose { tx_mm: 90.0, ty_mm: 150.5, theta_deg: 0.0, mirrored: false },
+    ]
+}
+
+/// **Split-and-close moves exactly one side, in exactly one coordinate.**
+///
+/// Grok review 12 Round 2 §6.3's FAST vector, verbatim: "cut-close bits:
+/// far-side `t_y += delta`, near-side `t_y` unchanged, `t_x` and `theta`
+/// frozen". Every comparison here is on `to_bits`, because the failure this
+/// guards against is not a large error - it is an affine squeeze, or a stray
+/// `x` nudge, that would look correct at four decimal places and would make the
+/// homotopy a different one.
+#[test]
+fn the_cut_close_moves_only_the_far_side_and_only_in_y() {
+    let fixture = Fixture::squares(4, 20.0);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let before = cut_close_poses();
+    let split_y = 100.0;
+    let delta = -0.18297600000000001;
+    let mut after = before.clone();
+    let moved = split_and_close(&sources, &mut after, delta, split_y);
+
+    let mut far = 0usize;
+    for (index, (entry, exit)) in before.iter().zip(&after).enumerate() {
+        assert_eq!(
+            exit.tx_mm.to_bits(),
+            entry.tx_mm.to_bits(),
+            "piece {index}: t_x is frozen to the bit"
+        );
+        assert_eq!(
+            exit.theta_deg.to_bits(),
+            entry.theta_deg.to_bits(),
+            "piece {index}: theta is frozen to the bit"
+        );
+        assert_eq!(exit.mirrored, entry.mirrored, "piece {index}: the mirror is frozen");
+        let centre_y = transformed_centroid(&sources[index], *entry)[1];
+        if centre_y > split_y {
+            far += 1;
+            assert_eq!(
+                exit.ty_mm.to_bits(),
+                (entry.ty_mm + delta).to_bits(),
+                "piece {index} is on the far side: t_y += delta, to the bit"
+            );
+        } else {
+            assert_eq!(
+                exit.ty_mm.to_bits(),
+                entry.ty_mm.to_bits(),
+                "piece {index} is on the near side and must not move at all"
+            );
+        }
+    }
+    assert_eq!(far, 2, "the fixture must actually straddle the cut");
+    assert_eq!(moved, far, "the returned count is the far side's size");
+}
+
+/// The explore bite's three numbers: 0.1 %, a centre cut, and `delta = T - D`.
+#[test]
+fn the_explore_bite_is_a_tenth_of_a_percent_at_mid_depth() {
+    let fixture = Fixture::squares(4, 20.0);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let mut poses = cut_close_poses();
+    let width = 182.976;
+    let bite = explore_bite(&sources, &mut poses, width);
+    assert_eq!(EXPLORE_SHRINK_STEP, 0.001, "Sparrow's frozen shrink_step");
+    assert_eq!(bite.width_before_mm.to_bits(), width.to_bits());
+    assert_eq!(
+        bite.width_after_mm.to_bits(),
+        (width * (1.0 - 0.001)).to_bits(),
+        "W <- W (1 - 0.001)"
+    );
+    assert_eq!(
+        bite.delta_mm.to_bits(),
+        (bite.width_after_mm - width).to_bits(),
+        "delta is T - D"
+    );
+    assert!(bite.delta_mm < 0.0, "and it is negative");
+    assert_eq!(
+        bite.split_y_mm.to_bits(),
+        (width / 2.0).to_bits(),
+        "explore cuts at mid-depth: their split_position = None"
+    );
+    assert_eq!(EXPLORE_TIME_RATIO, 0.8, "8 s of a 10 s budget explore");
+}
+
+/// **The TimeBased step, against a fake elapsed.**
+///
+/// The whole point of the signature is that the clock is somebody else's: a
+/// wall phase hands it seconds and a fixed-work replay hands it a bite ordinal,
+/// and the decay is the same either way. So the vector is arithmetic, and it
+/// pins the two ends, both saturations, and monotonicity.
+#[test]
+fn the_time_based_step_interpolates_against_a_fake_elapsed() {
+    let (start, end) = COMPRESS_SHRINK_RANGE;
+    assert_eq!(start, 0.0005, "0.05 %");
+    assert_eq!(end, 0.00001, "0.001 %");
+    assert_eq!(
+        time_based_step(0.0, 2.0).to_bits(),
+        start.to_bits(),
+        "at the start of the phase the step is the start of the range, exactly"
+    );
+    assert_eq!(
+        time_based_step(1.0, 2.0).to_bits(),
+        (start + (end - start) * 0.5).to_bits(),
+        "linear in elapsed/limit"
+    );
+    // `start + (end - start) * 1.0` is `end` in real arithmetic and one ulp
+    // away from it in this one; the interpolation is left as written rather
+    // than special-cased, so the vector asks for the arithmetic it does.
+    let at_end = time_based_step(2.0, 2.0);
+    assert!(
+        (at_end - end).abs() <= 1e-18,
+        "at the phase limit the step is the end of the range: {at_end}"
+    );
+    assert_eq!(
+        time_based_step(9.0, 2.0).to_bits(),
+        at_end.to_bits(),
+        "past the phase limit the step saturates rather than inverting"
+    );
+    assert_eq!(
+        time_based_step(-1.0, 2.0).to_bits(),
+        start.to_bits(),
+        "before the phase began it is the start of the range"
+    );
+    assert_eq!(
+        time_based_step(1.0, 0.0).to_bits(),
+        start.to_bits(),
+        "an unmeasured phase has not decayed"
+    );
+    let mut previous = f64::INFINITY;
+    for tick in 0..=10 {
+        let step = time_based_step(tick as f64, 10.0);
+        assert!(step < previous, "the decay is strictly monotone at tick {tick}");
+        assert!(
+            step >= end - 1e-18 && step <= start,
+            "and stays inside the range"
+        );
+        previous = step;
+    }
+    assert_eq!(
+        compress_width_mm(100.0, 0.0005).to_bits(),
+        (100.0f64 * (1.0 - 0.0005)).to_bits()
+    );
+}
+
+/// The compression cut and the pool rank are functions of their keys alone.
+#[test]
+fn the_compress_cut_and_the_pool_rank_are_functions_of_their_keys() {
+    let fixture = Fixture::squares(2, 20.0);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let edge = contract.physical_edge_clearance_mm();
+
+    let first = uniform_cut_mm(&contract, 182.976, 7, 3);
+    assert_eq!(
+        first.to_bits(),
+        uniform_cut_mm(&contract, 182.976, 7, 3).to_bits(),
+        "the same key is the same cut"
+    );
+    assert_ne!(
+        first.to_bits(),
+        uniform_cut_mm(&contract, 182.976, 7, 4).to_bits(),
+        "the next bite draws a different cut"
+    );
+    for bite in 0..64 {
+        let cut = uniform_cut_mm(&contract, 182.976, 7, bite);
+        assert!(cut >= edge && cut <= 182.976, "uniform in (edge, W): {cut}");
+    }
+
+    // The bite carries the cut it drew, and closes the far side of it.
+    let mut poses = vec![
+        Pose { tx_mm: 20.0, ty_mm: 20.0, theta_deg: 0.0, mirrored: false },
+        Pose { tx_mm: 20.0, ty_mm: 120.0, theta_deg: 0.0, mirrored: false },
+    ];
+    let bite = compress_bite(&sources, &mut poses, &contract, 182.976, 0.0005, 7, 3);
+    assert_eq!(bite.split_y_mm.to_bits(), first.to_bits());
+    assert_eq!(bite.step.to_bits(), 0.0005f64.to_bits());
+    assert_eq!(
+        bite.width_after_mm.to_bits(),
+        (182.976f64 * (1.0 - 0.0005)).to_bits()
+    );
+
+    // The Normal(0, 0.25) bias: in range, keyed, and skewed toward the best
+    // entries of a loss-sorted pool.
+    assert_eq!(normal_biased_rank(0, 1, 2, 3), 0, "an empty pool has no rank");
+    assert_eq!(normal_biased_rank(1, 1, 2, 3), 0);
+    let mut best_half = 0usize;
+    for attempt in 0..512u64 {
+        let rank = normal_biased_rank(40, 11, 5, attempt);
+        assert!(rank < 40, "the rank indexes the pool");
+        if rank < 20 {
+            best_half += 1;
+        }
+    }
+    assert_eq!(
+        normal_biased_rank(40, 11, 5, 17),
+        normal_biased_rank(40, 11, 5, 17),
+        "the same key is the same rank"
+    );
+    assert!(
+        best_half > 400,
+        "|N(0, 0.25)| * len puts the draw in the better half almost always: {best_half}/512"
+    );
+}
+
+// ------------------------------------------------------ the loop's fixtures ---
+
+/// A two-square layout whose *material* gap is 5.0 mm minus 3 µm: inside the
+/// canonical band, so the round kernel refuses and the bounded repair moves a
+/// pose. That is what makes it the forced-nonzero-repair fixture.
+fn banded_deficit_engine<'a>(
+    pieces: &'a [GeneralFastPiece<'a>],
+    incumbent_depth_mm: f64,
+) -> Engine<'a> {
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(pieces).expect("sources");
+    let poses = vec![
+        Pose { tx_mm: 20.0, ty_mm: 25.0, theta_deg: 0.0, mirrored: false },
+        Pose { tx_mm: 45.0 - 0.003, ty_mm: 25.0, theta_deg: 0.0, mirrored: false },
+    ];
+    let config = IcsConfig {
+        target_depth_mm: incumbent_depth_mm,
+        proposal_budget: 0,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 0),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: incumbent_depth_mm,
+        from_constructor: true,
+        placement_fingerprint: "the-constructor".to_owned(),
+    };
+    Engine::from_poses(pieces, settings, sources, contract, poses, incumbent, config)
+}
+
+fn two_squares() -> Fixture {
+    Fixture {
+        polygons: vec![polygon(&square(0.0, 0.0, 20.0)), polygon(&square(0.0, 0.0, 20.0))],
+        ids: vec!["a".to_owned(), "b".to_owned()],
+    }
+}
+
+/// Two explore bites, one attempt each: enough to publish and bite again, and
+/// small enough to run in a debug build.
+const TWO_BITES: Budget = Budget::FixedWork {
+    explore_bites: 2,
+    compress_bites: 0,
+    attempts_per_bite: 1,
+    iterations_per_separation: 2,
+};
+
+/// **The exact parent: a repaired publication becomes the continuous state, and
+/// the next `D` is the published raw depth.**
+///
+/// Sol review 17 Round 2's mandatory addition 1, all six clauses: a bite reaches
+/// the 4 µm band; the repair moves at least one pose; the publication succeeds;
+/// the engine's poses equal `Publication.poses`; the geometry and every row
+/// equal a cold rebuild *from those poses*; and the next bite derives `D` from
+/// the published raw depth rather than from the target or the pre-repair proxy
+/// depth.
+///
+/// The cold-rebuild clause is built from `build_geometry`, not from
+/// `rebuild_all` on the engine's own geometry - `rebuild_all` measures the
+/// cached transforms, so it would happily agree with a *stale* geometry, and a
+/// stale geometry after a pose install is exactly the failure being excluded.
+#[test]
+fn a_repaired_publication_becomes_the_next_bites_exact_parent() {
+    let fixture = two_squares();
+    let pieces = fixture.pieces();
+
+    // --- the install, on its own.
+    let mut engine = banded_deficit_engine(&pieces, f64::INFINITY);
+    let totals = engine.totals();
+    assert!(
+        totals.max_violation_mm > 0.0 && totals.max_violation_mm <= 0.004,
+        "the deficit must sit inside the 4 µm band: {totals:?}"
+    );
+    let attempt = engine.attempt_publication();
+    let publication = attempt.publication.expect("a banded deficit must publish");
+    assert!(
+        publication.repair_rows >= 1 && publication.repair_max_displacement_mm > 0.0,
+        "the vector needs a repair that actually moved a pose: {publication:?}"
+    );
+    let pre_repair = engine.state().poses.clone();
+    assert!(
+        pre_repair
+            .iter()
+            .zip(&publication.poses)
+            .any(|(before, after)| before.tx_mm.to_bits() != after.tx_mm.to_bits()
+                || before.ty_mm.to_bits() != after.ty_mm.to_bits()),
+        "the repaired poses must differ from the state's, or the vector is vacuous"
+    );
+
+    engine.install_publication(&publication);
+    for (index, (installed, published)) in engine
+        .state()
+        .poses
+        .iter()
+        .zip(&publication.poses)
+        .enumerate()
+    {
+        assert_eq!(
+            installed.tx_mm.to_bits(),
+            published.tx_mm.to_bits(),
+            "piece {index}: the state's poses are the publication's"
+        );
+        assert_eq!(installed.ty_mm.to_bits(), published.ty_mm.to_bits());
+        assert_eq!(installed.theta_deg.to_bits(), published.theta_deg.to_bits());
+    }
+    assert_eq!(
+        engine.state().target_depth_mm.to_bits(),
+        publication.raw_source_depth_mm.to_bits(),
+        "the width becomes the published raw depth"
+    );
+
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let contract = Contract::from_settings(test_settings());
+    let cold_geometry = build_geometry(&sources, &publication.poses);
+    for (index, (cached, cold)) in engine
+        .geometry()
+        .ring_points
+        .iter()
+        .zip(&cold_geometry.ring_points)
+        .enumerate()
+    {
+        assert_eq!(
+            cached[0].to_bits(),
+            cold[0].to_bits(),
+            "ring point {index} was not re-transformed after the install"
+        );
+        assert_eq!(cached[1].to_bits(), cold[1].to_bits());
+    }
+    let count = publication.poses.len();
+    let mut cold = IcsState {
+        poses: publication.poses.clone(),
+        geometry: cold_geometry,
+        pair_rows: vec![PairRow::default(); pair_count(count)],
+        edge_rows: vec![[EdgeRow::default(); 4]; count],
+        target_depth_mm: publication.raw_source_depth_mm,
+    };
+    let mut work = WorkVector::default();
+    rebuild_all(&mut cold, &contract, &mut work);
+    for (index, (cached, fresh)) in engine
+        .state()
+        .pair_rows
+        .iter()
+        .zip(&cold.pair_rows)
+        .enumerate()
+    {
+        assert_eq!(
+            cached.violation_mm.to_bits(),
+            fresh.violation_mm.to_bits(),
+            "pair row {index} disagrees with a cold rebuild of the installed poses"
+        );
+    }
+    for (piece, (cached, fresh)) in
+        engine.state().edge_rows.iter().zip(&cold.edge_rows).enumerate()
+    {
+        for edge in 0..4 {
+            assert_eq!(
+                cached[edge].violation_mm.to_bits(),
+                fresh[edge].violation_mm.to_bits(),
+                "piece {piece} edge {edge} disagrees with a cold rebuild"
+            );
+        }
+    }
+
+    // --- the two bites.
+    let mut engine = banded_deficit_engine(&pieces, 60.0);
+    let schedule = ScheduleConfig {
+        workers: 2,
+        ..ScheduleConfig::default()
+    };
+    let run = engine.run_cutclose(schedule, TWO_BITES);
+    assert_eq!(run.start_depth_mm.to_bits(), 60.0f64.to_bits(), "W enters at D*");
+    assert!(
+        !run.publications.is_empty(),
+        "the banded deficit must publish inside the first bite: {:?}",
+        run.bites
+    );
+    let first = &run.publications[0];
+    assert_eq!(first.phase, Phase::Explore);
+    assert!(first.repair_rows >= 1, "the repair must have fired: {first:?}");
+    assert_eq!(
+        first.parent_fingerprint, "the-constructor",
+        "the bite's parent is the layout it started from"
+    );
+    for row in &run.publications {
+        assert!(
+            row.published_raw_depth_mm <= row.target_depth_mm,
+            "every publication is inside the strip it was published in: {row:?}"
+        );
+    }
+    assert_eq!(
+        run.depth_mm.to_bits(),
+        run.publications
+            .last()
+            .expect("a publication")
+            .published_raw_depth_mm
+            .to_bits(),
+        "D is the PUBLISHED raw depth, not the target and not the proxy depth"
+    );
+    assert_eq!(run.bites.len(), 2, "the publication licensed a second bite");
+    assert_eq!(
+        run.bites[1].bite.width_before_mm.to_bits(),
+        first.published_raw_depth_mm.to_bits(),
+        "the second bite shrinks from the depth the first one published"
+    );
+    assert_eq!(
+        run.bites[1].bite.width_after_mm.to_bits(),
+        (first.published_raw_depth_mm * (1.0 - EXPLORE_SHRINK_STEP)).to_bits()
+    );
+    // The exact-parent chain: every bite after the first one names the layout
+    // its predecessor published.
+    for pair in run.publications.windows(2) {
+        assert_eq!(
+            pair[1].parent_fingerprint, pair[0].placement_fingerprint,
+            "each publication's parent is the previous publication"
+        );
+    }
+}
+
+/// **A Phi = 0 layout whose publication is refused does not advance `W`.**
+///
+/// Grok review 12 Round 1 §5.2 names the deception this excludes - the
+/// "proxy-legal parent", a shrink taken from a `Phi = 0` state the exact
+/// authorities would reject - and Sol review 17 Round 2 §5 names what the loop
+/// must do instead: "If proxy Phi reaches zero but exact publication refuses,
+/// classify it as a failed separation: otherwise every piece is skipped forever
+/// and the loop spins at a false legal state."
+///
+/// The refusal here is the publication gate's own: a 1 km minimum improvement,
+/// so no layout at any depth can ever clear it. The state is genuinely
+/// collision-free at the bitten width, so the colliding set is empty and no
+/// sweep could do anything - which is precisely the spin this clause prevents.
+#[test]
+fn a_refused_publication_never_advances_the_width() {
+    let fixture = Fixture::squares(6, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = (0..pieces.len())
+        .map(|index| Pose {
+            tx_mm: 20.0 + (index % 3) as f64 * 60.0,
+            ty_mm: 20.0 + (index / 3) as f64 * 60.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        })
+        .collect::<Vec<_>>();
+    let mut limits = PublicationLimits::default();
+    limits.minimum_improvement_mm = 1_000_000.0;
+    let config = IcsConfig {
+        target_depth_mm: 360.0,
+        proposal_budget: 0,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 0),
+        limits,
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: 360.0,
+        from_constructor: true,
+        placement_fingerprint: "the-constructor".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    assert_eq!(engine.totals().raw, 0.0, "the fixture must be Phi-feasible");
+
+    let schedule = ScheduleConfig {
+        workers: 2,
+        ..ScheduleConfig::default()
+    };
+    let run = engine.run_cutclose(
+        schedule,
+        Budget::FixedWork {
+            explore_bites: 3,
+            compress_bites: 0,
+            attempts_per_bite: 3,
+            iterations_per_separation: 2,
+        },
+    );
+
+    assert!(
+        run.publications.is_empty(),
+        "nothing may publish: {:?}",
+        run.publications
+    );
+    assert_eq!(run.explore_bites, 0, "no bite succeeded");
+    assert_eq!(
+        run.bites.len(),
+        1,
+        "and no second bite was ever licensed: {:?}",
+        run.bites.iter().map(|row| row.bite).collect::<Vec<_>>()
+    );
+    assert_eq!(
+        run.depth_mm.to_bits(),
+        run.start_depth_mm.to_bits(),
+        "D did not move"
+    );
+    assert_eq!(
+        run.bites[0].bite.width_after_mm.to_bits(),
+        (360.0f64 * (1.0 - EXPLORE_SHRINK_STEP)).to_bits(),
+        "exactly one 0.1 % bite was taken and it stayed there"
+    );
+    assert_eq!(
+        run.bites[0].attempts, 3,
+        "it spent its whole attempt quota failing"
+    );
+    assert!(
+        run.bites[0].proxy_band_reached,
+        "the state was inside the band the whole time - that is what makes it a refusal"
+    );
+    assert!(
+        engine.incumbent.from_constructor,
+        "best_exact never moved off the constructor"
+    );
+}
+
+/// The tournament vector's fixture: twelve 20 mm squares in a strip that is too
+/// shallow to hold them.
+///
+/// The strip has to be **infeasible by area**, or the vector measures nothing.
+/// Twelve pieces at `c_pair = 5` need `12 * 25 * 25 = 7,500` mm² and the usable
+/// width is 190 mm, so a depth of 40 mm - which leaves `40 - 5 - 5 = 30` mm of
+/// usable band, or 5,700 mm² - cannot hold them at any arrangement. Phi
+/// therefore never reaches zero, no worker ever ties at the floor, and the
+/// eight of them really do have to be compared. A roomy strip is not a weaker
+/// test of the merge; it is not a test of the merge at all, because eight
+/// workers that all clear it tie at zero and the ordinal decides.
+fn tournament_run(workers: usize) -> (ScheduleOutcome, usize) {
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = (0..pieces.len())
+        .map(|index| Pose {
+            tx_mm: 20.0 + (index % 4) as f64 * 22.0,
+            ty_mm: 20.0 + (index / 4) as f64 * 22.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        })
+        .collect::<Vec<_>>();
+    let config = IcsConfig {
+        target_depth_mm: 40.0,
+        proposal_budget: 0,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: 40.0,
+        from_constructor: true,
+        placement_fingerprint: "the-constructor".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    let schedule = ScheduleConfig {
+        workers,
+        record_fingerprints: true,
+        ..ScheduleConfig::default()
+    };
+    let outcome = engine.run_cutclose(
+        schedule,
+        Budget::FixedWork {
+            explore_bites: 1,
+            compress_bites: 1,
+            attempts_per_bite: 1,
+            iterations_per_separation: 2,
+        },
+    );
+    let count = engine.state().poses.len();
+    (outcome, count)
+}
+
+/// **The eight-worker tournament is a function of its key.**
+///
+/// Sol review 17 Round 2's mandatory addition 2 asks FAST for two processes
+/// agreeing on "each worker seed, each master snapshot, winning worker ordinal,
+/// pose and weight fingerprint after every master iteration, exact parent after
+/// every bite". This is the in-process half of that - two independent
+/// trajectories through the same eight-thread tournament - and it is the half
+/// that is sensitive to the thing threads break: the workers are joined in
+/// ordinal order and the merge is a serial scan, so the operating system's
+/// scheduling cannot reach the answer. The evidence agent owns the two-process
+/// cell.
+///
+/// It also pins the fan-out in the work vector. Eight workers really do sweep
+/// the same master state, so `pieceProposals` is exactly `workers * n` per
+/// master iteration; a "tournament" that quietly ran one worker would be
+/// deterministic too, and this is what tells the two apart.
+#[test]
+fn the_eight_worker_tournament_is_a_function_of_its_key() {
+    let (first, count) = tournament_run(8);
+    let (again, _) = tournament_run(8);
+    assert!(
+        !first.fingerprints.is_empty(),
+        "the vector needs master iterations to compare"
+    );
+    assert_eq!(
+        first.fingerprints, again.fingerprints,
+        "two runs of the same key must agree on every winner and every master state"
+    );
+    assert_eq!(first.trace.work, again.trace.work, "and on every counter");
+    for (left, right) in first.final_poses.iter().zip(&again.final_poses) {
+        assert_eq!(left.tx_mm.to_bits(), right.tx_mm.to_bits());
+        assert_eq!(left.ty_mm.to_bits(), right.ty_mm.to_bits());
+        assert_eq!(left.theta_deg.to_bits(), right.theta_deg.to_bits());
+    }
+    assert_eq!(
+        first.bites.iter().map(|row| row.bite).collect::<Vec<_>>(),
+        again.bites.iter().map(|row| row.bite).collect::<Vec<_>>()
+    );
+
+    // Eight sweeps per master iteration, not one.
+    let iterations: u64 = first.bites.iter().map(|row| row.master_iterations).sum();
+    assert!(iterations > 0, "the fixture must actually separate");
+    assert_eq!(
+        first.trace.work.piece_proposals,
+        8 * count as u64 * iterations,
+        "eight workers each sweep every piece slot of every master iteration"
+    );
+    assert_eq!(
+        first.fingerprints.len() as u64,
+        iterations,
+        "one fingerprint per master iteration"
+    );
+
+    // The merge had something to choose. On this fixture Phi can never reach
+    // zero, so the eight workers cannot all tie at the floor.
+    assert!(
+        first.fingerprints.iter().all(|row| row.contested),
+        "the eight workers must reach different totals on an over-full strip: {:?}",
+        first
+            .fingerprints
+            .iter()
+            .map(|row| (row.winner, row.winner_guided, row.contested))
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        first.fingerprints.iter().any(|row| row.winner != 0),
+        "and some iteration must be won by a worker other than ordinal 0, or the \
+         tournament is decoration: {:?}",
+        first.fingerprints.iter().map(|row| row.winner).collect::<Vec<_>>()
+    );
+
+    // A single worker is a different trajectory, and its winner is always
+    // ordinal 0.
+    let (single, _) = tournament_run(1);
+    assert!(
+        single.fingerprints.iter().all(|row| row.winner == 0 && !row.contested),
+        "with one worker the winner is always ordinal 0 and nothing is contested"
+    );
+    let single_iterations: u64 = single.bites.iter().map(|row| row.master_iterations).sum();
+    assert_eq!(
+        single.trace.work.piece_proposals,
+        count as u64 * single_iterations
+    );
+    assert!(
+        first
+            .fingerprints
+            .iter()
+            .zip(&single.fingerprints)
+            .any(|(many, one)| many.state != one.state),
+        "the eight-worker trajectory must differ from worker 0's own"
+    );
+    // The merge rule itself. Both runs start their first master iteration from
+    // the same master state, so the eight-worker winner cannot be worse than
+    // ordinal 0's own sweep - that is what taking the minimum means. From the
+    // second iteration on the two trajectories stand on different states and
+    // their totals are no longer comparable, which is why this is pinned on the
+    // first one alone.
+    assert!(
+        first.fingerprints[0].winner_guided <= single.fingerprints[0].winner_guided,
+        "eight workers: {} vs ordinal 0 alone: {}",
+        first.fingerprints[0].winner_guided,
+        single.fingerprints[0].winner_guided
+    );
+}
+
+/// The master fingerprint is over the weights as well as the poses.
+///
+/// Two master iterations can install the same poses on two different
+/// landscapes, and the merge-determinism vector has to be able to tell those
+/// apart - the weights are half of what the next tournament ranks on.
+#[test]
+fn the_master_fingerprint_sees_the_weights_and_not_only_the_poses() {
+    let fixture = Fixture::squares(6, 20.0);
+    let (_, _, state) = state_of(&fixture, 300.0);
+    let bare = state_fingerprint(&state);
+    let mut weighted = state.clone();
+    super::energy::gls_update(&mut weighted);
+    assert_ne!(
+        bare,
+        state_fingerprint(&weighted),
+        "one Algorithm-8 pass moved every weight and nothing else"
+    );
+    for (left, right) in state.poses.iter().zip(&weighted.poses) {
+        assert_eq!(left.tx_mm.to_bits(), right.tx_mm.to_bits());
+        assert_eq!(left.ty_mm.to_bits(), right.ty_mm.to_bits());
+    }
+    let mut moved = state.clone();
+    moved.poses[0].tx_mm += 1.0;
+    assert_ne!(bare, state_fingerprint(&moved), "and it sees a moved pose");
+    let mut retargeted = state.clone();
+    retargeted.target_depth_mm += 0.001;
+    assert_ne!(bare, state_fingerprint(&retargeted), "and the width");
+}
+
+/// The strike limits and the worker count are the published ones, and nothing
+/// fitted them to a wall number.
+#[test]
+fn the_strike_caps_are_the_published_two_hundred_three_and_one_hundred_five() {
+    assert_eq!(SeparateLimits::EXPLORE.iterations_without_improvement, 200);
+    assert_eq!(SeparateLimits::EXPLORE.strikes, 3);
+    assert_eq!(SeparateLimits::COMPRESS.iterations_without_improvement, 100);
+    assert_eq!(SeparateLimits::COMPRESS.strikes, 5);
+    assert_eq!(super::STRIKE_IMPROVEMENT_RATIO, 0.98);
+    let default = ScheduleConfig::default();
+    assert_eq!(default.workers, 8, "eight workers from the start");
+    assert_eq!(default.explore, SeparateLimits::EXPLORE);
+    assert_eq!(default.compress, SeparateLimits::COMPRESS);
+    assert!(
+        !default.record_fingerprints,
+        "the wall run does not pay for the per-iteration record"
+    );
 }

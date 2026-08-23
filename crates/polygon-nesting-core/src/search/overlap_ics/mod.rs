@@ -616,7 +616,7 @@ impl<'a> Engine<'a> {
     /// `(weighted_loss, worker_ordinal)`. A digest between the two would only
     /// reorder exact ties by a hash, which is not more meaningful than the
     /// ordinal and costs a fingerprint per worker per iteration.
-    fn tournament(&mut self, workers: usize, bite: u64) -> (SweepOutcome, usize) {
+    fn tournament(&mut self, workers: usize, bite: u64) -> (SweepOutcome, Merge) {
         let workers = workers.max(1);
         let mut slots: Vec<(IcsState, Descent, WorkVector)> = Vec::with_capacity(workers);
         for ordinal in 0..workers {
@@ -660,7 +660,15 @@ impl<'a> Engine<'a> {
                 winner = ordinal;
             }
         }
+        let contested = outcomes
+            .iter()
+            .any(|other| other.totals.guided != outcomes[0].totals.guided);
         let outcome = outcomes[winner];
+        let merge = Merge {
+            winner,
+            guided: outcome.totals.guided,
+            contested,
+        };
         let (state, descent, _) = slots.swap_remove(winner);
         self.state = state;
         self.descent = descent;
@@ -677,7 +685,7 @@ impl<'a> Engine<'a> {
                 totals,
                 ..outcome
             },
-            winner,
+            merge,
         )
     }
 
@@ -785,7 +793,7 @@ impl<'a> Engine<'a> {
                 }
             }
 
-            let (_, winner) = self.tournament(workers, bite);
+            let (_, merge) = self.tournament(workers, bite);
             iterations += 1;
             // **The barrier.** This is the one clock read of a master
             // iteration, and it is after the eight workers have joined.
@@ -795,7 +803,9 @@ impl<'a> Engine<'a> {
                     bite,
                     attempt,
                     iteration: iterations,
-                    winner,
+                    winner: merge.winner,
+                    winner_guided: merge.guided,
+                    contested: merge.contested,
                     state: state_fingerprint(&self.state),
                 });
             }
@@ -1354,13 +1364,22 @@ pub struct BiteRecord {
 
 /// The fingerprint of one master iteration: what the eight-worker merge
 /// determinism vector compares.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IterationFingerprint {
     pub bite: u64,
     pub attempt: u64,
     pub iteration: u64,
     /// The winning worker's ordinal.
     pub winner: usize,
+    /// The winner's total weighted Φ, **before** the master's Algorithm-8 pass:
+    /// the number the tournament actually ranked on.
+    pub winner_guided: f64,
+    /// At least two workers reached different totals, so the merge had
+    /// something to choose. `false` is not a defect - eight workers that all
+    /// clear a roomy strip tie at zero and the ordinal breaks it - but a run in
+    /// which *no* iteration is ever contested has not exercised the tournament,
+    /// and the evidence should be able to say which happened.
+    pub contested: bool,
     /// Poses, row violations and row weights of the installed master state,
     /// after its Algorithm-8 pass.
     pub state: String,
@@ -1415,6 +1434,14 @@ pub enum SeparateStop {
     Deadline,
     /// The fixed-work iteration cap.
     WorkCap,
+}
+
+/// What the barrier decided.
+#[derive(Clone, Copy, Debug)]
+struct Merge {
+    winner: usize,
+    guided: f64,
+    contested: bool,
 }
 
 struct SeparateOutcome {
