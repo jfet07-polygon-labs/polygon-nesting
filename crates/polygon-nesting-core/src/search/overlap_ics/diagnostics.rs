@@ -42,10 +42,7 @@ pub struct WorkVector {
     pub exact_checkpoints: u64,
     pub repair_rows: u64,
     /// One piece **slot** of a sweep: `n` per sweep, whatever the colliding set
-    /// held. This is the currency `IcsConfig::proposal_budget` is denominated
-    /// in and the ordinal `Descent::proposals` advances by, and it is kept
-    /// numerically equal to that ordinal so that a reader can divide the budget
-    /// by it.
+    /// held.
     ///
     /// **It is no longer a count of operator invocations, and it is not the
     /// unit of the old 100 K-in-8-seconds proposal pin.** It used to be "a
@@ -54,6 +51,18 @@ pub struct WorkVector {
     /// to feasible, because the member only relocates the colliding set. The
     /// operator's own count is `relocates`, its cost is `sampleEvaluations`,
     /// and nothing here claims parity with the retired pin.
+    ///
+    /// **It equals `Descent::proposals` under one worker and is `workers`
+    /// times it under the Algorithm-10 tournament.** On the locked-strip
+    /// trajectory (`Engine::run`: S0, S1, triangle-20, the corpus, the
+    /// throughput cell) there is one sweep per master iteration and the two are
+    /// numerically identical, which is what lets a reader divide
+    /// `IcsConfig::proposal_budget` by it. Under `Engine::run_cutclose` eight
+    /// workers each sweep the same master state, so eight times the slots are
+    /// really visited, while `Descent::proposals` - the *trajectory's* ordinal,
+    /// taken from the winner - advances by `n`. Both numbers are true and they
+    /// are not the same number; charging only the winner would report one
+    /// eighth of the machine's work.
     pub piece_proposals: u64,
     /// Piece visits that committed a pose different from the entry pose.
     pub accepted_moves: u64,
