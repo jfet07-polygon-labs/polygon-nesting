@@ -100,6 +100,25 @@ pub struct IcsConfig {
     pub target_depth_mm: f64,
     /// The work quota, in complete piece proposals. Fixed work, no clock.
     pub proposal_budget: u64,
+    /// **The same quota in the member's own currency**: one incremental
+    /// incident-Φ evaluation of one candidate pose
+    /// ([`diagnostics::WorkVector::sample_evaluations`]). `u64::MAX` - the
+    /// default everywhere except where a caller names it - leaves
+    /// [`Engine::run`] stopping on `proposal_budget` alone, bit for bit.
+    ///
+    /// It exists because the spec of record re-denominates the locked-strip
+    /// regressions and refuses to let the old unit be renamed into the new one:
+    /// Grok review 12 Round 1 §4.3 - "Work quota for S1: 200,000
+    /// **relocate-evals** (not PGS proposals)" - and arbitration 4, "no silent
+    /// renaming of the 100K pin". A `piece_proposal` is now a *slot*, most of
+    /// which are empty once a layout is nearly feasible, so a budget counted in
+    /// slots buys a different amount of the operator on every fixture. This
+    /// counts what the operator actually spent.
+    ///
+    /// Read at the same place `proposal_budget` is - between whole sweeps, never
+    /// inside one - so a trajectory that stops on it is still a fixed-work
+    /// trajectory two processes reproduce bit for bit.
+    pub relocate_eval_budget: u64,
     /// Sweeps between publication attempts, so a checkpoint cadence is a
     /// deterministic function of the trajectory rather than of the wall.
     pub checkpoint_every_sweeps: u64,
@@ -492,7 +511,9 @@ impl<'a> Engine<'a> {
         let mut sweeps_since_checkpoint = 0u64;
         let mut first_strict_child = None;
         self.sample_proxy();
-        while self.descent.proposals + count <= self.config.proposal_budget {
+        while self.descent.proposals + count <= self.config.proposal_budget
+            && self.trace.work.sample_evaluations < self.config.relocate_eval_budget
+        {
             let outcome = {
                 let Engine {
                     ref mut state,

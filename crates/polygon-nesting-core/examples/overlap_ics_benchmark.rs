@@ -49,7 +49,8 @@ use polygon_nesting_core::search::overlap_ics::state::{
     piece_sources, Contract, ExactIncumbent, PieceSource, Pose,
 };
 use polygon_nesting_core::search::overlap_ics::{
-    poses_of, Engine, IcsConfig, IcsOutcome, InitialLayoutProvider,
+    poses_of, Budget, Engine, IcsConfig, IcsOutcome, InitialLayoutProvider, ScheduleConfig,
+    ScheduleOutcome,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -370,6 +371,227 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
     })
 }
 
+/// **The `CutCloseRelocate` trajectory, as a document.**
+///
+/// Everything the pre-committed gate, the funnel autopsy and the two-process
+/// replay read, and nothing a clock touches outside `wall`:
+///
+/// * `publications` - the **only** quality series. One row per dual-valid
+///   publication, with its fixed-work ordinal `(bite, attempt, iteration,
+///   proposals)` so a wall run and its fixed-work replay can be lined up, its
+///   `wallSeconds` so the 3/10/30 staircase is a *filter* rather than an
+///   interpolation, and the exact parent fingerprint before and after.
+/// * `bites` - the funnel row the failure license names, per bite:
+///   `bitesStarted -> proxyBandReached -> exactAttempted -> dualValidPublished`.
+/// * `fingerprints` - present only under `--fingerprints=1`; the eight-worker
+///   merge-determinism vector's whole subject.
+fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Value {
+    let publications = outcome
+        .publications
+        .iter()
+        .map(|row| {
+            json!({
+                "ordinal": {
+                    "bite": row.ordinal.bite,
+                    "attempt": row.ordinal.attempt,
+                    "iteration": row.ordinal.iteration,
+                    "proposals": row.ordinal.proposals,
+                },
+                "phase": row.phase.label(),
+                "targetDepthMm": row.target_depth_mm,
+                "publishedRawDepthMm": row.published_raw_depth_mm,
+                "repairRows": row.repair_rows,
+                "repairMaxDisplacementMm": row.repair_max_displacement_mm,
+                "repairDepthGivebackMm": row.repair_depth_giveback_mm,
+                "parentFingerprint": row.parent_fingerprint,
+                "placementFingerprint": row.placement_fingerprint,
+                "improvedIncumbent": row.improved_incumbent,
+                "wallSeconds": row.wall_seconds,
+            })
+        })
+        .collect::<Vec<_>>();
+    let bites = outcome
+        .bites
+        .iter()
+        .map(|row| {
+            json!({
+                "ordinal": row.ordinal,
+                "phase": row.phase.label(),
+                "widthBeforeMm": row.bite.width_before_mm,
+                "widthAfterMm": row.bite.width_after_mm,
+                "deltaMm": row.bite.delta_mm,
+                "splitYMm": row.bite.split_y_mm,
+                "movedPieces": row.bite.moved_pieces,
+                "step": row.bite.step,
+                "attempts": row.attempts,
+                "disruptions": row.disruptions,
+                "masterIterations": row.master_iterations,
+                "strikes": row.strikes,
+                "minRawPhi": if row.min_raw_phi.is_finite() { json!(row.min_raw_phi) } else { Value::Null },
+                "proxyBandReached": row.proxy_band_reached,
+                "exactAttempts": row.exact_attempts,
+                "published": row.published.is_some(),
+            })
+        })
+        .collect::<Vec<_>>();
+    // The funnel, summed. The failure license asks for exactly this row.
+    let band_reached = outcome.bites.iter().filter(|row| row.proxy_band_reached).count();
+    let exact_attempted = outcome.bites.iter().filter(|row| row.exact_attempts > 0).count();
+    json!({
+        "startDepthMm": outcome.start_depth_mm,
+        "depthMm": outcome.depth_mm,
+        "finalWidthMm": outcome.final_width_mm,
+        "exploreBites": outcome.explore_bites,
+        "compressBites": outcome.compress_bites,
+        "publications": publications,
+        "publicationCount": outcome.publications.len(),
+        "bites": bites,
+        "funnel": {
+            "bitesStarted": outcome.bites.len(),
+            "proxyBandReached": band_reached,
+            "exactAttempted": exact_attempted,
+            "dualValidPublished": outcome.publications.len(),
+        },
+        "fingerprints": outcome.fingerprints.iter().map(|row| json!({
+            "bite": row.bite,
+            "attempt": row.attempt,
+            "iteration": row.iteration,
+            "winner": row.winner,
+            "winnerGuided": row.winner_guided,
+            "contested": row.contested,
+            "state": row.state,
+        })).collect::<Vec<_>>(),
+        "fingerprintCount": outcome.fingerprints.len(),
+        "contestedIterations": outcome.fingerprints.iter().filter(|row| row.contested).count(),
+        "incumbent": {
+            "rawSourceDepthMm": outcome.incumbent.raw_source_depth_mm,
+            "fromConstructor": outcome.incumbent.from_constructor,
+            "placementFingerprint": outcome.incumbent.placement_fingerprint,
+            "constructorFingerprint": constructor_fingerprint,
+            "fingerprintDiffersFromConstructor":
+                outcome.incumbent.placement_fingerprint != constructor_fingerprint,
+            "placementCount": outcome.incumbent.placements.len(),
+        },
+        "proxy": {
+            "rawPhi": outcome.final_raw_phi,
+            "guidedPhi": outcome.final_guided_phi,
+            "maxViolationMm": outcome.final_max_violation_mm,
+            "rawSourceDepthMm": outcome.final_raw_depth_mm,
+        },
+        "census": {
+            "activePairRows": outcome.final_census.active_pairs,
+            "activeEdgeRows": outcome.final_census.active_edges,
+            "maxPairViolationMm": outcome.final_census.max_pair_violation_mm,
+            "maxEdgeViolationMm": outcome.final_census.max_edge_violation_mm,
+            "maxGuidedPenalty": outcome.final_census.max_penalty,
+        },
+        "work": work_json(&outcome.trace.work),
+        "relocateEconomics": relocate_economics(&outcome.trace.work),
+        "sweeps": outcome.trace.sweeps,
+        "exactCheckpoints": outcome.trace.checkpoints.iter().map(|row| json!({
+            "proposalOrdinal": row.proposal_ordinal,
+            "targetDepthMm": row.target_depth_mm,
+            "maxViolationMm": row.max_violation_mm,
+            "proxyRawDepthMm": row.proxy_raw_depth_mm,
+            "kernelExclusiveValid": row.kernel_exclusive_valid,
+            "contractValid": row.contract_valid,
+            "repairRows": row.repair_rows,
+            "repairMaxDisplacementMm": row.repair_max_displacement_mm,
+            "repairDepthGivebackMm": row.repair_depth_giveback_mm,
+            "publishedRawDepthMm": row.published_raw_depth_mm,
+            "refusal": row.refusal,
+        })).collect::<Vec<_>>(),
+        // The two invariant clauses of the gate, computed here so no reader has
+        // to re-derive them: a single invalid publication is a FAIL for the
+        // whole round, whatever any depth says.
+        "invalidPublications": outcome.trace.checkpoints.iter().filter(|row|
+            row.published_raw_depth_mm.is_some()
+                && !(row.kernel_exclusive_valid && row.contract_valid)).count(),
+        "repairMaxDisplacementMm": outcome.trace.checkpoints.iter()
+            .filter(|row| row.published_raw_depth_mm.is_some())
+            .map(|row| row.repair_max_displacement_mm).fold(0.0f64, f64::max),
+        "repairMaxGivebackMm": outcome.trace.checkpoints.iter()
+            .filter(|row| row.published_raw_depth_mm.is_some())
+            .map(|row| row.repair_depth_giveback_mm).fold(0.0f64, f64::max),
+    })
+}
+
+/// **The relocate metric version**, arbitration 4 / Sol review 17 Round 2 §2.
+///
+/// New names for new economics. The committed cold-Φ, row-rebuild and cell-gap
+/// thresholds stay literal in [`throughput`] under their original meaning; these
+/// counters describe the operator that replaced the proposal ladder, and none of
+/// them is allowed to be read as the retired 100 K proposal pin.
+fn relocate_economics(work: &WorkVector) -> Value {
+    json!({
+        "sampleEvaluations": work.sample_evaluations,
+        "sampleEvaluationsPerRelocate": work.sample_evaluations_per_relocate(),
+        "relocates": work.relocates,
+        "focusedSamples": work.focused_samples,
+        "containerSamples": work.container_samples,
+        "containerWinners": work.container_winners,
+        "focusedWinners": work.focused_winners,
+        "stayPutWinners": work.stay_put_winners,
+        // The neutered-relocate tripwire's counter. `containerSamples >= 50`
+        // beside `containerCommits == 0` is the pre-named defect.
+        "containerCommits": work.container_commits,
+        "acceptedMoves": work.accepted_moves,
+        "disruptions": work.disruptions,
+        "disruptionMoves": work.disruption_moves,
+    })
+}
+
+/// **What the trajectory was allowed to spend, and what it spent.**
+///
+/// The locked-strip regressions are now denominated in relocate-evals, per Grok
+/// review 12 Round 1 §4.3 ("Work quota for S1: 200,000 **relocate-evals** (not
+/// PGS proposals)"). Both currencies are printed, because they are not
+/// interchangeable and the whole point of arbitration 4 is that no reader is
+/// asked to convert one into the other:
+///
+/// * `pieceProposals` is a **slot** - `n` per sweep, most of them empty once
+///   the colliding set has shrunk;
+/// * `sampleEvaluations` is what the operator actually paid for.
+///
+/// `stopReason` names which quota bound the run, so a cell that stopped early
+/// for the *other* reason cannot be read as one that spent its budget. The
+/// proposal test is "one more sweep would not fit", not "the counter reached the
+/// number", because `Engine::run`'s condition is `proposals + n <= budget` and a
+/// 61-piece sweep therefore stops at 199,958 of 200,000.
+///
+/// **Both quotas are kept, and that is a finding rather than belt-and-braces.**
+/// A relocate-eval quota alone does *not* terminate a locked-strip trajectory:
+/// once the layout converges the colliding set is empty, every further sweep
+/// relocates nothing and spends **zero** relocate-evals, so the quota is never
+/// reached and the loop spins until something else stops it. Measured, on S1:
+/// with the proposal backstop removed the cell ran 10^9 empty slots in 155 s and
+/// still finished 116,406 relocate-evals short of a 200,000 cap. The relocate-eval
+/// budget is the *work* the operator is licensed to spend; the proposal budget is
+/// what makes a converged cell stop.
+fn quota_json(config: &IcsConfig, work: &WorkVector, pieces: usize) -> Value {
+    let proposals_bound = config.proposal_budget != u64::MAX
+        && work.piece_proposals + pieces.max(1) as u64 > config.proposal_budget;
+    let relocate_bound = config.relocate_eval_budget != u64::MAX
+        && work.sample_evaluations >= config.relocate_eval_budget;
+    json!({
+        "proposalBudget": config.proposal_budget,
+        "relocateEvalBudget": if config.relocate_eval_budget == u64::MAX {
+            Value::Null
+        } else {
+            json!(config.relocate_eval_budget)
+        },
+        "pieceProposalsSpent": work.piece_proposals,
+        "sampleEvaluationsSpent": work.sample_evaluations,
+        "relocatesSpent": work.relocates,
+        "sampleEvaluationsPerRelocate": work.sample_evaluations_per_relocate(),
+        "stopReason": match (relocate_bound, proposals_bound) {
+            (true, _) => "relocateEvalBudget",
+            (false, true) => "proposalBudget",
+            (false, false) => "converged-or-cadence",
+        },
+    })
+}
+
 // -------------------------------------------------------------------- main ---
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -550,6 +772,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let config = IcsConfig {
                 target_depth_mm: target,
                 proposal_budget: options.integer("budget", 0)?,
+                relocate_eval_budget: options.integer("relocateevals", u64::MAX)?,
                 checkpoint_every_sweeps: options.integer("checkpointevery", 1)?,
                 descent: descent_config(&options, &contract, &sources, seed)?,
                 limits: publication_limits(&options)?,
@@ -595,6 +818,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "lockedTargetMm": target,
             });
             document["outcome"] = outcome_json(&outcome, &placement_fingerprint(&placements));
+            document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
         }
         "constructor" | "c175" | "c168" | "triangle" | "run" => {
             let constructor_started = Instant::now();
@@ -663,6 +887,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let config = IcsConfig {
                     target_depth_mm: target,
                     proposal_budget: options.integer("budget", 100_000)?,
+                    relocate_eval_budget: options.integer("relocateevals", u64::MAX)?,
                     checkpoint_every_sweeps: options.integer("checkpointevery", 1)?,
                     descent: descent_config(&options, &contract, &sources, seed)?,
                     limits: publication_limits(&options)?,
@@ -718,8 +943,152 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "lockedTargetMm": target,
                 });
                 document["outcome"] = outcome_json(&outcome, &constructor_fingerprint);
+                document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
                 document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
             }
+        }
+        // ---------------------------------------------------- CutCloseRelocate --
+        //
+        // **The live loop, and the only cell any gate verdict rests on.**
+        //
+        //   --cell=cutclose --mode=wall  --wall=10.0 --workers=8 --seed=S
+        //   --cell=cutclose --mode=fixed --bites=8 --attempts=2 --iters=400
+        //                   --compressbites=2 --workers=8 --seed=S
+        //
+        // The clock starts on the **decoded bare request** (`started`, at the top
+        // of `main`) and the constructor is charged against it but never capped -
+        // arbitration 3, "a load-dependent start would break the determinism
+        // contract; the ~1.4 s is charged, not enforced". So the wall handed to
+        // the loop is `--wall` minus whatever the constructor actually spent, and
+        // a constructor that overran the whole budget leaves the loop zero
+        // seconds and the constructor's own layout as the anytime floor. That is
+        // the honest degenerate case and it is reported, not hidden: Grok review
+        // 12 Round 2 §6.6, "constructor-only at 3 s is allowed and expected".
+        //
+        // `--mode=fixed` constructs no `Instant` inside the trajectory at all.
+        "cutclose" => {
+            let constructor_started = Instant::now();
+            let placements = ShortSideFirst.layout(&pieces, settings)?;
+            let constructor_seconds = constructor_started.elapsed().as_secs_f64();
+            wall.insert("constructorSeconds".to_owned(), json!(constructor_seconds));
+            let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+            let constructor_fingerprint = placement_fingerprint(&placements);
+            let mode = options.get("mode").unwrap_or("fixed").to_owned();
+            let workers = options.integer("workers", 8)? as usize;
+            let schedule = ScheduleConfig {
+                workers,
+                record_fingerprints: options.integer("fingerprints", 0)? != 0,
+                ..ScheduleConfig::default()
+            };
+            let wall_budget_s = options.number("wall", 10.0)?;
+            let budget = match mode.as_str() {
+                "wall" => {
+                    // The clock started at the decoded request, not here.
+                    let remaining = wall_budget_s - started.elapsed().as_secs_f64();
+                    Budget::Wall {
+                        remaining_seconds: remaining.max(0.0),
+                    }
+                }
+                "fixed" => Budget::FixedWork {
+                    explore_bites: options.integer("bites", 8)?,
+                    compress_bites: options.integer("compressbites", 0)?,
+                    attempts_per_bite: options.integer("attempts", 1)?,
+                    iterations_per_separation: options.integer("iters", 400)?,
+                },
+                other => return Err(format!("--mode must be wall|fixed, not `{other}`").into()),
+            };
+            let config = IcsConfig {
+                // Overridden by `from_constructor_at_depth` with `D*`; named here
+                // so the record shows what the cell asked for.
+                target_depth_mm: constructor_depth,
+                proposal_budget: 0,
+                relocate_eval_budget: u64::MAX,
+                checkpoint_every_sweeps: u64::MAX,
+                descent: descent_config(&options, &contract, &sources, seed)?,
+                limits: publication_limits(&options)?,
+            };
+            let mut engine = Engine::from_constructor_at_depth(
+                &pieces,
+                settings,
+                &placements,
+                constructor_depth,
+                config,
+            )?;
+            let search_started = Instant::now();
+            let outcome = engine.run_cutclose(schedule, budget);
+            let search_seconds = search_started.elapsed().as_secs_f64();
+            wall.insert("searchSeconds".to_owned(), json!(search_seconds));
+            wall.insert(
+                "loopSearchSeconds".to_owned(),
+                json!(outcome.search_seconds),
+            );
+            wall.insert(
+                "loopExploreSeconds".to_owned(),
+                json!(outcome.explore_seconds),
+            );
+            document["constructor"] = json!({
+                "rawSourceDepthMm": constructor_depth,
+                "placementFingerprint": constructor_fingerprint,
+                "placementCount": placements.len(),
+                "lowerScaleMm": lower_scale_mm,
+            });
+            document["schedule"] = json!({
+                "mode": mode,
+                "workers": workers,
+                "wallBudgetSeconds": if mode == "wall" { json!(wall_budget_s) } else { Value::Null },
+                "exploreTimeRatio": schedule.explore_time_ratio,
+                "exploreIterationsWithoutImprovement":
+                    schedule.explore.iterations_without_improvement,
+                "exploreStrikes": schedule.explore.strikes,
+                "compressIterationsWithoutImprovement":
+                    schedule.compress.iterations_without_improvement,
+                "compressStrikes": schedule.compress.strikes,
+                "recordFingerprints": schedule.record_fingerprints,
+                "fixedWork": match budget {
+                    Budget::FixedWork { explore_bites, compress_bites, attempts_per_bite,
+                                        iterations_per_separation } => json!({
+                        "exploreBites": explore_bites,
+                        "compressBites": compress_bites,
+                        "attemptsPerBite": attempts_per_bite,
+                        "iterationsPerSeparation": iterations_per_separation,
+                    }),
+                    Budget::Wall { .. } => Value::Null,
+                },
+            });
+            document["outcome"] = schedule_json(&outcome, &constructor_fingerprint);
+            document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+            // The first-bite canary's own clause, computed by the driver rather
+            // than by the python that reads it, so the binary and the tripwire
+            // cannot disagree about what `0.999 * D*` is.
+            //
+            // FAIL HERE MEANS DO NOT RUN THE 9-SEED WALL: Grok review 12 Round 2
+            // §6.3.4, "FAIL here is a member fail" - 0.183 mm is inside the S1
+            // basin the member already republishes, so a first 0.1 % bite that
+            // cannot publish is not a throughput story.
+            let first_bite_target = homotopy::explore_width_mm(constructor_depth);
+            let first = outcome
+                .publications
+                .iter()
+                .find(|row| row.ordinal.bite == 1 && row.phase.label() == "explore");
+            document["firstBiteCanary"] = json!({
+                "constructorDepthMm": constructor_depth,
+                "expectedTargetMm": first_bite_target,
+                "published": first.is_some(),
+                "publishedRawDepthMm": first.map(|row| row.published_raw_depth_mm),
+                "targetDepthMm": first.map(|row| row.target_depth_mm),
+                "targetMatchesExpected": first
+                    .map(|row| row.target_depth_mm == first_bite_target)
+                    .unwrap_or(false),
+                "withinTarget": first
+                    .map(|row| row.published_raw_depth_mm <= row.target_depth_mm)
+                    .unwrap_or(false),
+                "dualValid": outcome.trace.checkpoints.iter().all(|row|
+                    row.published_raw_depth_mm.is_none()
+                        || (row.kernel_exclusive_valid && row.contract_valid)),
+                "strictChild": first
+                    .map(|row| row.placement_fingerprint != constructor_fingerprint)
+                    .unwrap_or(false),
+            });
         }
         "randomt" => {
             // Diagnostic only, by both designers' arbitration: a uniform dense
@@ -738,6 +1107,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let config = IcsConfig {
                 target_depth_mm: target,
                 proposal_budget: options.integer("budget", 100_000)?,
+                relocate_eval_budget: options.integer("relocateevals", u64::MAX)?,
                 checkpoint_every_sweeps: options.integer("checkpointevery", 1)?,
                 descent: descent_config(&options, &contract, &sources, seed)?,
                 limits: publication_limits(&options)?,
@@ -916,6 +1286,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let config = IcsConfig {
                 target_depth_mm: target,
                 proposal_budget: 0,
+                relocate_eval_budget: u64::MAX,
                 checkpoint_every_sweeps: u64::MAX,
                 descent: descent_config(&options, &contract, &sources, seed)?,
                 limits: publication_limits(&options)?,
@@ -1122,7 +1493,7 @@ fn throughput(engine: &mut Engine<'_>, repeats: usize, proposals: u64) -> Value 
     // see from `rawPhiAfter > 0` and `acceptedMoves` that the loop was doing
     // the work the currency is denominated in.
     let phi_before = engine.cold_rebuild().raw;
-    let accepted_before = engine.work().accepted_moves;
+    let before = engine.work();
     let started = Instant::now();
     let mut done = 0u64;
     while done < proposals {
@@ -1132,7 +1503,30 @@ fn throughput(engine: &mut Engine<'_>, repeats: usize, proposals: u64) -> Value 
     let proposal_seconds = started.elapsed().as_secs_f64();
     let proposals_per_second = done as f64 / proposal_seconds;
     let phi_after = engine.cold_rebuild().raw;
-    let accepted = engine.work().accepted_moves - accepted_before;
+    let after = engine.work();
+    let accepted = after.accepted_moves - before.accepted_moves;
+
+    // ------------------------------------- the relocate metric version (§4) --
+    //
+    // **Arbitration 4, both halves.** The three committed thresholds above stay
+    // literal and keep their original meaning, and the fourth pin is
+    // *re-denominated* rather than renamed: the retired pin counted a proposal
+    // that formed a gradient and walked a backtracking ladder; one `propose_once`
+    // is now a whole relocate - 75 pool samples plus four coordinate descents -
+    // and a rate in that unit is not the same number and never was.
+    //
+    // Both are printed. `pieceProposalsPerSecond` is the old counter under the
+    // NEW operator and is *expected* to be far below the retired 100 K/8 s pin,
+    // because one unit now buys ~76x the work; `relocateEvalsPerSecond` is the
+    // member's own currency and is what §4.3's ">= 100 K relocate-evals projected
+    // in 8 s" clause is scored on. `rawPhiBefore/After` and `acceptedRelocates`
+    // sit beside it so a skip-loop cannot fake the rate - a relocate on a piece
+    // with no incident energy returns before it samples anything, and the
+    // `relocates` counter (not `pieceProposals`) is what excludes it.
+    let sample_evaluations = after.sample_evaluations - before.sample_evaluations;
+    let relocates = after.relocates - before.relocates;
+    let relocate_evals_per_second = sample_evaluations as f64 / proposal_seconds;
+    let projected_relocate_evals = relocate_evals_per_second * 8.0;
 
     json!({
         "coldPhiMicroseconds": cold_micros,
@@ -1148,10 +1542,35 @@ fn throughput(engine: &mut Engine<'_>, repeats: usize, proposals: u64) -> Value 
         "rawPhiAfterProposals": phi_after,
         "acceptedMovesDuringProposals": accepted,
         "projectedProposalsInEightSeconds": proposals_per_second * 8.0,
+        // Kept under its ORIGINAL name and meaning so the previous rounds'
+        // documents stay diffable, and explicitly NOT a clause of `pass` any
+        // more - see `retiredProposalPinNote`.
         "projectedAtLeast100K": proposals_per_second * 8.0 >= 100_000.0,
+        "retiredProposalPinNote":
+            "pieceProposals now buys one whole relocate (75 pool samples + 4 \
+             coordinate descents), not one gradient + ladder. The 100K/8s pin is \
+             re-denominated into relocateEvals per docs/cutclose-relocate-spec.md \
+             arbitration 4; this field is reported under its old meaning and is \
+             not a pass clause.",
+        "relocates": relocates,
+        "acceptedRelocates": accepted,
+        "sampleEvaluations": sample_evaluations,
+        "sampleEvaluationsPerRelocate": if relocates == 0 {
+            0.0
+        } else {
+            sample_evaluations as f64 / relocates as f64
+        },
+        "relocatesPerSecond": relocates as f64 / proposal_seconds,
+        "relocateEvalsPerSecond": relocate_evals_per_second,
+        "projectedRelocateEvalsInEightSeconds": projected_relocate_evals,
+        "relocateEvalsAtLeast100K": projected_relocate_evals >= 100_000.0,
+        "containerWinners": after.container_winners - before.container_winners,
+        "focusedWinners": after.focused_winners - before.focused_winners,
+        "stayPutWinners": after.stay_put_winners - before.stay_put_winners,
+        "containerCommits": after.container_commits - before.container_commits,
         "pass": cold_micros <= 200.0
             && row_micros <= 20.0
             && (evaluations as f64 / gap_seconds) >= 1.0e6
-            && proposals_per_second * 8.0 >= 100_000.0,
+            && projected_relocate_evals >= 100_000.0,
     })
 }

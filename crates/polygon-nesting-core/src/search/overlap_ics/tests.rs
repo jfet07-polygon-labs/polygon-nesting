@@ -501,6 +501,7 @@ fn engine_fixture(target: f64, budget: u64) -> (Fixture, GeneralFastSettings, Ic
     let config = IcsConfig {
         target_depth_mm: target,
         proposal_budget: budget,
+        relocate_eval_budget: u64::MAX,
         checkpoint_every_sweeps: 1,
         descent: DescentConfig::derive(&contract, &sources, 0),
         limits: PublicationLimits::default(),
@@ -563,6 +564,7 @@ fn a_four_micrometre_deficit_is_repaired_inside_the_same_strip() {
     let config = IcsConfig {
         target_depth_mm: 200.0,
         proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
         checkpoint_every_sweeps: 1,
         descent: DescentConfig::derive(&contract, &sources, 0),
         limits: PublicationLimits::default(),
@@ -617,6 +619,7 @@ fn a_half_millimetre_deficit_is_discarded_rather_than_legalized() {
     let config = IcsConfig {
         target_depth_mm: 200.0,
         proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
         checkpoint_every_sweeps: 1,
         descent: DescentConfig::derive(&contract, &sources, 0),
         limits,
@@ -2144,6 +2147,7 @@ fn banded_deficit_engine<'a>(
     let config = IcsConfig {
         target_depth_mm: incumbent_depth_mm,
         proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
         checkpoint_every_sweeps: u64::MAX,
         descent: DescentConfig::derive(&contract, &sources, 0),
         limits: PublicationLimits::default(),
@@ -2377,6 +2381,7 @@ fn a_refused_publication_never_advances_the_width() {
     let config = IcsConfig {
         target_depth_mm: 360.0,
         proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
         checkpoint_every_sweeps: u64::MAX,
         descent: DescentConfig::derive(&contract, &sources, 0),
         limits,
@@ -2470,6 +2475,7 @@ fn tournament_run(workers: usize) -> (ScheduleOutcome, usize) {
     let config = IcsConfig {
         target_depth_mm: 40.0,
         proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
         checkpoint_every_sweeps: u64::MAX,
         descent: DescentConfig::derive(&contract, &sources, 4),
         limits: PublicationLimits::default(),
