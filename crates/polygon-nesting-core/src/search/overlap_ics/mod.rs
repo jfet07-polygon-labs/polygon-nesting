@@ -43,6 +43,16 @@
 //! descent.** Wall mode reads the deadline at a worker-sweep barrier
 //! (arbitration 2) and at a phase boundary, and nowhere else; fixed-work mode
 //! constructs no `Instant` at all and runs the identical trajectory code.
+//!
+//! The one qualification, added by the economics round's profile census and
+//! stated here rather than left for a reader of [`profile`] to discover: under
+//! the **`ics-profile`** cargo feature - off by default, off in the
+//! `overlap-ics` set every gate is measured on - `Engine::tournament` and
+//! `Engine::separate` read a clock around six named regions and add the
+//! nanoseconds to a [`profile::PhaseProfile`] that no engine decision ever
+//! reads. The audit's "an `Instant` appears in exactly one place" stays true of
+//! the shipped binary, and the census asserts the two builds' whole fixed-work
+//! documents against each other rather than asking to be believed.
 
 pub mod broad_phase;
 pub mod contact;
@@ -58,6 +68,15 @@ pub mod diagnostics;
 pub mod disrupt;
 pub mod energy;
 pub mod homotopy;
+/// The persisted calibrated-work plan's file format, and its writer.
+///
+/// Schema and write path only: this round funds no reader and no pacer, and
+/// the two halves are deliberately separate compilation units so that a
+/// trajectory can never acquire a reader by accident. See the module docs.
+pub mod icscal;
+/// The master-iteration phase census behind the `ics-profile` feature.
+/// Measurement only; every field is zero in a default build.
+pub mod profile;
 pub mod publish;
 /// The routine move: Algorithm 5-6's global relocate of one colliding piece.
 pub mod relocate;
@@ -86,6 +105,7 @@ pub trait InitialLayoutProvider {
 
 use descent::{Descent, DescentConfig, SweepOutcome};
 use diagnostics::{ProxySample, QualityPoint, Trace, WorkVector};
+use profile::{ics_time, PhaseProfile};
 use publish::{Publication, PublicationLimits};
 use state::{
     build_geometry, pair_count, Contract, ExactIncumbent, Geometry, IcsState, PairRow, PieceSource,
@@ -643,31 +663,46 @@ impl<'a> Engine<'a> {
     /// `(weighted_loss, worker_ordinal)`. A digest between the two would only
     /// reorder exact ties by a hash, which is not more meaningful than the
     /// ordinal and costs a fingerprint per worker per iteration.
-    fn tournament(&mut self, workers: usize, bite: u64) -> (SweepOutcome, Merge) {
+    fn tournament(
+        &mut self,
+        workers: usize,
+        bite: u64,
+        profile: &mut PhaseProfile,
+    ) -> (SweepOutcome, Merge) {
         let workers = workers.max(1);
-        let mut slots: Vec<(IcsState, Descent, WorkVector)> = Vec::with_capacity(workers);
-        for ordinal in 0..workers {
-            let mut descent = self.descent.clone();
-            descent.set_stream(bite, ordinal as u64);
-            slots.push((self.state.clone(), descent, WorkVector::default()));
-        }
+        // **Step 1-2, and the first half of the spawn tax.** A persistent
+        // executor keeps these slots alive across iterations and refills them
+        // with `clone_from`; this loop allocates and clones eight of them every
+        // master iteration. `prep_ns` is what that costs, measured rather than
+        // asserted, and it is one of the two terms in the spec's 10 % clause.
+        let mut slots: Vec<Slot> = ics_time!(profile, prep_ns, {
+            let mut slots: Vec<Slot> = Vec::with_capacity(workers);
+            for ordinal in 0..workers {
+                let mut descent = self.descent.clone();
+                descent.set_stream(bite, ordinal as u64);
+                slots.push(Slot {
+                    state: self.state.clone(),
+                    descent,
+                    work: WorkVector::default(),
+                    sweep_ns: 0,
+                });
+            }
+            slots
+        });
 
         let sources: &[PieceSource] = &self.sources;
         let contract: &Contract = &self.contract;
         let mut outcomes: Vec<SweepOutcome> = Vec::with_capacity(workers);
+        #[cfg(feature = "ics-profile")]
+        let dispatch_started = std::time::Instant::now();
         if workers == 1 {
-            let (state, descent, work) = &mut slots[0];
-            outcomes.push(descent.worker_sweep(state, sources, contract, work));
+            let slot = &mut slots[0];
+            outcomes.push(slot.sweep(sources, contract));
         } else {
             std::thread::scope(|scope| {
                 let handles: Vec<_> = slots
                     .iter_mut()
-                    .map(|slot| {
-                        scope.spawn(move || {
-                            let (state, descent, work) = slot;
-                            descent.worker_sweep(state, sources, contract, work)
-                        })
-                    })
+                    .map(|slot| scope.spawn(move || slot.sweep(sources, contract)))
                     .collect();
                 // The barrier. Joined in ordinal order, so the vector is a
                 // function of the ordinals and not of who finished first.
@@ -676,44 +711,65 @@ impl<'a> Engine<'a> {
                 }
             });
         }
-
-        for (_, _, work) in &slots {
-            self.trace.work.saturating_add(work);
+        // **The second half of the spawn tax.** `std::thread::scope`'s whole
+        // wall minus the *critical-path* sweep is what thread creation, the
+        // scheduler placing eight threads on eight cores, and the join cost.
+        // At `workers == 1` no thread is created and this is zero by
+        // construction - which is what makes the 1/2/4/8 ladder a measurement
+        // of the tax rather than of the box.
+        #[cfg(feature = "ics-profile")]
+        {
+            let scope_ns = dispatch_started.elapsed().as_nanos() as u64;
+            let critical = slots.iter().map(|slot| slot.sweep_ns).max().unwrap_or(0);
+            let total: u64 = slots.iter().map(|slot| slot.sweep_ns).sum();
+            profile.sweep_critical_ns += critical;
+            profile.sweep_total_ns += total;
+            profile.dispatch_ns += scope_ns.saturating_sub(critical);
         }
 
-        let mut winner = 0usize;
-        for ordinal in 1..workers {
-            if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
-                winner = ordinal;
+        for slot in &slots {
+            self.trace.work.saturating_add(&slot.work);
+        }
+
+        // Steps 5-7: the ordinal merge, the install, and one Algorithm-8 pass.
+        // Timed as one region because a persistent executor changes none of it
+        // and the census must not be able to flatter the executor by counting
+        // merge work as dispatch work.
+        ics_time!(profile, merge_gls_ns, {
+            let mut winner = 0usize;
+            for ordinal in 1..workers {
+                if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
+                    winner = ordinal;
+                }
             }
-        }
-        let contested = outcomes
-            .iter()
-            .any(|other| other.totals.guided != outcomes[0].totals.guided);
-        let outcome = outcomes[winner];
-        let merge = Merge {
-            winner,
-            guided: outcome.totals.guided,
-            contested,
-        };
-        let (state, descent, _) = slots.swap_remove(winner);
-        self.state = state;
-        self.descent = descent;
-        self.trace.sweeps += 1;
+            let contested = outcomes
+                .iter()
+                .any(|other| other.totals.guided != outcomes[0].totals.guided);
+            let outcome = outcomes[winner];
+            let merge = Merge {
+                winner,
+                guided: outcome.totals.guided,
+                contested,
+            };
+            let slot = slots.swap_remove(winner);
+            self.state = slot.state;
+            self.descent = slot.descent;
+            self.trace.sweeps += 1;
 
-        // Step 7. One Algorithm-8 pass, on the master, over every row.
-        let active_rows = energy::gls_update(&mut self.state);
-        self.trace.work.weight_updates += 1;
-        let totals = energy::fold(&self.state);
-        (
-            SweepOutcome {
-                active_rows,
-                raw_after: totals.raw,
-                totals,
-                ..outcome
-            },
-            merge,
-        )
+            // Step 7. One Algorithm-8 pass, on the master, over every row.
+            let active_rows = energy::gls_update(&mut self.state);
+            self.trace.work.weight_updates += 1;
+            let totals = energy::fold(&self.state);
+            (
+                SweepOutcome {
+                    active_rows,
+                    raw_after: totals.raw,
+                    totals,
+                    ..outcome
+                },
+                merge,
+            )
+        })
     }
 
     // ------------------------------------------ Algorithm 9: one separation --
@@ -761,7 +817,23 @@ impl<'a> Engine<'a> {
         let mut strikes = 0u32;
         let mut iterations = 0u64;
         let mut band_reached = false;
-        let mut exact_attempts = 0u64;
+        // **The two numbers the audit's F4 says the funnel was missing.**
+        //
+        // `exact_band_entries` is the counter round 1 shipped under the name
+        // `exact_attempts`: it is incremented when `max_g` falls inside the
+        // 4 µm band, *before* `attempt_publication` is called, and 73 % of its
+        // increments never reach exact geometry at all - the unchanged-pose
+        // digest returns early (`Engine::attempt_publication`), and
+        // `publish::attempt` returns `None` on `max_g > band`, `proxy > T` or
+        // `proxy > incumbent - 1 µm`. `exact_checkpoint_calls` is the delta of
+        // `work.exact_checkpoints`, which `publish::attempt` increments only
+        // once it is past all three gates: **the count of times the exact
+        // authorities were actually asked.** Neither is a rename of the other
+        // and the two are emitted side by side, because the funnel needs both
+        // rungs and had neither.
+        let mut exact_band_entries = 0u64;
+        let mut exact_checkpoint_calls = 0u64;
+        let mut profile = PhaseProfile::default();
         // The clock, read at the previous barrier. Wall mode refreshes it once
         // per master iteration and never inside one.
         let mut elapsed_s = pacer.elapsed_s();
@@ -769,19 +841,36 @@ impl<'a> Engine<'a> {
         let iteration_cap = pacer.iteration_cap();
 
         let stop = loop {
-            let totals = energy::fold(&self.state);
+            // **Barrier to barrier**: the master iteration the spec's 10 %
+            // clause is denominated in, opened here and closed at the bottom
+            // of the turn. Under `ics-profile` only.
+            #[cfg(feature = "ics-profile")]
+            let turn_started = std::time::Instant::now();
+            let totals = ics_time!(profile, band_fold_ns, energy::fold(&self.state));
             // The one transition, from the one place that owns it. A new
             // minimum inside the 2 % band moves the snapshot and leaves the
             // counter where it is; only a 2 % improvement forgives it.
             if observe_raw(totals.raw, &mut min_raw, &mut since_improvement).is_new_minimum() {
-                snapshot.clone_from(&self.state);
+                ics_time!(profile, snapshot_ns, snapshot.clone_from(&self.state));
             }
 
             if totals.max_violation_mm <= band {
                 band_reached = true;
-                exact_attempts += 1;
-                let outcome = self.attempt_publication();
+                exact_band_entries += 1;
+                profile.band_entries += 1;
+                let called_before = self.trace.work.exact_checkpoints;
+                let repaired_before = self.trace.work.repair_rows;
+                let outcome = ics_time!(profile, exact_ns, self.attempt_publication());
+                let called = self.trace.work.exact_checkpoints - called_before;
+                exact_checkpoint_calls += called;
+                profile.exact_calls += called;
+                profile.repair_rows += self.trace.work.repair_rows - repaired_before;
                 if let Some(publication) = outcome.publication {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     return SeparateOutcome {
                         published: Some(publication),
                         stop: SeparateStop::Published,
@@ -789,16 +878,27 @@ impl<'a> Engine<'a> {
                         strikes,
                         min_raw,
                         band_reached,
-                        exact_attempts,
+                        exact_band_entries,
+                        exact_checkpoint_calls,
+                        profile,
                     };
                 }
                 if totals.raw <= 0.0 {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::Refused;
                 }
             }
 
             if since_improvement >= limits.iterations_without_improvement {
-                restore_keeping_weights(&mut self.state, &snapshot);
+                ics_time!(
+                    profile,
+                    snapshot_ns,
+                    restore_keeping_weights(&mut self.state, &snapshot)
+                );
                 // The improving strike: a strike that still beat the previous
                 // strike's entry by 2 % does not count against the cap.
                 if min_raw < STRIKE_IMPROVEMENT_RATIO * strike_entry_raw {
@@ -809,23 +909,43 @@ impl<'a> Engine<'a> {
                 strike_entry_raw = min_raw;
                 since_improvement = 0;
                 if strikes >= limits.strikes {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::Struck;
                 }
             }
 
             if let (Some(elapsed), Some(deadline)) = (elapsed_s, deadline_s) {
                 if elapsed >= deadline {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::Deadline;
                 }
             }
             if let Some(cap) = iteration_cap {
                 if iterations >= cap {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::WorkCap;
                 }
             }
 
-            let (_, merge) = self.tournament(workers, bite);
+            let samples_before = self.trace.work.sample_evaluations;
+            let (_, merge) = self.tournament(workers, bite, &mut profile);
             iterations += 1;
+            // The currency's two per-batch terms, counted rather than timed,
+            // so a build without `ics-profile` still carries them.
+            profile.iterations += 1;
+            profile.sample_evaluations += self.trace.work.sample_evaluations - samples_before;
             // **The barrier.** This is the one clock read of a master
             // iteration, and it is after the eight workers have joined.
             elapsed_s = pacer.elapsed_s();
@@ -839,6 +959,16 @@ impl<'a> Engine<'a> {
                     contested: merge.contested,
                     state: state_fingerprint(&self.state),
                 });
+            }
+            // Only a turn that reached the tournament is a *master iteration*;
+            // a turn that broke out above published, struck or ran out of
+            // budget without sweeping, and charging its wall to the iteration
+            // denominator would deflate every phase share. Its wall is still
+            // added to `barrier_to_barrier_ns`, so the shares stay honest
+            // about the whole separation.
+            #[cfg(feature = "ics-profile")]
+            {
+                profile.barrier_to_barrier_ns += turn_started.elapsed().as_nanos() as u64;
             }
         };
 
@@ -855,7 +985,9 @@ impl<'a> Engine<'a> {
             strikes,
             min_raw,
             band_reached,
-            exact_attempts,
+            exact_band_entries,
+            exact_checkpoint_calls,
+            profile,
         }
     }
 
@@ -930,7 +1062,9 @@ impl<'a> Engine<'a> {
                 strikes: 0,
                 min_raw_phi: f64::INFINITY,
                 proxy_band_reached: false,
-                exact_attempts: 0,
+                exact_band_entries: 0,
+                exact_checkpoint_calls: 0,
+                profile: PhaseProfile::default(),
                 published: None,
             };
             let mut pool: Vec<PoolEntry> = Vec::new();
@@ -950,7 +1084,9 @@ impl<'a> Engine<'a> {
                 );
                 record.master_iterations += separation.iterations;
                 record.strikes += separation.strikes;
-                record.exact_attempts += separation.exact_attempts;
+                record.exact_band_entries += separation.exact_band_entries;
+                record.exact_checkpoint_calls += separation.exact_checkpoint_calls;
+                record.profile.add(&separation.profile);
                 record.proxy_band_reached |= separation.band_reached;
                 record.min_raw_phi = record.min_raw_phi.min(separation.min_raw);
                 if let Some(publication) = separation.published {
@@ -985,6 +1121,7 @@ impl<'a> Engine<'a> {
                     ref descent,
                     ..
                 } = *self;
+                let moves_before = trace.work.disruption_moves;
                 let disruption = disrupt::disrupt(
                     state,
                     sources,
@@ -995,6 +1132,8 @@ impl<'a> Engine<'a> {
                     attempt,
                     &mut trace.work,
                 );
+                // The currency's `D` term, charged to the bite that paid it.
+                record.profile.disruption_moves += trace.work.disruption_moves - moves_before;
                 if disruption.fired {
                     record.disruptions += 1;
                 }
@@ -1072,7 +1211,9 @@ impl<'a> Engine<'a> {
                 strikes: separation.strikes,
                 min_raw_phi: separation.min_raw,
                 proxy_band_reached: separation.band_reached,
-                exact_attempts: separation.exact_attempts,
+                exact_band_entries: separation.exact_band_entries,
+                exact_checkpoint_calls: separation.exact_checkpoint_calls,
+                profile: separation.profile,
                 published: None,
             };
             compress_bites += 1;
@@ -1101,7 +1242,7 @@ impl<'a> Engine<'a> {
         // ends as well as of its middle, and no reader can mistake an
         // interrupted child's proxy depth for progress. What that child reached
         // is not lost - every bite record carries its own `min_raw_phi`,
-        // `proxy_band_reached` and `exact_attempts`, which is the funnel row the
+        // `proxy_band_reached` and its two exact counters, which is the funnel row the
         // failure license asks for, and `final_width_mm` below is the target it
         // was reaching for.
         self.install_poses(&parent_poses, depth_mm);
@@ -1161,6 +1302,7 @@ impl<'a> Engine<'a> {
             improved_incumbent: self.incumbent.placement_fingerprint
                 == publication.placement_fingerprint,
             wall_seconds,
+            poses: publication.poses.clone(),
         }
     }
 }
@@ -1456,6 +1598,21 @@ pub struct PublishedBite {
     /// Seconds since the loop entered, in wall mode; `None` in fixed work.
     /// A publication whose seconds exceed a checkpoint does not count for it.
     pub wall_seconds: Option<f64>,
+    /// **The repaired layout itself.** The evidence audit's revalidation
+    /// chapter closes on this sentence: "No pose is recorded for any of the
+    /// 1,701 publications. `161.05499`, `163.56062`, `167.31508` and
+    /// `167.95169` are re-validatable only by the process that produced them."
+    /// They are recorded now.
+    ///
+    /// These are the **post-repair** poses - `Publication::poses`, the same
+    /// array `install_publication` installs - so
+    /// `placements_of(sources, &poses)` reproduces `Publication::placements`
+    /// exactly (`publish::attempt` re-derives the placements from the poses
+    /// after every repair row), and therefore reproduces both
+    /// `placement_fingerprint` and, through `raw_depth_of`,
+    /// `published_raw_depth_mm`. A reader with the request and this array can
+    /// re-run both exact authorities without the process that produced it.
+    pub poses: Vec<Pose>,
 }
 
 /// One bite, successful or not: the funnel row
@@ -1474,7 +1631,18 @@ pub struct BiteRecord {
     pub min_raw_phi: f64,
     /// `max_g` fell inside the 4 µm band at least once.
     pub proxy_band_reached: bool,
-    pub exact_attempts: u64,
+    /// **Entries into the 4 µm band**, not calls to the exact authorities.
+    /// This is the counter round 1 emitted as `exactAttempts`; the value is
+    /// unchanged and the name now says what it counts (audit F4).
+    pub exact_band_entries: u64,
+    /// **Calls that reached exact geometry.** Measured as the delta of
+    /// `work.exact_checkpoints`, so `sum(exact_checkpoint_calls)` over the
+    /// bites reconciles exactly with the work vector's own total, and
+    /// `exact_checkpoint_calls <= exact_band_entries` always.
+    pub exact_checkpoint_calls: u64,
+    /// Where this bite's master iterations went. All zeros without
+    /// `ics-profile`; never read by the engine.
+    pub profile: PhaseProfile,
     pub published: Option<PublishedBite>,
 }
 
@@ -1565,6 +1733,42 @@ struct Merge {
     contested: bool,
 }
 
+/// One competitive worker's private world for one master iteration.
+///
+/// It was an anonymous `(IcsState, Descent, WorkVector)` triple until the
+/// profile census needed somewhere to put a per-worker duration that is
+/// **written by the worker thread itself**, before the join, so that the
+/// critical-path sweep can be separated from the dispatch that surrounds it.
+/// Naming the triple is the whole change; the contents, the ordering and the
+/// merge are untouched.
+struct Slot {
+    state: IcsState,
+    descent: Descent,
+    work: WorkVector,
+    /// Nanoseconds this worker spent inside `worker_sweep`. Written only under
+    /// `ics-profile`; one `u64` in an already-allocated vector otherwise, and
+    /// read by nothing the engine decides on.
+    #[cfg_attr(not(feature = "ics-profile"), allow(dead_code))]
+    sweep_ns: u64,
+}
+
+impl Slot {
+    /// Step 3: one complete sequential relocate sweep, in this worker's own
+    /// state, descent and work vector.
+    fn sweep(&mut self, sources: &[PieceSource], contract: &Contract) -> SweepOutcome {
+        #[cfg(feature = "ics-profile")]
+        let started = std::time::Instant::now();
+        let outcome = self
+            .descent
+            .worker_sweep(&mut self.state, sources, contract, &mut self.work);
+        #[cfg(feature = "ics-profile")]
+        {
+            self.sweep_ns = started.elapsed().as_nanos() as u64;
+        }
+        outcome
+    }
+}
+
 struct SeparateOutcome {
     published: Option<Publication>,
     stop: SeparateStop,
@@ -1572,7 +1776,13 @@ struct SeparateOutcome {
     strikes: u32,
     min_raw: f64,
     band_reached: bool,
-    exact_attempts: u64,
+    /// Turns that entered the 4 µm band. Round 1's `exact_attempts`, renamed
+    /// for what it counts (audit F4).
+    exact_band_entries: u64,
+    /// Band entries that reached exact geometry: the delta of
+    /// `work.exact_checkpoints` across `attempt_publication`.
+    exact_checkpoint_calls: u64,
+    profile: PhaseProfile,
 }
 
 /// One entry of the least-infeasible pool.

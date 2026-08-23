@@ -42,6 +42,11 @@ use polygon_nesting_core::search::overlap_ics::descent::{
 };
 use polygon_nesting_core::search::overlap_ics::diagnostics::WorkVector;
 use polygon_nesting_core::search::overlap_ics::homotopy;
+use polygon_nesting_core::search::overlap_ics::icscal::{
+    BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase, WorkPlan,
+};
+use polygon_nesting_core::search::overlap_ics::profile::PhaseProfile;
+use polygon_nesting_core::search::overlap_ics::publish;
 use polygon_nesting_core::search::overlap_ics::publish::{
     placement_fingerprint, raw_depth_of, PublicationLimits,
 };
@@ -266,6 +271,251 @@ fn rejection_census_json(census: &RejectionCensus) -> Value {
     })
 }
 
+/// What `schedule_json` needs to make a layout re-validatable by a reader.
+///
+/// It is a borrowed bundle rather than four more parameters because the poses
+/// have to be turned back into request-coordinate placements, and the pieces
+/// and contract are only reached at all when `--revalidate=1` asks the emitter
+/// to recompute the depth it is printing.
+struct LayoutContext<'a> {
+    sources: &'a [PieceSource],
+    pieces: &'a [GeneralFastPiece<'a>],
+    contract: &'a Contract,
+    revalidate: bool,
+}
+
+/// The engine's own continuous poses. `mirrored` first-class, `thetaDeg`
+/// unwrapped: this is the array the engine installs, not a presentation of it.
+fn poses_json(poses: &[Pose]) -> Value {
+    Value::Array(
+        poses
+            .iter()
+            .map(|pose| {
+                json!({
+                    "txMm": pose.tx_mm,
+                    "tyMm": pose.ty_mm,
+                    "thetaDeg": pose.theta_deg,
+                    "mirrored": pose.mirrored,
+                })
+            })
+            .collect(),
+    )
+}
+
+/// The same layout in the request's own coordinates, in the shape a pose
+/// fixture is read in (`PoseFixture` above, and
+/// `docs/experiments/gate-a-sparrow-import/fixture/`). This is the form an
+/// external validator can push straight back through `raw_depth_of` and the
+/// contract validator.
+fn placements_json(placements: &[GeneralFastPlacement]) -> Value {
+    Value::Array(
+        placements
+            .iter()
+            .map(|placement| {
+                json!({
+                    "pieceId": placement.piece_id,
+                    "rotationDeg": placement.rotation_deg,
+                    "mirrored": placement.mirrored,
+                    "translateShortAxis": placement.translate_short_axis,
+                    "translateLongAxis": placement.translate_long_axis,
+                })
+            })
+            .collect(),
+    )
+}
+
+/// One bite's master-iteration phase census. All zeros - and `measured: false`
+/// - in a build without `ics-profile`, which is every build a gate reads.
+fn profile_json(profile: &PhaseProfile) -> Value {
+    json!({
+        "measured": profile.measured(),
+        "iterations": profile.iterations,
+        "barrierToBarrierNs": profile.barrier_to_barrier_ns,
+        "prepNs": profile.prep_ns,
+        "dispatchNs": profile.dispatch_ns,
+        "sweepCriticalNs": profile.sweep_critical_ns,
+        "sweepTotalNs": profile.sweep_total_ns,
+        "mergeGlsNs": profile.merge_gls_ns,
+        "exactNs": profile.exact_ns,
+        "bandFoldNs": profile.band_fold_ns,
+        "snapshotNs": profile.snapshot_ns,
+        "residualNs": profile.residual_ns(),
+        "bandEntries": profile.band_entries,
+        "exactCalls": profile.exact_calls,
+        "sampleEvaluations": profile.sample_evaluations,
+        "repairRows": profile.repair_rows,
+        "disruptionMoves": profile.disruption_moves,
+        "prepPlusDispatchNs": profile.prep_plus_dispatch_ns(),
+        "prepPlusDispatchShare": profile.prep_plus_dispatch_share(),
+    })
+}
+
+/// One profile, decomposed **as fractions of barrier-to-barrier**, which is
+/// the denominator the spec's 10 % clause names.
+///
+/// The seven named regions are not forced to sum to one. `residualShare` is
+/// whatever is left - `observe_raw`, the strike ladder's comparisons, the loop
+/// bookkeeping and the measurement's own overhead - and it is printed rather
+/// than distributed, because a decomposition that always adds up is usually a
+/// decomposition with a fudge term in it. `prepPlusDispatchShare` is the one
+/// number the executor gate reads, and this function does not compare it to
+/// anything: the threshold lives in the census driver, quoted from the spec.
+fn phase_census_json(profile: &PhaseProfile) -> Value {
+    let total = profile.barrier_to_barrier_ns;
+    let share = |value: u64| -> Value {
+        if total == 0 {
+            Value::Null
+        } else {
+            json!(value as f64 / total as f64)
+        }
+    };
+    let per_iteration = |value: u64| -> Value {
+        if profile.iterations == 0 {
+            Value::Null
+        } else {
+            json!(value as f64 / profile.iterations as f64)
+        }
+    };
+    json!({
+        "measured": profile.measured(),
+        "iterations": profile.iterations,
+        "barrierToBarrierNs": total,
+        "barrierToBarrierNsPerIteration": per_iteration(total),
+        "ns": {
+            "prep": profile.prep_ns,
+            "dispatch": profile.dispatch_ns,
+            "sweepCritical": profile.sweep_critical_ns,
+            "sweepTotal": profile.sweep_total_ns,
+            "mergeGls": profile.merge_gls_ns,
+            "exact": profile.exact_ns,
+            "bandFold": profile.band_fold_ns,
+            "snapshot": profile.snapshot_ns,
+            "residual": profile.residual_ns(),
+        },
+        "share": {
+            "prep": share(profile.prep_ns),
+            "dispatch": share(profile.dispatch_ns),
+            "sweepCritical": share(profile.sweep_critical_ns),
+            "mergeGls": share(profile.merge_gls_ns),
+            "exact": share(profile.exact_ns),
+            "bandFold": share(profile.band_fold_ns),
+            "snapshot": share(profile.snapshot_ns),
+            "residual": share(profile.residual_ns()),
+        },
+        "prepPlusDispatchNs": profile.prep_plus_dispatch_ns(),
+        "prepPlusDispatchShare": profile.prep_plus_dispatch_share(),
+        "bandEntries": profile.band_entries,
+        "exactCalls": profile.exact_calls,
+        // The five terms of the spec's currency, for this window alone. All
+        // counters, so they are populated in every build.
+        "currencyTerms": {
+            "sampleEvaluations": profile.sample_evaluations,
+            "masterBatches": profile.iterations,
+            "actualPublicationAttemptCalls": profile.exact_calls,
+            "repairRows": profile.repair_rows,
+            "disruptionMoves": profile.disruption_moves,
+        },
+        "sampleEvaluationsPerSecond": if total == 0 {
+            Value::Null
+        } else {
+            json!(profile.sample_evaluations as f64 / (total as f64 / 1e9))
+        },
+    })
+}
+
+/// This executable's own sha256, the `binaryKey` half of an icscal file.
+///
+/// `None` rather than an empty string when the executable cannot be read, so
+/// the document keeps saying `null` exactly where it always has and
+/// `WorkPlan::validate` refuses a plan keyed to a binary nobody can name.
+fn executable_sha256() -> Option<String> {
+    env::current_exe()
+        .ok()
+        .and_then(|path| fs::read(path).ok())
+        .map(|bytes| format!("{:x}", Sha256::digest(&bytes)))
+}
+
+/// The features this binary was built with, in a fixed order, for the same key.
+fn build_features() -> Vec<String> {
+    let mut features = vec!["overlap-ics".to_owned()];
+    if cfg!(feature = "ics-profile") {
+        features.push("ics-profile".to_owned());
+    }
+    features
+}
+
+/// An `icscal/v1` plan derived from the **shelf** bite alone.
+///
+/// The rate is `sampleEvaluations / seconds` measured on bite 22, never on the
+/// cheap prefix: pre-named defect (3). The seconds are the shelf's own
+/// barrier-to-barrier wall when the profile measured one, and the whole
+/// search's wall otherwise - the latter is a *slower* rate because it includes
+/// the prefix, so a plan built without `ics-profile` under-promises rather
+/// than over-promising, and `derivation` says which of the two it was.
+#[allow(clippy::too_many_arguments)]
+fn shelf_work_plan(
+    request_sha256: &str,
+    executable_sha256: &str,
+    workers: usize,
+    outcome: &ScheduleOutcome,
+    shelf_index: usize,
+    shelf_ordinal: u64,
+    search_seconds: f64,
+    safety_factor: f64,
+) -> Result<WorkPlan, String> {
+    let shelf = outcome
+        .bites
+        .get(shelf_index)
+        .ok_or_else(|| format!("no bite {} to calibrate on", shelf_index + 1))?;
+    let (seconds, units, derivation) = if shelf.profile.measured() {
+        (
+            shelf.profile.barrier_to_barrier_ns as f64 / 1e9,
+            // The shelf's OWN sample evaluations, not the trajectory's:
+            // `PhaseProfile` carries the currency's five terms per bite for
+            // exactly this reason. Nothing here is apportioned.
+            shelf.profile.sample_evaluations,
+            format!(
+                "trajectory bite {shelf_ordinal} (the 179 shelf) alone, {} master iterations, \
+                 barrier-to-barrier wall from the ics-profile timers, sampleEvaluations \
+                 charged to that bite. NOT the cheap 0.1 % prefix: spec defect (3).",
+                shelf.master_iterations
+            ),
+        )
+    } else {
+        (
+            search_seconds,
+            outcome.trace.work.sample_evaluations,
+            format!(
+                "whole {}-bite fixed-work trajectory wall; no ics-profile timers, so this \
+                 rate includes the cheap prefix and is deliberately slower than the shelf's",
+                outcome.bites.len()
+            ),
+        )
+    };
+    let phases = vec![PhasePlan::from_measurement(
+        PlanPhase::Explore,
+        units,
+        seconds,
+        safety_factor,
+        derivation,
+    )?];
+    Ok(WorkPlan::new(
+        PlanKey {
+            request_sha256: request_sha256.to_owned(),
+            currency_version: CurrencyVersion::U0Samples,
+            binary_key: BinaryKey {
+                executable_sha256: executable_sha256.to_owned(),
+                features: build_features(),
+            },
+            workers,
+            executor: Executor::EphemeralScope,
+        },
+        phases,
+        "docs/experiments/overlap-ics/economics-round/census/, the spawntax cell. \
+         Schema and writer only: this round builds no reader and no pacer.",
+    ))
+}
+
 fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
     json!({
         "incumbent": {
@@ -385,12 +635,28 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
 ///   `bitesStarted -> proxyBandReached -> exactAttempted -> dualValidPublished`.
 /// * `fingerprints` - present only under `--fingerprints=1`; the eight-worker
 ///   merge-determinism vector's whole subject.
-fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Value {
+///
+/// **Every publication and the incumbent now carry their layout.** The
+/// evidence audit's revalidation chapter closes on "no pose is recorded for any
+/// of the 1,701 publications ... re-validatable only by the process that
+/// produced them" (RV2). `placements` is the pose set in the request's own
+/// coordinates - the shape `sparrow_import_gate` and the `s0`/`s1`/`s2` cells
+/// read - so `raw_depth_of` and both exact authorities can be re-run on it by
+/// anyone. Under `--revalidate=1` this function re-runs the depth itself and
+/// prints whether the recomputation matched bit for bit; it is off by default
+/// because it happens between the loop's last clock read and `totalSeconds`,
+/// and `wall.py` brackets a publication's age with that difference.
+fn schedule_json(
+    outcome: &ScheduleOutcome,
+    constructor_fingerprint: &str,
+    layouts: &LayoutContext<'_>,
+) -> Value {
     let publications = outcome
         .publications
         .iter()
         .map(|row| {
-            json!({
+            let placements = publish::placements_of(layouts.sources, &row.poses);
+            let mut value = json!({
                 "ordinal": {
                     "bite": row.ordinal.bite,
                     "attempt": row.ordinal.attempt,
@@ -407,7 +673,22 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
                 "placementFingerprint": row.placement_fingerprint,
                 "improvedIncumbent": row.improved_incumbent,
                 "wallSeconds": row.wall_seconds,
-            })
+                // RV2. The repaired poses, and the placements they denote.
+                "poses": poses_json(&row.poses),
+                "placements": placements_json(&placements),
+            });
+            if layouts.revalidate {
+                let depth = raw_depth_of(layouts.pieces, &placements, layouts.contract);
+                value["revalidation"] = json!({
+                    "recomputedPlacementFingerprint": placement_fingerprint(&placements),
+                    "fingerprintMatches":
+                        placement_fingerprint(&placements) == row.placement_fingerprint,
+                    "recomputedRawDepthMm": depth,
+                    "depthMatchesBitwise": depth.to_bits()
+                        == row.published_raw_depth_mm.to_bits(),
+                });
+            }
+            value
         })
         .collect::<Vec<_>>();
     let bites = outcome
@@ -429,14 +710,35 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
                 "strikes": row.strikes,
                 "minRawPhi": if row.min_raw_phi.is_finite() { json!(row.min_raw_phi) } else { Value::Null },
                 "proxyBandReached": row.proxy_band_reached,
-                "exactAttempts": row.exact_attempts,
+                // **Unchanged value, unchanged name.** Every committed
+                // document and every audit script reads this key as the count
+                // of 4 um band entries, and it still is one. The two keys
+                // below are the split, not a replacement.
+                "exactAttempts": row.exact_band_entries,
+                // Audit F4. `exactBandEntries` is `exactAttempts` under the
+                // name of the thing it counts; `exactCheckpointCalls` is the
+                // number the funnel never had - how many times the exact
+                // authorities were actually asked.
+                "exactBandEntries": row.exact_band_entries,
+                "exactCheckpointCalls": row.exact_checkpoint_calls,
+                "profile": profile_json(&row.profile),
                 "published": row.published.is_some(),
             })
         })
         .collect::<Vec<_>>();
     // The funnel, summed. The failure license asks for exactly this row.
     let band_reached = outcome.bites.iter().filter(|row| row.proxy_band_reached).count();
-    let exact_attempted = outcome.bites.iter().filter(|row| row.exact_attempts > 0).count();
+    let exact_attempted = outcome
+        .bites
+        .iter()
+        .filter(|row| row.exact_band_entries > 0)
+        .count();
+    let band_entries: u64 = outcome.bites.iter().map(|row| row.exact_band_entries).sum();
+    let checkpoint_calls: u64 = outcome
+        .bites
+        .iter()
+        .map(|row| row.exact_checkpoint_calls)
+        .sum();
     json!({
         "startDepthMm": outcome.start_depth_mm,
         "depthMm": outcome.depth_mm,
@@ -446,10 +748,31 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
         "publications": publications,
         "publicationCount": outcome.publications.len(),
         "bites": bites,
+        // **The funnel, with the rung the audit says it never had.**
+        //
+        // F4: "the failure license's funnel `bitesStarted -> proxyBandReached
+        // -> exactAttempted -> dualValidPublished` has no rung that answers
+        // 'how many times were the exact authorities asked', the true number
+        // is `work.exactCheckpoints`, and `wall.py`'s reduction drops `work`
+        // entirely. The autopsy the failure license buys is being read off two
+        // numbers that are 0.6x and 3.7x the one it wants."
+        //
+        // `exactAttempted` keeps its value and its place, so every committed
+        // document stays comparable, and `bitesWithBandEntry` is the same
+        // number under the name of what it counts: BITES that entered the
+        // band, not attempts. The two sums beside it are the attempts and the
+        // calls. `exactCheckpointCallsReconcile` is the identity that makes
+        // the split checkable from the document alone.
         "funnel": {
             "bitesStarted": outcome.bites.len(),
             "proxyBandReached": band_reached,
             "exactAttempted": exact_attempted,
+            "bitesWithBandEntry": exact_attempted,
+            "exactBandEntries": band_entries,
+            "exactCheckpointCalls": checkpoint_calls,
+            "exactCheckpointCallsReconcile":
+                checkpoint_calls == outcome.trace.work.exact_checkpoints,
+            "workExactCheckpoints": outcome.trace.work.exact_checkpoints,
             "dualValidPublished": outcome.publications.len(),
         },
         "fingerprints": outcome.fingerprints.iter().map(|row| json!({
@@ -471,6 +794,8 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
             "fingerprintDiffersFromConstructor":
                 outcome.incumbent.placement_fingerprint != constructor_fingerprint,
             "placementCount": outcome.incumbent.placements.len(),
+            // RV2, for the number the README prints as the cell's answer.
+            "placements": placements_json(&outcome.incumbent.placements),
         },
         "proxy": {
             "rawPhi": outcome.final_raw_phi,
@@ -1014,6 +1339,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 constructor_depth,
                 config,
             )?;
+            // **The offset between the two clocks, emitted rather than
+            // bracketed.**
+            //
+            // `PublishedBite.wallSeconds` is `Pacer::elapsed_s()` and the
+            // `Pacer` is constructed on the next line, inside
+            // `Engine::run_cutclose`; `--wall` is measured from the decoded
+            // request, which is `started`. The audit's F1/F2 are both about
+            // the gap between those two clocks, and until now the only way to
+            // bound it from the document was `constructorSeconds` below and
+            // `totalSeconds - searchSeconds` above - an upper bound that
+            // includes the whole document build, and therefore widens every
+            // time this driver emits more evidence.
+            //
+            // This is the offset itself, read one statement before the pacer
+            // exists: constructor, engine construction and nothing else. What
+            // it still cannot see is the call prologue and `Pacer::new`, tens
+            // of nanoseconds, so `constructorSeconds` stays the conservative
+            // LOWER bound and the verdict stays on that side.
+            let loop_entry_seconds = started.elapsed().as_secs_f64();
+            wall.insert("loopEntrySeconds".to_owned(), json!(loop_entry_seconds));
             let search_started = Instant::now();
             let outcome = engine.run_cutclose(schedule, budget);
             let search_seconds = search_started.elapsed().as_secs_f64();
@@ -1055,7 +1400,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Budget::Wall { .. } => Value::Null,
                 },
             });
-            document["outcome"] = schedule_json(&outcome, &constructor_fingerprint);
+            document["outcome"] = schedule_json(
+                &outcome,
+                &constructor_fingerprint,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    contract: &contract,
+                    revalidate: options.integer("revalidate", 0)? != 0,
+                },
+            );
             document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
             // The first-bite canary's own clause, computed by the driver rather
             // than by the python that reads it, so the binary and the tripwire
@@ -1274,6 +1628,207 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     && total_rate >= 0.80,
             });
         }
+        // ------------------------------------------------ the profile census --
+        //
+        // **The spawn-tax cell.** docs/economics-round-spec.md funds a persistent
+        // executor only behind a measured gate: "profile easy + bite-22 hard
+        // states, workers 1/2/4/8, identical fixed work (prep, dispatch/join,
+        // sweeps, merge+GLS, exact/repair separately). Build iff prep+dispatch
+        // >= 10% of hard-state wall."
+        //
+        // The density is the whole point, and it is the spec's own pre-named
+        // defect (3): "probe-on-cheap-bites (calibrating on bites 1-21
+        // overstates iters/s ~1.5x; the probe is 400 iterations AT the 179
+        // shelf)". So this cell does not run bites 1-21 and time them. It runs
+        // the constructor, takes the 21 published 0.1 % bites that land the
+        // trajectory on the 179 shelf, and then spends `--probeiters` master
+        // iterations on the 22nd bite - the one that does not publish - with
+        // the phase clock running. Both halves are reported: the cheap prefix
+        // is the number the defect would have calibrated on, and printing it
+        // beside the shelf is how a reader sees the 1.5x rather than being
+        // told about it.
+        //
+        // The phase timers only exist under `--features ics-profile`. Without
+        // it this cell still runs and still reports work and iterations, and
+        // every duration is zero with `measured: false` beside it - which is a
+        // refusal to answer, not an answer of zero.
+        "spawntax" => {
+            let constructor_started = Instant::now();
+            let placements = ShortSideFirst.layout(&pieces, settings)?;
+            let constructor_seconds = constructor_started.elapsed().as_secs_f64();
+            wall.insert("constructorSeconds".to_owned(), json!(constructor_seconds));
+            let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+            let constructor_fingerprint = placement_fingerprint(&placements);
+            // **Two quotas, and two worker counts, on purpose.**
+            //
+            // The PREFIX is the audit's committed fixed-work replay exactly -
+            // `bites=21, attempts=1, iters=400` - and it always runs at the
+            // frozen eight workers, whatever `--workers` says. That is what
+            // makes the ladder a measurement: all four arms enter the shelf
+            // from the *identical* state, the 8-worker parent whose depth is
+            // 179.16566573285345 on seed 0, and only the probe's worker count
+            // differs. A prefix run at the arm's own worker count would enter
+            // four different states, and the 1/2/4/8 comparison would be a
+            // comparison of four layouts rather than of the machinery.
+            //
+            // The PROBE is a second `run_cutclose` on the same engine: one
+            // explore bite from the published shelf parent, `--probeiters`
+            // master iterations, one attempt. It is a fresh 0.1 % cut from the
+            // exact-valid incumbent, which is what a 22nd bite is.
+            let workers = options.integer("workers", 8)? as usize;
+            let prefix_workers = options.integer("prefixworkers", 8)? as usize;
+            let shelf_bites = options.integer("shelfbites", 21)?;
+            let prefix_iterations = options.integer("prefixiters", 400)?;
+            let probe_iterations = options.integer("probeiters", 200)?;
+            let record_fingerprints = options.integer("fingerprints", 0)? != 0;
+            let config = IcsConfig {
+                target_depth_mm: constructor_depth,
+                proposal_budget: 0,
+                relocate_eval_budget: u64::MAX,
+                checkpoint_every_sweeps: u64::MAX,
+                descent: descent_config(&options, &contract, &sources, seed)?,
+                limits: publication_limits(&options)?,
+            };
+            let mut engine = Engine::from_constructor_at_depth(
+                &pieces,
+                settings,
+                &placements,
+                constructor_depth,
+                config,
+            )?;
+            let prefix_started = Instant::now();
+            let prefix_outcome = engine.run_cutclose(
+                ScheduleConfig {
+                    workers: prefix_workers,
+                    record_fingerprints,
+                    ..ScheduleConfig::default()
+                },
+                Budget::FixedWork {
+                    explore_bites: shelf_bites,
+                    compress_bites: 0,
+                    attempts_per_bite: 1,
+                    iterations_per_separation: prefix_iterations,
+                },
+            );
+            let prefix_seconds = prefix_started.elapsed().as_secs_f64();
+            wall.insert("prefixSeconds".to_owned(), json!(prefix_seconds));
+            let search_started = Instant::now();
+            let outcome = engine.run_cutclose(
+                ScheduleConfig {
+                    workers,
+                    record_fingerprints,
+                    ..ScheduleConfig::default()
+                },
+                Budget::FixedWork {
+                    explore_bites: 1,
+                    compress_bites: 0,
+                    attempts_per_bite: 1,
+                    iterations_per_separation: probe_iterations,
+                },
+            );
+            let search_seconds = search_started.elapsed().as_secs_f64();
+            wall.insert("searchSeconds".to_owned(), json!(search_seconds));
+
+            let shelf_index = 0usize;
+            let prefix: Vec<&_> = prefix_outcome.bites.iter().collect();
+            let shelf = outcome.bites.first();
+            let mut cheap = PhaseProfile::default();
+            for row in &prefix {
+                cheap.add(&row.profile);
+            }
+            let hard = shelf.map(|row| row.profile).unwrap_or_default();
+            let published_prefix = prefix.iter().filter(|row| row.published.is_some()).count();
+            document["constructor"] = json!({
+                "rawSourceDepthMm": constructor_depth,
+                "placementFingerprint": constructor_fingerprint,
+                "placementCount": placements.len(),
+                "lowerScaleMm": lower_scale_mm,
+                "seconds": constructor_seconds,
+            });
+            document["spawnTax"] = json!({
+                "workers": workers,
+                "prefixWorkers": prefix_workers,
+                "shelfBites": shelf_bites,
+                "prefixIterations": prefix_iterations,
+                "probeIterations": probe_iterations,
+                "profileFeature": cfg!(feature = "ics-profile"),
+                // The prefix has to have done what it was asked to do before
+                // any duration below means anything: 21 bites, 21 publications,
+                // and the shelf depth the committed replay records.
+                "prefixBites": prefix.len(),
+                "prefixPublications": published_prefix,
+                "prefixAllPublished": published_prefix == prefix.len()
+                    && prefix.len() == shelf_bites as usize,
+                "prefixDepthMm": prefix_outcome.depth_mm,
+                "prefixFingerprint": prefix_outcome.incumbent.placement_fingerprint,
+                "shelfDepthMm": outcome.depth_mm,
+                "shelfEntryWidthMm": shelf.map(|row| row.bite.width_after_mm),
+                "shelfPublished": shelf.map(|row| row.published.is_some()),
+                "shelfIterations": shelf.map(|row| row.master_iterations),
+                "shelfStrikes": shelf.map(|row| row.strikes),
+                "shelfBandEntries": shelf.map(|row| row.exact_band_entries),
+                "shelfCheckpointCalls": shelf.map(|row| row.exact_checkpoint_calls),
+                // The two arms of the census. `cheapPrefix` is bites 1-21 -
+                // the window the pre-named probe defect would calibrate on -
+                // and `hardState` is the 22nd bite alone.
+                "cheapPrefix": phase_census_json(&cheap),
+                "hardState": phase_census_json(&hard),
+                "prefixPerBite": prefix_outcome.bites.iter().map(|row| json!({
+                    "ordinal": row.ordinal,
+                    "published": row.published.is_some(),
+                    "masterIterations": row.master_iterations,
+                    "widthAfterMm": row.bite.width_after_mm,
+                    "census": phase_census_json(&row.profile),
+                })).collect::<Vec<_>>(),
+                // The work each arm really did, so a reader can normalise the
+                // 1/2/4/8 ladder by work instead of by iteration count. At
+                // eight workers one master iteration buys eight sweeps.
+                // `work` is the engine's cumulative vector and therefore
+                // includes the prefix; the per-window currency terms inside
+                // `hardState` and `cheapPrefix` are the ones that do not.
+                "work": work_json(&outcome.trace.work),
+                "prefixWork": work_json(&prefix_outcome.trace.work),
+            });
+            document["outcome"] = schedule_json(
+                &outcome,
+                &constructor_fingerprint,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    contract: &contract,
+                    revalidate: options.integer("revalidate", 0)? != 0,
+                },
+            );
+            document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+
+            // **The icscal write path, exercised on a real measurement.**
+            //
+            // Schema and writer only, per the spec: no reader exists in this
+            // round and no pacer consumes this file. The currency is
+            // `U0-sample-evaluations`, which is what Wave 1 can honestly
+            // measure - the spec's `U` needs B/E/R/D from microbenchmarks that
+            // have not been run - and the rate is taken from the SHELF, never
+            // from the cheap prefix.
+            if let Some(path) = options.get("icscal") {
+                let plan = shelf_work_plan(
+                    &request_sha256,
+                    &executable_sha256().unwrap_or_default(),
+                    workers,
+                    &outcome,
+                    shelf_index,
+                    shelf_bites + 1,
+                    search_seconds,
+                    options.number("icscalsafety", 0.80)?,
+                )?;
+                fs::write(path, plan.to_bytes()?)?;
+                document["icscal"] = json!({
+                    "path": path,
+                    "summary": plan.summary(),
+                    "sha256": format!("{:x}", Sha256::digest(&plan.to_bytes()?)),
+                    "plan": serde_json::to_value(&plan)?,
+                });
+            }
+        }
         "throughput" => {
             let constructor_started = Instant::now();
             let placements = ShortSideFirst.layout(&pieces, settings)?;
@@ -1306,10 +1861,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json!(started.elapsed().as_secs_f64()),
     );
     document["wall"] = Value::Object(wall);
-    document["executableSha256"] = json!(env::current_exe()
-        .ok()
-        .and_then(|path| fs::read(path).ok())
-        .map(|bytes| format!("{:x}", Sha256::digest(&bytes))));
+    document["executableSha256"] = json!(executable_sha256());
+    document["buildFeatures"] = json!(build_features());
     println!("{}", serde_json::to_string_pretty(&document)?);
     Ok(())
 }

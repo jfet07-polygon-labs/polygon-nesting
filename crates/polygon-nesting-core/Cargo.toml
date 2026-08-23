@@ -546,6 +546,23 @@ skip-pile-dump = ["compression-schedule"]
 # `ExplorationKernel`, no `GeneralRelaxedOutcome.result` - and none of those
 # until the Round-2 gate in the converged spec passes.
 overlap-ics = ["round-envelope-kernel", "fast-contract-validator"]
+# The overlap-ICS master-iteration phase census: nanosecond accumulators around
+# slot preparation, thread dispatch/join, the worker sweeps, the ordinal merge
+# and Algorithm-8 pass, and the exact attempt. **Measurement only, and off in
+# every build any gate is measured on.**
+#
+# It is a feature rather than a runtime flag because of what the evidence audit
+# verified about the default build: an `Instant` appears in exactly one place
+# under `search/overlap_ics/`, `Pacer::Wall`, so a fixed-work trajectory cannot
+# read a clock at all - which is what makes the two-process bit-identity a
+# proof rather than a coincidence. With this feature off, that sentence stays
+# literally true; the phase timers do not exist in the binary, and the only
+# residue is one never-read `u64` per worker slot. With it on, the clock reads
+# are still outside every decision - no field of `profile::PhaseProfile` is
+# read by the engine - so the profiling build takes the same trajectory. The
+# census asserts that rather than claiming it: see
+# docs/experiments/overlap-ics/economics-round/census/.
+ics-profile = []
 
 [dependencies]
 polygon-nesting-protocol = { path = "../polygon-nesting-protocol" }

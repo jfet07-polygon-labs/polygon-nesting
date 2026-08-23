@@ -72,6 +72,9 @@ def two_process(cell, out, **options):
         'digestA': lib.digest(first),
         'digestB': lib.digest(second),
         'strippedFields': lib.WALL_FIELDS,
+        # RV3: the two cell documents this comparison reduced, by sha.
+        'sourceShaA': lib.source_sha256(f'{out}/{cell}-process-a.json'),
+        'sourceShaB': lib.source_sha256(f'{out}/{cell}-process-b.json'),
         'bitIdentical': (status_a == 0 and status_b == 0
                          and lib.stripped(first) == lib.stripped(second)),
     }, first
@@ -146,6 +149,10 @@ def main():
     document = {
         'experiment': 'overlap-ics',
         'battery': 'two-process-fixed-work-smoke',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'binary': lib.BIN,
         'proposalBudget': budget,
         's0': {'pins': s0_pins, 'twoProcess': s0_compare, 'pass': s0_pass},

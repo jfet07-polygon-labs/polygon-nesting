@@ -84,6 +84,11 @@ def main():
             'exitB': status_b,
             'digestA': lib.digest(first, STRIP),
             'digestB': lib.digest(second, STRIP),
+            # RV3: the two cell documents this row reduced, by sha. A
+            # two-BINARY comparison is the one place a reader most needs to be
+            # able to check which bytes each side actually read.
+            'sourceShaA': lib.source_sha256(f'{out}/{name}-a.json'),
+            'sourceShaB': lib.source_sha256(f'{out}/{name}-b.json'),
             'bitIdentical': same,
             'stderrA': err_a[-400:] if err_a else '',
             'stderrB': err_b[-400:] if err_b else '',
@@ -91,6 +96,10 @@ def main():
     document = {
         'experiment': 'overlap-ics',
         'battery': 'two-binary-determinism',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'binaryA': binary_a,
         'binaryB': binary_b,
         'proposalBudget': budget,

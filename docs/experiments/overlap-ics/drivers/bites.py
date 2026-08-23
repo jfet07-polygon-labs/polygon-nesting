@@ -35,6 +35,10 @@ def extract(cells_dir, label):
     document = {
         'experiment': 'overlap-ics',
         'battery': label,
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'what': ('the per-bite rows of all 27 wall cells, copied verbatim out of '
                  'the raw cell documents, per Sol review 18 general-fidelity '
                  'risk 2'),
