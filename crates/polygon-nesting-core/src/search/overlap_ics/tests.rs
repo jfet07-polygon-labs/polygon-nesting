@@ -1547,6 +1547,10 @@ fn a_sweep_advances_the_quota_by_one_per_piece() {
     let outcome = descent.sweep(&mut state, &sources, &contract, &mut work);
     assert_eq!(outcome.relocated, 0, "nothing was in the colliding set");
     assert_eq!(descent.proposals, 4, "and the quota still advanced");
+    assert_eq!(
+        work.piece_proposals, descent.proposals,
+        "the counter the evidence prints beside proposalBudget tracks the ordinal"
+    );
     assert_eq!(work.sample_evaluations, 0);
 }
 

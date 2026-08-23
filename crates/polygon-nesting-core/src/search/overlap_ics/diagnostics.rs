@@ -41,14 +41,19 @@ pub struct WorkVector {
     pub jump_proposals: u64,
     pub exact_checkpoints: u64,
     pub repair_rows: u64,
-    /// One piece **visit** of a sweep: the currency `IcsConfig::proposal_budget`
-    /// is denominated in, and the ordinal `Descent::proposals` advances by.
+    /// One piece **slot** of a sweep: `n` per sweep, whatever the colliding set
+    /// held. This is the currency `IcsConfig::proposal_budget` is denominated
+    /// in and the ordinal `Descent::proposals` advances by, and it is kept
+    /// numerically equal to that ordinal so that a reader can divide the budget
+    /// by it.
     ///
-    /// **Its mechanism changed and the name is kept only because the work quota
-    /// is.** It used to be "a gradient formed and a backtracking ladder walked";
-    /// it is now "a relocate attempted on this piece". It is therefore **not**
-    /// the unit of the old 100 K-in-8-seconds proposal pin, and nothing here
-    /// claims parity with it - read `relocates` and `sampleEvaluations`.
+    /// **It is no longer a count of operator invocations, and it is not the
+    /// unit of the old 100 K-in-8-seconds proposal pin.** It used to be "a
+    /// gradient formed and a backtracking ladder walked", one per piece per
+    /// sweep. It is now a slot, most of which are empty once a layout is close
+    /// to feasible, because the member only relocates the colliding set. The
+    /// operator's own count is `relocates`, its cost is `sampleEvaluations`,
+    /// and nothing here claims parity with the retired pin.
     pub piece_proposals: u64,
     /// Piece visits that committed a pose different from the entry pose.
     pub accepted_moves: u64,

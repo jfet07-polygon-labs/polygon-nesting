@@ -322,8 +322,6 @@ impl Descent {
         let mut container_commits = 0usize;
         let mut max_displacement_mm = 0.0f64;
         for piece in &order {
-            self.proposals += 1;
-            work.piece_proposals += 1;
             let outcome = relocate(
                 state,
                 sources,
@@ -349,8 +347,12 @@ impl Descent {
         self.order = order;
         // A sweep advances the work quota by one per piece whatever the
         // colliding set's size was, so a converged trajectory still reaches its
-        // budget instead of spinning.
+        // budget instead of spinning - and `pieceProposals` advances with it,
+        // because the evidence document prints that counter next to
+        // `proposalBudget` and a reader must be able to divide one by the other.
+        // The operator's own count is `relocates`.
         self.proposals = entry_proposals + count as u64;
+        work.piece_proposals += count as u64;
         let active_rows = gls_update(state);
         work.weight_updates += 1;
         self.iteration += 1;
