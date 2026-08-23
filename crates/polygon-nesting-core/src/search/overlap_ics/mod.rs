@@ -593,7 +593,13 @@ impl<'a> Engine<'a> {
     /// 1. clone the identical pose, row and weight state into workers `0..8`;
     /// 2. give each a counter-derived colliding-piece permutation and an
     ///    independent sample stream, keyed by
-    ///    `(request seed, bite, iteration, worker ordinal)`;
+    ///    `(request seed, bite, iteration, worker ordinal)`. All eight share the
+    ///    master's `iteration` and differ only in the ordinal, which is what
+    ///    makes them eight views of *one* state rather than eight trajectories.
+    ///    `iteration` is [`Descent`]'s own counter and is **trajectory-global**:
+    ///    it is never reset at a bite or an attempt, so a second separation of
+    ///    the same width cannot re-draw the first one's 75 poses, pay for them
+    ///    again and land in the same place;
     /// 3. run one complete sequential relocate sweep in each;
     /// 4. finish **equal work** - no early cancellation;
     /// 5. select the minimum total weighted Φ, stable by worker ordinal;
@@ -1018,8 +1024,7 @@ impl<'a> Engine<'a> {
                 seed,
                 bite_ordinal,
             );
-            width_mm = bite.width_after_mm;
-            self.state.target_depth_mm = width_mm;
+            self.state.target_depth_mm = bite.width_after_mm;
             self.refresh_all();
 
             let separation = self.separate(
@@ -1056,7 +1061,6 @@ impl<'a> Engine<'a> {
                     pacer.elapsed_s(),
                 );
                 depth_mm = publication.raw_source_depth_mm;
-                width_mm = depth_mm;
                 parent_poses = publication.poses.clone();
                 parent_fingerprint = publication.placement_fingerprint.clone();
                 self.install_publication(&publication);
@@ -1073,11 +1077,15 @@ impl<'a> Engine<'a> {
         // interrupted child's proxy depth for progress. What that child reached
         // is not lost - every bite record carries its own `min_raw_phi`,
         // `proxy_band_reached` and `exact_attempts`, which is the funnel row the
-        // failure license asks for.
+        // failure license asks for, and `final_width_mm` below is the target it
+        // was reaching for.
         self.install_poses(&parent_poses, depth_mm);
-        width_mm = depth_mm;
         self.sample_proxy();
         let totals = energy::fold(&self.state);
+        let final_width_mm = bites
+            .last()
+            .map(|row| row.bite.width_after_mm)
+            .unwrap_or(start_depth_mm);
         ScheduleOutcome {
             incumbent: self.incumbent.clone(),
             trace: self.trace.clone(),
@@ -1086,7 +1094,7 @@ impl<'a> Engine<'a> {
             fingerprints,
             start_depth_mm,
             depth_mm,
-            final_width_mm: width_mm,
+            final_width_mm,
             explore_bites,
             compress_bites,
             final_poses: self.state.poses.clone(),
@@ -1405,10 +1413,15 @@ pub struct ScheduleOutcome {
     pub fingerprints: Vec<IterationFingerprint>,
     /// `D*`: the width the loop entered at.
     pub start_depth_mm: f64,
-    /// `D`: the last exact-valid depth the loop is standing on.
+    /// `D`: the last exact-valid depth the loop is standing on, and the width
+    /// its continuous state was restored to.
     pub depth_mm: f64,
-    /// `W`: the width the loop stopped at, which may be smaller than `D` when
-    /// the last bite failed.
+    /// The target of the **last bite taken**, successful or not.
+    ///
+    /// It is smaller than `depth_mm` exactly when the last bite failed, and the
+    /// gap between them is how far the trajectory was still reaching when the
+    /// wall stopped it. It is never a quality number: nothing was published
+    /// there.
     pub final_width_mm: f64,
     pub explore_bites: u64,
     pub compress_bites: u64,
