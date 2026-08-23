@@ -1,0 +1,85 @@
+# The red transcript: round 1's rule against the state-machine vector
+
+Sol review 18 §P0 and Grok review 13 flag 3 both ask for a red/green minimal
+vector on the inner strike predicate. This file is the RED half, taken on this
+box, and the GREEN half is appended below it so a reader can diff two runs of
+one command rather than trust a sentence.
+
+**What the red is.** Base `1fd70d0` computes the transition inline in
+`Engine::separate` as
+
+    if totals.raw < min_raw { min_raw = totals.raw; snapshot..; since_improvement = 0; }
+    else { since_improvement += 1; }
+
+i.e. ANY new minimum forgives the 200-counter. The repair moves that transition
+into `observe_raw` and makes the reset conditional on a >=2% improvement. The
+red run below is that same `observe_raw` with its one comparison put back to
+round 1's, which is `STRIKE_IMPROVEMENT_RATIO -> 1.0` in a single token:
+`raw < 1.0 * min_raw` is `raw < min_raw`. `evidence/strike-red.patch` is that
+diff, and `git apply` of it reproduces this transcript exactly.
+
+The red is therefore an ASSERTION failure, not a compile error. That is
+deliberate: a vector that could not be built against the defective rule would
+prove nothing about it. The rule under test in the red run is round 1's,
+character for character in its comparison, reached through the same call site
+`Engine::separate` uses.
+
+**The vector.** Repeated blocks of nine non-minima followed by one
+0.01%-better minimum, `SeparateLimits::EXPLORE.iterations_without_improvement`
+= 200.
+
+**Reproduce.**
+
+    git apply docs/experiments/overlap-ics/cutclose-rerun/evidence/strike-red.patch
+    cargo test -p polygon-nesting-core --release --features overlap-ics --lib \
+      search::overlap_ics::tests::the_no_improvement_counter -- --nocapture
+    # exit 101; then
+    git checkout crates/polygon-nesting-core/src/search/overlap_ics/mod.rs
+    cargo test -p polygon-nesting-core --release --features overlap-ics --lib \
+      search::overlap_ics::tests::the_no_improvement_counter -- --nocapture
+    # exit 0
+
+**The two numbers that matter.** Red: 10,000 observations, 1,000 resets,
+`since=0` at the end, `struckAfter=None` - the counter never once reached 200,
+and it could not, in any number of blocks. Green: `struckAfter=Some(222)`,
+`none=200`, `marginal=22`, `substantial=0` - the strike arrives after exactly
+200 non-minimum observations, and the 22 microscopic minima paused the counter
+instead of forgiving it.
+
+================================================================================
+RED - round 1's rule (strike-red.patch applied).  cargo test exit status: 101
+================================================================================
+    Finished `release` profile [optimized] target(s) in 52.46s
+     Running unittests src/lib.rs (target/release/deps/polygon_nesting_core-daff7fff978d08c7)
+
+running 1 test
+observations=10000 none=9000 marginal=0 substantial=1000 since=0 limit=200 struckAfter=None minRaw=9.048328935585562e-1
+
+thread 'search::overlap_ics::tests::the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_two_percent' (3976232) panicked at crates/polygon-nesting-core/src/search/overlap_ics/tests.rs:2743:5:
+assertion `left == right` failed: 22 whole blocks of ten, then two more non-minima: the counter crosses 200 on the 222nd observation of this vector
+  left: None
+ right: Some(222)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test search::overlap_ics::tests::the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_two_percent ... FAILED
+
+failures:
+
+failures:
+    search::overlap_ics::tests::the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_two_percent
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 767 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p polygon-nesting-core --lib`
+
+================================================================================
+GREEN - the repaired rule (tree as committed).  cargo test exit status: 0
+================================================================================
+    Finished `release` profile [optimized] target(s) in 52.90s
+     Running unittests src/lib.rs (target/release/deps/polygon_nesting_core-daff7fff978d08c7)
+
+running 1 test
+observations=222 none=200 marginal=22 substantial=0 since=200 limit=200 struckAfter=Some(222) minRaw=9.978023084607315e-1
+test search::overlap_ics::tests::the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_two_percent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 767 filtered out; finished in 0.00s
+

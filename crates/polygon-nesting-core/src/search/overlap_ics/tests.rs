@@ -1911,7 +1911,10 @@ use super::homotopy::{
     time_based_step, uniform_cut_mm, COMPRESS_SHRINK_RANGE, EXPLORE_SHRINK_STEP,
     EXPLORE_TIME_RATIO,
 };
-use super::{state_fingerprint, Budget, Phase, ScheduleConfig, ScheduleOutcome, SeparateLimits};
+use super::{
+    observe_raw, state_fingerprint, Budget, Phase, RawObservation, ScheduleConfig, ScheduleOutcome,
+    SeparateLimits,
+};
 
 /// The four poses the cut-close vector splits: two below the cut and two above
 /// it, all four with an angle and a translation nothing may touch.
@@ -2643,6 +2646,15 @@ fn the_master_fingerprint_sees_the_weights_and_not_only_the_poses() {
 
 /// The strike limits and the worker count are the published ones, and nothing
 /// fitted them to a wall number.
+///
+/// **This vector checks literals and nothing else.** It was read for two rounds
+/// as covering separator-strike *semantics* - the round 1 provenance table says
+/// "identical / none" for that row - and it never touched the transition. Sol
+/// review 18 §P0 names it a false green. The semantics are
+/// [`the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_two_percent`],
+/// immediately below; this one is kept because "nobody retuned 200 to fit a
+/// wall number" is still worth asserting, and is now honest about being all it
+/// asserts.
 #[test]
 fn the_strike_caps_are_the_published_two_hundred_three_and_one_hundred_five() {
     assert_eq!(SeparateLimits::EXPLORE.iterations_without_improvement, 200);
@@ -2658,4 +2670,159 @@ fn the_strike_caps_are_the_published_two_hundred_three_and_one_hundred_five() {
         !default.record_fingerprints,
         "the wall run does not pay for the per-iteration record"
     );
+}
+
+/// **The red/green state-machine vector for the inner strike predicate.**
+///
+/// Sol review 18 §P0 and Grok review 13 flag 3, the same sketch from both: feed
+/// the no-improvement counter repeated blocks of **nine non-minima followed by
+/// one 0.01 %-better minimum**.
+///
+/// * **Red.** Round 1's rule - `raw < min_raw => since_improvement = 0` - resets
+///   on the tenth observation of every block and can never reach 200, in any
+///   number of blocks. The transcript of this vector against that rule is
+///   `docs/experiments/overlap-ics/cutclose-rerun/evidence/strike-red.log`,
+///   reproducible from `evidence/strike-red.patch`.
+/// * **Green.** The repaired rule *pauses* on each 0.01 % minimum and reaches
+///   the explore limit after exactly 200 non-minimum observations.
+/// * A single **>2 %** improvement resets it, and exactly 2 % does not.
+///
+/// The vector drives [`observe_raw`] - the same function `Engine::separate`
+/// calls, and the only copy of the rule in the tree. It does not restate the
+/// predicate, so it cannot pass by agreeing with a duplicate of it.
+#[test]
+fn the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_two_percent() {
+    let limit = SeparateLimits::EXPLORE.iterations_without_improvement;
+
+    // ---- the vector: nine non-minima, then a 0.01 % minimum, repeated -------
+    let mut min_raw = 1.0_f64;
+    let mut since = 0_u64;
+    let mut observations = 0_u64;
+    let mut classes: Vec<RawObservation> = Vec::new();
+    let mut struck_after = None;
+    'blocks: for _ in 0..1_000 {
+        for _ in 0..9 {
+            // Strictly worse than the incumbent: a non-improvement under any
+            // reading of the word.
+            classes.push(observe_raw(min_raw * 1.5, &mut min_raw, &mut since));
+            observations += 1;
+            if since >= limit {
+                struck_after = Some(observations);
+                break 'blocks;
+            }
+        }
+        // The trickle: a genuine new minimum, 200x too small to be worth 2 %.
+        // This is the 1e-15-scale minimum bite 22 produced thousands of times.
+        classes.push(observe_raw(min_raw * 0.9999, &mut min_raw, &mut since));
+        observations += 1;
+        if since >= limit {
+            struck_after = Some(observations);
+            break 'blocks;
+        }
+    }
+
+    let nones = classes.iter().filter(|c| **c == RawObservation::None).count();
+    let marginals = classes
+        .iter()
+        .filter(|c| **c == RawObservation::Marginal)
+        .count();
+    let substantials = classes
+        .iter()
+        .filter(|c| **c == RawObservation::Substantial)
+        .count();
+
+    // Printed, not only asserted: `cargo test` shows a failing test's stdout,
+    // so the red transcript of this vector carries its own numbers.
+    println!(
+        "observations={observations} none={nones} marginal={marginals} \
+         substantial={substantials} since={since} limit={limit} \
+         struckAfter={struck_after:?} minRaw={min_raw:e}"
+    );
+
+    // GREEN: the strike arrives, after 200 non-minima and not one earlier.
+    assert_eq!(
+        struck_after,
+        Some(222),
+        "22 whole blocks of ten, then two more non-minima: the counter crosses \
+         200 on the 222nd observation of this vector"
+    );
+    assert_eq!(nones, 200, "only non-minima counted");
+    assert_eq!(since, limit, "and it stopped exactly at the explore limit");
+    assert_eq!(marginals, 22, "each 0.01 % minimum paused the counter");
+    assert_eq!(substantials, 0, "nothing here was worth 2 %");
+    assert!(min_raw < 1.0, "the trickle really did lower the incumbent");
+
+    // RED, stated in the classifier's own vocabulary rather than by
+    // re-implementing round 1: round 1 reset on ANY new minimum, so its counter
+    // was exactly the longest run of consecutive `None` in this same sequence.
+    let mut run = 0_u64;
+    let mut longest_run = 0_u64;
+    for class in &classes {
+        if *class == RawObservation::None {
+            run += 1;
+            longest_run = longest_run.max(run);
+        } else {
+            run = 0;
+        }
+    }
+    assert_eq!(
+        longest_run, 9,
+        "round 1's counter never got past nine on this vector"
+    );
+    assert!(
+        longest_run < limit,
+        "which is why no separation on the 22nd bite ever struck out, and why \
+         Algorithm 12 never ran there"
+    );
+
+    // ---- one >2 % improvement forgives the counter --------------------------
+    let mut min_raw = 1.0_f64;
+    let mut since = 0_u64;
+    for _ in 0..150 {
+        observe_raw(min_raw * 1.5, &mut min_raw, &mut since);
+    }
+    assert_eq!(since, 150);
+    assert_eq!(
+        observe_raw(min_raw * 0.9999, &mut min_raw, &mut since),
+        RawObservation::Marginal
+    );
+    assert_eq!(since, 150, "a marginal minimum neither resets nor increments");
+    assert_eq!(
+        observe_raw(min_raw * 0.97, &mut min_raw, &mut since),
+        RawObservation::Substantial
+    );
+    assert_eq!(since, 0, "one 3 % improvement forgives it");
+
+    // ---- the boundary is strict, as `separator.rs`'s `<` is -----------------
+    let mut min_raw = 1.0_f64;
+    let mut since = 7_u64;
+    assert_eq!(
+        observe_raw(0.98, &mut min_raw, &mut since),
+        RawObservation::Marginal,
+        "exactly 2 % is not a 2 % improvement"
+    );
+    assert_eq!(since, 7);
+    assert_eq!(min_raw, 0.98, "but it is still the new incumbent");
+    let mut min_raw = 1.0_f64;
+    let mut since = 7_u64;
+    assert_eq!(
+        observe_raw(0.979_999, &mut min_raw, &mut since),
+        RawObservation::Substantial
+    );
+    assert_eq!(since, 0);
+
+    // ---- equal is not an improvement ----------------------------------------
+    let mut min_raw = 1.0_f64;
+    let mut since = 3_u64;
+    assert_eq!(
+        observe_raw(1.0, &mut min_raw, &mut since),
+        RawObservation::None,
+        "the comparison is strict on both sides"
+    );
+    assert_eq!(since, 4);
+
+    // ---- and the snapshot moves on both improving classes --------------------
+    assert!(RawObservation::Substantial.is_new_minimum());
+    assert!(RawObservation::Marginal.is_new_minimum());
+    assert!(!RawObservation::None.is_new_minimum());
 }

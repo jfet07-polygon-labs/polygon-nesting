@@ -24,6 +24,12 @@ What it runs, in order:
 
 The interleaved AB/BA wall-arm control is `control.py`; it is a separate
 process family and a separate document, because the old stack is never a lane.
+
+**Every cell row carries its raw `bites` array now.** Round 1's reduction
+dropped it, and Sol review 18's second non-gating risk is that the README's
+per-bite statements were consequently not reconstructible from committed
+evidence. They are the largest thing in this document and they are the point of
+it: `bites[21]` is the 22nd bite, the one the whole autopsy is about.
 """
 import json
 import os
@@ -98,6 +104,14 @@ def cell(out, seed, budget):
                                    if publications else None),
         'finalWidthMm': outcome.get('finalWidthMm'),
         'minRawPhiOfLastBite': (outcome.get('bites') or [{}])[-1].get('minRawPhi'),
+        # **The raw per-bite schedule, verbatim.** Round 1 reduced the cell
+        # document to the aggregates above and dropped `outcome.bites`, so the
+        # README's per-bite claims - 5,319 master iterations, 0 strikes, 0
+        # disruptions on the 22nd bite - could not be reconstructed from
+        # committed evidence and had to be read out of a temporary directory.
+        # Sol review 18, general fidelity, risk 2. Not reduced, not rounded,
+        # not renamed: every field the engine emitted, per bite.
+        'bites': outcome.get('bites'),
         # §0.1's pass predicate, per seed.
         'qualifies': bool(best is not None and best <= BAR_MM),
     }

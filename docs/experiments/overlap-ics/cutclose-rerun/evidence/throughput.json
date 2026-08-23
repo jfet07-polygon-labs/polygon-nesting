@@ -1,0 +1,63 @@
+{
+  "cell": "throughput",
+  "contract": {
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.5,
+    "flatteningSagToleranceMm": 0.0,
+    "pairClearanceMm": 5.0,
+    "physicalEdgeClearanceMm": 5.0,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.0,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5000.0
+  },
+  "executableSha256": "b42c10afca031ce24fac4cb2a85a752462c6fffb1eee42956e523ee846376f03",
+  "experiment": "overlap-ics",
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 115.83870984650393,
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7126ae13-aad-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+    "pieceCount": 61,
+    "sha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "seed": 0,
+  "throughput": {
+    "acceptedMovesDuringProposals": 2817,
+    "acceptedRelocates": 2817,
+    "cellGapAtLeast1MPerSecond": true,
+    "coldPhiMicroseconds": 36.81965,
+    "coldPhiUnder200us": true,
+    "containerCommits": 4,
+    "containerWinners": 4,
+    "convexCellGapEvaluations": 36952,
+    "convexCellGapEvaluationsPerSecond": 7381492.015435772,
+    "focusedWinners": 80,
+    "lockedTargetMm": 173.8272,
+    "movedPieceRowRebuildMicroseconds": 1.26234,
+    "pass": true,
+    "pieceProposals": 20000,
+    "pieceProposalsPerSecond": 8251.388672097977,
+    "projectedAtLeast100K": false,
+    "projectedProposalsInEightSeconds": 66011.10937678382,
+    "projectedRelocateEvalsInEightSeconds": 5723239.09574294,
+    "rawPhiAfterProposals": 65.01279617164288,
+    "rawPhiBeforeProposals": 565.3763292381366,
+    "relocateEvalsAtLeast100K": true,
+    "relocateEvalsPerSecond": 715404.8869678675,
+    "relocates": 7071,
+    "relocatesPerSecond": 2917.2784650202398,
+    "retiredProposalPinNote": "pieceProposals now buys one whole relocate (75 pool samples + 4 coordinate descents), not one gradient + ladder. The 100K/8s pin is re-denominated into relocateEvals per docs/cutclose-relocate-spec.md arbitration 4; this field is reported under its old meaning and is not a pass clause.",
+    "rowRebuildUnder20us": true,
+    "sampleEvaluations": 1734023,
+    "sampleEvaluationsPerRelocate": 245.23023617592986,
+    "stayPutWinners": 6987
+  },
+  "wall": {
+    "constructorSeconds": 2.323514197,
+    "totalSeconds": 4.767511725
+  }
+}

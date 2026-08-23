@@ -732,6 +732,11 @@ impl<'a> Engine<'a> {
     ///   which also means an entry state that is already publishable is offered
     ///   immediately instead of after a sweep that would relocate nothing.
     /// * **a refused Φ = 0 ends the separation** ([`SeparateStop::Refused`]).
+    /// * **the 2 % governs both counters.** [`observe_raw`] is the inner one -
+    ///   200 iterations without a 2 % improvement on the strike-best, not 200
+    ///   without *any* improvement - and [`STRIKE_IMPROVEMENT_RATIO`] against
+    ///   `strike_entry_raw` is the outer one. Round 1 shipped only the outer,
+    ///   and that is the whole of this round's repair.
     /// * **the rollback keeps the weights.** `tracker.rs::restore_but_keep_weights`:
     ///   the landscape a separation learned is not undone by a rollback inside
     ///   the same width. Only a width change resets it.
@@ -765,12 +770,11 @@ impl<'a> Engine<'a> {
 
         let stop = loop {
             let totals = energy::fold(&self.state);
-            if totals.raw < min_raw {
-                min_raw = totals.raw;
+            // The one transition, from the one place that owns it. A new
+            // minimum inside the 2 % band moves the snapshot and leaves the
+            // counter where it is; only a 2 % improvement forgives it.
+            if observe_raw(totals.raw, &mut min_raw, &mut since_improvement).is_new_minimum() {
                 snapshot.clone_from(&self.state);
-                since_improvement = 0;
-            } else {
-                since_improvement += 1;
             }
 
             if totals.max_violation_mm <= band {
@@ -1268,7 +1272,80 @@ impl SeparateLimits {
 /// The improving-strike reset: a strike whose min raw Φ beat the previous
 /// strike's entry by 2 % does not count. `separator.rs`: `min_loss < 0.98 *
 /// initial_strike_loss`.
+///
+/// The **same** 2 % governs the no-improvement counter *inside* one strike.
+/// That is [`observe_raw`], and round 1 shipped without it.
 pub const STRIKE_IMPROVEMENT_RATIO: f64 = 0.98;
+
+/// What one raw-Φ reading did to the strike-best, and therefore to the
+/// no-improvement counter.
+///
+/// Three classes, not two. The middle one is the whole point.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RawObservation {
+    /// A new minimum that beat the strike-best by **at least 2 %**. The
+    /// snapshot moves and the no-improvement counter **resets**.
+    Substantial,
+    /// A new minimum **inside** the 2 % band. The snapshot moves - it is still
+    /// the best layout this separation has seen - but the counter is
+    /// **paused**: neither reset nor incremented. A trickle of 1e-15 minima
+    /// therefore cannot hold one separation open until the deadline.
+    Marginal,
+    /// Not a new minimum. The counter **increments**.
+    None,
+}
+
+impl RawObservation {
+    /// True when the reading is a new minimum, i.e. when the caller must take
+    /// the minimum-raw snapshot.
+    pub fn is_new_minimum(self) -> bool {
+        matches!(self, Self::Substantial | Self::Marginal)
+    }
+}
+
+/// **The no-improvement transition, in one place.**
+///
+/// One raw-Φ reading against `min_raw` (this separation's best) and the running
+/// `since_improvement` counter. Both are updated in place; the return value
+/// tells the caller whether the snapshot must be taken.
+///
+/// This function is the whole of the rule. [`Engine::separate`] calls it and the
+/// state-machine vector calls it, so there is exactly one copy of the predicate
+/// in the tree and no test can pass by agreeing with a duplicate of it.
+///
+/// Grok review 12 Round 2 §6.5, the frozen sentence: *"explore 200 iterations
+/// without 2 % raw-Φ improvement vs strike-best -> strike"*. Sparrow
+/// `separator.rs:102-115` (rev `14f4868f`) is the source of that 2 %: a new best
+/// that is not below `min_loss * 0.98` updates the incumbent and falls through
+/// **without touching** `n_iter_no_improvement`; only a non-improvement
+/// increments it.
+///
+/// Round 1 shipped `raw < min_raw => reset`, which is this function with
+/// [`RawObservation::Marginal`] folded into [`RawObservation::Substantial`].
+/// That is the one line both implementation reviews named
+/// (docs/sol-review-18-the-strike-predicate.md §P0,
+/// docs/grok-review-13-the-strike-predicate.md flag 3): at the Φ ≈ 1e-4 floor of
+/// mixed-61's 22nd bite it forgave the counter on every microscopic minimum, so
+/// no separation there ever struck out and Algorithm 12 - the disruption built
+/// to cross exactly that shelf - never ran.
+pub fn observe_raw(raw: f64, min_raw: &mut f64, since_improvement: &mut u64) -> RawObservation {
+    if raw < *min_raw {
+        // The 2 % is measured against the strike-best **before** it moves,
+        // which is Sparrow's order: `loss < min_loss * 0.98` is evaluated while
+        // `min_loss` still holds the incumbent.
+        let substantial = raw < STRIKE_IMPROVEMENT_RATIO * *min_raw;
+        *min_raw = raw;
+        if substantial {
+            *since_improvement = 0;
+            RawObservation::Substantial
+        } else {
+            RawObservation::Marginal
+        }
+    } else {
+        *since_improvement += 1;
+        RawObservation::None
+    }
+}
 
 /// How many failed separations of one width are kept for the Normal-biased
 /// draw.
