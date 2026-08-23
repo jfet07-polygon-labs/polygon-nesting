@@ -18,6 +18,21 @@
 #   4. the module's unit vectors + the three pinned vector suites
 #   5. the 1,000-state deterministic contact corpus
 #   6. the two-process fixed-work smoke, S0 canary and S1 locked strip
+#   7. the `CutCloseRelocate` additions (`cutclose.py`): the first-bite canary,
+#      the four driver-level tripwires, the K=8 two-process bite sequence and
+#      the eight-worker merge across two processes
+#
+# **Stage 7's canary is a stop, not a report.** Grok review 12 Round 2 §6.3.4:
+# "FAIL here is a member fail; do not run the 9-seed wall." `wall.py` reads
+# `CANARY_PASS` out of stage 7's own document and refuses to start without it,
+# so the two cannot drift apart by anyone forgetting.
+#
+# Stages 4 and 7 overlap on purpose and neither subsumes the other. Stage 4
+# proves the *functions* - `relocate` commits a container pose beyond the old
+# `ladder_top`, a refused publication does not advance `W`, `split_and_close`
+# touches only `ty` on the far side, a repaired publication becomes the next
+# bite's exact parent, the tournament is a function of its key. Stage 7 proves
+# the *shipped binary*, in two processes, with eight OS threads really running.
 #
 # Stage 6 was red for two rounds and that was the finding, not a broken script:
 # S1's *mechanism* clause (republish inside the locked strip) failed at
@@ -135,6 +150,27 @@ record "1,000-state contact corpus" $?
 # ------------------------------------------------------------------ 6. smoke --
 ICS_OUT="$OUT" python3 "$ROOT/docs/experiments/overlap-ics/drivers/smoke.py" 200000 > "$LOG/smoke.log" 2>&1
 record "two-process fixed-work smoke (S0 canary, S1 locked strip)" $?
+
+# ------------------------------------------------- 7. the CutCloseRelocate --
+# One process per stage, every stage fixed-work, no clock inside any
+# trajectory. The canary is reported on its own line **before** the aggregate,
+# because it is the one member of this script whose failure has a different
+# consequence from every other: it cancels the 9-seed wall rather than merely
+# failing the tier.
+ICS_OUT="$OUT" python3 "$ROOT/docs/experiments/overlap-ics/drivers/cutclose.py" \
+  > "$LOG/cutclose.log" 2>&1
+CUTCLOSE_STATUS=$?
+if python3 -c "
+import json,sys
+d=json.load(open('$OUT/cutclose-fast.json'))
+sys.exit(0 if d.get('CANARY_PASS') else 1)
+" 2>/dev/null; then
+  note "first-bite canary (mixed-61 seed 0, 0.1% bite, 8 workers) EXIT=0"
+else
+  note "first-bite canary FAILED  <-- DO NOT RUN THE 9-SEED WALL"
+fi
+record "cutclose FAST additions (canary, tripwires, K=8 bites, 8-worker merge)" \
+  "$CUTCLOSE_STATUS"
 
 note "logs in $LOG"
 note "FAILURES=$FAILURES"

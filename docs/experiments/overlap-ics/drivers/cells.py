@@ -36,6 +36,13 @@ HEAVY_CORPUS_STATES = 10_000
 # afterwards; it is not what the trajectory stops on.
 C175_BUDGET = 200_000
 CELL_BUDGET = 200_000
+# The locked-strip regressions' quota in the member's own currency, Grok review
+# 12 Round 1 §4.3: "200,000 **relocate-evals** (not PGS proposals)". Passed
+# alongside `CELL_BUDGET`, which is what makes a converged cell stop - a
+# converged layout has an empty colliding set and spends zero relocate-evals per
+# sweep, so this cap alone never terminates. `quota.stopReason` in every document
+# names which of the two bound the run.
+RELOCATE_EVAL_QUOTA = 200_000
 
 
 def verdict(name, fatal, passed, detail):
@@ -77,7 +84,8 @@ def s0(out):
 def perturbed(name, cell, out, fatal, perturb_mm, perturb_deg, budget):
     doc, wall, status, err = lib.run(
         cell, 'mixed-61', f'{out}/{cell}.json', poses=lib.SPARROW_POSES,
-        target=S1_LOCKED_W_MM, budget=budget, seed=0,
+        target=S1_LOCKED_W_MM, budget=budget,
+        relocateevals=RELOCATE_EVAL_QUOTA, seed=0,
         perturbmm=perturb_mm, perturbdeg=perturb_deg, checkpointevery=1)
     if status != 0:
         return verdict(name, fatal, False, {'exit': status, 'stderr': err})
@@ -100,6 +108,7 @@ def perturbed(name, cell, out, fatal, perturb_mm, perturb_deg, budget):
         'maxGivebackMm': lib.max_giveback_mm(doc),
         'exactCheckpoints': len(lib.checkpoints(doc)),
         'work': outcome.get('work'),
+        'quota': doc.get('quota'),
         'wallSeconds': wall,
         'solverSeconds': doc.get('wall', {}).get('solverSeconds'),
     }
@@ -181,7 +190,8 @@ def c175(out):
 def triangle(out):
     doc, wall, status, err = lib.run(
         'triangle', 'triangle-20', f'{out}/triangle20.json',
-        target=TRIANGLE_W_MM, budget=CELL_BUDGET, seed=0, checkpointevery=1)
+        target=TRIANGLE_W_MM, budget=CELL_BUDGET,
+        relocateevals=RELOCATE_EVAL_QUOTA, seed=0, checkpointevery=1)
     if status != 0:
         return verdict('triangle-20', True, False, {'exit': status, 'stderr': err})
     outcome = doc.get('outcome', {})
@@ -201,6 +211,7 @@ def triangle(out):
         'maxRepairUm': lib.max_repair_um(doc),
         'maxGivebackMm': lib.max_giveback_mm(doc),
         'work': outcome.get('work'),
+        'quota': doc.get('quota'),
         'solverSeconds': doc.get('wall', {}).get('solverSeconds'),
         'wallSeconds': wall,
     }
@@ -208,7 +219,8 @@ def triangle(out):
         row['kernelExclusiveValid'] and row['contractValid']
         and row['publishedRawDepthMm'] <= TRIANGLE_W_MM for row in rows)
     passed = (legalized and detail['invalidPublications'] == 0
-              and detail['maxRepairUm'] <= S1_MAX_REPAIR_UM)
+              and detail['maxRepairUm'] <= S1_MAX_REPAIR_UM
+              and detail['maxGivebackMm'] <= S1_MAX_GIVEBACK_MM)
     return verdict('triangle-20', True, passed, detail)
 
 

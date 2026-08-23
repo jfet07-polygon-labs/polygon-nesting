@@ -52,11 +52,20 @@ def main():
         ('s0', 'mixed-61', dict(poses=lib.SPARROW_POSES, target=150.16547,
                                 budget=0, seed=0)),
         ('s1', 'mixed-61', dict(poses=lib.SPARROW_POSES, target=150.16547,
-                                budget=budget, seed=0, perturbmm=0.5,
-                                perturbdeg=2.0, checkpointevery=1)),
+                                budget=budget, relocateevals=200_000, seed=0,
+                                perturbmm=0.5, perturbdeg=2.0,
+                                checkpointevery=1)),
         ('c175', 'mixed-61', dict(budget=budget, seed=0, checkpointevery=1)),
-        ('triangle', 'triangle-20', dict(target=70.742, budget=budget, seed=0,
+        ('triangle', 'triangle-20', dict(target=70.742, budget=budget,
+                                         relocateevals=200_000, seed=0,
                                          checkpointevery=1)),
+        # This round's member. Fixed work, eight workers, eight explore bites
+        # and two compress bites: the same trajectory `cutclose.py`'s `bites`
+        # stage compares across two processes, here compared across two
+        # independently built binaries.
+        ('cutclose', 'mixed-61', dict(mode='fixed', bites=8, attempts=2,
+                                      iters=400, compressbites=2, workers=8,
+                                      seed=0)),
     ]
     rows = []
     identical = True
