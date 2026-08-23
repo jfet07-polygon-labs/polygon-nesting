@@ -34,8 +34,17 @@ set -u
 # ROOT resolves to the repository containing this script (sol-review-17: a
 # stale hard-coded worktree default let the strongest tripwires validate the
 # wrong tree). ICS_ROOT still overrides explicitly.
+#
+# It is **exported**, because stages 5 and 6 are Python and `lib.py` resolves
+# `BIN` and every request path from its own `ICS_ROOT`. Repairing this script's
+# path alone left those two stages reading whichever worktree `lib.py`'s
+# constant named - which on this box still exists, so nothing would have said
+# so. `lib.py` now derives its own default from its own location as well; the
+# export is the belt to that suspenders, and it also pins the two to the same
+# tree when only one of them is overridden.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${ICS_ROOT:-$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel)}"
+export ICS_ROOT="$ROOT"
 OUT="${ICS_OUT:-/var/lib/t3/tmp/overlapics/fast}"
 LOG="$OUT/log"
 mkdir -p "$LOG"

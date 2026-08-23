@@ -4,9 +4,18 @@
 One process per cell, one JSON document per process, every exit status read
 directly on the line after the command and never through a pipe.
 
-`ROOT` points at this round's worktree. `BIN` is the release example built from
-the committed tree; override it to point one driver at two binaries for the
-two-process and two-binary determinism comparisons.
+`ROOT` is the repository containing **this file**, not a hard-coded worktree.
+Sol review 17 Round 2 §2 named the hard-coded default a round-validity defect
+rather than a knob - "otherwise the strongest tripwires can validate the wrong
+tree" - and `fast.sh` was repaired for its own path in the spec commit. This
+module was not, and it is the one that resolves `BIN` and every request path, so
+the corpus and smoke stages were still reading whichever worktree the constant
+happened to name. That worktree still exists on this box, so the failure mode
+was silent rather than loud. `ICS_ROOT` still overrides explicitly.
+
+`BIN` is the release example built from the committed tree; override it to point
+one driver at two binaries for the two-process and two-binary determinism
+comparisons.
 """
 import hashlib
 import json
@@ -16,7 +25,8 @@ import time
 
 ROOT = os.environ.get(
     'ICS_ROOT',
-    '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-1')
+    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 '..', '..', '..', '..')))
 BIN = os.environ.get('ICS_BIN', f'{ROOT}/target/release/examples/overlap_ics_benchmark')
 OUT = os.environ.get('ICS_OUT', '/var/lib/t3/tmp/overlapics')
 
