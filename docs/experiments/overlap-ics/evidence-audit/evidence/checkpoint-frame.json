@@ -1,0 +1,4542 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-checkpoint-frame",
+ "cellsDir": "/var/lib/t3/tmp/ics-audit-full/cells9",
+ "cells": [
+  {
+   "cell": "wall-10s-seed0.json",
+   "seed": 0,
+   "constructorSeconds": 2.326459869,
+   "searchSeconds": 7.675315311,
+   "totalSeconds": 10.002095366,
+   "publications": 22,
+   "maxLoopSeconds": 6.163565762,
+   "maxRequestSeconds": 8.490025631,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.836434238,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.021394687,
+     "requestSeconds": 2.3478545559999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.026791455,
+     "requestSeconds": 2.353251324,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.036454971,
+     "requestSeconds": 2.3629148399999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.040617879,
+     "requestSeconds": 2.367077748,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.044877787,
+     "requestSeconds": 2.3713376559999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.048060361,
+     "requestSeconds": 2.37452023,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.0500081,
+     "requestSeconds": 2.3764679689999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.053913336,
+     "requestSeconds": 2.3803732049999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.06147985,
+     "requestSeconds": 2.387939719,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.0683794,
+     "requestSeconds": 2.3948392689999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.08339874,
+     "requestSeconds": 2.4098586089999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.100890564,
+     "requestSeconds": 2.427350433,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.116357285,
+     "requestSeconds": 2.4428171539999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.154054495,
+     "requestSeconds": 2.480514364,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.176055653,
+     "requestSeconds": 2.502515522,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.224801241,
+     "requestSeconds": 2.55126111,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.89016874667288,
+     "loopSeconds": 0.291309482,
+     "requestSeconds": 2.6177693509999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.7102785779262,
+     "loopSeconds": 0.303263949,
+     "requestSeconds": 2.6297238179999995,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.5291740699323,
+     "loopSeconds": 0.329544493,
+     "requestSeconds": 2.656004362,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.3489303379231,
+     "loopSeconds": 0.37650806,
+     "requestSeconds": 2.7029679289999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.16566573285345,
+     "loopSeconds": 0.409741068,
+     "requestSeconds": 2.7362009369999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "compress",
+     "publishedRawDepthMm": 179.0760865230147,
+     "loopSeconds": 6.163565762,
+     "requestSeconds": 8.490025631,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed1.json",
+   "seed": 1,
+   "constructorSeconds": 2.31772664,
+   "searchSeconds": 7.683543621,
+   "totalSeconds": 10.001574566,
+   "publications": 22,
+   "maxLoopSeconds": 6.165225934,
+   "maxRequestSeconds": 8.482952574,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.8347740659999996,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.021031434,
+     "requestSeconds": 2.3387580740000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.023002243,
+     "requestSeconds": 2.340728883,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.030203992,
+     "requestSeconds": 2.347930632,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.038732098,
+     "requestSeconds": 2.356458738,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.042386989,
+     "requestSeconds": 2.360113629,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.044770931,
+     "requestSeconds": 2.362497571,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.050346197,
+     "requestSeconds": 2.368072837,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.05597426,
+     "requestSeconds": 2.3737009000000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.068104625,
+     "requestSeconds": 2.385831265,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.08131865,
+     "requestSeconds": 2.39904529,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.106376994,
+     "requestSeconds": 2.424103634,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.12665722,
+     "requestSeconds": 2.44438386,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.151570472,
+     "requestSeconds": 2.469297112,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.165317527,
+     "requestSeconds": 2.483044167,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.189413029,
+     "requestSeconds": 2.507139669,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.27601956,
+     "requestSeconds": 2.5937462,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.88905108137158,
+     "loopSeconds": 0.46480128,
+     "requestSeconds": 2.78252792,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.7091620302902,
+     "loopSeconds": 0.469822509,
+     "requestSeconds": 2.787549149,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.5294528682599,
+     "loopSeconds": 0.482309403,
+     "requestSeconds": 2.800036043,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.34992341539166,
+     "loopSeconds": 0.593739367,
+     "requestSeconds": 2.911466007,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.17057349197626,
+     "loopSeconds": 0.603558961,
+     "requestSeconds": 2.921285601,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "compress",
+     "publishedRawDepthMm": 179.08099195461827,
+     "loopSeconds": 6.165225934,
+     "requestSeconds": 8.482952574,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed2.json",
+   "seed": 2,
+   "constructorSeconds": 2.30537806,
+   "searchSeconds": 7.6956710059999995,
+   "totalSeconds": 10.002225775,
+   "publications": 136,
+   "maxLoopSeconds": 7.692701574,
+   "maxRequestSeconds": 9.998079634,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 2.307298426,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": true,
+   "qualifiesUnderBudgetFrame": true,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.022464786,
+     "requestSeconds": 2.327842846,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.025116479,
+     "requestSeconds": 2.3304945389999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.039422758,
+     "requestSeconds": 2.344800818,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.052291688,
+     "requestSeconds": 2.3576697479999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.05837682,
+     "requestSeconds": 2.3637548799999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.061346966,
+     "requestSeconds": 2.3667250259999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.06582712,
+     "requestSeconds": 2.3712051799999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.073026162,
+     "requestSeconds": 2.378404222,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.080719304,
+     "requestSeconds": 2.386097364,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.09371396,
+     "requestSeconds": 2.39909202,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.11376703,
+     "requestSeconds": 2.4191450899999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.130337958,
+     "requestSeconds": 2.435716018,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.150513739,
+     "requestSeconds": 2.4558917989999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.195735894,
+     "requestSeconds": 2.5011139539999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.24921515528405,
+     "loopSeconds": 0.336348879,
+     "requestSeconds": 2.6417269389999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.067695738759,
+     "loopSeconds": 0.347074181,
+     "requestSeconds": 2.6524522409999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.88762804302024,
+     "loopSeconds": 0.352584275,
+     "requestSeconds": 2.6579623349999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.70774041497722,
+     "loopSeconds": 0.361801938,
+     "requestSeconds": 2.667179998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.52803267456224,
+     "loopSeconds": 0.399996306,
+     "requestSeconds": 2.705374366,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.34850464188767,
+     "loopSeconds": 0.499900329,
+     "requestSeconds": 2.8052783889999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.16915613724578,
+     "loopSeconds": 0.53202284,
+     "requestSeconds": 2.8374008999999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 22,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.98823227601144,
+     "loopSeconds": 5.180570227,
+     "requestSeconds": 7.485948286999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.7911468339699,
+     "loopSeconds": 5.191137049,
+     "requestSeconds": 7.496515109,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 24,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.61235568713593,
+     "loopSeconds": 5.196009515,
+     "requestSeconds": 7.501387575,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 25,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.4337433314488,
+     "loopSeconds": 5.205914858,
+     "requestSeconds": 7.511292918,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 26,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.25530958811734,
+     "loopSeconds": 5.212621593,
+     "requestSeconds": 7.5179996529999995,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 27,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.07705427852923,
+     "loopSeconds": 5.222208677,
+     "requestSeconds": 7.527586737,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 28,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.8989772242507,
+     "loopSeconds": 5.234573033,
+     "requestSeconds": 7.539951093,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 29,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.72107824702644,
+     "loopSeconds": 5.243621889,
+     "requestSeconds": 7.548999949,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 30,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.5433571687794,
+     "loopSeconds": 5.256762378,
+     "requestSeconds": 7.562140438,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 31,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.36581381161062,
+     "loopSeconds": 5.264460767,
+     "requestSeconds": 7.569838827,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 32,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.18844799779902,
+     "loopSeconds": 5.277535045,
+     "requestSeconds": 7.582913104999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 33,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.01125954980122,
+     "loopSeconds": 5.300090441,
+     "requestSeconds": 7.605468501,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 34,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.83424829025142,
+     "loopSeconds": 5.328086865,
+     "requestSeconds": 7.633464925,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 35,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.65741404196118,
+     "loopSeconds": 5.341305772,
+     "requestSeconds": 7.646683832,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 36,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.48075662791922,
+     "loopSeconds": 5.354489803,
+     "requestSeconds": 7.659867863,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 37,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.3042758712913,
+     "loopSeconds": 5.371865935,
+     "requestSeconds": 7.6772439949999995,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 38,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.12797159542,
+     "loopSeconds": 5.385858021,
+     "requestSeconds": 7.691236081,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 39,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.9518436238246,
+     "loopSeconds": 5.396116697,
+     "requestSeconds": 7.701494757,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 40,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.77589178020077,
+     "loopSeconds": 5.404082688,
+     "requestSeconds": 7.709460748,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 41,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.60011588842056,
+     "loopSeconds": 5.415388999,
+     "requestSeconds": 7.720767059,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 42,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.42451577253215,
+     "loopSeconds": 5.432983395,
+     "requestSeconds": 7.738361455,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 43,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.2490912567596,
+     "loopSeconds": 5.44740752,
+     "requestSeconds": 7.752785579999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 44,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.07384216550284,
+     "loopSeconds": 5.464157283,
+     "requestSeconds": 7.769535342999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 45,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.89876832333732,
+     "loopSeconds": 5.480793395,
+     "requestSeconds": 7.786171455,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 46,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.72386955501398,
+     "loopSeconds": 5.494680554,
+     "requestSeconds": 7.800058614,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 47,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.54914568545897,
+     "loopSeconds": 5.506169572,
+     "requestSeconds": 7.811547632,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 48,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.3745965397735,
+     "loopSeconds": 5.524435271,
+     "requestSeconds": 7.8298133309999995,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 49,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.20022194323374,
+     "loopSeconds": 5.554874264,
+     "requestSeconds": 7.860252324,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 50,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.0260217212905,
+     "loopSeconds": 5.565728764,
+     "requestSeconds": 7.871106824,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 51,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.85199569956922,
+     "loopSeconds": 5.585002147,
+     "requestSeconds": 7.890380207,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 52,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.67814370386964,
+     "loopSeconds": 5.606598115,
+     "requestSeconds": 7.9119761749999995,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 53,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.50446556016576,
+     "loopSeconds": 5.636268065,
+     "requestSeconds": 7.941646125,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 54,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.33096109460558,
+     "loopSeconds": 5.6614095970000005,
+     "requestSeconds": 7.966787657,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 55,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.157630133511,
+     "loopSeconds": 5.693163124,
+     "requestSeconds": 7.998541184,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 56,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.98447250337748,
+     "loopSeconds": 5.751231843,
+     "requestSeconds": 8.056609903,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 57,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.8114880308741,
+     "loopSeconds": 5.789432781,
+     "requestSeconds": 8.094810841000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 58,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.63867654284323,
+     "loopSeconds": 5.817795688,
+     "requestSeconds": 8.123173748,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 59,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.46603786630038,
+     "loopSeconds": 5.83889255,
+     "requestSeconds": 8.14427061,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 60,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.29357182843407,
+     "loopSeconds": 5.861097522,
+     "requestSeconds": 8.166475582,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 61,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.12127825660562,
+     "loopSeconds": 5.898680009,
+     "requestSeconds": 8.204058068999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 62,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.949156978349,
+     "loopSeconds": 5.921364652,
+     "requestSeconds": 8.226742712,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 63,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.77720782137067,
+     "loopSeconds": 5.94817385,
+     "requestSeconds": 8.253551909999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 64,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.6054306135493,
+     "loopSeconds": 5.980339459,
+     "requestSeconds": 8.285717518999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 65,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.43382518293575,
+     "loopSeconds": 6.011456662,
+     "requestSeconds": 8.316834722,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 66,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.26239135775282,
+     "loopSeconds": 6.068337964,
+     "requestSeconds": 8.373716024,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 67,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.09112896639508,
+     "loopSeconds": 6.11741894,
+     "requestSeconds": 8.422797,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 68,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.92003783742868,
+     "loopSeconds": 6.138280968,
+     "requestSeconds": 8.443659027999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 70,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.8345826911763,
+     "loopSeconds": 6.1782979000000005,
+     "requestSeconds": 8.48367596,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 71,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.74993894005982,
+     "loopSeconds": 6.187588555,
+     "requestSeconds": 8.492966615,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 72,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.66584464310802,
+     "loopSeconds": 6.205945381,
+     "requestSeconds": 8.511323441,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 73,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.5827976389945,
+     "loopSeconds": 6.223262931,
+     "requestSeconds": 8.528640991,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 75,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.5029613652347,
+     "loopSeconds": 6.290039795,
+     "requestSeconds": 8.595417855,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 76,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.42458473715638,
+     "loopSeconds": 6.296493625,
+     "requestSeconds": 8.601871684999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 77,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.34659687082248,
+     "loopSeconds": 6.328898889,
+     "requestSeconds": 8.634276949,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 78,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.270411926937,
+     "loopSeconds": 6.340387439,
+     "requestSeconds": 8.645765499,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 79,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.19488763148172,
+     "loopSeconds": 6.376484175,
+     "requestSeconds": 8.681862235,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 80,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.12136403723525,
+     "loopSeconds": 6.407663591,
+     "requestSeconds": 8.713041651000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 81,
+     "phase": "compress",
+     "publishedRawDepthMm": 170.04956774967368,
+     "loopSeconds": 6.417807353,
+     "requestSeconds": 8.723185413,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 82,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.9783543348709,
+     "loopSeconds": 6.435833582,
+     "requestSeconds": 8.741211642,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 83,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.90815426233036,
+     "loopSeconds": 6.445826006,
+     "requestSeconds": 8.751204066,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 84,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.83852662849537,
+     "loopSeconds": 6.463011379,
+     "requestSeconds": 8.768389439,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 85,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.76906347042603,
+     "loopSeconds": 6.4880611009999996,
+     "requestSeconds": 8.793439160999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 86,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.7017888880162,
+     "loopSeconds": 6.497174651,
+     "requestSeconds": 8.802552711,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 87,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.63503596703515,
+     "loopSeconds": 6.503793659,
+     "requestSeconds": 8.809171719,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 88,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.56866909518288,
+     "loopSeconds": 6.510165899,
+     "requestSeconds": 8.815543959,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 89,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.49906528139581,
+     "loopSeconds": 6.522403937,
+     "requestSeconds": 8.827781996999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 90,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.43376157478184,
+     "loopSeconds": 6.536480053,
+     "requestSeconds": 8.841858113,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 91,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.36824798700727,
+     "loopSeconds": 6.5530612040000005,
+     "requestSeconds": 8.858439264000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 92,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.30290836599912,
+     "loopSeconds": 6.576226899,
+     "requestSeconds": 8.881604959,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 93,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.24059528163374,
+     "loopSeconds": 6.585121026,
+     "requestSeconds": 8.890499086,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 94,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.17878669256876,
+     "loopSeconds": 6.591744816,
+     "requestSeconds": 8.897122876000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 95,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.11735945709424,
+     "loopSeconds": 6.625413158,
+     "requestSeconds": 8.930791218,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 96,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.0574334725266,
+     "loopSeconds": 6.651658276,
+     "requestSeconds": 8.957036336,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 97,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.99670014490943,
+     "loopSeconds": 6.669135975,
+     "requestSeconds": 8.974514034999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 98,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.93952974361616,
+     "loopSeconds": 6.691663397,
+     "requestSeconds": 8.997041457,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 99,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.88359484970658,
+     "loopSeconds": 6.710866456,
+     "requestSeconds": 9.016244516,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 100,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.82871942486835,
+     "loopSeconds": 6.721133626,
+     "requestSeconds": 9.026511686,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 101,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.77376649565326,
+     "loopSeconds": 6.745789474,
+     "requestSeconds": 9.051167534000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 102,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.72081396723513,
+     "loopSeconds": 6.778179736,
+     "requestSeconds": 9.083557796000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 103,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.66722868134005,
+     "loopSeconds": 6.810939724,
+     "requestSeconds": 9.116317784,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 104,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.61782801870794,
+     "loopSeconds": 6.824594844,
+     "requestSeconds": 9.129972903999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 105,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.5687335829699,
+     "loopSeconds": 6.841615402,
+     "requestSeconds": 9.146993462000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 106,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.52101769274827,
+     "loopSeconds": 6.856773211,
+     "requestSeconds": 9.162151270999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 107,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.4737853262173,
+     "loopSeconds": 6.883789509,
+     "requestSeconds": 9.189167568999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 108,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.42836914929055,
+     "loopSeconds": 6.920594172,
+     "requestSeconds": 9.225972232,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 109,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.38495001552795,
+     "loopSeconds": 6.953078024,
+     "requestSeconds": 9.258456083999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 110,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.34148448888988,
+     "loopSeconds": 6.982068813,
+     "requestSeconds": 9.287446873,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 111,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.3014037992059,
+     "loopSeconds": 6.989469563,
+     "requestSeconds": 9.294847622999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 112,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.26173163876248,
+     "loopSeconds": 6.996772474,
+     "requestSeconds": 9.302150533999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 113,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.22246234322446,
+     "loopSeconds": 7.002001597,
+     "requestSeconds": 9.307379656999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 114,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.18348327282007,
+     "loopSeconds": 7.010804377,
+     "requestSeconds": 9.316182437,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 115,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.14498766521396,
+     "loopSeconds": 7.045473504,
+     "requestSeconds": 9.350851564,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 117,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.1071396092964,
+     "loopSeconds": 7.091306291,
+     "requestSeconds": 9.396684351000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 118,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.07299470680698,
+     "loopSeconds": 7.133902741,
+     "requestSeconds": 9.439280800999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 119,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.04114916388087,
+     "loopSeconds": 7.170735504,
+     "requestSeconds": 9.476113563999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 120,
+     "phase": "compress",
+     "publishedRawDepthMm": 168.01128902660304,
+     "loopSeconds": 7.20080866,
+     "requestSeconds": 9.506186719999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 123,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.98338054135382,
+     "loopSeconds": 7.268038691,
+     "requestSeconds": 9.573416751,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 124,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.95803136225177,
+     "loopSeconds": 7.286104367,
+     "requestSeconds": 9.591482426999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 125,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.9343926397552,
+     "loopSeconds": 7.303375784,
+     "requestSeconds": 9.608753843999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 126,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.91159205976436,
+     "loopSeconds": 7.321508729,
+     "requestSeconds": 9.626886789,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 127,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.8898637410253,
+     "loopSeconds": 7.334371974,
+     "requestSeconds": 9.639750033999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 128,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.86882978211767,
+     "loopSeconds": 7.353401345,
+     "requestSeconds": 9.658779405,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 129,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.8488209925694,
+     "loopSeconds": 7.369591526,
+     "requestSeconds": 9.674969586,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 130,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.82758921050845,
+     "loopSeconds": 7.386189052,
+     "requestSeconds": 9.691567112,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 131,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.80934469538855,
+     "loopSeconds": 7.394066116,
+     "requestSeconds": 9.699444176,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 132,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.79152790376827,
+     "loopSeconds": 7.412082704,
+     "requestSeconds": 9.717460764,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 136,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.77902912072918,
+     "loopSeconds": 7.520757543,
+     "requestSeconds": 9.826135603,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 138,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.76876678315517,
+     "loopSeconds": 7.543611396,
+     "requestSeconds": 9.848989456,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 139,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.75898560986465,
+     "loopSeconds": 7.559430153,
+     "requestSeconds": 9.864808213,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 140,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.75005523101842,
+     "loopSeconds": 7.567237754,
+     "requestSeconds": 9.872615814,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 141,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.74154412622838,
+     "loopSeconds": 7.570935643,
+     "requestSeconds": 9.876313703000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 142,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.7323311258785,
+     "loopSeconds": 7.5877231389999995,
+     "requestSeconds": 9.893101199,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 143,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.72457828819424,
+     "loopSeconds": 7.605020821,
+     "requestSeconds": 9.910398880999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 144,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.7180554367021,
+     "loopSeconds": 7.650877963,
+     "requestSeconds": 9.956256023,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 146,
+     "phase": "compress",
+     "publishedRawDepthMm": 167.71514200324802,
+     "loopSeconds": 7.692701574,
+     "requestSeconds": 9.998079634,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed3.json",
+   "seed": 3,
+   "constructorSeconds": 2.333137781,
+   "searchSeconds": 7.669342518,
+   "totalSeconds": 10.003211903,
+   "publications": 82,
+   "maxLoopSeconds": 6.28761419,
+   "maxRequestSeconds": 8.620751971,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.71238581,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.022533233,
+     "requestSeconds": 2.355671014,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.036208465,
+     "requestSeconds": 2.369346246,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.047768064,
+     "requestSeconds": 2.380905845,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.053429648,
+     "requestSeconds": 2.386567429,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.057807085,
+     "requestSeconds": 2.390944866,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.060441274,
+     "requestSeconds": 2.393579055,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.064835789,
+     "requestSeconds": 2.39797357,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.071095448,
+     "requestSeconds": 2.404233229,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.078848231,
+     "requestSeconds": 2.411986012,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.08772693,
+     "requestSeconds": 2.420864711,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.112290733,
+     "requestSeconds": 2.445428514,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.121853871,
+     "requestSeconds": 2.454991652,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.144414983,
+     "requestSeconds": 2.477552764,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.156512624,
+     "requestSeconds": 2.489650405,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.185750904,
+     "requestSeconds": 2.518888685,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.221577649,
+     "requestSeconds": 2.55471543,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.89016874667288,
+     "loopSeconds": 0.339240536,
+     "requestSeconds": 2.672378317,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.69916397384222,
+     "loopSeconds": 0.441523457,
+     "requestSeconds": 2.774661238,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.5047879538366,
+     "loopSeconds": 0.457320834,
+     "requestSeconds": 2.790458615,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.32528316588275,
+     "loopSeconds": 0.469968609,
+     "requestSeconds": 2.80310639,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.14595788271686,
+     "loopSeconds": 0.482735382,
+     "requestSeconds": 2.815873163,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 22,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.9666481914237,
+     "loopSeconds": 1.2672184610000001,
+     "requestSeconds": 3.600356242,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.78768154323228,
+     "loopSeconds": 1.283392442,
+     "requestSeconds": 3.616530223,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 24,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.60846650773908,
+     "loopSeconds": 1.29520209,
+     "requestSeconds": 3.628339871,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 25,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.42985804123134,
+     "loopSeconds": 1.308715678,
+     "requestSeconds": 3.641853459,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 26,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.25142818319011,
+     "loopSeconds": 1.325188124,
+     "requestSeconds": 3.658325905,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 27,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.07317675500693,
+     "loopSeconds": 1.356656145,
+     "requestSeconds": 3.689793926,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 28,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.8951035782519,
+     "loopSeconds": 1.398362052,
+     "requestSeconds": 3.731499833,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 29,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.71720847467364,
+     "loopSeconds": 1.436697351,
+     "requestSeconds": 3.769835132,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 30,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.53949126619898,
+     "loopSeconds": 1.507205299,
+     "requestSeconds": 3.8403430800000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 31,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.36195177493278,
+     "loopSeconds": 1.5324451890000002,
+     "requestSeconds": 3.86558297,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 32,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.17921548443357,
+     "loopSeconds": 1.571354457,
+     "requestSeconds": 3.904492238,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 33,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.99804699417447,
+     "loopSeconds": 1.6086122409999999,
+     "requestSeconds": 3.941750022,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 34,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.82081778541402,
+     "loopSeconds": 1.641855193,
+     "requestSeconds": 3.974992974,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 35,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.6439969676286,
+     "loopSeconds": 1.66494041,
+     "requestSeconds": 3.9980781910000003,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 36,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.46735297066095,
+     "loopSeconds": 1.723314217,
+     "requestSeconds": 4.056451998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 37,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.2908856176903,
+     "loopSeconds": 1.790929808,
+     "requestSeconds": 4.124067589,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 38,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.1145947320726,
+     "loopSeconds": 2.266602621,
+     "requestSeconds": 4.599740402,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 39,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.93848013734052,
+     "loopSeconds": 2.278845859,
+     "requestSeconds": 4.61198364,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 40,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.76254165720317,
+     "loopSeconds": 2.301913807,
+     "requestSeconds": 4.635051588,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 41,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.58677911554597,
+     "loopSeconds": 2.335187501,
+     "requestSeconds": 4.668325282,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 42,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.41119233643042,
+     "loopSeconds": 2.345664383,
+     "requestSeconds": 4.678802164,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 43,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.23578114409398,
+     "loopSeconds": 2.394613918,
+     "requestSeconds": 4.727751699000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 44,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.06054536294988,
+     "loopSeconds": 2.447116771,
+     "requestSeconds": 4.780254552000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 45,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.88548481758693,
+     "loopSeconds": 2.4752570289999998,
+     "requestSeconds": 4.808394809999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 46,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.7105045741963,
+     "loopSeconds": 2.566392293,
+     "requestSeconds": 4.899530073999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 47,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.5357940696221,
+     "loopSeconds": 2.690283537,
+     "requestSeconds": 5.0234213180000005,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 48,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.3611313871806,
+     "loopSeconds": 2.759415873,
+     "requestSeconds": 5.092553654,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 49,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.18677025579342,
+     "loopSeconds": 2.844569593,
+     "requestSeconds": 5.177707374000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 50,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.01258348553762,
+     "loopSeconds": 2.99407693,
+     "requestSeconds": 5.327214711,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 51,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.8380169905914,
+     "loopSeconds": 3.022917348,
+     "requestSeconds": 5.356055129,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 52,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.6641789736008,
+     "loopSeconds": 3.042759373,
+     "requestSeconds": 5.3758971540000005,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 53,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.4905147946272,
+     "loopSeconds": 3.060490629,
+     "requestSeconds": 5.39362841,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 54,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.31702427983257,
+     "loopSeconds": 3.076040014,
+     "requestSeconds": 5.409177795,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 55,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.14370725555273,
+     "loopSeconds": 3.123484828,
+     "requestSeconds": 5.456622609,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 56,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.97056354829718,
+     "loopSeconds": 3.183527278,
+     "requestSeconds": 5.516665059,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 57,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.7975929847489,
+     "loopSeconds": 3.249260586,
+     "requestSeconds": 5.582398367,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 58,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.62479539176414,
+     "loopSeconds": 3.413751398,
+     "requestSeconds": 5.746889179,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 59,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.45217059637238,
+     "loopSeconds": 4.450266815,
+     "requestSeconds": 6.7834045960000005,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 60,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.279718425776,
+     "loopSeconds": 4.765405421,
+     "requestSeconds": 7.098543202,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 61,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.1074387073502,
+     "loopSeconds": 5.648091868,
+     "requestSeconds": 7.981229648999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 62,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.93533126864287,
+     "loopSeconds": 5.665477097,
+     "requestSeconds": 7.998614878,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 63,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.7633959373742,
+     "loopSeconds": 5.692131757,
+     "requestSeconds": 8.025269538,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 64,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.59163254143684,
+     "loopSeconds": 5.711016298,
+     "requestSeconds": 8.044154079,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 65,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.4200409088954,
+     "loopSeconds": 5.734564803,
+     "requestSeconds": 8.067702584,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 66,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.24862086798652,
+     "loopSeconds": 5.756767368,
+     "requestSeconds": 8.089905149,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 67,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.07737224711852,
+     "loopSeconds": 5.790516944,
+     "requestSeconds": 8.123654725,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 68,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.9062948748714,
+     "loopSeconds": 5.844563761,
+     "requestSeconds": 8.177701542,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 69,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.73538857999654,
+     "loopSeconds": 5.939263009,
+     "requestSeconds": 8.27240079,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 70,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.56465319141654,
+     "loopSeconds": 5.999629982,
+     "requestSeconds": 8.332767763,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 71,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.39408853822513,
+     "loopSeconds": 6.033220933,
+     "requestSeconds": 8.366358714,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 72,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.22369444968692,
+     "loopSeconds": 6.0638834,
+     "requestSeconds": 8.397021181,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 73,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.05347075523724,
+     "loopSeconds": 6.091048372,
+     "requestSeconds": 8.424186153,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 74,
+     "phase": "explore",
+     "publishedRawDepthMm": 169.883417284482,
+     "loopSeconds": 6.129179242,
+     "requestSeconds": 8.462317023,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 76,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.79848117645363,
+     "loopSeconds": 6.166410791,
+     "requestSeconds": 8.499548572,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 77,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.71488203150633,
+     "loopSeconds": 6.192283829,
+     "requestSeconds": 8.52542161,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 78,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.63273626999845,
+     "loopSeconds": 6.205652555,
+     "requestSeconds": 8.538790336,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 79,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.55135897089392,
+     "loopSeconds": 6.211834406,
+     "requestSeconds": 8.544972187,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 80,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.47035813692673,
+     "loopSeconds": 6.223215012,
+     "requestSeconds": 8.556352793,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 81,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.3900159822376,
+     "loopSeconds": 6.235844846,
+     "requestSeconds": 8.568982627,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 82,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.31037046061388,
+     "loopSeconds": 6.266161445,
+     "requestSeconds": 8.599299226,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 83,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.23244167973186,
+     "loopSeconds": 6.28761419,
+     "requestSeconds": 8.620751971,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed4.json",
+   "seed": 4,
+   "constructorSeconds": 2.317081657,
+   "searchSeconds": 7.68879788,
+   "totalSeconds": 10.006172144,
+   "publications": 22,
+   "maxLoopSeconds": 6.190348567,
+   "maxRequestSeconds": 8.507430224,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.809651433,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.021934538,
+     "requestSeconds": 2.339016195,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.02510256,
+     "requestSeconds": 2.3421842170000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.033931512,
+     "requestSeconds": 2.3510131690000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.039027085,
+     "requestSeconds": 2.356108742,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.042891962,
+     "requestSeconds": 2.3599736190000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.044671756,
+     "requestSeconds": 2.361753413,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.049565182,
+     "requestSeconds": 2.366646839,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.051082467,
+     "requestSeconds": 2.368164124,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.054605561,
+     "requestSeconds": 2.371687218,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.062191726,
+     "requestSeconds": 2.379273383,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.079578682,
+     "requestSeconds": 2.3966603390000003,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.089325788,
+     "requestSeconds": 2.406407445,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.101687881,
+     "requestSeconds": 2.4187695380000003,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.114176675,
+     "requestSeconds": 2.431258332,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.136830315,
+     "requestSeconds": 2.453911972,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.160727623,
+     "requestSeconds": 2.4778092800000002,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.8895164051753,
+     "loopSeconds": 0.216339712,
+     "requestSeconds": 2.533421369,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.70962688877012,
+     "loopSeconds": 0.223094581,
+     "requestSeconds": 2.540176238,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.52969195968157,
+     "loopSeconds": 0.234628414,
+     "requestSeconds": 2.551710071,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.35016226772188,
+     "loopSeconds": 0.242576728,
+     "requestSeconds": 2.559658385,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.17081210545416,
+     "loopSeconds": 0.264984211,
+     "requestSeconds": 2.582065868,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "compress",
+     "publishedRawDepthMm": 179.0812317802364,
+     "loopSeconds": 6.190348567,
+     "requestSeconds": 8.507430224,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed5.json",
+   "seed": 5,
+   "constructorSeconds": 2.3633031239999998,
+   "searchSeconds": 7.638203011,
+   "totalSeconds": 10.001853331,
+   "publications": 22,
+   "maxLoopSeconds": 6.138992168,
+   "maxRequestSeconds": 8.502295292,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.8610078320000003,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.02116821,
+     "requestSeconds": 2.3844713339999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.024367661,
+     "requestSeconds": 2.3876707849999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.034510457,
+     "requestSeconds": 2.397813581,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.041235973,
+     "requestSeconds": 2.404539097,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.056831716,
+     "requestSeconds": 2.42013484,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.06658927,
+     "requestSeconds": 2.429892394,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.077847322,
+     "requestSeconds": 2.441150446,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.087700893,
+     "requestSeconds": 2.451004017,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.13583993,
+     "requestSeconds": 2.4991430539999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.159270185,
+     "requestSeconds": 2.5225733089999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.170510622,
+     "requestSeconds": 2.533813746,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.200414406,
+     "requestSeconds": 2.56371753,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.218319554,
+     "requestSeconds": 2.5816226779999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.236684764,
+     "requestSeconds": 2.599987888,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.24938659906584,
+     "loopSeconds": 0.297186044,
+     "requestSeconds": 2.660489168,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.06546327594663,
+     "loopSeconds": 0.378687858,
+     "requestSeconds": 2.741990982,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.8797193695341,
+     "loopSeconds": 0.457688606,
+     "requestSeconds": 2.82099173,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.69983965016456,
+     "loopSeconds": 0.463380062,
+     "requestSeconds": 2.826683186,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.5201398105144,
+     "loopSeconds": 0.470489925,
+     "requestSeconds": 2.8337930489999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.3406196707039,
+     "loopSeconds": 0.487204064,
+     "requestSeconds": 2.850507188,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.16127905103318,
+     "loopSeconds": 0.498314287,
+     "requestSeconds": 2.8616174109999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "compress",
+     "publishedRawDepthMm": 179.07170280092177,
+     "loopSeconds": 6.138992168,
+     "requestSeconds": 8.502295292,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed6.json",
+   "seed": 6,
+   "constructorSeconds": 2.317461441,
+   "searchSeconds": 7.6856342699999995,
+   "totalSeconds": 10.003868041,
+   "publications": 87,
+   "maxLoopSeconds": 7.588836206,
+   "maxRequestSeconds": 9.906297646999999,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 2.411163794,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.018592797,
+     "requestSeconds": 2.336054238,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.021263108,
+     "requestSeconds": 2.3387245489999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.029370415,
+     "requestSeconds": 2.3468318559999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.035243125,
+     "requestSeconds": 2.352704566,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.037350386,
+     "requestSeconds": 2.354811827,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.041769569,
+     "requestSeconds": 2.35923101,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.044382482,
+     "requestSeconds": 2.361843923,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.048363874,
+     "requestSeconds": 2.365825315,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.05424372,
+     "requestSeconds": 2.371705161,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.063098805,
+     "requestSeconds": 2.380560246,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.074201796,
+     "requestSeconds": 2.391663237,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.084641337,
+     "requestSeconds": 2.4021027779999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.116299848,
+     "requestSeconds": 2.433761289,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.130633123,
+     "requestSeconds": 2.448094564,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.144140415,
+     "requestSeconds": 2.4616018559999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.173764639,
+     "requestSeconds": 2.4912260799999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.8849254124023,
+     "loopSeconds": 0.396613754,
+     "requestSeconds": 2.714075195,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.7050404869899,
+     "loopSeconds": 0.403874167,
+     "requestSeconds": 2.721335608,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.504759815354,
+     "loopSeconds": 0.410257009,
+     "requestSeconds": 2.72771845,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.32525505553863,
+     "loopSeconds": 0.417860055,
+     "requestSeconds": 2.735321496,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.14383312890993,
+     "loopSeconds": 0.431515962,
+     "requestSeconds": 2.7489774029999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 22,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.955449846644,
+     "loopSeconds": 1.289011224,
+     "requestSeconds": 3.606472665,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.77649439679735,
+     "loopSeconds": 1.297469622,
+     "requestSeconds": 3.6149310629999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 24,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.59771790240055,
+     "loopSeconds": 1.30397556,
+     "requestSeconds": 3.621437001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 25,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.41912018449815,
+     "loopSeconds": 1.312824258,
+     "requestSeconds": 3.630285699,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 26,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.24070106431367,
+     "loopSeconds": 1.321030873,
+     "requestSeconds": 3.6384923139999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 27,
+     "phase": "explore",
+     "publishedRawDepthMm": 178.06246036324936,
+     "loopSeconds": 1.32851506,
+     "requestSeconds": 3.645976501,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 28,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.88439790288612,
+     "loopSeconds": 1.339401199,
+     "requestSeconds": 3.65686264,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 29,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.70651350498323,
+     "loopSeconds": 1.357207901,
+     "requestSeconds": 3.6746693419999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 30,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.52880699147826,
+     "loopSeconds": 1.36845152,
+     "requestSeconds": 3.6859129609999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 31,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.35127818448677,
+     "loopSeconds": 1.378028532,
+     "requestSeconds": 3.695489973,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 32,
+     "phase": "explore",
+     "publishedRawDepthMm": 177.17275455495076,
+     "loopSeconds": 1.399963683,
+     "requestSeconds": 3.717425124,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 33,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.99499775830498,
+     "loopSeconds": 1.421362215,
+     "requestSeconds": 3.738823656,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 34,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.81800276054668,
+     "loopSeconds": 1.442579773,
+     "requestSeconds": 3.760041214,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 35,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.6411847577861,
+     "loopSeconds": 1.455658502,
+     "requestSeconds": 3.7731199429999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 36,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.45420418699354,
+     "loopSeconds": 1.466460134,
+     "requestSeconds": 3.783921575,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 37,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.27774998280654,
+     "loopSeconds": 1.484843096,
+     "requestSeconds": 3.802304537,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 38,
+     "phase": "explore",
+     "publishedRawDepthMm": 176.1014722328237,
+     "loopSeconds": 1.508516891,
+     "requestSeconds": 3.825978332,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 39,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.9208347659557,
+     "loopSeconds": 1.540107715,
+     "requestSeconds": 3.857569156,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 40,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.74491393118976,
+     "loopSeconds": 1.5613826419999999,
+     "requestSeconds": 3.8788440829999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 41,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.56916901725856,
+     "loopSeconds": 1.582207032,
+     "requestSeconds": 3.8996684729999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 42,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.3929824850964,
+     "loopSeconds": 1.6179961710000001,
+     "requestSeconds": 3.935457612,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 43,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.2175895026113,
+     "loopSeconds": 1.673440866,
+     "requestSeconds": 3.990902307,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 44,
+     "phase": "explore",
+     "publishedRawDepthMm": 175.04205938337736,
+     "loopSeconds": 1.7234487170000001,
+     "requestSeconds": 4.040910158,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 45,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.8648020354427,
+     "loopSeconds": 1.866814403,
+     "requestSeconds": 4.184275844,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 46,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.68993723340725,
+     "loopSeconds": 1.8902954969999999,
+     "requestSeconds": 4.207756937999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 47,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.50929040978286,
+     "loopSeconds": 1.925642989,
+     "requestSeconds": 4.24310443,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 48,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.33478111937308,
+     "loopSeconds": 1.961935617,
+     "requestSeconds": 4.279397058,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 49,
+     "phase": "explore",
+     "publishedRawDepthMm": 174.15233083175167,
+     "loopSeconds": 1.999517728,
+     "requestSeconds": 4.316979169,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 50,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.9781785009199,
+     "loopSeconds": 2.038966619,
+     "requestSeconds": 4.35642806,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 51,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.80420032241898,
+     "loopSeconds": 2.080519415,
+     "requestSeconds": 4.397980856,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 52,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.63039612209656,
+     "loopSeconds": 2.151110523,
+     "requestSeconds": 4.468571964,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 53,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.4563455308352,
+     "loopSeconds": 2.205526254,
+     "requestSeconds": 4.522987694999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 54,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.28283066468396,
+     "loopSeconds": 2.312025107,
+     "requestSeconds": 4.629486548,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 55,
+     "phase": "explore",
+     "publishedRawDepthMm": 173.1082431945048,
+     "loopSeconds": 2.442900966,
+     "requestSeconds": 4.760362407,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 56,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.9346147369939,
+     "loopSeconds": 2.659107899,
+     "requestSeconds": 4.976569339999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 57,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.76091577948722,
+     "loopSeconds": 2.689545521,
+     "requestSeconds": 5.007006962,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 58,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.58797796424045,
+     "loopSeconds": 2.724167117,
+     "requestSeconds": 5.041628557999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 59,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.40449899394227,
+     "loopSeconds": 2.7538695,
+     "requestSeconds": 5.071330940999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 60,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.22368027771859,
+     "loopSeconds": 2.7785249309999998,
+     "requestSeconds": 5.095986372,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 61,
+     "phase": "explore",
+     "publishedRawDepthMm": 172.05145659744088,
+     "loopSeconds": 3.029059314,
+     "requestSeconds": 5.346520755,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 62,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.87940514084343,
+     "loopSeconds": 3.075125249,
+     "requestSeconds": 5.39258669,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 63,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.70752573570257,
+     "loopSeconds": 3.105089103,
+     "requestSeconds": 5.422550544,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 64,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.53581820996686,
+     "loopSeconds": 3.135011187,
+     "requestSeconds": 5.452472628,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 65,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.3642823917569,
+     "loopSeconds": 3.194430575,
+     "requestSeconds": 5.511892016,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 66,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.19291810936514,
+     "loopSeconds": 3.398752961,
+     "requestSeconds": 5.716214402,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 67,
+     "phase": "explore",
+     "publishedRawDepthMm": 171.0189965442968,
+     "loopSeconds": 3.980690995,
+     "requestSeconds": 6.298152436,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 68,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.84797754775252,
+     "loopSeconds": 4.201567038,
+     "requestSeconds": 6.519028479,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 69,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.67712957020476,
+     "loopSeconds": 4.220825242,
+     "requestSeconds": 6.538286683,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 70,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.50645244063455,
+     "loopSeconds": 4.277063985,
+     "requestSeconds": 6.594525426,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 71,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.33466162612126,
+     "loopSeconds": 4.846057336,
+     "requestSeconds": 7.163518777,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 72,
+     "phase": "explore",
+     "publishedRawDepthMm": 170.1643081268312,
+     "loopSeconds": 4.865978254,
+     "requestSeconds": 7.183439695,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 73,
+     "phase": "explore",
+     "publishedRawDepthMm": 169.99414381870437,
+     "loopSeconds": 4.915684077,
+     "requestSeconds": 7.233145518,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 74,
+     "phase": "explore",
+     "publishedRawDepthMm": 169.82414967488566,
+     "loopSeconds": 4.966691386,
+     "requestSeconds": 7.284152827,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 76,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.73924279825812,
+     "loopSeconds": 6.166556583,
+     "requestSeconds": 8.484018024000001,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 78,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.66217261611322,
+     "loopSeconds": 6.448461654,
+     "requestSeconds": 8.765923095,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 79,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.59367755677582,
+     "loopSeconds": 6.49028813,
+     "requestSeconds": 8.807749570999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 80,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.52678197701283,
+     "loopSeconds": 6.515152635,
+     "requestSeconds": 8.832614075999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 81,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.4611882590552,
+     "loopSeconds": 6.552627545,
+     "requestSeconds": 8.870088985999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 82,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.3982966897743,
+     "loopSeconds": 6.575134587,
+     "requestSeconds": 8.892596028,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 83,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.3355542683692,
+     "loopSeconds": 6.611329787,
+     "requestSeconds": 8.928791228,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 86,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.28328776428407,
+     "loopSeconds": 6.822661762,
+     "requestSeconds": 9.140123203,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 87,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.23477154046805,
+     "loopSeconds": 6.919347742,
+     "requestSeconds": 9.236809183,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 88,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.1918707966427,
+     "loopSeconds": 7.094920551,
+     "requestSeconds": 9.412381992,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 89,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.1584584848063,
+     "loopSeconds": 7.224020534,
+     "requestSeconds": 9.541481975,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 91,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.14112782204847,
+     "loopSeconds": 7.519108727,
+     "requestSeconds": 9.836570168,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 92,
+     "phase": "compress",
+     "publishedRawDepthMm": 169.13062704410603,
+     "loopSeconds": 7.588836206,
+     "requestSeconds": 9.906297646999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed7.json",
+   "seed": 7,
+   "constructorSeconds": 2.315682045,
+   "searchSeconds": 7.690806791,
+   "totalSeconds": 10.006748439,
+   "publications": 22,
+   "maxLoopSeconds": 6.170659376,
+   "maxRequestSeconds": 8.486341420999999,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.8293406240000003,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.021950062,
+     "requestSeconds": 2.337632107,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.026925426,
+     "requestSeconds": 2.342607471,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.037573381,
+     "requestSeconds": 2.353255426,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.041967808,
+     "requestSeconds": 2.357649853,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.048139733,
+     "requestSeconds": 2.363821778,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.050337438,
+     "requestSeconds": 2.366019483,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.058809033,
+     "requestSeconds": 2.374491078,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.06433368,
+     "requestSeconds": 2.380015725,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.086177526,
+     "requestSeconds": 2.401859571,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.102092322,
+     "requestSeconds": 2.417774367,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.111342227,
+     "requestSeconds": 2.427024272,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.122544967,
+     "requestSeconds": 2.438227012,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.132538638,
+     "requestSeconds": 2.4482206829999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.138128485,
+     "requestSeconds": 2.45381053,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.148299253,
+     "requestSeconds": 2.4639812979999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.16883765,
+     "requestSeconds": 2.484519695,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.89016874667288,
+     "loopSeconds": 0.230340732,
+     "requestSeconds": 2.546022777,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.7102785779262,
+     "loopSeconds": 0.239522457,
+     "requestSeconds": 2.555204502,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.5305682993483,
+     "loopSeconds": 0.246772845,
+     "requestSeconds": 2.56245489,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.35103773104893,
+     "loopSeconds": 0.255946573,
+     "requestSeconds": 2.571628618,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.1716866933179,
+     "loopSeconds": 0.269492728,
+     "requestSeconds": 2.585174773,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "compress",
+     "publishedRawDepthMm": 179.08210417433258,
+     "loopSeconds": 6.170659376,
+     "requestSeconds": 8.486341420999999,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  },
+  {
+   "cell": "wall-10s-seed8.json",
+   "seed": 8,
+   "constructorSeconds": 2.327825988,
+   "searchSeconds": 7.672342887,
+   "totalSeconds": 10.000446275,
+   "publications": 22,
+   "maxLoopSeconds": 6.153407918,
+   "maxRequestSeconds": 8.481233906,
+   "filterThresholdS": 10.0,
+   "filterHeadroomS": 3.846592082,
+   "publicationsAdmittedByFilterButOutsideBudget": [],
+   "qualifiesUnderFilterFrame": false,
+   "qualifiesUnderBudgetFrame": false,
+   "verdictDiffers": false,
+   "rows": [
+    {
+     "bite": 1,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.793024,
+     "loopSeconds": 0.02115856,
+     "requestSeconds": 2.348984548,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 2,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.610230976,
+     "loopSeconds": 0.024613922,
+     "requestSeconds": 2.3524399099999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 3,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.427620745024,
+     "loopSeconds": 0.031548828,
+     "requestSeconds": 2.359374816,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 4,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.24519312427898,
+     "loopSeconds": 0.034266361,
+     "requestSeconds": 2.3620923489999996,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 5,
+     "phase": "explore",
+     "publishedRawDepthMm": 182.0629479311547,
+     "loopSeconds": 0.038426677,
+     "requestSeconds": 2.3662526649999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 6,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.88088498322355,
+     "loopSeconds": 0.048089592,
+     "requestSeconds": 2.37591558,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 7,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.69900409824032,
+     "loopSeconds": 0.062633346,
+     "requestSeconds": 2.390459334,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 8,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.51730509414207,
+     "loopSeconds": 0.07277044,
+     "requestSeconds": 2.400596428,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 9,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.33578778904794,
+     "loopSeconds": 0.085190827,
+     "requestSeconds": 2.4130168149999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 10,
+     "phase": "explore",
+     "publishedRawDepthMm": 181.1544520012589,
+     "loopSeconds": 0.092811893,
+     "requestSeconds": 2.4206378809999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 11,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.97329754925764,
+     "loopSeconds": 0.111169563,
+     "requestSeconds": 2.4389955509999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 12,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.79232425170838,
+     "loopSeconds": 0.121705553,
+     "requestSeconds": 2.449531541,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 13,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.61153192745667,
+     "loopSeconds": 0.132714604,
+     "requestSeconds": 2.460540592,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 14,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.4309203955292,
+     "loopSeconds": 0.150021135,
+     "requestSeconds": 2.4778471229999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 15,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.25048947513366,
+     "loopSeconds": 0.160067549,
+     "requestSeconds": 2.4878935369999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 16,
+     "phase": "explore",
+     "publishedRawDepthMm": 180.07023898565853,
+     "loopSeconds": 0.166404882,
+     "requestSeconds": 2.49423087,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 17,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.89016874667288,
+     "loopSeconds": 0.180033988,
+     "requestSeconds": 2.5078599759999998,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 18,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.7102785779262,
+     "loopSeconds": 0.187396423,
+     "requestSeconds": 2.515222411,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 19,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.5305682993483,
+     "loopSeconds": 0.229648137,
+     "requestSeconds": 2.5574741249999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 20,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.35103773104893,
+     "loopSeconds": 0.241932905,
+     "requestSeconds": 2.569758893,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 21,
+     "phase": "explore",
+     "publishedRawDepthMm": 179.1716866933179,
+     "loopSeconds": 0.255979986,
+     "requestSeconds": 2.5838059739999997,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    },
+    {
+     "bite": 23,
+     "phase": "compress",
+     "publishedRawDepthMm": 179.0821041378155,
+     "loopSeconds": 6.153407918,
+     "requestSeconds": 8.481233906,
+     "insideFilterFrame": true,
+     "insideBudgetFrame": true,
+     "strictChild": true
+    }
+   ]
+  }
+ ],
+ "FRAME_MISMATCH": false,
+ "ANY_VERDICT_DIFFERS": false,
+ "MIN_FILTER_HEADROOM_S": 2.307298426
+}

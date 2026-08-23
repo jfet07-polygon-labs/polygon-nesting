@@ -1,0 +1,2986 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-counter-identities",
+ "evidenceDir": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-1/docs/experiments/overlap-ics/cutclose-rerun/evidence",
+ "identitiesChecked": 314,
+ "failures": [],
+ "reported": [
+  {
+   "note": "wall/3s/seed0/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 22,
+   "bitesThatAttempted": 22,
+   "attemptsActuallyMade": 39,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed0/R15 trajectory ordinal is winner-only",
+   "proposals": 7808,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed1/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 25,
+   "bitesThatAttempted": 25,
+   "attemptsActuallyMade": 36,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed1/R15 trajectory ordinal is winner-only",
+   "proposals": 9699,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed2/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 23,
+   "bitesThatAttempted": 23,
+   "attemptsActuallyMade": 75,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed2/R15 trajectory ordinal is winner-only",
+   "proposals": 8845,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed3/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 22,
+   "bitesThatAttempted": 22,
+   "attemptsActuallyMade": 25,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed3/R15 trajectory ordinal is winner-only",
+   "proposals": 7625,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed4/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 27,
+   "bitesThatAttempted": 27,
+   "attemptsActuallyMade": 49,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed4/R15 trajectory ordinal is winner-only",
+   "proposals": 8479,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed5/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 22,
+   "bitesThatAttempted": 22,
+   "attemptsActuallyMade": 34,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed5/R15 trajectory ordinal is winner-only",
+   "proposals": 8784,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed6/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 22,
+   "bitesThatAttempted": 22,
+   "attemptsActuallyMade": 27,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed6/R15 trajectory ordinal is winner-only",
+   "proposals": 7320,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed7/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 32,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed7/R15 trajectory ordinal is winner-only",
+   "proposals": 8296,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/3s/seed8/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 43,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/3s/seed8/R15 trajectory ordinal is winner-only",
+   "proposals": 6527,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed0/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 22,
+   "bitesThatAttempted": 22,
+   "attemptsActuallyMade": 37,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed0/R15 trajectory ordinal is winner-only",
+   "proposals": 92415,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed1/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 35,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed1/R15 trajectory ordinal is winner-only",
+   "proposals": 57950,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed2/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 174,
+   "bitesThatAttempted": 174,
+   "attemptsActuallyMade": 1313,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed2/R15 trajectory ordinal is winner-only",
+   "proposals": 123952,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed3/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 180,
+   "bitesThatAttempted": 180,
+   "attemptsActuallyMade": 413,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed3/R15 trajectory ordinal is winner-only",
+   "proposals": 73322,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed4/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 167,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed4/R15 trajectory ordinal is winner-only",
+   "proposals": 73566,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed5/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 22,
+   "bitesThatAttempted": 22,
+   "attemptsActuallyMade": 34,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed5/R15 trajectory ordinal is winner-only",
+   "proposals": 60878,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed6/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 107,
+   "bitesThatAttempted": 107,
+   "attemptsActuallyMade": 792,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed6/R15 trajectory ordinal is winner-only",
+   "proposals": 100894,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed7/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 159,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed7/R15 trajectory ordinal is winner-only",
+   "proposals": 59048,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/10s/seed8/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 124,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/10s/seed8/R15 trajectory ordinal is winner-only",
+   "proposals": 60268,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed0/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 155,
+   "bitesThatAttempted": 155,
+   "attemptsActuallyMade": 969,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed0/R15 trajectory ordinal is winner-only",
+   "proposals": 231007,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed1/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 150,
+   "bitesThatAttempted": 150,
+   "attemptsActuallyMade": 865,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed1/R15 trajectory ordinal is winner-only",
+   "proposals": 287127,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed2/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 134,
+   "bitesThatAttempted": 134,
+   "attemptsActuallyMade": 1568,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed2/R15 trajectory ordinal is winner-only",
+   "proposals": 192089,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed3/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 111,
+   "bitesThatAttempted": 111,
+   "attemptsActuallyMade": 720,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed3/R15 trajectory ordinal is winner-only",
+   "proposals": 237717,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed4/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 119,
+   "bitesThatAttempted": 119,
+   "attemptsActuallyMade": 1762,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed4/R15 trajectory ordinal is winner-only",
+   "proposals": 439505,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed5/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 137,
+   "bitesThatAttempted": 137,
+   "attemptsActuallyMade": 818,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed5/R15 trajectory ordinal is winner-only",
+   "proposals": 211670,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed6/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 118,
+   "bitesThatAttempted": 118,
+   "attemptsActuallyMade": 2067,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed6/R15 trajectory ordinal is winner-only",
+   "proposals": 314272,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed7/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 24,
+   "bitesThatAttempted": 24,
+   "attemptsActuallyMade": 4293,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed7/R15 trajectory ordinal is winner-only",
+   "proposals": 348676,
+   "divisibleBy61": true
+  },
+  {
+   "note": "wall/30s/seed8/R9c exactAttempted is a BITE count, not an attempt count",
+   "funnelExactAttempted": 34,
+   "bitesThatAttempted": 34,
+   "attemptsActuallyMade": 2163,
+   "agreesWithBiteCount": true
+  },
+  {
+   "note": "wall/30s/seed8/R15 trajectory ordinal is winner-only",
+   "proposals": 461892,
+   "divisibleBy61": true
+  }
+ ],
+ "COUNTERS_PASS": true,
+ "rows": [
+  {
+   "identity": "wall/3s/seed0/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 191725,
+    "expected": 191725
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 383450,
+    "expected": 383450
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 7669,
+    "relocates": 7669,
+    "container": 18,
+    "focused": 427,
+    "stayPut": 7224
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 18,
+    "winners": 18
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1369438,
+    "coordDescentSteps": 684719,
+    "sampleEvaluations": 1944613
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5600,
+    "relocates": 7669
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "counted": 22
+   }
+  },
+  {
+   "identity": "wall/3s/seed0/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 190800,
+    "expected": 190800
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 381600,
+    "expected": 381600
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 7632,
+    "relocates": 7632,
+    "container": 33,
+    "focused": 397,
+    "stayPut": 7202
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 33,
+    "winners": 33
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1349324,
+    "coordDescentSteps": 674662,
+    "sampleEvaluations": 1921724
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5875,
+    "relocates": 7632
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 26,
+    "len": 26
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 25,
+    "counted": 25
+   }
+  },
+  {
+   "identity": "wall/3s/seed1/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 25,
+    "countedBites": 25,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 187975,
+    "expected": 187975
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 375950,
+    "expected": 375950
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 7519,
+    "relocates": 7519,
+    "container": 26,
+    "focused": 355,
+    "stayPut": 7138
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 26,
+    "winners": 26
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1347390,
+    "coordDescentSteps": 673695,
+    "sampleEvaluations": 1911315
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5927,
+    "relocates": 7519
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 1,
+    "disruptionMoves": 3
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 1,
+    "work": 1
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 23,
+    "counted": 23
+   }
+  },
+  {
+   "identity": "wall/3s/seed2/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 190850,
+    "expected": 190850
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 381700,
+    "expected": 381700
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 7634,
+    "relocates": 7634,
+    "container": 18,
+    "focused": 397,
+    "stayPut": 7219
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 18,
+    "winners": 18
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1346054,
+    "coordDescentSteps": 673027,
+    "sampleEvaluations": 1918604
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 6074,
+    "relocates": 7634
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "counted": 22
+   }
+  },
+  {
+   "identity": "wall/3s/seed3/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 201450,
+    "expected": 201450
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 402900,
+    "expected": 402900
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 8058,
+    "relocates": 8058,
+    "container": 28,
+    "focused": 328,
+    "stayPut": 7702
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 28,
+    "winners": 28
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1411940,
+    "coordDescentSteps": 705970,
+    "sampleEvaluations": 2016290
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5567,
+    "relocates": 8058
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 27,
+    "len": 27
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 27,
+    "counted": 27
+   }
+  },
+  {
+   "identity": "wall/3s/seed4/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "countedBites": 24,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 181100,
+    "expected": 181100
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 362200,
+    "expected": 362200
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 7244,
+    "relocates": 7244,
+    "container": 28,
+    "focused": 427,
+    "stayPut": 6789
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 28,
+    "winners": 28
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1293500,
+    "coordDescentSteps": 646750,
+    "sampleEvaluations": 1836800
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5896,
+    "relocates": 7244
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 1,
+    "disruptionMoves": 4
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 1,
+    "work": 1
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "counted": 22
+   }
+  },
+  {
+   "identity": "wall/3s/seed5/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 192625,
+    "expected": 192625
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 385250,
+    "expected": 385250
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 7705,
+    "relocates": 7705,
+    "container": 25,
+    "focused": 409,
+    "stayPut": 7271
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 25,
+    "winners": 25
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1369206,
+    "coordDescentSteps": 684603,
+    "sampleEvaluations": 1947081
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5981,
+    "relocates": 7705
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "counted": 22
+   }
+  },
+  {
+   "identity": "wall/3s/seed6/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 207200,
+    "expected": 207200
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 414400,
+    "expected": 414400
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 8288,
+    "relocates": 8288,
+    "container": 26,
+    "focused": 349,
+    "stayPut": 7913
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 26,
+    "winners": 26
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1443038,
+    "coordDescentSteps": 721519,
+    "sampleEvaluations": 2064638
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5063,
+    "relocates": 8288
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 25,
+    "len": 25
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed7/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 23,
+    "countedBites": 23,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 200250,
+    "expected": 200250
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 400500,
+    "expected": 400500
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 8010,
+    "relocates": 8010,
+    "container": 28,
+    "focused": 399,
+    "stayPut": 7583
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 28,
+    "winners": 28
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 1398230,
+    "coordDescentSteps": 699115,
+    "sampleEvaluations": 1998980
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 5792,
+    "relocates": 8010
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/3s/seed8/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 2013775,
+    "expected": 2013775
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 4027550,
+    "expected": 4027550
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 80551,
+    "relocates": 80551,
+    "container": 115,
+    "focused": 897,
+    "stayPut": 79539
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 115,
+    "winners": 115
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 13687160,
+    "coordDescentSteps": 6843580,
+    "sampleEvaluations": 19728485
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 29253,
+    "relocates": 80551
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "counted": 22
+   }
+  },
+  {
+   "identity": "wall/10s/seed0/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 2140550,
+    "expected": 2140550
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 4281100,
+    "expected": 4281100
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 85622,
+    "relocates": 85622,
+    "container": 135,
+    "focused": 881,
+    "stayPut": 84606
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 135,
+    "winners": 135
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 14672534,
+    "coordDescentSteps": 7336267,
+    "sampleEvaluations": 21094184
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 22005,
+    "relocates": 85622
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed1/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 1866075,
+    "expected": 1866075
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 3732150,
+    "expected": 3732150
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 74643,
+    "relocates": 74643,
+    "container": 255,
+    "focused": 2167,
+    "stayPut": 72221
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 255,
+    "winners": 255
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 13003480,
+    "coordDescentSteps": 6501740,
+    "sampleEvaluations": 18601705
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 40438,
+    "relocates": 74643
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 2,
+    "disruptionMoves": 5
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 2,
+    "work": 2
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 175,
+    "len": 175
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 174,
+    "counted": 174
+   }
+  },
+  {
+   "identity": "wall/10s/seed2/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 168,
+    "countedBites": 168,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 1580275,
+    "expected": 1580275
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 3160550,
+    "expected": 3160550
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 63211,
+    "relocates": 63211,
+    "container": 348,
+    "focused": 3024,
+    "stayPut": 59839
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 348,
+    "winners": 348
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 11373698,
+    "coordDescentSteps": 5686849,
+    "sampleEvaluations": 16114523
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 46307,
+    "relocates": 63211
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 11,
+    "disruptionMoves": 34
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 11,
+    "work": 11
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 181,
+    "len": 181
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 180,
+    "counted": 180
+   }
+  },
+  {
+   "identity": "wall/10s/seed3/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 180,
+    "countedBites": 180,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 2145025,
+    "expected": 2145025
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 4290050,
+    "expected": 4290050
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 85801,
+    "relocates": 85801,
+    "container": 80,
+    "focused": 585,
+    "stayPut": 85136
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 80,
+    "winners": 80
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 14614964,
+    "coordDescentSteps": 7307482,
+    "sampleEvaluations": 21050039
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 37761,
+    "relocates": 85801
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed4/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 2201775,
+    "expected": 2201775
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 4403550,
+    "expected": 4403550
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 88071,
+    "relocates": 88071,
+    "container": 192,
+    "focused": 1080,
+    "stayPut": 86799
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 192,
+    "winners": 192
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 15147960,
+    "coordDescentSteps": 7573980,
+    "sampleEvaluations": 21753285
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 26484,
+    "relocates": 88071
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 1,
+    "disruptionMoves": 4
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 1,
+    "work": 1
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "counted": 22
+   }
+  },
+  {
+   "identity": "wall/10s/seed5/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 1863700,
+    "expected": 1863700
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 3727400,
+    "expected": 3727400
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 74548,
+    "relocates": 74548,
+    "container": 455,
+    "focused": 3664,
+    "stayPut": 70429
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 455,
+    "winners": 455
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 13273922,
+    "coordDescentSteps": 6636961,
+    "sampleEvaluations": 18865022
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 47938,
+    "relocates": 74548
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 12,
+    "disruptionMoves": 34
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 12,
+    "work": 12
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 107,
+    "len": 107
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 107,
+    "counted": 107
+   }
+  },
+  {
+   "identity": "wall/10s/seed6/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 104,
+    "countedBites": 104,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 2279125,
+    "expected": 2279125
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 4558250,
+    "expected": 4558250
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 91165,
+    "relocates": 91165,
+    "container": 27,
+    "focused": 435,
+    "stayPut": 90703
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 27,
+    "winners": 27
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 15488634,
+    "coordDescentSteps": 7744317,
+    "sampleEvaluations": 22326009
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 9556,
+    "relocates": 91165
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed7/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 2151525,
+    "expected": 2151525
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 4303050,
+    "expected": 4303050
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 86061,
+    "relocates": 86061,
+    "container": 163,
+    "focused": 971,
+    "stayPut": 84927
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 163,
+    "winners": 163
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 14716422,
+    "coordDescentSteps": 7358211,
+    "sampleEvaluations": 21170997
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 24933,
+    "relocates": 86061
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 0,
+    "work": 0
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/10s/seed8/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 5684800,
+    "expected": 5684800
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 11369600,
+    "expected": 11369600
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 227392,
+    "relocates": 227392,
+    "container": 1310,
+    "focused": 8595,
+    "stayPut": 217487
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 1310,
+    "winners": 1310
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 40281938,
+    "coordDescentSteps": 20140969,
+    "sampleEvaluations": 57336338
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 135766,
+    "relocates": 227392
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 12,
+    "disruptionMoves": 32
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 12,
+    "work": 12
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 155,
+    "len": 155
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 155,
+    "counted": 155
+   }
+  },
+  {
+   "identity": "wall/30s/seed0/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 139,
+    "countedBites": 139,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 7118175,
+    "expected": 7118175
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 14236350,
+    "expected": 14236350
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 284727,
+    "relocates": 284727,
+    "container": 469,
+    "focused": 4757,
+    "stayPut": 279501
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 469,
+    "winners": 469
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 49460724,
+    "coordDescentSteps": 24730362,
+    "sampleEvaluations": 70815249
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 83239,
+    "relocates": 284727
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 17,
+    "disruptionMoves": 58
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 17,
+    "work": 17
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 152,
+    "len": 152
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 150,
+    "counted": 150
+   }
+  },
+  {
+   "identity": "wall/30s/seed1/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 144,
+    "countedBites": 144,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 5600900,
+    "expected": 5600900
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 11201800,
+    "expected": 11201800
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 224036,
+    "relocates": 224036,
+    "container": 1508,
+    "focused": 8347,
+    "stayPut": 214181
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 1508,
+    "winners": 1508
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 39768014,
+    "coordDescentSteps": 19884007,
+    "sampleEvaluations": 56570714
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 137386,
+    "relocates": 224036
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 9,
+    "disruptionMoves": 27
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 9,
+    "work": 9
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 134,
+    "len": 134
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 134,
+    "counted": 134
+   }
+  },
+  {
+   "identity": "wall/30s/seed2/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 114,
+    "countedBites": 114,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 6162975,
+    "expected": 6162975
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 12325950,
+    "expected": 12325950
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 246519,
+    "relocates": 246519,
+    "container": 1689,
+    "focused": 10306,
+    "stayPut": 234524
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 1689,
+    "winners": 1689
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 41952886,
+    "coordDescentSteps": 20976443,
+    "sampleEvaluations": 60441811
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 164271,
+    "relocates": 246519
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 23,
+    "disruptionMoves": 68
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 23,
+    "work": 23
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 116,
+    "len": 116
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 111,
+    "counted": 111
+   }
+  },
+  {
+   "identity": "wall/30s/seed3/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 110,
+    "countedBites": 110,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 6829150,
+    "expected": 6829150
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 13658300,
+    "expected": 13658300
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 273166,
+    "relocates": 273166,
+    "container": 836,
+    "focused": 6442,
+    "stayPut": 265888
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 836,
+    "winners": 836
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 45758358,
+    "coordDescentSteps": 22879179,
+    "sampleEvaluations": 66245808
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 171873,
+    "relocates": 273166
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 24,
+    "disruptionMoves": 67
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 24,
+    "work": 24
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 123,
+    "len": 123
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 119,
+    "counted": 119
+   }
+  },
+  {
+   "identity": "wall/30s/seed4/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 113,
+    "countedBites": 113,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 6212825,
+    "expected": 6212825
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 12425650,
+    "expected": 12425650
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 248513,
+    "relocates": 248513,
+    "container": 629,
+    "focused": 5430,
+    "stayPut": 242454
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 629,
+    "winners": 629
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 43581248,
+    "coordDescentSteps": 21790624,
+    "sampleEvaluations": 62219723
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 116274,
+    "relocates": 248513
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 9,
+    "disruptionMoves": 30
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 9,
+    "work": 9
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 137,
+    "len": 137
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 137,
+    "counted": 137
+   }
+  },
+  {
+   "identity": "wall/30s/seed5/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 125,
+    "countedBites": 125,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 5964625,
+    "expected": 5964625
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 11929250,
+    "expected": 11929250
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 238585,
+    "relocates": 238585,
+    "container": 1341,
+    "focused": 9942,
+    "stayPut": 227302
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 1341,
+    "winners": 1341
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 40795972,
+    "coordDescentSteps": 20397986,
+    "sampleEvaluations": 58689847
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 176509,
+    "relocates": 238585
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 32,
+    "disruptionMoves": 97
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 32,
+    "work": 32
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 121,
+    "len": 121
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 118,
+    "counted": 118
+   }
+  },
+  {
+   "identity": "wall/30s/seed6/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 114,
+    "countedBites": 114,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 7323650,
+    "expected": 7323650
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 14647300,
+    "expected": 14647300
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 292946,
+    "relocates": 292946,
+    "container": 162,
+    "focused": 1215,
+    "stayPut": 291569
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 162,
+    "winners": 162
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 49159432,
+    "coordDescentSteps": 24579716,
+    "sampleEvaluations": 71130382
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 63307,
+    "relocates": 292946
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 5,
+    "disruptionMoves": 16
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 5,
+    "work": 5
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "len": 24
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 24,
+    "counted": 24
+   }
+  },
+  {
+   "identity": "wall/30s/seed7/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 22,
+    "countedBites": 22,
+    "publications": null
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 7302650,
+    "expected": 7302650
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 14605300,
+    "expected": 14605300
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 292106,
+    "relocates": 292106,
+    "container": 343,
+    "focused": 1925,
+    "stayPut": 289838
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 343,
+    "winners": 343
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 49523192,
+    "coordDescentSteps": 24761596,
+    "sampleEvaluations": 71431142
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 58665,
+    "relocates": 292106
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 5,
+    "disruptionMoves": 14
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R8 sum(bite.disruptions)==work.disruptions",
+   "ok": true,
+   "detail": {
+    "summed": 5,
+    "work": 5
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R9a bitesStarted==len(bites)",
+   "ok": true,
+   "detail": {
+    "funnel": 34,
+    "len": 34
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R9b proxyBandReached==#bites reaching band",
+   "ok": true,
+   "detail": {
+    "funnel": 34,
+    "counted": 34
+   }
+  },
+  {
+   "identity": "wall/30s/seed8/R9d dualValidPublished==#published bites",
+   "ok": true,
+   "detail": {
+    "funnel": 32,
+    "countedBites": 32,
+    "publications": null
+   }
+  },
+  {
+   "identity": "cutclose-fast/tripwires/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 14750,
+    "expected": 14750
+   }
+  },
+  {
+   "identity": "cutclose-fast/tripwires/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 29500,
+    "expected": 29500
+   }
+  },
+  {
+   "identity": "cutclose-fast/tripwires/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 590,
+    "relocates": 590,
+    "container": 3,
+    "focused": 84,
+    "stayPut": 503
+   }
+  },
+  {
+   "identity": "cutclose-fast/tripwires/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 3,
+    "winners": 3
+   }
+  },
+  {
+   "identity": "triangle20.json/R10 len(checkpoints)==work.exactCheckpoints",
+   "ok": true,
+   "detail": {
+    "rows": 1,
+    "counter": 1
+   }
+  },
+  {
+   "identity": "triangle20.json/R11 published iff dual valid",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "triangle20.json/R12 giveback==published-proxy (bit exact)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "triangle20.json/R13 published<=target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "triangle20.json/R14a repair<=16um",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "triangle20.json/R14b repairRows<=4n",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "pieces": 20
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R1 focusedSamples==25*relocates",
+   "ok": true,
+   "detail": {
+    "focusedSamples": 500,
+    "expected": 500
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R2 containerSamples==50*relocates",
+   "ok": true,
+   "detail": {
+    "containerSamples": 1000,
+    "expected": 1000
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R3 winners sum==relocates",
+   "ok": true,
+   "detail": {
+    "sum": 20,
+    "relocates": 20,
+    "container": 2,
+    "focused": 18,
+    "stayPut": 0
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R4 containerCommits<=containerWinners",
+   "ok": true,
+   "detail": {
+    "commits": 2,
+    "winners": 2
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R5 CD residual non-negative and even",
+   "ok": true,
+   "detail": {
+    "residual": 2580,
+    "coordDescentSteps": 1290,
+    "sampleEvaluations": 4080
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R6 acceptedMoves<=relocates",
+   "ok": true,
+   "detail": {
+    "acceptedMoves": 20,
+    "relocates": 20
+   }
+  },
+  {
+   "identity": "triangle20.json#work/R7 disruptionMoves>=2*disruptions",
+   "ok": true,
+   "detail": {
+    "disruptions": 0,
+    "disruptionMoves": 0
+   }
+  }
+ ]
+}

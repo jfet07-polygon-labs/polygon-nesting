@@ -30,6 +30,14 @@ dropped it, and Sol review 18's second non-gating risk is that the README's
 per-bite statements were consequently not reconstructible from committed
 evidence. They are the largest thing in this document and they are the point of
 it: `bites[21]` is the 22nd bite, the one the whole autopsy is about.
+
+**And every cell row now carries its `checkpointFrame`.** The same reduction
+dropped every per-publication clock reading, and §0.1's "a publication
+completed after 10.000 s cannot change that verdict" was implemented against
+the engine's LOOP-relative `wallSeconds` rather than the request-relative
+budget - a comparison that cannot fire, because the loop's own clock is bounded
+by `budget - constructorSeconds`. See `cell()` and
+`docs/experiments/overlap-ics/evidence-audit/checkpoint-frame.py`.
 """
 import json
 import os
@@ -61,28 +69,79 @@ def cell(out, seed, budget):
     outcome = doc.get('outcome', {})
     constructor = doc.get('constructor', {})
     publications = outcome.get('publications', [])
-    # **The checkpoint filter, not an interpolation.** A publication whose own
-    # `wallSeconds` exceeds the budget does not count for it (§0.1: "a
-    # publication completed after 10.000 s cannot change that verdict"). In
-    # practice the loop cannot publish after its own deadline, but the filter is
-    # written out so the claim is checked rather than assumed.
+    # **The checkpoint filter, in the budget's own frame.**
+    #
+    # §0.1: "a publication completed after 10.000 s cannot change that verdict".
+    # The engine's `PublishedBite.wallSeconds` is `Pacer::elapsed_s()`, and the
+    # `Pacer` is constructed inside `Engine::run_cutclose` - **after** the
+    # constructor has already spent its share of the request's budget. So
+    # `wallSeconds` is measured from the moment the loop entered and the budget
+    # is measured from the decoded request, and the two are 2.3 s apart on
+    # mixed-61.
+    #
+    # Comparing `wallSeconds <= limit` directly - which is what this driver did
+    # through round 1 and the rerun - is therefore not the §0.1 clause. It is a
+    # comparison whose left side is bounded above by
+    # `limit - constructorSeconds` by construction, so it can never exclude
+    # anything, on any cell, whatever the loop does. Measured on nine 10 s
+    # cells the headroom was 2.307 s, while the closest publication sat 1.9 ms
+    # inside the budget in the frame that matters. `docs/experiments/
+    # overlap-ics/evidence-audit/checkpoint-frame.py` is the vector.
+    #
+    # The offset is not emitted directly, so both bounds the document does carry
+    # are computed and reported:
+    #
+    #   * `requestSecondsLower = constructorSeconds + wallSeconds` - the
+    #     constructor alone; excludes the engine construction between the two
+    #     clock reads, so it is a LOWER bound on a publication's age.
+    #   * `requestSecondsUpper = (totalSeconds - searchSeconds) + wallSeconds` -
+    #     everything outside `run_cutclose`, which includes the document build
+    #     after it, so it is an UPPER bound.
+    #
+    # The verdict uses the lower bound: a publication is excluded only when it
+    # is *certainly* late. A publication whose two bounds straddle the budget
+    # is counted, and reported in `publicationsUndecidedByFrame` so the reader
+    # can see that the document could not settle it.
     limit = SECONDS[budget]
-    within = [row for row in publications
-              if row.get('wallSeconds') is None or row['wallSeconds'] <= limit]
+    constructor_s = doc.get('wall', {}).get('constructorSeconds')
+    search_s = doc.get('wall', {}).get('searchSeconds')
+    total_s = doc.get('wall', {}).get('totalSeconds')
+    lower_offset = constructor_s
+    upper_offset = (None if total_s is None or search_s is None
+                    else total_s - search_s)
+
+    def request_seconds(row, offset):
+        loop_s = row.get('wallSeconds')
+        if loop_s is None or offset is None:
+            return None
+        return offset + loop_s
+
+    within, late, undecided = [], [], []
+    for row in publications:
+        low = request_seconds(row, lower_offset)
+        high = request_seconds(row, upper_offset)
+        if low is not None and low > limit:
+            late.append(row)
+            continue
+        within.append(row)
+        if low is not None and high is not None and high > limit:
+            undecided.append(row)
     strict = [row for row in within
               if row['placementFingerprint']
               != constructor.get('placementFingerprint')]
     best = min((row['publishedRawDepthMm'] for row in strict), default=None)
     incumbent = outcome.get('incumbent', {})
+    loop_seconds = [row['wallSeconds'] for row in publications
+                    if row.get('wallSeconds') is not None]
     return {
         'seed': seed,
         'budgetSeconds': limit,
         'exit': status,
         'valid': True,
         'constructorDepthMm': constructor.get('rawSourceDepthMm'),
-        'constructorSeconds': doc.get('wall', {}).get('constructorSeconds'),
-        'searchSeconds': doc.get('wall', {}).get('searchSeconds'),
-        'totalSeconds': doc.get('wall', {}).get('totalSeconds'),
+        'constructorSeconds': constructor_s,
+        'searchSeconds': search_s,
+        'totalSeconds': total_s,
         'processWallSeconds': wall,
         # The anytime answer: the best STRICT non-constructor dual-valid child
         # published at or before the budget. `None` means the constructor floor
@@ -93,6 +152,24 @@ def cell(out, seed, budget):
         'publicationsWithinBudget': len(within),
         'publicationsTotal': len(publications),
         'strictChildren': len(strict),
+        # **The §0.1 clause, reconstructible.** Round 1 and the rerun dropped
+        # every per-publication clock reading, so nobody downstream could check
+        # whether a qualifying publication landed after the budget. These four
+        # numbers are what the clause needs and they are cheap.
+        'checkpointFrame': {
+            'loopRelativeMaxSeconds': max(loop_seconds, default=None),
+            'requestSecondsLowerMax': (None if lower_offset is None or not loop_seconds
+                                       else lower_offset + max(loop_seconds)),
+            'requestSecondsUpperMax': (None if upper_offset is None or not loop_seconds
+                                       else upper_offset + max(loop_seconds)),
+            'publicationsExcludedAsLate': len(late),
+            'publicationsUndecidedByFrame': len(undecided),
+            'bestStrictChildRequestSecondsLower': min(
+                (request_seconds(row, lower_offset) for row in strict
+                 if row['publishedRawDepthMm'] == best
+                 and request_seconds(row, lower_offset) is not None),
+                default=None),
+        },
         'exploreBites': outcome.get('exploreBites'),
         'compressBites': outcome.get('compressBites'),
         'funnel': outcome.get('funnel'),
@@ -208,6 +285,12 @@ def main():
             'invalidPublicationsAcrossAllSeeds': invalid,
             'allSeedsValid': all(row.get('valid') for row in rows),
             'isTheGate': budget == GATE_BUDGET,
+            'publicationsExcludedAsLate': sum(
+                (row.get('checkpointFrame') or {}).get('publicationsExcludedAsLate', 0)
+                for row in rows),
+            'publicationsUndecidedByFrame': sum(
+                (row.get('checkpointFrame') or {}).get('publicationsUndecidedByFrame', 0)
+                for row in rows),
         }
 
     gate = cells.get(GATE_BUDGET)
@@ -227,6 +310,13 @@ def main():
             'everyPublicationDualValid': invalid_everywhere == 0,
             'invalidPublicationsAcrossEveryCell': invalid_everywhere,
             'allNineSeedsValid': gate['allSeedsValid'],
+            # §0.1's "completed after 10.000 s" clause, in the budget's own
+            # frame. `publicationsExcludedAsLate` is what the clause removed;
+            # `publicationsUndecidedByFrame` is what this document cannot
+            # settle, because the engine emits a loop-relative clock and the
+            # offset is only bracketed. Both belong beside the quorum.
+            'publicationsExcludedAsLate': gate['publicationsExcludedAsLate'],
+            'publicationsUndecidedByFrame': gate['publicationsUndecidedByFrame'],
             'GATE_PASS': bool(gate['qualifyingCount'] >= QUORUM
                               and invalid_everywhere == 0
                               and gate['allSeedsValid']),

@@ -1,0 +1,470 @@
+{
+  "RUST_VECTORS_PASS": true,
+  "battery": "evidence-audit-rust-vectors",
+  "constructorDepthMm": 182.976,
+  "contract": {
+    "clearanceSafetyMarginMm": 0.0,
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.5,
+    "flatteningSagToleranceMm": 0.0,
+    "pairClearanceMm": 5.0,
+    "physicalEdgeClearanceMm": 5.0,
+    "sheetEdgeClearanceMm": 5.0,
+    "sheetInsetMm": 2.5,
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0,
+    "totalPaddingMm": 5.0
+  },
+  "experiment": "overlap-ics",
+  "failureCount": 0,
+  "pieces": 61,
+  "root": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-1",
+  "vectorCount": 40,
+  "vectors": [
+    {
+      "detail": {
+        "offenders": []
+      },
+      "ok": true,
+      "vector": "S1a observe_raw truth table (9 hand-derived transitions)"
+    },
+    {
+      "detail": {
+        "marginal": 26864,
+        "none": 1925699,
+        "offenders": [],
+        "steps": 2000000,
+        "substantial": 47437
+      },
+      "ok": true,
+      "vector": "S1b observe_raw property test vs spec-text reference"
+    },
+    {
+      "detail": {
+        "exploreStrikeCap": 200,
+        "note": "this is the red/green the failure license names",
+        "repairedCounter": 200,
+        "roundOneCounter": 1
+      },
+      "ok": true,
+      "vector": "S1c the alternating shelf sequence strikes under the repair and not under round 1"
+    },
+    {
+      "detail": {
+        "faithfulToSource": true,
+        "iterations": 1000,
+        "marginalMinima": 1000,
+        "reading": "the repair pauses the counter on a marginal minimum; it does not increment it, so a strictly monotone trickle still holds one separation open indefinitely",
+        "sinceImprovementAfter": 0
+      },
+      "ok": true,
+      "vector": "S1d REPORTED: a monotone marginal trickle never increments the counter"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "worstResidualMm": 4.547473508864641e-13
+      },
+      "ok": true,
+      "vector": "S2a[gate mixed-61 (sag=0, safety=0)] strip_sample_box corners charge zero boundary Φ"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "sampleBox": [
+          15.0,
+          25.0,
+          1965.0,
+          455.0
+        ]
+      },
+      "ok": true,
+      "vector": "S2b[gate mixed-61 (sag=0, safety=0)] 1 um outside a sample-box wall is 1 um of Φ on that side"
+    },
+    {
+      "detail": {
+        "depthTopInset": 5.0,
+        "physicalEdge": 5.0,
+        "sheetEdgeClearance": 5.0,
+        "topResidualMm": 0.0
+      },
+      "ok": true,
+      "vector": "S2c[gate mixed-61 (sag=0, safety=0)] raw depth == T charges zero top Φ (no phantom sag)"
+    },
+    {
+      "detail": {
+        "topResidualMm": 0.007000000000005002
+      },
+      "ok": true,
+      "vector": "S2d[gate mixed-61 (sag=0, safety=0)] 7 um past T is exactly 7 um of top Φ"
+    },
+    {
+      "detail": {
+        "asserted": true,
+        "kernelBoundaryMm": 5.0,
+        "note": "shortfall > 0 means Φ under-charges the sheet edge relative to the exact kernel by that many mm",
+        "phiBoundaryMm": 5.0,
+        "reportedRed": false,
+        "safety": 0.0,
+        "sag": 0.0,
+        "shortfallMm": 0.0
+      },
+      "ok": true,
+      "vector": "S2e[gate mixed-61 (sag=0, safety=0)] Φ's boundary is at least the kernel's"
+    },
+    {
+      "detail": {
+        "expansion": 2.5,
+        "pairClearance": 5.0,
+        "twoR": 5.0
+      },
+      "ok": true,
+      "vector": "S2f[gate mixed-61 (sag=0, safety=0)] pair clearance == padding + 2 sag, radius == padding/2 + safety"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "worstResidualMm": 4.547473508864641e-13
+      },
+      "ok": true,
+      "vector": "S2a[triangle-20 (sag=0.25, safety=0.25)] strip_sample_box corners charge zero boundary Φ"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "sampleBox": [
+          15.25,
+          25.25,
+          1964.75,
+          455.0
+        ]
+      },
+      "ok": true,
+      "vector": "S2b[triangle-20 (sag=0.25, safety=0.25)] 1 um outside a sample-box wall is 1 um of Φ on that side"
+    },
+    {
+      "detail": {
+        "depthTopInset": 5.0,
+        "physicalEdge": 5.25,
+        "sheetEdgeClearance": 5.0,
+        "topResidualMm": 0.0
+      },
+      "ok": true,
+      "vector": "S2c[triangle-20 (sag=0.25, safety=0.25)] raw depth == T charges zero top Φ (no phantom sag)"
+    },
+    {
+      "detail": {
+        "topResidualMm": 0.007000000000005002
+      },
+      "ok": true,
+      "vector": "S2d[triangle-20 (sag=0.25, safety=0.25)] 7 um past T is exactly 7 um of top Φ"
+    },
+    {
+      "detail": {
+        "asserted": true,
+        "kernelBoundaryMm": 5.25,
+        "note": "shortfall > 0 means Φ under-charges the sheet edge relative to the exact kernel by that many mm",
+        "phiBoundaryMm": 5.25,
+        "reportedRed": false,
+        "safety": 0.25,
+        "sag": 0.25,
+        "shortfallMm": 0.0
+      },
+      "ok": true,
+      "vector": "S2e[triangle-20 (sag=0.25, safety=0.25)] Φ's boundary is at least the kernel's"
+    },
+    {
+      "detail": {
+        "expansion": 5.25,
+        "pairClearance": 10.5,
+        "twoR": 10.5
+      },
+      "ok": true,
+      "vector": "S2f[triangle-20 (sag=0.25, safety=0.25)] pair clearance == padding + 2 sag, radius == padding/2 + safety"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "worstResidualMm": 4.547473508864641e-13
+      },
+      "ok": true,
+      "vector": "S2a[PROBE safety>sag (not a campaign request)] strip_sample_box corners charge zero boundary Φ"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "sampleBox": [
+          15.1,
+          25.1,
+          1964.9,
+          455.0
+        ]
+      },
+      "ok": true,
+      "vector": "S2b[PROBE safety>sag (not a campaign request)] 1 um outside a sample-box wall is 1 um of Φ on that side"
+    },
+    {
+      "detail": {
+        "depthTopInset": 5.0,
+        "physicalEdge": 5.1,
+        "sheetEdgeClearance": 5.0,
+        "topResidualMm": 0.0
+      },
+      "ok": true,
+      "vector": "S2c[PROBE safety>sag (not a campaign request)] raw depth == T charges zero top Φ (no phantom sag)"
+    },
+    {
+      "detail": {
+        "topResidualMm": 0.007000000000005002
+      },
+      "ok": true,
+      "vector": "S2d[PROBE safety>sag (not a campaign request)] 7 um past T is exactly 7 um of top Φ"
+    },
+    {
+      "detail": {
+        "asserted": false,
+        "kernelBoundaryMm": 5.4,
+        "note": "shortfall > 0 means Φ under-charges the sheet edge relative to the exact kernel by that many mm",
+        "phiBoundaryMm": 5.1,
+        "reportedRed": true,
+        "safety": 0.4,
+        "sag": 0.1,
+        "shortfallMm": 0.3000000000000007
+      },
+      "ok": true,
+      "vector": "S2e[PROBE safety>sag (not a campaign request)] Φ's boundary is at least the kernel's"
+    },
+    {
+      "detail": {
+        "expansion": 5.4,
+        "pairClearance": 10.2,
+        "twoR": 10.8
+      },
+      "ok": true,
+      "vector": "S2f[PROBE safety>sag (not a campaign request)] pair clearance == padding + 2 sag, radius == padding/2 + safety"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "worstAbsDeltaMm": 0.0
+      },
+      "ok": true,
+      "vector": "S3a proxy depth == published depth, bit for bit, on 400 random pose sets"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "pieces": 61
+      },
+      "ok": true,
+      "vector": "S3b transformed_centroid == Geometry::centroids, bit for bit"
+    },
+    {
+      "detail": {
+        "offenders": []
+      },
+      "ok": true,
+      "vector": "S3c compose_proposal about the centroid leaves the centroid fixed"
+    },
+    {
+      "detail": {
+        "offenders": []
+      },
+      "ok": true,
+      "vector": "S3d centroid_relative_extents reproduce Geometry::piece_bounds"
+    },
+    {
+      "detail": {
+        "activeRowUpdates": 10,
+        "cappedRows": 0,
+        "decayedRowUpdates": 21950,
+        "offenders": [],
+        "passes": 12
+      },
+      "ok": true,
+      "vector": "S4a Algorithm 8 weights == independent recomputation over 12 real sweeps"
+    },
+    {
+      "detail": {
+        "allAtFloorAfterReset": true,
+        "landscapeWasLearned": true
+      },
+      "ok": true,
+      "vector": "S4b reset_weights returns every row to the floor (width change)"
+    },
+    {
+      "detail": {
+        "note": "if this is false the S4b vector proves nothing"
+      },
+      "ok": true,
+      "vector": "S4c the learned landscape is distinguishable from the floor"
+    },
+    {
+      "detail": {
+        "containerOriginThatMOVED": 0,
+        "focusedOriginThatMOVED": 3,
+        "reading": "a StayPut-origin relocate that MOVED is the fine coordinate descent walking off the entry pose; the work vector's stayPutWinners does not separate the two",
+        "relocatesThatRan": 17,
+        "stayPutOriginThatDidNotMove": 2,
+        "stayPutOriginThatMOVED": 12,
+        "stayPutOriginTotal": 14,
+        "visitsSkippedAsNonColliding": 4,
+        "worker": 1
+      },
+      "ok": true,
+      "vector": "S7a REPORTED: stayPutWinners counts the winning SEED, not a piece that stayed put"
+    },
+    {
+      "detail": {
+        "ladderTopMm": 1.25,
+        "maxCommittedDisplacementMm": 33.0069075606215,
+        "ratio": 26.4055260484972
+      },
+      "ok": true,
+      "vector": "S7b a committed relocate reaches beyond the old ladder_top (not neutered)"
+    },
+    {
+      "detail": {
+        "counters": {
+          "acceptedMoves": {
+            "eightWorkerSum": 132,
+            "engineDelta": 132
+          },
+          "containerCommits": {
+            "eightWorkerSum": 1,
+            "engineDelta": 1
+          },
+          "containerSamples": {
+            "eightWorkerSum": 6900,
+            "engineDelta": 6900
+          },
+          "containerWinners": {
+            "eightWorkerSum": 1,
+            "engineDelta": 1
+          },
+          "focusedSamples": {
+            "eightWorkerSum": 3450,
+            "engineDelta": 3450
+          },
+          "focusedWinners": {
+            "eightWorkerSum": 28,
+            "engineDelta": 28
+          },
+          "relocates": {
+            "eightWorkerSum": 138,
+            "engineDelta": 138
+          },
+          "sampleEvaluations": {
+            "eightWorkerSum": 33354,
+            "engineDelta": 33354
+          },
+          "stayPutWinners": {
+            "eightWorkerSum": 109,
+            "engineDelta": 109
+          }
+        },
+        "offenders": [],
+        "workers": 8
+      },
+      "ok": true,
+      "vector": "S5a one master iteration is charged exactly the sum of its eight workers"
+    },
+    {
+      "detail": {
+        "engineDelta": 488,
+        "expected": 488
+      },
+      "ok": true,
+      "vector": "S5b piece_proposals == workers * n for one master iteration"
+    },
+    {
+      "detail": {
+        "engineDelta": 1
+      },
+      "ok": true,
+      "vector": "S5c weight_updates == 1 for one master iteration (one Algorithm-8 pass)"
+    },
+    {
+      "detail": {
+        "allGuided": [
+          0.07605626107829651,
+          0.042881774969295086,
+          0.0434485644425319,
+          0.06132872407945493,
+          0.07496777270259278,
+          0.0622379781518675,
+          0.0589926082001242,
+          0.053631463799990405
+        ],
+        "engineFingerprint": {
+          "contested": true,
+          "guided": 0.042881774969295086,
+          "winner": 1
+        },
+        "reconstructedContested": true,
+        "reconstructedGuided": 0.042881774969295086,
+        "reconstructedWinner": 1
+      },
+      "ok": true,
+      "vector": "S5d the winner is the minimum guided, ties by ordinal"
+    },
+    {
+      "detail": {
+        "distinctTotals": 8,
+        "guided": [
+          0.07605626107829651,
+          0.042881774969295086,
+          0.0434485644425319,
+          0.06132872407945493,
+          0.07496777270259278,
+          0.0622379781518675,
+          0.0589926082001242,
+          0.053631463799990405
+        ]
+      },
+      "ok": true,
+      "vector": "S5e the eight workers reached distinct totals (the merge had a choice)"
+    },
+    {
+      "detail": {
+        "constructorDepthMm": 182.976,
+        "recomputedMovedPiecesByCentroidTest": 34,
+        "recomputedMovedPiecesByPoseDelta": 34,
+        "recorded": {
+          "deltaMm": -0.18297599999999647,
+          "movedPieces": 34,
+          "splitYMm": 91.488,
+          "step": 0.001,
+          "widthAfterMm": 182.793024,
+          "widthBeforeMm": 182.976
+        }
+      },
+      "ok": true,
+      "vector": "S6a the first explore bite's record == an independent recomputation"
+    },
+    {
+      "detail": {
+        "offenders": [],
+        "pieces": 61
+      },
+      "ok": true,
+      "vector": "S6b split_and_close touches only ty, only on the far side, by exactly delta"
+    },
+    {
+      "detail": {
+        "offenders": []
+      },
+      "ok": true,
+      "vector": "S6c uniform_cut_mm is a pure function of (contract, W, seed, ordinal) in (edge, W)"
+    },
+    {
+      "detail": {
+        "constructor": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+        "parent": null,
+        "published": false
+      },
+      "ok": true,
+      "vector": "S6d the first publication's parent fingerprint is the constructor's"
+    }
+  ]
+}

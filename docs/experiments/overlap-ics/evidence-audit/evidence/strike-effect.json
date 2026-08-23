@@ -1,0 +1,372 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-strike-effect",
+ "round1": {
+  "cells": 27,
+  "bites": 1391,
+  "publishedBites": 1269,
+  "failedSeparations": 244,
+  "strikes": 88,
+  "disruptions": 122,
+  "cellsWithAnyStrike": 11,
+  "cellsWithAnyDisruption": 13
+ },
+ "rerun": {
+  "cells": 27,
+  "bites": 1825,
+  "publishedBites": 1701,
+  "failedSeparations": 288,
+  "strikes": 145,
+  "disruptions": 164,
+  "cellsWithAnyStrike": 13,
+  "cellsWithAnyDisruption": 15
+ },
+ "bite22At30s": [
+  {
+   "seed": 0,
+   "round1": {
+    "masterIterations": 2061,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 1424,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 1.1992955066947794e-05
+   }
+  },
+  {
+   "seed": 1,
+   "round1": {
+    "masterIterations": 5319,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 3.695709020949532e-05
+   },
+   "rerun": {
+    "masterIterations": 3059,
+    "strikes": 6,
+    "disruptions": 2,
+    "attempts": 2,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 2,
+   "round1": {
+    "masterIterations": 7450,
+    "strikes": 3,
+    "disruptions": 1,
+    "attempts": 1,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 1283,
+    "strikes": 3,
+    "disruptions": 1,
+    "attempts": 1,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 3,
+   "round1": {
+    "masterIterations": 137,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 137,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 4,
+   "round1": {
+    "masterIterations": 3622,
+    "strikes": 6,
+    "disruptions": 2,
+    "attempts": 2,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 2032,
+    "strikes": 6,
+    "disruptions": 2,
+    "attempts": 2,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 5,
+   "round1": {
+    "masterIterations": 1700,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 1.5805794137300585e-05
+   },
+   "rerun": {
+    "masterIterations": 1142,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 6,
+   "round1": {
+    "masterIterations": 131,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 131,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 7,
+   "round1": {
+    "masterIterations": 3906,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 6.163514289718313e-05
+   },
+   "rerun": {
+    "masterIterations": 5638,
+    "strikes": 17,
+    "disruptions": 5,
+    "attempts": 6,
+    "published": false,
+    "minRawPhi": 1.8675042075611397e-05
+   }
+  },
+  {
+   "seed": 8,
+   "round1": {
+    "masterIterations": 3825,
+    "strikes": 4,
+    "disruptions": 1,
+    "attempts": 2,
+    "published": false,
+    "minRawPhi": 6.163727568026612e-05
+   },
+   "rerun": {
+    "masterIterations": 6483,
+    "strikes": 15,
+    "disruptions": 5,
+    "attempts": 6,
+    "published": false,
+    "minRawPhi": 1.8676093462303335e-05
+   }
+  }
+ ],
+ "bite22At10s": [
+  {
+   "seed": 0,
+   "round1": {
+    "masterIterations": 1290,
+    "strikes": 1,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 0.00012151479546341587
+   },
+   "rerun": {
+    "masterIterations": 1408,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 6.0822604221878824e-05
+   }
+  },
+  {
+   "seed": 1,
+   "round1": {
+    "masterIterations": 797,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 0.00010639252287825683
+   },
+   "rerun": {
+    "masterIterations": 809,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 8.14478758534553e-05
+   }
+  },
+  {
+   "seed": 2,
+   "round1": {
+    "masterIterations": 1754,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 3.343452629896077e-05
+   },
+   "rerun": {
+    "masterIterations": 1283,
+    "strikes": 3,
+    "disruptions": 1,
+    "attempts": 1,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 3,
+   "round1": {
+    "masterIterations": 137,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 137,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 4,
+   "round1": {
+    "masterIterations": 1072,
+    "strikes": 1,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 6.988570805679046e-05
+   },
+   "rerun": {
+    "masterIterations": 1125,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 6.988383636392119e-05
+   }
+  },
+  {
+   "seed": 5,
+   "round1": {
+    "masterIterations": 855,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 0.00015991505698488993
+   },
+   "rerun": {
+    "masterIterations": 854,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 0.00015991505698488993
+   }
+  },
+  {
+   "seed": 6,
+   "round1": {
+    "masterIterations": 131,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   },
+   "rerun": {
+    "masterIterations": 131,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 0,
+    "published": true,
+    "minRawPhi": 0.0
+   }
+  },
+  {
+   "seed": 7,
+   "round1": {
+    "masterIterations": 892,
+    "strikes": 0,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 8.093670338857854e-05
+   },
+   "rerun": {
+    "masterIterations": 893,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 8.100828837587119e-05
+   }
+  },
+  {
+   "seed": 8,
+   "round1": {
+    "masterIterations": 922,
+    "strikes": 1,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 6.350079162449856e-05
+   },
+   "rerun": {
+    "masterIterations": 925,
+    "strikes": 2,
+    "disruptions": 0,
+    "attempts": 1,
+    "published": false,
+    "minRawPhi": 6.350079162449856e-05
+   }
+  }
+ ],
+ "namedCellRepairDemonstrated": true,
+ "round1WasGloballyStrikeFree": false
+}

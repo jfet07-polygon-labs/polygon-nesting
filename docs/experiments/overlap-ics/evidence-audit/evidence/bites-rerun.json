@@ -1,0 +1,1644 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-bite-consistency",
+ "source": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-1/docs/experiments/overlap-ics/cutclose-rerun/evidence/wall.json",
+ "identitiesChecked": 162,
+ "failures": [],
+ "totals": {
+  "cells": 27,
+  "strikes": 145,
+  "disruptions": 164,
+  "failedSeparations": 288,
+  "masterIterations": 61967,
+  "exactAttempts": 18659,
+  "bites": 1825,
+  "publishedBites": 1701,
+  "cellsWithAnyStrike": 13,
+  "cellsWithAnyDisruption": 15
+ },
+ "perCell": [
+  {
+   "cell": "3s/seed0",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 158,
+   "exactAttempts": 39,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 2.7988500859712222e-05,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed1",
+   "bites": 26,
+   "exploreBites": 20,
+   "compressBites": 6,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 1,
+   "masterIterations": 159,
+   "exactAttempts": 36,
+   "publishedBites": 25,
+   "minRawPhiOfLast": 0.0,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed2",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 1,
+   "attempts": 3,
+   "masterIterations": 164,
+   "exactAttempts": 75,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 1.6788946835573195e-07,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed3",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 141,
+   "exactAttempts": 25,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 0.0012912032514388065,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed4",
+   "bites": 27,
+   "exploreBites": 22,
+   "compressBites": 5,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 3,
+   "masterIterations": 142,
+   "exactAttempts": 49,
+   "publishedBites": 24,
+   "minRawPhiOfLast": 4.226017986586046e-07,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed5",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 1,
+   "attempts": 3,
+   "masterIterations": 160,
+   "exactAttempts": 34,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 0.00016619346925912982,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed6",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 136,
+   "exactAttempts": 27,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 0.0026849825980471186,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed7",
+   "bites": 25,
+   "exploreBites": 22,
+   "compressBites": 3,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 142,
+   "exactAttempts": 32,
+   "publishedBites": 23,
+   "minRawPhiOfLast": 0.0006247561334573726,
+   "budget": "3"
+  },
+  {
+   "cell": "3s/seed8",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 129,
+   "exactAttempts": 43,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 8.586019462024049e-06,
+   "budget": "3"
+  },
+  {
+   "cell": "10s/seed0",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 2,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 1761,
+   "exactAttempts": 37,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 0.00015575964535061837,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed1",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 1163,
+   "exactAttempts": 35,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 8.778446074439314e-05,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed2",
+   "bites": 175,
+   "exploreBites": 64,
+   "compressBites": 111,
+   "strikes": 3,
+   "disruptions": 2,
+   "attempts": 9,
+   "masterIterations": 2035,
+   "exactAttempts": 1313,
+   "publishedBites": 168,
+   "minRawPhiOfLast": 1.0584411275364763e-07,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed3",
+   "bites": 181,
+   "exploreBites": 73,
+   "compressBites": 108,
+   "strikes": 0,
+   "disruptions": 11,
+   "attempts": 12,
+   "masterIterations": 1202,
+   "exactAttempts": 413,
+   "publishedBites": 180,
+   "minRawPhiOfLast": 0.0,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed4",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 2,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 1399,
+   "exactAttempts": 167,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 5.758310770610872e-05,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed5",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 0,
+   "disruptions": 1,
+   "attempts": 3,
+   "masterIterations": 1182,
+   "exactAttempts": 34,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 0.00042093529243653256,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed6",
+   "bites": 107,
+   "exploreBites": 75,
+   "compressBites": 32,
+   "strikes": 0,
+   "disruptions": 12,
+   "attempts": 15,
+   "masterIterations": 1697,
+   "exactAttempts": 792,
+   "publishedBites": 104,
+   "minRawPhiOfLast": 1.0027873231205808e-10,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed7",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 2,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 1167,
+   "exactAttempts": 159,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 6.442054750515964e-05,
+   "budget": "10"
+  },
+  {
+   "cell": "10s/seed8",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 2,
+   "disruptions": 0,
+   "attempts": 2,
+   "masterIterations": 1203,
+   "exactAttempts": 124,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 7.295654764955541e-05,
+   "budget": "10"
+  },
+  {
+   "cell": "30s/seed0",
+   "bites": 155,
+   "exploreBites": 121,
+   "compressBites": 34,
+   "strikes": 2,
+   "disruptions": 12,
+   "attempts": 28,
+   "masterIterations": 3845,
+   "exactAttempts": 969,
+   "publishedBites": 139,
+   "minRawPhiOfLast": 1.0921753719800668e-07,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed1",
+   "bites": 152,
+   "exploreBites": 77,
+   "compressBites": 75,
+   "strikes": 7,
+   "disruptions": 17,
+   "attempts": 25,
+   "masterIterations": 5392,
+   "exactAttempts": 865,
+   "publishedBites": 144,
+   "minRawPhiOfLast": 0.00018992569335168398,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed2",
+   "bites": 134,
+   "exploreBites": 112,
+   "compressBites": 22,
+   "strikes": 3,
+   "disruptions": 9,
+   "attempts": 29,
+   "masterIterations": 3245,
+   "exactAttempts": 1568,
+   "publishedBites": 114,
+   "minRawPhiOfLast": 0.0,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed3",
+   "bites": 116,
+   "exploreBites": 110,
+   "compressBites": 6,
+   "strikes": 21,
+   "disruptions": 23,
+   "attempts": 29,
+   "masterIterations": 4773,
+   "exactAttempts": 720,
+   "publishedBites": 110,
+   "minRawPhiOfLast": 3.4555736081847984e-05,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed4",
+   "bites": 123,
+   "exploreBites": 110,
+   "compressBites": 13,
+   "strikes": 36,
+   "disruptions": 24,
+   "attempts": 34,
+   "masterIterations": 7304,
+   "exactAttempts": 1762,
+   "publishedBites": 113,
+   "minRawPhiOfLast": 6.919321586036998e-06,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed5",
+   "bites": 137,
+   "exploreBites": 118,
+   "compressBites": 19,
+   "strikes": 0,
+   "disruptions": 9,
+   "attempts": 21,
+   "masterIterations": 3538,
+   "exactAttempts": 818,
+   "publishedBites": 125,
+   "minRawPhiOfLast": 3.546572858311673e-07,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed6",
+   "bites": 121,
+   "exploreBites": 106,
+   "compressBites": 15,
+   "strikes": 24,
+   "disruptions": 32,
+   "attempts": 39,
+   "masterIterations": 5700,
+   "exactAttempts": 2067,
+   "publishedBites": 114,
+   "minRawPhiOfLast": 1.5790728174929462e-05,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed7",
+   "bites": 24,
+   "exploreBites": 22,
+   "compressBites": 2,
+   "strikes": 21,
+   "disruptions": 5,
+   "attempts": 7,
+   "masterIterations": 6458,
+   "exactAttempts": 4293,
+   "publishedBites": 22,
+   "minRawPhiOfLast": 8.128673730704027e-05,
+   "budget": "30"
+  },
+  {
+   "cell": "30s/seed8",
+   "bites": 34,
+   "exploreBites": 22,
+   "compressBites": 12,
+   "strikes": 20,
+   "disruptions": 5,
+   "attempts": 7,
+   "masterIterations": 7572,
+   "exactAttempts": 2163,
+   "publishedBites": 32,
+   "minRawPhiOfLast": 1.0258077098408806e-06,
+   "budget": "30"
+  }
+ ],
+ "BITES_CONSISTENT": true,
+ "rows": [
+  {
+   "identity": "3s/seed0/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed0/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed0/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed0/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed0/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed0/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed1/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed1/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed1/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed1/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed1/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     20
+    ],
+    "lastExplore": 20
+   }
+  },
+  {
+   "identity": "3s/seed1/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 18
+   }
+  },
+  {
+   "identity": "3s/seed2/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed2/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed2/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed2/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed2/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed2/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed3/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed3/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed3/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed3/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed3/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed3/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed4/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed4/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed4/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed4/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed4/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed4/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed5/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed5/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed5/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed5/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed5/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed5/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed6/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed6/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed6/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed6/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed6/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed6/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed7/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed7/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed7/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed7/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed7/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed7/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "3s/seed8/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed8/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed8/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed8/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "3s/seed8/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "3s/seed8/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "10s/seed0/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed0/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed0/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed0/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed0/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "10s/seed0/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "10s/seed1/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed1/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed1/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed1/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed1/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "10s/seed1/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "10s/seed2/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed2/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed2/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed2/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed2/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     64
+    ],
+    "lastExplore": 64
+   }
+  },
+  {
+   "identity": "10s/seed2/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 62
+   }
+  },
+  {
+   "identity": "10s/seed3/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed3/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed3/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed3/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed3/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     73
+    ],
+    "lastExplore": 73
+   }
+  },
+  {
+   "identity": "10s/seed3/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 71
+   }
+  },
+  {
+   "identity": "10s/seed4/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed4/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed4/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed4/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed4/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "10s/seed4/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "10s/seed5/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed5/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed5/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed5/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed5/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "10s/seed5/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "10s/seed6/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed6/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed6/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed6/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed6/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     75
+    ],
+    "lastExplore": 75
+   }
+  },
+  {
+   "identity": "10s/seed6/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 73
+   }
+  },
+  {
+   "identity": "10s/seed7/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed7/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed7/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed7/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed7/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "10s/seed7/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "10s/seed8/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed8/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed8/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed8/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "10s/seed8/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "10s/seed8/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "30s/seed0/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed0/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed0/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed0/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed0/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     121
+    ],
+    "lastExplore": 121
+   }
+  },
+  {
+   "identity": "30s/seed0/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 119
+   }
+  },
+  {
+   "identity": "30s/seed1/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed1/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed1/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed1/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed1/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     77
+    ],
+    "lastExplore": 77
+   }
+  },
+  {
+   "identity": "30s/seed1/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 75
+   }
+  },
+  {
+   "identity": "30s/seed2/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed2/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed2/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed2/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed2/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     112
+    ],
+    "lastExplore": 112
+   }
+  },
+  {
+   "identity": "30s/seed2/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 110
+   }
+  },
+  {
+   "identity": "30s/seed3/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed3/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed3/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed3/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed3/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     110
+    ],
+    "lastExplore": 110
+   }
+  },
+  {
+   "identity": "30s/seed3/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 108
+   }
+  },
+  {
+   "identity": "30s/seed4/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed4/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed4/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed4/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed4/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     110
+    ],
+    "lastExplore": 110
+   }
+  },
+  {
+   "identity": "30s/seed4/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 108
+   }
+  },
+  {
+   "identity": "30s/seed5/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed5/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed5/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed5/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed5/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     118
+    ],
+    "lastExplore": 118
+   }
+  },
+  {
+   "identity": "30s/seed5/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 116
+   }
+  },
+  {
+   "identity": "30s/seed6/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed6/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed6/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed6/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed6/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     106
+    ],
+    "lastExplore": 106
+   }
+  },
+  {
+   "identity": "30s/seed6/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 104
+   }
+  },
+  {
+   "identity": "30s/seed7/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed7/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed7/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed7/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed7/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "30s/seed7/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  },
+  {
+   "identity": "30s/seed8/B2 widthAfter == widthBefore*(1-step)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed8/B3 delta == after - before",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed8/B4-B5 split is mid-depth (explore) / in (edge,W) (compress)",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed8/B4 explore step is the frozen 0.001",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "30s/seed8/B7 at most one unpublished explore bite, and it is last",
+   "ok": true,
+   "detail": {
+    "unpublished": [
+     22
+    ],
+    "lastExplore": 22
+   }
+  },
+  {
+   "identity": "30s/seed8/B1 each explore bite starts at or below the previous target",
+   "ok": true,
+   "detail": {
+    "brokenLinks": [],
+    "links": 20
+   }
+  }
+ ]
+}

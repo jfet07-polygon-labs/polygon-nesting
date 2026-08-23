@@ -1,0 +1,233 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-funnel-names",
+ "totals": {
+  "cells": 9,
+  "funnelExactAttempted": 461,
+  "attemptsSummedOverBites": 2780,
+  "exactCheckpointRows": 756,
+  "bandEntriesThatNeverReachedExactGeometry": 2024,
+  "checkpointsThatRefused": 319,
+  "allCheckpointRowsEqualWorkCounter": true,
+  "publicationsCarryingPlacements": 0,
+  "publications": 437
+ },
+ "cells": [
+  {
+   "cell": "wall-10s-seed0.json",
+   "seed": 0,
+   "N1": {
+    "funnelExactAttempted": 22,
+    "bitesThatAttempted": 22,
+    "attemptsSummedOverBites": 37,
+    "overclaimFactor": 1.6818181818181819
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 37,
+    "exactCheckpointRows": 33,
+    "workExactCheckpoints": 33,
+    "bandEntriesThatNeverReachedExactGeometry": 4,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 11
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 22,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed1.json",
+   "seed": 1,
+   "N1": {
+    "funnelExactAttempted": 24,
+    "bitesThatAttempted": 24,
+    "attemptsSummedOverBites": 136,
+    "overclaimFactor": 5.666666666666667
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 136,
+    "exactCheckpointRows": 28,
+    "workExactCheckpoints": 28,
+    "bandEntriesThatNeverReachedExactGeometry": 108,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 6
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 22,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed2.json",
+   "seed": 2,
+   "N1": {
+    "funnelExactAttempted": 146,
+    "bitesThatAttempted": 146,
+    "attemptsSummedOverBites": 1310,
+    "overclaimFactor": 8.972602739726028
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 1310,
+    "exactCheckpointRows": 252,
+    "workExactCheckpoints": 252,
+    "bandEntriesThatNeverReachedExactGeometry": 1058,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 116
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 136,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed3.json",
+   "seed": 3,
+   "N1": {
+    "funnelExactAttempted": 82,
+    "bitesThatAttempted": 82,
+    "attemptsSummedOverBites": 211,
+    "overclaimFactor": 2.573170731707317
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 211,
+    "exactCheckpointRows": 147,
+    "workExactCheckpoints": 147,
+    "bandEntriesThatNeverReachedExactGeometry": 64,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 65
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 82,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed4.json",
+   "seed": 4,
+   "N1": {
+    "funnelExactAttempted": 24,
+    "bitesThatAttempted": 24,
+    "attemptsSummedOverBites": 167,
+    "overclaimFactor": 6.958333333333333
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 167,
+    "exactCheckpointRows": 28,
+    "workExactCheckpoints": 28,
+    "bandEntriesThatNeverReachedExactGeometry": 139,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 6
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 22,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed5.json",
+   "seed": 5,
+   "N1": {
+    "funnelExactAttempted": 22,
+    "bitesThatAttempted": 22,
+    "attemptsSummedOverBites": 45,
+    "overclaimFactor": 2.0454545454545454
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 45,
+    "exactCheckpointRows": 45,
+    "workExactCheckpoints": 45,
+    "bandEntriesThatNeverReachedExactGeometry": 0,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 23
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 22,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed6.json",
+   "seed": 6,
+   "N1": {
+    "funnelExactAttempted": 93,
+    "bitesThatAttempted": 93,
+    "attemptsSummedOverBites": 543,
+    "overclaimFactor": 5.838709677419355
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 543,
+    "exactCheckpointRows": 174,
+    "workExactCheckpoints": 174,
+    "bandEntriesThatNeverReachedExactGeometry": 369,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 87
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 87,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed7.json",
+   "seed": 7,
+   "N1": {
+    "funnelExactAttempted": 24,
+    "bitesThatAttempted": 24,
+    "attemptsSummedOverBites": 174,
+    "overclaimFactor": 7.25
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 174,
+    "exactCheckpointRows": 22,
+    "workExactCheckpoints": 22,
+    "bandEntriesThatNeverReachedExactGeometry": 152,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 0
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 22,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  },
+  {
+   "cell": "wall-10s-seed8.json",
+   "seed": 8,
+   "N1": {
+    "funnelExactAttempted": 24,
+    "bitesThatAttempted": 24,
+    "attemptsSummedOverBites": 157,
+    "overclaimFactor": 6.541666666666667
+   },
+   "N2": {
+    "bandEntriesCountedAsAttempts": 157,
+    "exactCheckpointRows": 27,
+    "workExactCheckpoints": 27,
+    "bandEntriesThatNeverReachedExactGeometry": 130,
+    "checkpointRowsEqualWorkCounter": true,
+    "checkpointsThatRefused": 5
+   },
+   "N3": {
+    "invalidPublications": 0,
+    "publications": 22,
+    "publicationsCarryingPlacements": 0,
+    "structurallyUnfalsifiable": true
+   }
+  }
+ ]
+}

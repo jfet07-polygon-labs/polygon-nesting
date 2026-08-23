@@ -1,0 +1,761 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-publication-chain",
+ "documents": [
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed0.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed1.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed2.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed3.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed4.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed5.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed6.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed7.json",
+  "/var/lib/t3/tmp/ics-audit-full/cells9/wall-10s-seed8.json",
+  "/var/lib/t3/tmp/ics-audit-full/replay/replay-seed0-a.json",
+  "/var/lib/t3/tmp/ics-audit-full/replay/replay-seed0-b.json",
+  "/var/lib/t3/tmp/ics-audit-full/replay/replay-seed1-a.json",
+  "/var/lib/t3/tmp/ics-audit-full/replay/replay-seed1-b.json",
+  "/var/lib/t3/tmp/ics-audit-full/replay/replay-seed5-a.json",
+  "/var/lib/t3/tmp/ics-audit-full/replay/replay-seed5-b.json"
+ ],
+ "identitiesChecked": 90,
+ "failures": [],
+ "CHAIN_PASS": true,
+ "rows": [
+  {
+   "identity": "wall-10s-seed0.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 22
+   }
+  },
+  {
+   "identity": "wall-10s-seed0.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed0.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed0.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.16566573285345
+   }
+  },
+  {
+   "identity": "wall-10s-seed0.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.0760865230147
+   }
+  },
+  {
+   "identity": "wall-10s-seed0.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 22,
+    "publications": 22,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed1.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 22
+   }
+  },
+  {
+   "identity": "wall-10s-seed1.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed1.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed1.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.17057349197626
+   }
+  },
+  {
+   "identity": "wall-10s-seed1.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.08099195461827
+   }
+  },
+  {
+   "identity": "wall-10s-seed1.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 22,
+    "publications": 22,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed2.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 136
+   }
+  },
+  {
+   "identity": "wall-10s-seed2.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed2.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed2.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 170.92003783742868
+   }
+  },
+  {
+   "identity": "wall-10s-seed2.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 167.71514200324802
+   }
+  },
+  {
+   "identity": "wall-10s-seed2.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 136,
+    "publications": 136,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed3.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 82
+   }
+  },
+  {
+   "identity": "wall-10s-seed3.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed3.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed3.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 169.883417284482
+   }
+  },
+  {
+   "identity": "wall-10s-seed3.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 169.23244167973186
+   }
+  },
+  {
+   "identity": "wall-10s-seed3.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 82,
+    "publications": 82,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed4.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 22
+   }
+  },
+  {
+   "identity": "wall-10s-seed4.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed4.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed4.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.17081210545416
+   }
+  },
+  {
+   "identity": "wall-10s-seed4.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.0812317802364
+   }
+  },
+  {
+   "identity": "wall-10s-seed4.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 22,
+    "publications": 22,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed5.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 22
+   }
+  },
+  {
+   "identity": "wall-10s-seed5.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed5.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed5.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.16127905103318
+   }
+  },
+  {
+   "identity": "wall-10s-seed5.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.07170280092177
+   }
+  },
+  {
+   "identity": "wall-10s-seed5.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 22,
+    "publications": 22,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed6.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 87
+   }
+  },
+  {
+   "identity": "wall-10s-seed6.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed6.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed6.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 169.82414967488566
+   }
+  },
+  {
+   "identity": "wall-10s-seed6.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 169.13062704410603
+   }
+  },
+  {
+   "identity": "wall-10s-seed6.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 87,
+    "publications": 87,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed7.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 22
+   }
+  },
+  {
+   "identity": "wall-10s-seed7.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed7.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed7.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.1716866933179
+   }
+  },
+  {
+   "identity": "wall-10s-seed7.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.08210417433258
+   }
+  },
+  {
+   "identity": "wall-10s-seed7.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 22,
+    "publications": 22,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed8.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 22
+   }
+  },
+  {
+   "identity": "wall-10s-seed8.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed8.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "wall-10s-seed8.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.1716866933179
+   }
+  },
+  {
+   "identity": "wall-10s-seed8.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.0821041378155
+   }
+  },
+  {
+   "identity": "wall-10s-seed8.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 22,
+    "publications": 22,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed0-a.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 21
+   }
+  },
+  {
+   "identity": "replay-seed0-a.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed0-a.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed0-a.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.16566573285345
+   }
+  },
+  {
+   "identity": "replay-seed0-a.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.16566573285345
+   }
+  },
+  {
+   "identity": "replay-seed0-a.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 21,
+    "publications": 21,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed0-b.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 21
+   }
+  },
+  {
+   "identity": "replay-seed0-b.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed0-b.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed0-b.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.16566573285345
+   }
+  },
+  {
+   "identity": "replay-seed0-b.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.16566573285345
+   }
+  },
+  {
+   "identity": "replay-seed0-b.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 21,
+    "publications": 21,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed1-a.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 21
+   }
+  },
+  {
+   "identity": "replay-seed1-a.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed1-a.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed1-a.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.17057349197626
+   }
+  },
+  {
+   "identity": "replay-seed1-a.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.17057349197626
+   }
+  },
+  {
+   "identity": "replay-seed1-a.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 21,
+    "publications": 21,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed1-b.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 21
+   }
+  },
+  {
+   "identity": "replay-seed1-b.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed1-b.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed1-b.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 179.17057349197626
+   }
+  },
+  {
+   "identity": "replay-seed1-b.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 179.17057349197626
+   }
+  },
+  {
+   "identity": "replay-seed1-b.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 21,
+    "publications": 21,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed5-a.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 8
+   }
+  },
+  {
+   "identity": "replay-seed5-a.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed5-a.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed5-a.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 181.51730509414207
+   }
+  },
+  {
+   "identity": "replay-seed5-a.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 181.51730509414207
+   }
+  },
+  {
+   "identity": "replay-seed5-a.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 8,
+    "publications": 8,
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed5-b.json/C1 the publication chain is a chain from the constructor",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "links": 8
+   }
+  },
+  {
+   "identity": "replay-seed5-b.json/C2 each explore bite starts at the previous PUBLISHED depth, bit for bit",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed5-b.json/C3 the bite record and its publication agree on the target",
+   "ok": true,
+   "detail": {
+    "offenders": []
+   }
+  },
+  {
+   "identity": "replay-seed5-b.json/C4 published <= target, and the explore series is non-increasing",
+   "ok": true,
+   "detail": {
+    "overTarget": [],
+    "exploreMonotone": true,
+    "firstExploreDepth": 182.793024,
+    "lastExploreDepth": 181.51730509414207
+   }
+  },
+  {
+   "identity": "replay-seed5-b.json/C5 improvedIncumbent == a >1 um gain on the running best",
+   "ok": true,
+   "detail": {
+    "offenders": [],
+    "finalIncumbentMm": 181.51730509414207
+   }
+  },
+  {
+   "identity": "replay-seed5-b.json/C6 every publication row equals its own exact-checkpoint row",
+   "ok": true,
+   "detail": {
+    "publishedCheckpoints": 8,
+    "publications": 8,
+    "offenders": []
+   }
+  }
+ ]
+}

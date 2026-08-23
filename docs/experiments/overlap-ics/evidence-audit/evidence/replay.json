@@ -1,0 +1,702 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "evidence-audit-fixed-work-replay",
+ "root": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-1",
+ "source": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-1/docs/experiments/overlap-ics/cutclose-rerun/evidence/wall.json",
+ "seeds": [
+  0,
+  1,
+  5
+ ],
+ "rows": [
+  {
+   "seed": 0,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "twoProcessBitIdentical": true,
+   "committedShapeDigest": "18e868fc7d26d5fd268c607ccc364e2bce10230f5422f0df97ca0d7ae1ef8387",
+   "pathIndependentDigest": "022fbe7052bc95972438400e21c93ba305b269369fb688e4433d3f024c5c6b10",
+   "committed": {
+    "replayPublications": 21,
+    "replayDepthMm": 179.16566573285345,
+    "invalidPublications": 0,
+    "ordinals": [
+     {
+      "attempt": 0,
+      "bite": 1,
+      "iteration": 4,
+      "proposals": 244
+     },
+     {
+      "attempt": 0,
+      "bite": 2,
+      "iteration": 2,
+      "proposals": 366
+     },
+     {
+      "attempt": 0,
+      "bite": 3,
+      "iteration": 2,
+      "proposals": 488
+     },
+     {
+      "attempt": 0,
+      "bite": 4,
+      "iteration": 1,
+      "proposals": 549
+     },
+     {
+      "attempt": 0,
+      "bite": 5,
+      "iteration": 1,
+      "proposals": 610
+     },
+     {
+      "attempt": 0,
+      "bite": 6,
+      "iteration": 1,
+      "proposals": 671
+     },
+     {
+      "attempt": 0,
+      "bite": 7,
+      "iteration": 1,
+      "proposals": 732
+     },
+     {
+      "attempt": 0,
+      "bite": 8,
+      "iteration": 1,
+      "proposals": 793
+     },
+     {
+      "attempt": 0,
+      "bite": 9,
+      "iteration": 1,
+      "proposals": 854
+     },
+     {
+      "attempt": 0,
+      "bite": 10,
+      "iteration": 4,
+      "proposals": 1098
+     },
+     {
+      "attempt": 0,
+      "bite": 11,
+      "iteration": 3,
+      "proposals": 1281
+     },
+     {
+      "attempt": 0,
+      "bite": 12,
+      "iteration": 5,
+      "proposals": 1586
+     },
+     {
+      "attempt": 0,
+      "bite": 13,
+      "iteration": 4,
+      "proposals": 1830
+     },
+     {
+      "attempt": 0,
+      "bite": 14,
+      "iteration": 9,
+      "proposals": 2379
+     },
+     {
+      "attempt": 0,
+      "bite": 15,
+      "iteration": 5,
+      "proposals": 2684
+     },
+     {
+      "attempt": 0,
+      "bite": 16,
+      "iteration": 14,
+      "proposals": 3538
+     },
+     {
+      "attempt": 0,
+      "bite": 17,
+      "iteration": 15,
+      "proposals": 4453
+     },
+     {
+      "attempt": 0,
+      "bite": 18,
+      "iteration": 3,
+      "proposals": 4636
+     },
+     {
+      "attempt": 0,
+      "bite": 19,
+      "iteration": 6,
+      "proposals": 5002
+     },
+     {
+      "attempt": 0,
+      "bite": 20,
+      "iteration": 9,
+      "proposals": 5551
+     },
+     {
+      "attempt": 0,
+      "bite": 21,
+      "iteration": 9,
+      "proposals": 6100
+     }
+    ],
+    "digestA": "953990b0b402fcbe2f26942f64e64460410b939a73c3fdac88a8017dc29c3d9e"
+   },
+   "measured": {
+    "replayPublications": 21,
+    "replayDepthMm": 179.16566573285345,
+    "invalidPublications": 0,
+    "ordinals": [
+     {
+      "attempt": 0,
+      "bite": 1,
+      "iteration": 4,
+      "proposals": 244
+     },
+     {
+      "attempt": 0,
+      "bite": 2,
+      "iteration": 2,
+      "proposals": 366
+     },
+     {
+      "attempt": 0,
+      "bite": 3,
+      "iteration": 2,
+      "proposals": 488
+     },
+     {
+      "attempt": 0,
+      "bite": 4,
+      "iteration": 1,
+      "proposals": 549
+     },
+     {
+      "attempt": 0,
+      "bite": 5,
+      "iteration": 1,
+      "proposals": 610
+     },
+     {
+      "attempt": 0,
+      "bite": 6,
+      "iteration": 1,
+      "proposals": 671
+     },
+     {
+      "attempt": 0,
+      "bite": 7,
+      "iteration": 1,
+      "proposals": 732
+     },
+     {
+      "attempt": 0,
+      "bite": 8,
+      "iteration": 1,
+      "proposals": 793
+     },
+     {
+      "attempt": 0,
+      "bite": 9,
+      "iteration": 1,
+      "proposals": 854
+     },
+     {
+      "attempt": 0,
+      "bite": 10,
+      "iteration": 4,
+      "proposals": 1098
+     },
+     {
+      "attempt": 0,
+      "bite": 11,
+      "iteration": 3,
+      "proposals": 1281
+     },
+     {
+      "attempt": 0,
+      "bite": 12,
+      "iteration": 5,
+      "proposals": 1586
+     },
+     {
+      "attempt": 0,
+      "bite": 13,
+      "iteration": 4,
+      "proposals": 1830
+     },
+     {
+      "attempt": 0,
+      "bite": 14,
+      "iteration": 9,
+      "proposals": 2379
+     },
+     {
+      "attempt": 0,
+      "bite": 15,
+      "iteration": 5,
+      "proposals": 2684
+     },
+     {
+      "attempt": 0,
+      "bite": 16,
+      "iteration": 14,
+      "proposals": 3538
+     },
+     {
+      "attempt": 0,
+      "bite": 17,
+      "iteration": 15,
+      "proposals": 4453
+     },
+     {
+      "attempt": 0,
+      "bite": 18,
+      "iteration": 3,
+      "proposals": 4636
+     },
+     {
+      "attempt": 0,
+      "bite": 19,
+      "iteration": 6,
+      "proposals": 5002
+     },
+     {
+      "attempt": 0,
+      "bite": 20,
+      "iteration": 9,
+      "proposals": 5551
+     },
+     {
+      "attempt": 0,
+      "bite": 21,
+      "iteration": 9,
+      "proposals": 6100
+     }
+    ]
+   },
+   "publicationsMatch": true,
+   "depthMatchesBitForBit": true,
+   "ordinalsMatch": true
+  },
+  {
+   "seed": 1,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "twoProcessBitIdentical": true,
+   "committedShapeDigest": "b659793fb5dd74ad1722b1ead87dcbd06aa758f21b86bdc394a5d170101e0de5",
+   "pathIndependentDigest": "05dba727d1bc639132b4592a77532cdb8f301a409b7dba1456ad3363da6120b0",
+   "committed": {
+    "replayPublications": 21,
+    "replayDepthMm": 179.17057349197626,
+    "invalidPublications": 0,
+    "ordinals": [
+     {
+      "attempt": 0,
+      "bite": 1,
+      "iteration": 3,
+      "proposals": 183
+     },
+     {
+      "attempt": 0,
+      "bite": 2,
+      "iteration": 1,
+      "proposals": 244
+     },
+     {
+      "attempt": 0,
+      "bite": 3,
+      "iteration": 1,
+      "proposals": 305
+     },
+     {
+      "attempt": 0,
+      "bite": 4,
+      "iteration": 2,
+      "proposals": 427
+     },
+     {
+      "attempt": 0,
+      "bite": 5,
+      "iteration": 1,
+      "proposals": 488
+     },
+     {
+      "attempt": 0,
+      "bite": 6,
+      "iteration": 1,
+      "proposals": 549
+     },
+     {
+      "attempt": 0,
+      "bite": 7,
+      "iteration": 2,
+      "proposals": 671
+     },
+     {
+      "attempt": 0,
+      "bite": 8,
+      "iteration": 2,
+      "proposals": 793
+     },
+     {
+      "attempt": 0,
+      "bite": 9,
+      "iteration": 4,
+      "proposals": 1037
+     },
+     {
+      "attempt": 0,
+      "bite": 10,
+      "iteration": 4,
+      "proposals": 1281
+     },
+     {
+      "attempt": 0,
+      "bite": 11,
+      "iteration": 5,
+      "proposals": 1586
+     },
+     {
+      "attempt": 0,
+      "bite": 12,
+      "iteration": 6,
+      "proposals": 1952
+     },
+     {
+      "attempt": 0,
+      "bite": 13,
+      "iteration": 9,
+      "proposals": 2501
+     },
+     {
+      "attempt": 0,
+      "bite": 14,
+      "iteration": 4,
+      "proposals": 2745
+     },
+     {
+      "attempt": 0,
+      "bite": 15,
+      "iteration": 5,
+      "proposals": 3050
+     },
+     {
+      "attempt": 0,
+      "bite": 16,
+      "iteration": 18,
+      "proposals": 4148
+     },
+     {
+      "attempt": 0,
+      "bite": 17,
+      "iteration": 31,
+      "proposals": 6039
+     },
+     {
+      "attempt": 0,
+      "bite": 18,
+      "iteration": 1,
+      "proposals": 6100
+     },
+     {
+      "attempt": 0,
+      "bite": 19,
+      "iteration": 3,
+      "proposals": 6283
+     },
+     {
+      "attempt": 0,
+      "bite": 20,
+      "iteration": 32,
+      "proposals": 8235
+     },
+     {
+      "attempt": 0,
+      "bite": 21,
+      "iteration": 2,
+      "proposals": 8357
+     }
+    ],
+    "digestA": "12b4c59e7219809864bf5868f6ffd1e0f6f4458f06a85bae5f258e99c5fe7cb6"
+   },
+   "measured": {
+    "replayPublications": 21,
+    "replayDepthMm": 179.17057349197626,
+    "invalidPublications": 0,
+    "ordinals": [
+     {
+      "attempt": 0,
+      "bite": 1,
+      "iteration": 3,
+      "proposals": 183
+     },
+     {
+      "attempt": 0,
+      "bite": 2,
+      "iteration": 1,
+      "proposals": 244
+     },
+     {
+      "attempt": 0,
+      "bite": 3,
+      "iteration": 1,
+      "proposals": 305
+     },
+     {
+      "attempt": 0,
+      "bite": 4,
+      "iteration": 2,
+      "proposals": 427
+     },
+     {
+      "attempt": 0,
+      "bite": 5,
+      "iteration": 1,
+      "proposals": 488
+     },
+     {
+      "attempt": 0,
+      "bite": 6,
+      "iteration": 1,
+      "proposals": 549
+     },
+     {
+      "attempt": 0,
+      "bite": 7,
+      "iteration": 2,
+      "proposals": 671
+     },
+     {
+      "attempt": 0,
+      "bite": 8,
+      "iteration": 2,
+      "proposals": 793
+     },
+     {
+      "attempt": 0,
+      "bite": 9,
+      "iteration": 4,
+      "proposals": 1037
+     },
+     {
+      "attempt": 0,
+      "bite": 10,
+      "iteration": 4,
+      "proposals": 1281
+     },
+     {
+      "attempt": 0,
+      "bite": 11,
+      "iteration": 5,
+      "proposals": 1586
+     },
+     {
+      "attempt": 0,
+      "bite": 12,
+      "iteration": 6,
+      "proposals": 1952
+     },
+     {
+      "attempt": 0,
+      "bite": 13,
+      "iteration": 9,
+      "proposals": 2501
+     },
+     {
+      "attempt": 0,
+      "bite": 14,
+      "iteration": 4,
+      "proposals": 2745
+     },
+     {
+      "attempt": 0,
+      "bite": 15,
+      "iteration": 5,
+      "proposals": 3050
+     },
+     {
+      "attempt": 0,
+      "bite": 16,
+      "iteration": 18,
+      "proposals": 4148
+     },
+     {
+      "attempt": 0,
+      "bite": 17,
+      "iteration": 31,
+      "proposals": 6039
+     },
+     {
+      "attempt": 0,
+      "bite": 18,
+      "iteration": 1,
+      "proposals": 6100
+     },
+     {
+      "attempt": 0,
+      "bite": 19,
+      "iteration": 3,
+      "proposals": 6283
+     },
+     {
+      "attempt": 0,
+      "bite": 20,
+      "iteration": 32,
+      "proposals": 8235
+     },
+     {
+      "attempt": 0,
+      "bite": 21,
+      "iteration": 2,
+      "proposals": 8357
+     }
+    ]
+   },
+   "publicationsMatch": true,
+   "depthMatchesBitForBit": true,
+   "ordinalsMatch": true
+  },
+  {
+   "seed": 5,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "twoProcessBitIdentical": true,
+   "committedShapeDigest": "d2753b40c3d00aa200a7c3c5c7be1c90fe5b9b6ecfcc8a6caedf72bcef075a4e",
+   "pathIndependentDigest": "5576f30f3332797e1bd27903bbf32b4757350fad70032385ad9cea086be82fa6",
+   "committed": {
+    "replayPublications": 8,
+    "replayDepthMm": 181.51730509414207,
+    "invalidPublications": 0,
+    "ordinals": [
+     {
+      "attempt": 0,
+      "bite": 1,
+      "iteration": 3,
+      "proposals": 183
+     },
+     {
+      "attempt": 0,
+      "bite": 2,
+      "iteration": 1,
+      "proposals": 244
+     },
+     {
+      "attempt": 0,
+      "bite": 3,
+      "iteration": 2,
+      "proposals": 366
+     },
+     {
+      "attempt": 0,
+      "bite": 4,
+      "iteration": 2,
+      "proposals": 488
+     },
+     {
+      "attempt": 0,
+      "bite": 5,
+      "iteration": 8,
+      "proposals": 976
+     },
+     {
+      "attempt": 0,
+      "bite": 6,
+      "iteration": 3,
+      "proposals": 1159
+     },
+     {
+      "attempt": 0,
+      "bite": 7,
+      "iteration": 3,
+      "proposals": 1342
+     },
+     {
+      "attempt": 0,
+      "bite": 8,
+      "iteration": 3,
+      "proposals": 1525
+     }
+    ],
+    "digestA": "9a646fffc2cdb963376d8b9a761273fd38628ccb8a6d9f4096aab77e8e7efbd7"
+   },
+   "measured": {
+    "replayPublications": 8,
+    "replayDepthMm": 181.51730509414207,
+    "invalidPublications": 0,
+    "ordinals": [
+     {
+      "attempt": 0,
+      "bite": 1,
+      "iteration": 3,
+      "proposals": 183
+     },
+     {
+      "attempt": 0,
+      "bite": 2,
+      "iteration": 1,
+      "proposals": 244
+     },
+     {
+      "attempt": 0,
+      "bite": 3,
+      "iteration": 2,
+      "proposals": 366
+     },
+     {
+      "attempt": 0,
+      "bite": 4,
+      "iteration": 2,
+      "proposals": 488
+     },
+     {
+      "attempt": 0,
+      "bite": 5,
+      "iteration": 8,
+      "proposals": 976
+     },
+     {
+      "attempt": 0,
+      "bite": 6,
+      "iteration": 3,
+      "proposals": 1159
+     },
+     {
+      "attempt": 0,
+      "bite": 7,
+      "iteration": 3,
+      "proposals": 1342
+     },
+     {
+      "attempt": 0,
+      "bite": 8,
+      "iteration": 3,
+      "proposals": 1525
+     }
+    ]
+   },
+   "publicationsMatch": true,
+   "depthMatchesBitForBit": true,
+   "ordinalsMatch": true
+  }
+ ],
+ "ALL_TWO_PROCESS_BIT_IDENTICAL": true,
+ "ALL_REPRODUCE_COMMITTED": true
+}
