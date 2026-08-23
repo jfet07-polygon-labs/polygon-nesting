@@ -8635,3 +8635,33 @@ which is exactly what §0 fixed in advance, and it is not a constant of the
 member. The battery is docs/experiments/overlap-ics/cutclose-rerun/, whose §0 is
 round 1's §0 copied verbatim — 7,796 bytes, byte-identical — and committed before
 a single wall second of the rerun was spent.
+
+## The first three-model quorum: the economics round signs, gated on the audit
+
+The owner added ox-alpha (oxalpha.com, reasoning-first — maximum thinking is
+its native state; reached via opencode with --pure) to the consultant bench
+and mandated true convergence, with one more rule that reshapes the
+protocol: verify the evidence-producing code BEFORE the quorum signs against
+its numbers ("se ci sono bug che danno risultati meh, i risultati usati come
+evidenza non sono granché"). The consultation produced the campaign's most
+instructive exchange yet: Sol proposed work-denominated strike quanta and
+Grok froze the literals; after reading each other they SWAPPED — Grok
+verified Sol's derivation number-by-number and signed the quanta as an
+honestly-labeled treatment, Sol reversed to the literals on the
+algorithmic-event argument; ox-alpha, blind to both, independently landed on
+the quanta with a mandatory paired control. The resolution all three signed
+is the two-arm experiment: treatment = the impatient work-quanta
+(1_630_000/815_000, KNOB, no second guess), control = the frozen literals on
+the identical executor and pacer, promotion only on measured attribution
+(≥2 seeds or ≥1 mm paired) — in ox-alpha's closing words, it "settles a
+semantic disagreement by measurement instead of by vote count". Everything
+else was unanimous: the executor behind a 10%-census gate with Sol's
+promotion criteria, the calibrated-work pacer with a reject rule, compress
+fully frozen, 5/9 firm with no 4/9 fallback, 30 s median ≤163.00461,
+150.165 still the horizon. The spec is docs/economics-round-spec.md;
+consultations verbatim in sol-review-19 / grok-review-14 /
+ox-alpha-review-1 (-the-economics-round.md). Execution waits on the
+evidence-integrity audit now running two agents deep over the code and the
+committed rerun numbers; if the audit moves anything the spec leans on, the
+signatures are re-confirmed against corrected evidence before a line of
+implementation.
