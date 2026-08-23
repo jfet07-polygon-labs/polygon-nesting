@@ -1,0 +1,14 @@
+[heavy] base binary build (overlap-ics absent) EXIT=0
+[heavy] meas binary build (overlap-ics compiled, unarmed) EXIT=0
+[heavy] binary hashes EXIT=0
+[heavy] four pinned gates on the base binary EXIT=0
+[heavy] four pinned gates on the meas binary EXIT=0
+[heavy] gate comparison (whole-document identity) EXIT=0
+[heavy] second independent overlap-ics build EXIT=0
+[heavy] two-binary determinism (five cells, incl. this round's member) EXIT=0
+[heavy] five release suites EXIT=0
+[heavy] suite totals EXIT=0
+[heavy] campaign suite logs restored EXIT=0
+[heavy] logs in /var/lib/t3/tmp/overlapics/w4heavy/log
+[heavy] evidence in /var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-5/docs/experiments/overlap-ics/economics-round/gate/evidence
+[heavy] FAILURES=0

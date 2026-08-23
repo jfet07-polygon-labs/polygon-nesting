@@ -93,17 +93,39 @@ def arm_b(binary, seed, seconds, out_path):
         'independentDepthMm': document.get('independentUsedLongAxisDepthMm'),
         'coordinatorSeconds': portfolio.get('elapsedSeconds'),
         'processWallSeconds': wall,
+        # RV3. Arm B's document is written by a different binary and carries no
+        # per-publication clock at all, so the sha is the only binding there is.
+        'sourcePath': out_path,
+        'sourceSha256': sha256_of(out_path),
     }
 
 
 def arm_a(seed, seconds, out_path):
-    """One `CutCloseRelocate` process at the same wall."""
+    """One `CutCloseRelocate` process at the same wall.
+
+    **The publication set is filtered by the budget, in the budget's own
+    frame.** This driver used to take a plain minimum over every publication
+    the cell emitted, with no time filter of any kind - which meant arm A's
+    reported depth could be a publication that landed after the arm's own
+    `seconds`, while arm B's is what the old stack had at its deadline. The
+    evidence audit records that as the caveat on this file ("min over all
+    publications, no frame"); `wall.py` was repaired for the same defect one
+    step milder (F1: a filter in the wrong clock frame, which could never
+    fire). Both now go through `lib.within_budget`, so a future repair to one
+    is a repair to both.
+
+    The filter uses the LOWER bound: a publication is dropped only when it is
+    *certainly* late. `undecidedByFrame` is the band the document cannot
+    settle, and it is reported rather than resolved.
+    """
     doc, wall, status, err = lib.run(
         'cutclose', 'mixed-61', out_path, mode='wall', wall=seconds,
         workers=WORKERS, seed=seed)
     outcome = doc.get('outcome', {})
     constructor = doc.get('constructor', {})
-    strict = [row for row in outcome.get('publications', [])
+    within, late, undecided = lib.within_budget(
+        outcome.get('publications', []), doc, seconds)
+    strict = [row for row in within
               if row['placementFingerprint']
               != constructor.get('placementFingerprint')]
     return {
@@ -119,6 +141,15 @@ def arm_a(seed, seconds, out_path):
         'invalidPublications': outcome.get('invalidPublications'),
         'processWallSeconds': wall,
         'totalSeconds': doc.get('wall', {}).get('totalSeconds'),
+        # The audit's caveat on this file, closed and reported.
+        'publicationsTotal': len(outcome.get('publications', [])),
+        'publicationsWithinBudget': len(within),
+        'publicationsExcludedAsLate': len(late),
+        'publicationsUndecidedByFrame': len(undecided),
+        'strictChildrenWithinBudget': len(strict),
+        # RV3.
+        'sourcePath': out_path,
+        'sourceSha256': lib.source_sha256(out_path),
     }
 
 
@@ -164,6 +195,10 @@ def main():
     document = {
         'experiment': 'overlap-ics',
         'battery': 'cutclose-round1-ab-ba-wall-control',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'diagnosticOnly': True,
         'note': ('The bar is the pinned 168.484 and this control can neither '
                  'raise nor lower it (docs/cutclose-relocate-spec.md, "The '
@@ -188,6 +223,15 @@ def main():
             row['B']['dualGateValid'] is True for row in pairs),
         'armAInvalidPublications': sum(
             row['A'].get('invalidPublications') or 0 for row in pairs),
+        # The audit's caveat on this file, in the aggregate. A nonzero
+        # `armAPublicationsExcludedAsLate` means arm A really did publish after
+        # its own budget on some seed and the old reduction would have adopted
+        # it; a nonzero undecided count means the document could not settle it
+        # either way and the reader should say so rather than round.
+        'armAPublicationsExcludedAsLate': sum(
+            row['A'].get('publicationsExcludedAsLate') or 0 for row in pairs),
+        'armAPublicationsUndecidedByFrame': sum(
+            row['A'].get('publicationsUndecidedByFrame') or 0 for row in pairs),
     }
     print(json.dumps(document, indent=1))
     with open(f'{out}/control.json', 'w') as handle:

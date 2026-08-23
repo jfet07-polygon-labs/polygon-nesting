@@ -1,0 +1,23 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-census-checkpoint-bracket",
+ "exit": 0,
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-1/target/release/examples/overlap_ics_benchmark",
+ "sourcePath": "/var/lib/t3/tmp/census-wave1/ship/bracket-cell.json",
+ "sourceSha256": "6e17ccd0e3aaa0a68af0ad151e082db4777e1dac9a56f1a1121dc73eddaa4bd1",
+ "budgetSeconds": 3.0,
+ "publications": 23,
+ "constructorSeconds": 2.301016798,
+ "loopEntrySeconds": 2.301129459,
+ "totalMinusSearchSeconds": 2.304747932,
+ "oldBracketMs": 3.731134000000136,
+ "newBracketMs": 0.11266100000018042,
+ "auditBracketMs": 0.3,
+ "narrowerThanAudit": true,
+ "publicationsWithinBudget": 23,
+ "publicationsExcludedAsLate": 0,
+ "publicationsUndecidedByFrame": 0,
+ "maxRequestSecondsLower": 2.9537351640000002,
+ "maxRequestSecondsUpper": 2.9538478250000004,
+ "BRACKET_PASS": true
+}

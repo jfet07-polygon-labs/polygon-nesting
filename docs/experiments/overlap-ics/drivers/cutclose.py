@@ -95,6 +95,9 @@ def two_process(tag, out, **options):
         'digestA': lib.digest(first),
         'digestB': lib.digest(second),
         'strippedFields': lib.WALL_FIELDS,
+        # RV3, on both processes: the two documents this comparison reduced.
+        'sourceShaA': lib.source_sha256(f'{out}/{tag}-process-a.json'),
+        'sourceShaB': lib.source_sha256(f'{out}/{tag}-process-b.json'),
         'bitIdentical': (status_a == 0 and status_b == 0
                          and lib.stripped(first) == lib.stripped(second)),
     }, first, second
@@ -124,6 +127,9 @@ def canary(out):
         'wallSeconds': wall,
         'searchSeconds': doc.get('wall', {}).get('searchSeconds'),
         'constructorSeconds': doc.get('wall', {}).get('constructorSeconds'),
+        # RV3.
+        'sourcePath': f'{out}/cutclose-canary.json',
+        'sourceSha256': lib.source_sha256(f'{out}/cutclose-canary.json'),
     }
     detail['pass'] = bool(
         detail['constructorDepthMm'] == D_STAR_MM
@@ -305,6 +311,99 @@ def tripwires(out):
         phi_zero['everyPublishedBiteEndedAtItsTarget']
         and phi_zero['atMostOneUnpublishedAndItIsLast'])
 
+    # 5. **Actual-attempt reconciliation**, the economics round's FAST union
+    #    item, and the check the evidence audit's F4 says nothing performed.
+    #
+    #    `exactAttempts` counts *entries into the 4 um band*: it is incremented
+    #    before `attempt_publication`, which returns early on an unchanged pose
+    #    digest, and `publish::attempt` returns `None` on `max_g > band`,
+    #    `proxy > T` or `proxy > incumbent - 1 um`. Over the audit's nine fresh
+    #    10 s cells that was 2,780 band entries against 756 calls that reached
+    #    exact geometry - 73 % of the counter's increments never asked the exact
+    #    authorities anything - while the funnel's `exactAttempted` rung
+    #    reported a third number, 461, the count of BITES that attempted.
+    #
+    #    The split is emitted now, and this is the identity that keeps it
+    #    honest: the per-bite calls sum to the funnel's, which equals the work
+    #    vector's own `exactCheckpoints`, and no bite can have made more calls
+    #    than it made entries. If those ever disagree, one of the three sites is
+    #    counting something other than its name again.
+    funnel = outcome.get('funnel') or {}
+    work = outcome.get('work') or {}
+    per_bite_entries = sum(row.get('exactBandEntries', 0) for row in rows)
+    per_bite_calls = sum(row.get('exactCheckpointCalls', 0) for row in rows)
+    reconcile = {
+        'perBiteBandEntries': per_bite_entries,
+        'perBiteCheckpointCalls': per_bite_calls,
+        'funnelBandEntries': funnel.get('exactBandEntries'),
+        'funnelCheckpointCalls': funnel.get('exactCheckpointCalls'),
+        'workExactCheckpoints': work.get('exactCheckpoints'),
+        'legacyExactAttemptsKeptItsValue': (
+            sum(row.get('exactAttempts', 0) for row in rows) == per_bite_entries),
+        'callsNeverExceedEntriesPerBite': all(
+            row.get('exactCheckpointCalls', 0) <= row.get('exactBandEntries', 0)
+            for row in rows),
+        'bandEntriesRequireBandReached': all(
+            row.get('exactBandEntries', 0) == 0 or row.get('proxyBandReached')
+            for row in rows),
+        # The overclaim the rerun README recorded, measured on this cell rather
+        # than described: how many times the funnel's `exactAttempted` rung is
+        # off the number of calls it reads as.
+        'funnelBiteRungOverClaimRatio': (
+            None if not funnel.get('exactCheckpointCalls')
+            else funnel.get('exactAttempted') / funnel['exactCheckpointCalls']),
+        'bandEntriesThatNeverReachedExactGeometry':
+            per_bite_entries - per_bite_calls,
+    }
+
+    # **The per-bite currency, against the trajectory's own work vector.**
+    #
+    # This is the spec's ranked defect (1) - "persistent-slot leakage /
+    # double-debit ('stable but false' work accounting - the worst class this
+    # round has)" - as a driver check, and it is cheap enough to be a FAST
+    # stage. `PhaseProfile` charges each of the currency's five terms to the
+    # bite that spent it, by taking the delta of `work` around the tournament,
+    # the publication attempt and the disruption. If the per-bite deltas ever
+    # stopped summing to `work`'s own totals, work would be being charged
+    # twice, or to nobody, and every rate derived from it would be stable and
+    # false. The identity has to hold in every build, feature or no feature,
+    # because all five terms are counters.
+    profiles = [row.get('profile') or {} for row in rows]
+    currency = {
+        'perBiteSampleEvaluations': sum(p.get('sampleEvaluations', 0)
+                                        for p in profiles),
+        'workSampleEvaluations': work.get('sampleEvaluations'),
+        'perBiteRepairRows': sum(p.get('repairRows', 0) for p in profiles),
+        'workRepairRows': work.get('repairRows'),
+        'perBiteDisruptionMoves': sum(p.get('disruptionMoves', 0)
+                                      for p in profiles),
+        'workDisruptionMoves': work.get('disruptionMoves'),
+        'perBiteMasterBatches': sum(p.get('iterations', 0) for p in profiles),
+        'sweeps': outcome.get('sweeps'),
+        'masterIterations': sum(row.get('masterIterations', 0) for row in rows),
+        'profileIterationsMatchBiteRecords': all(
+            (row.get('profile') or {}).get('iterations')
+            == row.get('masterIterations') for row in rows),
+    }
+    currency['pass'] = bool(
+        currency['perBiteSampleEvaluations'] == currency['workSampleEvaluations']
+        and currency['perBiteRepairRows'] == currency['workRepairRows']
+        and currency['perBiteDisruptionMoves'] == currency['workDisruptionMoves']
+        and currency['perBiteMasterBatches'] == currency['sweeps']
+        and currency['perBiteMasterBatches'] == currency['masterIterations']
+        and currency['profileIterationsMatchBiteRecords'])
+    reconcile['perBiteCurrency'] = currency
+
+    reconcile['pass'] = bool(
+        reconcile['funnelBandEntries'] == per_bite_entries
+        and reconcile['funnelCheckpointCalls'] == per_bite_calls
+        and reconcile['workExactCheckpoints'] == per_bite_calls
+        and funnel.get('exactCheckpointCallsReconcile') is True
+        and reconcile['legacyExactAttemptsKeptItsValue']
+        and reconcile['callsNeverExceedEntriesPerBite']
+        and reconcile['bandEntriesRequireBandReached']
+        and currency['pass'])
+
     return {
         'stage': 'tripwires',
         'options': SEQUENCE,
@@ -312,9 +411,12 @@ def tripwires(out):
         'exactParentDrift': drift,
         'cutCloseBits': {'bites': cut, 'pass': bool(cut_pass)},
         'shrinkOnPhiZero': phi_zero,
+        'actualAttemptReconciliation': reconcile,
         'invalidPublications': outcome.get('invalidPublications'),
+        'sourcePath': f'{out}/cutclose-tripwires.json',
+        'sourceSha256': lib.source_sha256(f'{out}/cutclose-tripwires.json'),
         'pass': bool(neutered['pass'] and drift['pass'] and cut_pass
-                     and phi_zero['pass']
+                     and phi_zero['pass'] and reconcile['pass']
                      and outcome.get('invalidPublications') == 0),
     }
 
@@ -342,6 +444,10 @@ def main():
     document = {
         'experiment': 'overlap-ics',
         'battery': 'cutclose-fast-additions',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'binary': lib.BIN,
         'stagesRun': [row['stage'] for row in results],
         'stages': results,

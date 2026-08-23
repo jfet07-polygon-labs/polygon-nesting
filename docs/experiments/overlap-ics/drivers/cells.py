@@ -342,6 +342,10 @@ def main():
     document = {
         'experiment': 'overlap-ics',
         'battery': 'gate-0',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'binary': lib.BIN,
         'cells': results,
         'fatalFailures': fatal_failures,

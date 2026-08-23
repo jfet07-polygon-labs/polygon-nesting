@@ -1,0 +1,132 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-integration-armgate",
+ "baseBinary": "/tmp/w3-base/target/release/examples/overlap_ics_benchmark",
+ "newBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/target/release/examples/overlap_ics_benchmark",
+ "request": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-4/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "crossBinary": [
+  {
+   "cell": "A",
+   "argv": [
+    "--mode=fixed",
+    "--bites=8",
+    "--attempts=1",
+    "--iters=400",
+    "--compressbites=0",
+    "--workers=8",
+    "--seed=0"
+   ],
+   "baseExit": 0,
+   "newExit": 0,
+   "namedArmExit": 0,
+   "stderr": "",
+   "fieldsCompared": null,
+   "differences": [],
+   "differenceCount": 0,
+   "defaultArmIsControl": true,
+   "namingTheControlChangesNothing": true,
+   "frozenLiteralsIntact": true,
+   "pass": true
+  },
+  {
+   "cell": "B",
+   "argv": [
+    "--mode=fixed",
+    "--bites=21",
+    "--attempts=1",
+    "--iters=400",
+    "--compressbites=0",
+    "--workers=8",
+    "--seed=0"
+   ],
+   "baseExit": 0,
+   "newExit": 0,
+   "namedArmExit": 0,
+   "stderr": "",
+   "fieldsCompared": null,
+   "differences": [],
+   "differenceCount": 0,
+   "defaultArmIsControl": true,
+   "namingTheControlChangesNothing": true,
+   "frozenLiteralsIntact": true,
+   "pass": true
+  },
+  {
+   "cell": "C",
+   "argv": [
+    "--mode=fixed",
+    "--bites=21",
+    "--attempts=1",
+    "--iters=400",
+    "--compressbites=0",
+    "--workers=5",
+    "--seed=5"
+   ],
+   "baseExit": 0,
+   "newExit": 0,
+   "namedArmExit": 0,
+   "stderr": "",
+   "fieldsCompared": null,
+   "differences": [],
+   "differenceCount": 0,
+   "defaultArmIsControl": true,
+   "namingTheControlChangesNothing": true,
+   "frozenLiteralsIntact": true,
+   "pass": true
+  },
+  {
+   "cell": "D",
+   "argv": [
+    "--mode=fixed",
+    "--bites=3",
+    "--attempts=2",
+    "--iters=120",
+    "--compressbites=2",
+    "--workers=8",
+    "--seed=0",
+    "--fingerprints=1"
+   ],
+   "baseExit": 0,
+   "newExit": 0,
+   "namedArmExit": 0,
+   "stderr": "",
+   "fieldsCompared": null,
+   "differences": [],
+   "differenceCount": 0,
+   "defaultArmIsControl": true,
+   "namingTheControlChangesNothing": true,
+   "frozenLiteralsIntact": true,
+   "pass": true
+  }
+ ],
+ "twoProcess": [
+  {
+   "cell": "A",
+   "exitA": 0,
+   "exitB": 0,
+   "bitIdentical": true
+  },
+  {
+   "cell": "D",
+   "exitA": 0,
+   "exitB": 0,
+   "bitIdentical": true
+  }
+ ],
+ "treatmentArm": {
+  "exit": 0,
+  "stderr": "",
+  "armLabel": "treatment-work-strikes",
+  "explorePatience": "work",
+  "exploreQuantum": 1630000,
+  "compressQuantum": 815000,
+  "exploreIterationsWithoutImprovement": null,
+  "exploreStrikes": 3,
+  "compressStrikes": 5,
+  "pass": true
+ },
+ "failures": [],
+ "CONTROL_ARM_IS_THE_CLOSED_MEMBER": true,
+ "baseCommit": "883b297dce733c59128d7592b18172e19beda434",
+ "note": "The base binary is the example built at the round base 883b297 (the merge of wave 1 and wave 2b). Cell documents were written under /tmp and are not committed; the comparison is the artefact."
+}

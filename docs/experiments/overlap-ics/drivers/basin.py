@@ -74,6 +74,8 @@ def main():
     document = {'experiment': 'overlap-ics', 'battery': 'basin-sweep',
                 'lockedWmm': LOCKED_W_MM, 'proposalBudget': budget,
                 'jumpCommitRule': commit,
+                # RV3: every cell document this reduction spawned, by sha.
+                'cellSources': lib.MANIFEST,
                 'parent': 'S0 (the Sparrow correctness pin)', 'rows': rows}
     print(json.dumps(document, indent=1))
     with open(f'{out}/basin-{commit}.json', 'w') as handle:

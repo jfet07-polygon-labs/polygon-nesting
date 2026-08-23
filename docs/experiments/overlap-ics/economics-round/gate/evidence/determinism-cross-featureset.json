@@ -1,0 +1,164 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "two-binary-determinism",
+ "cellSources": [
+  {
+   "cell": "s0",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/s0-a.json",
+   "sha256": "5bce5598c5e786b07b9ebe383d8b153479bf17eada0f55a50bf44e9f750ddda2",
+   "bytes": 5362,
+   "exit": 0,
+   "binary": "target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "s0",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/s0-b.json",
+   "sha256": "3fddd46c67103ea51db6aec10f884867766042601655d53886c7a687569c7170",
+   "bytes": 5362,
+   "exit": 0,
+   "binary": "target/w4-stacked/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "s1",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/s1-a.json",
+   "sha256": "c9d050f4b95564461fa973652c7f6ee4f7d96a0c20dc3ea311d2b7045afc8180",
+   "bytes": 5677,
+   "exit": 0,
+   "binary": "target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "s1",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/s1-b.json",
+   "sha256": "299a0109576775942c8bc9e721032400fea6def767c5d44f841c28821b89c9f2",
+   "bytes": 5677,
+   "exit": 0,
+   "binary": "target/w4-stacked/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "c175",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/c175-a.json",
+   "sha256": "3a4a291633254e77476ed31e2628f15ff825824184c83d22836bea4692bf207e",
+   "bytes": 5851,
+   "exit": 0,
+   "binary": "target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "c175",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/c175-b.json",
+   "sha256": "9d3e51f7f9e2763ea2350f24eacc11688d0285b063d00a8a31804d05090828b3",
+   "bytes": 5844,
+   "exit": 0,
+   "binary": "target/w4-stacked/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "triangle",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/triangle-a.json",
+   "sha256": "7d2fb7d9bfb59d33c5b60d38223d063de3516b2ba2e6d22a634986d45e06ef96",
+   "bytes": 5716,
+   "exit": 0,
+   "binary": "target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "triangle",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/triangle-b.json",
+   "sha256": "d10e8bfd7ad1bd4fc3d604d12a50eff3e94c2f9415af4423640b1b77dfacaa4b",
+   "bytes": 5716,
+   "exit": 0,
+   "binary": "target/w4-stacked/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/cutclose-a.json",
+   "sha256": "6d14443e9fc9220c6245d35631f1cb70afb645bc41ac942abc8140767e62bebb",
+   "bytes": 297193,
+   "exit": 0,
+   "binary": "target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/w4det-cross/determinism/cutclose-b.json",
+   "sha256": "a25b5f30a96a62dbf77fb12e769b5ce46993157055bd7d4d0a807710c765567b",
+   "bytes": 297193,
+   "exit": 0,
+   "binary": "target/w4-stacked/release/examples/overlap_ics_benchmark"
+  }
+ ],
+ "binaryA": "target/release/examples/overlap_ics_benchmark",
+ "binaryB": "target/w4-stacked/release/examples/overlap_ics_benchmark",
+ "binaryASha256": "2c5da1ac5b7c7898de53a59983218fd3499ea797fdfa242b54a9ff7e5732b5cd",
+ "binaryBSha256": "a100542f50938ac70079eef1592b9f50cd1238a2333ca19ffdfd44ffe4f60d46",
+ "binariesDiffer": true,
+ "proposalBudget": 200000,
+ "strippedFields": [
+  "wall",
+  "executableSha256"
+ ],
+ "cells": [
+  {
+   "cell": "s0",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "3bd478b4f0de905d7b31b099550e5bdd52446382ec5ce7fe1aa1649f73197d7c",
+   "digestB": "3bd478b4f0de905d7b31b099550e5bdd52446382ec5ce7fe1aa1649f73197d7c",
+   "sourceShaA": "5bce5598c5e786b07b9ebe383d8b153479bf17eada0f55a50bf44e9f750ddda2",
+   "sourceShaB": "3fddd46c67103ea51db6aec10f884867766042601655d53886c7a687569c7170",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "s1",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "8d3be6f5bdeb33cb0c3bf37336f9f0a724a721e94478c5a5d39e541a09129abe",
+   "digestB": "8d3be6f5bdeb33cb0c3bf37336f9f0a724a721e94478c5a5d39e541a09129abe",
+   "sourceShaA": "c9d050f4b95564461fa973652c7f6ee4f7d96a0c20dc3ea311d2b7045afc8180",
+   "sourceShaB": "299a0109576775942c8bc9e721032400fea6def767c5d44f841c28821b89c9f2",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "c175",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "292f1eb1e76e14ca5ab73ad1232d6e49afd9fdb4a6a325d0af8d7eb736372a02",
+   "digestB": "292f1eb1e76e14ca5ab73ad1232d6e49afd9fdb4a6a325d0af8d7eb736372a02",
+   "sourceShaA": "3a4a291633254e77476ed31e2628f15ff825824184c83d22836bea4692bf207e",
+   "sourceShaB": "9d3e51f7f9e2763ea2350f24eacc11688d0285b063d00a8a31804d05090828b3",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "triangle",
+   "request": "triangle-20",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "846b6ae4fcc34db98a5e48afa51d326e38e572e7ddacf743630b0b87f085223d",
+   "digestB": "846b6ae4fcc34db98a5e48afa51d326e38e572e7ddacf743630b0b87f085223d",
+   "sourceShaA": "7d2fb7d9bfb59d33c5b60d38223d063de3516b2ba2e6d22a634986d45e06ef96",
+   "sourceShaB": "d10e8bfd7ad1bd4fc3d604d12a50eff3e94c2f9415af4423640b1b77dfacaa4b",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "cutclose",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "b5d27251c09cd12aee6b3bbffb6900c477d420a311e3a769d6c80390e28aeaf7",
+   "digestB": "b5d27251c09cd12aee6b3bbffb6900c477d420a311e3a769d6c80390e28aeaf7",
+   "sourceShaA": "6d14443e9fc9220c6245d35631f1cb70afb645bc41ac942abc8140767e62bebb",
+   "sourceShaB": "a25b5f30a96a62dbf77fb12e769b5ce46993157055bd7d4d0a807710c765567b",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  }
+ ],
+ "TWO_BINARY_IDENTICAL": true
+}

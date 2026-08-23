@@ -29,6 +29,16 @@ pub mod layout_scorer;
 /// docs/overlap-ics-converged-spec.md.
 #[cfg(feature = "overlap-ics")]
 pub mod overlap_ics;
+/// The economics round's meter primitives: the two-arm strike accounting, the
+/// calibrated-work currency `U`, and the pacer's unit bookkeeping. Compiled
+/// with `overlap_ics` because it reads that module's frozen classifier and
+/// literals; **nothing in `overlap_ics` names this module**, so none of it is
+/// on a trajectory until an integration diff puts it there. It is a sibling
+/// rather than a child because Sol review 19 §5 gives
+/// `search/overlap_ics/mod.rs` to one integration agent and forbids the
+/// parallel wave-2 agents from editing it - including to declare a child.
+#[cfg(feature = "overlap-ics")]
+pub mod overlap_ics_meter;
 pub mod placement_scorer;
 /// The anytime portfolio coordinator. Requires the deep operators, so it is
 /// compiled only where they are.

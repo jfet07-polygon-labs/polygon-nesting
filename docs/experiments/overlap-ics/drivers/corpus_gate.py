@@ -41,11 +41,18 @@ def main():
     document = {
         'experiment': 'overlap-ics',
         'battery': f'contact-corpus-{states}',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'binary': lib.BIN,
         'corpus': corpus,
         'verdict': verdict,
         'forceMisses': doc.get('forceMisses', [])[:16],
         'wallSeconds': wall,
+        # RV3: the cell document this reduction reduced.
+        'sourcePath': f'{out}/corpus-{states}.json',
+        'sourceSha256': lib.source_sha256(f'{out}/corpus-{states}.json'),
         'CORPUS_PASS': bool(verdict.get('pass')),
     }
     print(json.dumps(document, indent=1))

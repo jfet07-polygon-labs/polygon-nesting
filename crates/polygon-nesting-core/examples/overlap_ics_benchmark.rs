@@ -42,6 +42,12 @@ use polygon_nesting_core::search::overlap_ics::descent::{
 };
 use polygon_nesting_core::search::overlap_ics::diagnostics::WorkVector;
 use polygon_nesting_core::search::overlap_ics::homotopy;
+use polygon_nesting_core::search::overlap_ics::icscal::{
+    BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase, WorkPlan,
+};
+use polygon_nesting_core::search::overlap_ics::icscal_read::plan_from_bytes;
+use polygon_nesting_core::search::overlap_ics::profile::PhaseProfile;
+use polygon_nesting_core::search::overlap_ics::publish;
 use polygon_nesting_core::search::overlap_ics::publish::{
     placement_fingerprint, raw_depth_of, PublicationLimits,
 };
@@ -49,8 +55,15 @@ use polygon_nesting_core::search::overlap_ics::state::{
     piece_sources, Contract, ExactIncumbent, PieceSource, Pose,
 };
 use polygon_nesting_core::search::overlap_ics::{
-    poses_of, Budget, Engine, IcsConfig, IcsOutcome, InitialLayoutProvider, ScheduleConfig,
+    poses_of, Budget, Engine, IcsConfig, IcsOutcome, InitialLayoutProvider, Phase, ScheduleConfig,
     ScheduleOutcome,
+};
+use polygon_nesting_core::search::overlap_ics_meter::currency::{Currency, WorkTerms};
+use polygon_nesting_core::search::overlap_ics_meter::pacer::{
+    match_plan, NoClock, PlanMatch, WorkPlanPacer,
+};
+use polygon_nesting_core::search::overlap_ics_meter::strike_meter::{
+    frozen_literals_intact, Patience, StrikeConfig,
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -266,6 +279,361 @@ fn rejection_census_json(census: &RejectionCensus) -> Value {
     })
 }
 
+/// What `schedule_json` needs to make a layout re-validatable by a reader.
+///
+/// It is a borrowed bundle rather than four more parameters because the poses
+/// have to be turned back into request-coordinate placements, and the pieces
+/// and contract are only reached at all when `--revalidate=1` asks the emitter
+/// to recompute the depth it is printing.
+struct LayoutContext<'a> {
+    sources: &'a [PieceSource],
+    pieces: &'a [GeneralFastPiece<'a>],
+    contract: &'a Contract,
+    revalidate: bool,
+}
+
+/// The engine's own continuous poses. `mirrored` first-class, `thetaDeg`
+/// unwrapped: this is the array the engine installs, not a presentation of it.
+fn poses_json(poses: &[Pose]) -> Value {
+    Value::Array(
+        poses
+            .iter()
+            .map(|pose| {
+                json!({
+                    "txMm": pose.tx_mm,
+                    "tyMm": pose.ty_mm,
+                    "thetaDeg": pose.theta_deg,
+                    "mirrored": pose.mirrored,
+                })
+            })
+            .collect(),
+    )
+}
+
+/// The same layout in the request's own coordinates, in the shape a pose
+/// fixture is read in (`PoseFixture` above, and
+/// `docs/experiments/gate-a-sparrow-import/fixture/`). This is the form an
+/// external validator can push straight back through `raw_depth_of` and the
+/// contract validator.
+fn placements_json(placements: &[GeneralFastPlacement]) -> Value {
+    Value::Array(
+        placements
+            .iter()
+            .map(|placement| {
+                json!({
+                    "pieceId": placement.piece_id,
+                    "rotationDeg": placement.rotation_deg,
+                    "mirrored": placement.mirrored,
+                    "translateShortAxis": placement.translate_short_axis,
+                    "translateLongAxis": placement.translate_long_axis,
+                })
+            })
+            .collect(),
+    )
+}
+
+/// One bite's master-iteration phase census. All zeros - and `measured: false`
+/// - in a build without `ics-profile`, which is every build a gate reads.
+fn profile_json(profile: &PhaseProfile) -> Value {
+    json!({
+        "measured": profile.measured(),
+        "iterations": profile.iterations,
+        "barrierToBarrierNs": profile.barrier_to_barrier_ns,
+        "prepNs": profile.prep_ns,
+        "dispatchNs": profile.dispatch_ns,
+        "sweepCriticalNs": profile.sweep_critical_ns,
+        "sweepTotalNs": profile.sweep_total_ns,
+        "mergeGlsNs": profile.merge_gls_ns,
+        "exactNs": profile.exact_ns,
+        "bandFoldNs": profile.band_fold_ns,
+        "snapshotNs": profile.snapshot_ns,
+        "residualNs": profile.residual_ns(),
+        "bandEntries": profile.band_entries,
+        "exactCalls": profile.exact_calls,
+        "sampleEvaluations": profile.sample_evaluations,
+        "repairRows": profile.repair_rows,
+        "disruptionMoves": profile.disruption_moves,
+        "prepPlusDispatchNs": profile.prep_plus_dispatch_ns(),
+        "prepPlusDispatchShare": profile.prep_plus_dispatch_share(),
+    })
+}
+
+/// One profile, decomposed **as fractions of barrier-to-barrier**, which is
+/// the denominator the spec's 10 % clause names.
+///
+/// The seven named regions are not forced to sum to one. `residualShare` is
+/// whatever is left - `observe_raw`, the strike ladder's comparisons, the loop
+/// bookkeeping and the measurement's own overhead - and it is printed rather
+/// than distributed, because a decomposition that always adds up is usually a
+/// decomposition with a fudge term in it. `prepPlusDispatchShare` is the one
+/// number the executor gate reads, and this function does not compare it to
+/// anything: the threshold lives in the census driver, quoted from the spec.
+fn phase_census_json(profile: &PhaseProfile) -> Value {
+    let total = profile.barrier_to_barrier_ns;
+    let share = |value: u64| -> Value {
+        if total == 0 {
+            Value::Null
+        } else {
+            json!(value as f64 / total as f64)
+        }
+    };
+    let per_iteration = |value: u64| -> Value {
+        if profile.iterations == 0 {
+            Value::Null
+        } else {
+            json!(value as f64 / profile.iterations as f64)
+        }
+    };
+    json!({
+        "measured": profile.measured(),
+        "iterations": profile.iterations,
+        "barrierToBarrierNs": total,
+        "barrierToBarrierNsPerIteration": per_iteration(total),
+        "ns": {
+            "prep": profile.prep_ns,
+            "dispatch": profile.dispatch_ns,
+            "sweepCritical": profile.sweep_critical_ns,
+            "sweepTotal": profile.sweep_total_ns,
+            "mergeGls": profile.merge_gls_ns,
+            "exact": profile.exact_ns,
+            "bandFold": profile.band_fold_ns,
+            "snapshot": profile.snapshot_ns,
+            "residual": profile.residual_ns(),
+        },
+        "share": {
+            "prep": share(profile.prep_ns),
+            "dispatch": share(profile.dispatch_ns),
+            "sweepCritical": share(profile.sweep_critical_ns),
+            "mergeGls": share(profile.merge_gls_ns),
+            "exact": share(profile.exact_ns),
+            "bandFold": share(profile.band_fold_ns),
+            "snapshot": share(profile.snapshot_ns),
+            "residual": share(profile.residual_ns()),
+        },
+        "prepPlusDispatchNs": profile.prep_plus_dispatch_ns(),
+        "prepPlusDispatchShare": profile.prep_plus_dispatch_share(),
+        "bandEntries": profile.band_entries,
+        "exactCalls": profile.exact_calls,
+        // The five terms of the spec's currency, for this window alone. All
+        // counters, so they are populated in every build.
+        "currencyTerms": {
+            "sampleEvaluations": profile.sample_evaluations,
+            "masterBatches": profile.iterations,
+            "actualPublicationAttemptCalls": profile.exact_calls,
+            "repairRows": profile.repair_rows,
+            "disruptionMoves": profile.disruption_moves,
+        },
+        "sampleEvaluationsPerSecond": if total == 0 {
+            Value::Null
+        } else {
+            json!(profile.sample_evaluations as f64 / (total as f64 / 1e9))
+        },
+    })
+}
+
+/// The currency's five counted terms, in the currency's own field names.
+///
+/// One writer for all three of `charged`, `unchargedTail` and `trajectory`, so
+/// the three cannot be printed under names that do not line up - which is
+/// exactly the comparison the double-debit identity is read off.
+fn work_terms_json(terms: &WorkTerms) -> Value {
+    json!({
+        "sampleEvaluations": terms.sample_evaluations,
+        "masterBatches": terms.master_batches,
+        "actualPublicationAttemptCalls": terms.actual_publication_attempt_calls,
+        "repairRows": terms.repair_rows,
+        "disruptionMoves": terms.disruption_moves,
+    })
+}
+
+/// This executable's own sha256, the `binaryKey` half of an icscal file.
+///
+/// `None` rather than an empty string when the executable cannot be read, so
+/// the document keeps saying `null` exactly where it always has and
+/// `WorkPlan::validate` refuses a plan keyed to a binary nobody can name.
+fn executable_sha256() -> Option<String> {
+    env::current_exe()
+        .ok()
+        .and_then(|path| fs::read(path).ok())
+        .map(|bytes| format!("{:x}", Sha256::digest(&bytes)))
+}
+
+/// The features this binary was built with, in a fixed order, for the same key.
+fn build_features() -> Vec<String> {
+    let mut features = vec!["overlap-ics".to_owned()];
+    if cfg!(feature = "ics-profile") {
+        features.push("ics-profile".to_owned());
+    }
+    features
+}
+
+/// An `icscal/v1` plan derived from the **shelf** bite alone.
+///
+/// The rate is `sampleEvaluations / seconds` measured on bite 22, never on the
+/// cheap prefix: pre-named defect (3). The seconds are the shelf's own
+/// barrier-to-barrier wall when the profile measured one, and the whole
+/// search's wall otherwise - the latter is a *slower* rate because it includes
+/// the prefix, so a plan built without `ics-profile` under-promises rather
+/// than over-promising, and `derivation` says which of the two it was.
+///
+/// `compress` is Wave 3's addition and it is **additive**: passing `None`
+/// produces exactly the bytes Wave 1 wrote, which is why the census's
+/// committed plan is still the plan it was. A pacer needs both phases (a
+/// trajectory runs both), so a plan meant to be *spent* rather than merely
+/// recorded carries a compress rate measured on compress bites.
+#[allow(clippy::too_many_arguments)]
+fn shelf_work_plan(
+    request_sha256: &str,
+    executable_sha256: &str,
+    workers: usize,
+    outcome: &ScheduleOutcome,
+    shelf_index: usize,
+    shelf_ordinal: u64,
+    search_seconds: f64,
+    safety_factor: f64,
+    compress: Option<PhasePlan>,
+) -> Result<WorkPlan, String> {
+    let shelf = outcome
+        .bites
+        .get(shelf_index)
+        .ok_or_else(|| format!("no bite {} to calibrate on", shelf_index + 1))?;
+    let (seconds, units, derivation) = if shelf.profile.measured() {
+        (
+            shelf.profile.barrier_to_barrier_ns as f64 / 1e9,
+            // The shelf's OWN sample evaluations, not the trajectory's:
+            // `PhaseProfile` carries the currency's five terms per bite for
+            // exactly this reason. Nothing here is apportioned.
+            shelf.profile.sample_evaluations,
+            format!(
+                "trajectory bite {shelf_ordinal} (the 179 shelf) alone, {} master iterations, \
+                 barrier-to-barrier wall from the ics-profile timers, sampleEvaluations \
+                 charged to that bite. NOT the cheap 0.1 % prefix: spec defect (3).",
+                shelf.master_iterations
+            ),
+        )
+    } else {
+        (
+            search_seconds,
+            outcome.trace.work.sample_evaluations,
+            format!(
+                "whole {}-bite fixed-work trajectory wall; no ics-profile timers, so this \
+                 rate includes the cheap prefix and is deliberately slower than the shelf's",
+                outcome.bites.len()
+            ),
+        )
+    };
+    let mut phases = vec![PhasePlan::from_measurement(
+        PlanPhase::Explore,
+        units,
+        seconds,
+        safety_factor,
+        derivation,
+    )?];
+    phases.extend(compress);
+    Ok(WorkPlan::new(
+        PlanKey {
+            request_sha256: request_sha256.to_owned(),
+            currency_version: CurrencyVersion::U0Samples,
+            binary_key: BinaryKey {
+                executable_sha256: executable_sha256.to_owned(),
+                features: build_features(),
+            },
+            workers,
+            executor: Executor::EphemeralScope,
+        },
+        phases,
+        // **Not updated, on purpose.** This sentence is stale as a statement
+        // about the round - Wave 3 built both a reader and a pacer - but it is
+        // baked into `census/evidence/mixed61-w8-seed0.icscal.json`, and the
+        // committed bytes of a measurement are the measurement. Editing it
+        // would mean a re-run of `spawntax.py --icscal=` no longer reproduces
+        // the file the census recorded the sha256 of, which is a worse thing
+        // to be wrong about than a provenance line that names its own wave.
+        // The plan a pacer actually spends is written by `calibration_plan`
+        // below, and its provenance is current.
+        "docs/experiments/overlap-ics/economics-round/census/, the spawntax cell. \
+         Schema and writer only: this round builds no reader and no pacer.",
+    ))
+}
+
+/// **A two-phase plan measured on one wall trajectory: the calibration entry
+/// point a `--mode=calibrated` run spends.**
+///
+/// Each phase's rate is that phase's own `sampleEvaluations` - counters,
+/// charged per bite by `PhaseProfile`, so nothing is apportioned - over that
+/// phase's own wall, which the loop reports as `exploreSeconds` and
+/// `searchSeconds - exploreSeconds`. One blended rate would be the
+/// probe-on-cheap-bites defect wearing a different hat, which is why
+/// `PlanPhase` exists at all.
+///
+/// It is deliberately a **wall-mode** measurement, and that is not a leak: a
+/// rate is a statement about seconds and cannot be measured without a clock.
+/// The separation the spec asks for is between *this* process and the gated
+/// one, and it is total - the gated run reads bytes and constructs no
+/// `Instant` at all.
+fn calibration_plan(
+    request_sha256: &str,
+    executable_sha256: &str,
+    workers: usize,
+    outcome: &ScheduleOutcome,
+    safety_factor: f64,
+) -> Result<WorkPlan, String> {
+    let explore_seconds = outcome
+        .explore_seconds
+        .ok_or("a calibration needs a wall-mode trajectory: --mode=wall")?;
+    let search_seconds = outcome
+        .search_seconds
+        .ok_or("a calibration needs a wall-mode trajectory: --mode=wall")?;
+    let phase_units = |phase: &str| -> u64 {
+        outcome
+            .bites
+            .iter()
+            .filter(|row| row.phase.label() == phase)
+            .map(|row| row.profile.sample_evaluations)
+            .sum()
+    };
+    let phases = vec![
+        PhasePlan::from_measurement(
+            PlanPhase::Explore,
+            phase_units("explore"),
+            explore_seconds,
+            safety_factor,
+            format!(
+                "the explore phase of one wall trajectory: {} bites, sampleEvaluations charged \
+                 per bite by PhaseProfile, over the loop's own exploreSeconds",
+                outcome.explore_bites
+            ),
+        )?,
+        PhasePlan::from_measurement(
+            PlanPhase::Compress,
+            phase_units("compress"),
+            (search_seconds - explore_seconds).max(f64::MIN_POSITIVE),
+            safety_factor,
+            format!(
+                "the compress phase of the same wall trajectory: {} bites, over \
+                 searchSeconds - exploreSeconds",
+                outcome.compress_bites
+            ),
+        )?,
+    ];
+    Ok(WorkPlan::new(
+        PlanKey {
+            request_sha256: request_sha256.to_owned(),
+            currency_version: CurrencyVersion::U0Samples,
+            binary_key: BinaryKey {
+                executable_sha256: executable_sha256.to_owned(),
+                features: build_features(),
+            },
+            workers,
+            executor: Executor::EphemeralScope,
+        },
+        phases,
+        "overlap_ics_benchmark --cell=cutclose --mode=wall --icscal=<path>: the calibration \
+         entry point. Spend it with --mode=calibrated --plan=<path>, in a different process, \
+         which reads no clock.",
+    ))
+}
+
 fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
     json!({
         "incumbent": {
@@ -385,12 +753,28 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
 ///   `bitesStarted -> proxyBandReached -> exactAttempted -> dualValidPublished`.
 /// * `fingerprints` - present only under `--fingerprints=1`; the eight-worker
 ///   merge-determinism vector's whole subject.
-fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Value {
+///
+/// **Every publication and the incumbent now carry their layout.** The
+/// evidence audit's revalidation chapter closes on "no pose is recorded for any
+/// of the 1,701 publications ... re-validatable only by the process that
+/// produced them" (RV2). `placements` is the pose set in the request's own
+/// coordinates - the shape `sparrow_import_gate` and the `s0`/`s1`/`s2` cells
+/// read - so `raw_depth_of` and both exact authorities can be re-run on it by
+/// anyone. Under `--revalidate=1` this function re-runs the depth itself and
+/// prints whether the recomputation matched bit for bit; it is off by default
+/// because it happens between the loop's last clock read and `totalSeconds`,
+/// and `wall.py` brackets a publication's age with that difference.
+fn schedule_json(
+    outcome: &ScheduleOutcome,
+    constructor_fingerprint: &str,
+    layouts: &LayoutContext<'_>,
+) -> Value {
     let publications = outcome
         .publications
         .iter()
         .map(|row| {
-            json!({
+            let placements = publish::placements_of(layouts.sources, &row.poses);
+            let mut value = json!({
                 "ordinal": {
                     "bite": row.ordinal.bite,
                     "attempt": row.ordinal.attempt,
@@ -407,7 +791,22 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
                 "placementFingerprint": row.placement_fingerprint,
                 "improvedIncumbent": row.improved_incumbent,
                 "wallSeconds": row.wall_seconds,
-            })
+                // RV2. The repaired poses, and the placements they denote.
+                "poses": poses_json(&row.poses),
+                "placements": placements_json(&placements),
+            });
+            if layouts.revalidate {
+                let depth = raw_depth_of(layouts.pieces, &placements, layouts.contract);
+                value["revalidation"] = json!({
+                    "recomputedPlacementFingerprint": placement_fingerprint(&placements),
+                    "fingerprintMatches":
+                        placement_fingerprint(&placements) == row.placement_fingerprint,
+                    "recomputedRawDepthMm": depth,
+                    "depthMatchesBitwise": depth.to_bits()
+                        == row.published_raw_depth_mm.to_bits(),
+                });
+            }
+            value
         })
         .collect::<Vec<_>>();
     let bites = outcome
@@ -429,14 +828,51 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
                 "strikes": row.strikes,
                 "minRawPhi": if row.min_raw_phi.is_finite() { json!(row.min_raw_phi) } else { Value::Null },
                 "proxyBandReached": row.proxy_band_reached,
-                "exactAttempts": row.exact_attempts,
+                // **Unchanged value, unchanged name.** Every committed
+                // document and every audit script reads this key as the count
+                // of 4 um band entries, and it still is one. The two keys
+                // below are the split, not a replacement.
+                "exactAttempts": row.exact_band_entries,
+                // Audit F4. `exactBandEntries` is `exactAttempts` under the
+                // name of the thing it counts; `exactCheckpointCalls` is the
+                // number the funnel never had - how many times the exact
+                // authorities were actually asked.
+                "exactBandEntries": row.exact_band_entries,
+                "exactCheckpointCalls": row.exact_checkpoint_calls,
+                "profile": profile_json(&row.profile),
+                // **The two-arm gate's per-bite terms.** Both arms carry both
+                // patience counters, so the paired comparison is term by term
+                // rather than shape by shape. `strikeAccumulated` is the
+                // patience that had run out at each strike, summed;
+                // `strikeOvershoot` is the crossing batch's own cost, and
+                // `strikeAccumulated - strikeOvershoot` is what the spec's
+                // "overshoot <= one batch" clause bounds.
+                "strikeMeter": {
+                    "batches": row.strike_shadow.batches,
+                    "chargedWorkSampleEvaluations": row.strike_shadow.charged_work,
+                    "substantial": row.strike_shadow.substantial,
+                    "marginal": row.strike_shadow.marginal,
+                    "none": row.strike_shadow.none,
+                    "strikeAccumulated": row.strike_accumulated,
+                    "strikeOvershoot": row.strike_overshoot,
+                },
                 "published": row.published.is_some(),
             })
         })
         .collect::<Vec<_>>();
     // The funnel, summed. The failure license asks for exactly this row.
     let band_reached = outcome.bites.iter().filter(|row| row.proxy_band_reached).count();
-    let exact_attempted = outcome.bites.iter().filter(|row| row.exact_attempts > 0).count();
+    let exact_attempted = outcome
+        .bites
+        .iter()
+        .filter(|row| row.exact_band_entries > 0)
+        .count();
+    let band_entries: u64 = outcome.bites.iter().map(|row| row.exact_band_entries).sum();
+    let checkpoint_calls: u64 = outcome
+        .bites
+        .iter()
+        .map(|row| row.exact_checkpoint_calls)
+        .sum();
     json!({
         "startDepthMm": outcome.start_depth_mm,
         "depthMm": outcome.depth_mm,
@@ -446,10 +882,31 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
         "publications": publications,
         "publicationCount": outcome.publications.len(),
         "bites": bites,
+        // **The funnel, with the rung the audit says it never had.**
+        //
+        // F4: "the failure license's funnel `bitesStarted -> proxyBandReached
+        // -> exactAttempted -> dualValidPublished` has no rung that answers
+        // 'how many times were the exact authorities asked', the true number
+        // is `work.exactCheckpoints`, and `wall.py`'s reduction drops `work`
+        // entirely. The autopsy the failure license buys is being read off two
+        // numbers that are 0.6x and 3.7x the one it wants."
+        //
+        // `exactAttempted` keeps its value and its place, so every committed
+        // document stays comparable, and `bitesWithBandEntry` is the same
+        // number under the name of what it counts: BITES that entered the
+        // band, not attempts. The two sums beside it are the attempts and the
+        // calls. `exactCheckpointCallsReconcile` is the identity that makes
+        // the split checkable from the document alone.
         "funnel": {
             "bitesStarted": outcome.bites.len(),
             "proxyBandReached": band_reached,
             "exactAttempted": exact_attempted,
+            "bitesWithBandEntry": exact_attempted,
+            "exactBandEntries": band_entries,
+            "exactCheckpointCalls": checkpoint_calls,
+            "exactCheckpointCallsReconcile":
+                checkpoint_calls == outcome.trace.work.exact_checkpoints,
+            "workExactCheckpoints": outcome.trace.work.exact_checkpoints,
             "dualValidPublished": outcome.publications.len(),
         },
         "fingerprints": outcome.fingerprints.iter().map(|row| json!({
@@ -471,6 +928,8 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
             "fingerprintDiffersFromConstructor":
                 outcome.incumbent.placement_fingerprint != constructor_fingerprint,
             "placementCount": outcome.incumbent.placements.len(),
+            // RV2, for the number the README prints as the cell's answer.
+            "placements": placements_json(&outcome.incumbent.placements),
         },
         "proxy": {
             "rawPhi": outcome.final_raw_phi,
@@ -488,6 +947,38 @@ fn schedule_json(outcome: &ScheduleOutcome, constructor_fingerprint: &str) -> Va
         "work": work_json(&outcome.trace.work),
         "relocateEconomics": relocate_economics(&outcome.trace.work),
         "sweeps": outcome.trace.sweeps,
+        "strikeArm": outcome.strike_arm.arm(),
+        // **The calibrated plan's closing ledger**, or `null` when no plan was
+        // spending. `chargeIdentityHolds` is the spec's worst-ranked defect
+        // class as one boolean: the sum of the per-batch deltas plus the tail
+        // the last barrier did not see equals the trajectory's own five
+        // counters, so nothing was charged twice and nothing was charged to
+        // nobody.
+        "calibrated": match &outcome.calibrated {
+            None => Value::Null,
+            Some(row) => json!({
+                "exploreAllocationUnits": row.explore_allocation,
+                "compressAllocationUnits": row.compress_allocation,
+                "exploreConsumedUnits": row.explore_consumed,
+                "compressConsumedUnits": row.compress_consumed,
+                "exploreBatches": row.explore_batches,
+                "compressBatches": row.compress_batches,
+                // The overshoot clause's own numerator: `consumed -
+                // allocation` cannot exceed the batch that crossed.
+                "exploreCrossingBatchUnits": row.explore_crossing_batch_units,
+                "compressCrossingBatchUnits": row.compress_crossing_batch_units,
+                "charged": work_terms_json(&row.charged),
+                "unchargedTail": work_terms_json(&row.uncharged_tail),
+                "trajectory": work_terms_json(&row.trajectory),
+                "chargeIdentityHolds": row.charge_identity_holds,
+                "consumedUnits": row.consumed_units,
+                "consumedUnitsMatchCharged": row.consumed_units_match_charged,
+                "currencyVersion": row.currency_version.as_str(),
+                "budgetSeconds": row.budget_seconds,
+                "exploreRatio": row.explore_ratio,
+                "planKey": serde_json::to_value(&row.plan_key).unwrap_or(Value::Null),
+            }),
+        },
         "exactCheckpoints": outcome.trace.checkpoints.iter().map(|row| json!({
             "proposalOrdinal": row.proposal_ordinal,
             "targetDepthMm": row.target_depth_mm,
@@ -955,6 +1446,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         //   --cell=cutclose --mode=fixed --bites=8 --attempts=2 --iters=400
         //                   --compressbites=2 --workers=8 --seed=S
         //
+        // **The economics round adds one flag and one mode**, and neither
+        // changes anything unless it is named:
+        //
+        //   --arm=control|treatment       default `control`, the closed member
+        //   --mode=calibrated --plan=P    spend an `icscal/v1` plan, no clock
+        //   --icscal=P                    (on `--mode=wall`) write one
+        //
+        // `--arm` selects the strike policy and nothing else: the control is
+        // the frozen `200 / 3 / 100 / 5 / 0.98` read off `SeparateLimits`, the
+        // treatment is the KNOB quanta `1_630_000` / `815_000`. The default
+        // invocation - no `--arm` - is the control, so every committed cell
+        // and every existing driver call runs exactly the trajectory it
+        // always ran; `economics-round/integration/armgate.py` measures that
+        // against the round's base binary rather than asserting it.
+        //
+        // `--mode=calibrated` is the third budget. It reads a plan, refuses it
+        // by name if any key field disagrees with what this process is asking
+        // (request, currency, binary sha and features, workers, executor), and
+        // otherwise spends `--wall` seconds *of calibrated work* at the plan's
+        // own previously measured rate. It constructs no `Instant` at all - a
+        // miss is an exit status and never a fallback to measuring, because
+        // that fallback is the live probe the spec forbids. The extra guards:
+        //
+        //   --currency=U0|U1       what the runner is asking for; default U0
+        //   --calattempts=N        failed separations per width, 0 = unlimited
+        //
         // The clock starts on the **decoded bare request** (`started`, at the top
         // of `main`) and the constructor is charged against it but never capped -
         // arbitration 3, "a load-dependent start would break the determinism
@@ -975,12 +1492,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let constructor_fingerprint = placement_fingerprint(&placements);
             let mode = options.get("mode").unwrap_or("fixed").to_owned();
             let workers = options.integer("workers", 8)? as usize;
+            // **The arm, and nothing else about the arm.** `--arm=control` is
+            // the closed member: the frozen `200 / 3 / 100 / 5 / 0.98` read
+            // off `SeparateLimits` rather than restated here.
+            // `--arm=treatment` is the spec's work-denominated impatient
+            // policy at the KNOB quanta. The default is the control, so every
+            // committed cell and every existing driver invocation runs the
+            // trajectory it always ran.
+            let arm = options.get("arm").unwrap_or("control").to_owned();
+            let strikes = match arm.as_str() {
+                "control" => StrikeConfig::CONTROL,
+                "treatment" => StrikeConfig::TREATMENT,
+                other => {
+                    return Err(format!("--arm must be control|treatment, not `{other}`").into())
+                }
+            };
             let schedule = ScheduleConfig {
                 workers,
+                strikes,
                 record_fingerprints: options.integer("fingerprints", 0)? != 0,
                 ..ScheduleConfig::default()
             };
             let wall_budget_s = options.number("wall", 10.0)?;
+            // Built before the budget, because a calibrated budget moves into
+            // `run_cutclose` and a plan is worth printing whether or not the
+            // trajectory that spends it succeeds.
+            let mut plan_document = Value::Null;
             let budget = match mode.as_str() {
                 "wall" => {
                     // The clock started at the decoded request, not here.
@@ -995,7 +1532,106 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     attempts_per_bite: options.integer("attempts", 1)?,
                     iterations_per_separation: options.integer("iters", 400)?,
                 },
-                other => return Err(format!("--mode must be wall|fixed, not `{other}`").into()),
+                // **The 10-second calibrated work plan.** A file measured by
+                // some earlier process, read here, matched against what this
+                // process is actually asking, and spent in units. No clock is
+                // constructed anywhere on this path - not even to decide the
+                // budget, which is the plan's `--wall` seconds converted at
+                // the plan's own previously measured rate.
+                //
+                // A key that does not match is a **hard error**. There is no
+                // "measure it now" branch, because that branch is precisely
+                // the live probe on a gated trajectory the spec forbids.
+                "calibrated" => {
+                    let path = options
+                        .required("plan")
+                        .map_err(|_| "--mode=calibrated needs --plan=<icscal/v1 file>")?;
+                    let bytes = fs::read(path)
+                        .map_err(|error| format!("reading the plan `{path}`: {error}"))?;
+                    let plan = plan_from_bytes(&bytes)?;
+                    let wanted_currency = match options.get("currency").unwrap_or("U0") {
+                        "U0" => CurrencyVersion::U0Samples,
+                        "U1" => CurrencyVersion::U1Weighted,
+                        other => {
+                            return Err(format!("--currency must be U0|U1, not `{other}`").into())
+                        }
+                    };
+                    let wanted = PlanKey {
+                        request_sha256: request_sha256.clone(),
+                        currency_version: wanted_currency,
+                        binary_key: BinaryKey {
+                            executable_sha256: executable_sha256().unwrap_or_default(),
+                            features: build_features(),
+                        },
+                        workers,
+                        executor: Executor::EphemeralScope,
+                    };
+                    let verdict = match_plan(&wanted, &plan.key);
+                    if let PlanMatch::Miss(reason) = &verdict {
+                        return Err(format!(
+                            "the plan at `{path}` is not this run's plan: {reason}. \
+                             A miss is an answer, not a licence to measure one now: \
+                             calibrate offline and re-run."
+                        )
+                        .into());
+                    }
+                    let currency = match plan.currency {
+                        Some(coefficients) => Currency::u1(coefficients),
+                        None => Currency::U0,
+                    };
+                    let pacer = WorkPlanPacer::from_plan(
+                        &plan,
+                        &currency,
+                        wall_budget_s,
+                        schedule.explore_time_ratio,
+                        NoClock,
+                    )?;
+                    plan_document = json!({
+                        "path": path,
+                        "sourceSha256": format!("{:x}", Sha256::digest(&bytes)),
+                        "summary": plan.summary(),
+                        "currency": currency.summary(),
+                        "match": "hit",
+                        "wantedKey": serde_json::to_value(&wanted)?,
+                        "plan": serde_json::to_value(&plan)?,
+                        "budgetSeconds": wall_budget_s,
+                        "exploreRatio": schedule.explore_time_ratio,
+                        "exploreAllocationUnits": pacer.allocation(PlanPhase::Explore),
+                        "compressAllocationUnits": pacer.allocation(PlanPhase::Compress),
+                    });
+                    Budget::CalibratedWork {
+                        plan: Box::new(pacer),
+                        attempts_per_bite: options.integer("calattempts", 0)?,
+                    }
+                }
+                other => {
+                    return Err(format!(
+                        "--mode must be wall|fixed|calibrated, not `{other}`"
+                    )
+                    .into())
+                }
+            };
+            // The budget's own description, taken **before** it is spent: a
+            // calibrated budget carries a plan and moves into the trajectory.
+            let budget_json = match &budget {
+                Budget::FixedWork {
+                    explore_bites,
+                    compress_bites,
+                    attempts_per_bite,
+                    iterations_per_separation,
+                } => json!({
+                    "exploreBites": explore_bites,
+                    "compressBites": compress_bites,
+                    "attemptsPerBite": attempts_per_bite,
+                    "iterationsPerSeparation": iterations_per_separation,
+                }),
+                Budget::Wall { .. } | Budget::CalibratedWork { .. } => Value::Null,
+            };
+            let calibrated_attempts_per_bite = match &budget {
+                Budget::CalibratedWork {
+                    attempts_per_bite, ..
+                } => json!(attempts_per_bite),
+                _ => Value::Null,
             };
             let config = IcsConfig {
                 // Overridden by `from_constructor_at_depth` with `D*`; named here
@@ -1014,6 +1650,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 constructor_depth,
                 config,
             )?;
+            // **The offset between the two clocks, emitted rather than
+            // bracketed.**
+            //
+            // `PublishedBite.wallSeconds` is `Pacer::elapsed_s()` and the
+            // `Pacer` is constructed on the next line, inside
+            // `Engine::run_cutclose`; `--wall` is measured from the decoded
+            // request, which is `started`. The audit's F1/F2 are both about
+            // the gap between those two clocks, and until now the only way to
+            // bound it from the document was `constructorSeconds` below and
+            // `totalSeconds - searchSeconds` above - an upper bound that
+            // includes the whole document build, and therefore widens every
+            // time this driver emits more evidence.
+            //
+            // This is the offset itself, read one statement before the pacer
+            // exists: constructor, engine construction and nothing else. What
+            // it still cannot see is the call prologue and `Pacer::new`, tens
+            // of nanoseconds, so `constructorSeconds` stays the conservative
+            // LOWER bound and the verdict stays on that side.
+            let loop_entry_seconds = started.elapsed().as_secs_f64();
+            wall.insert("loopEntrySeconds".to_owned(), json!(loop_entry_seconds));
             let search_started = Instant::now();
             let outcome = engine.run_cutclose(schedule, budget);
             let search_seconds = search_started.elapsed().as_secs_f64();
@@ -1032,31 +1688,101 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "placementCount": placements.len(),
                 "lowerScaleMm": lower_scale_mm,
             });
+            // **The schedule block, and the two-arm gate's cell key.**
+            //
+            // The four `*IterationsWithoutImprovement` / `*Strikes` keys keep
+            // their names and, in the control arm, their exact values, so
+            // every committed document and every existing reduction reads
+            // them as it always did. In the treatment arm the iteration
+            // patience genuinely does not exist and the key is `null` rather
+            // than the control's literal: a document that reported `200` on an
+            // arm that never counts to 200 would be the one thing a paired
+            // comparison cannot survive.
+            let arm_rule = |phase: Phase| {
+                let rule = schedule.strikes.rule(phase);
+                let (kind, iterations, quantum) = match rule.patience {
+                    Patience::Iterations(limit) => ("iterations", json!(limit), Value::Null),
+                    Patience::Work(quantum) => ("work", Value::Null, json!(quantum)),
+                };
+                (kind, iterations, quantum, rule.strikes)
+            };
+            let (explore_kind, explore_iterations, explore_quantum, explore_strikes) =
+                arm_rule(Phase::Explore);
+            let (compress_kind, compress_iterations, compress_quantum, compress_strikes) =
+                arm_rule(Phase::Compress);
             document["schedule"] = json!({
                 "mode": mode,
                 "workers": workers,
-                "wallBudgetSeconds": if mode == "wall" { json!(wall_budget_s) } else { Value::Null },
-                "exploreTimeRatio": schedule.explore_time_ratio,
-                "exploreIterationsWithoutImprovement":
-                    schedule.explore.iterations_without_improvement,
-                "exploreStrikes": schedule.explore.strikes,
-                "compressIterationsWithoutImprovement":
-                    schedule.compress.iterations_without_improvement,
-                "compressStrikes": schedule.compress.strikes,
-                "recordFingerprints": schedule.record_fingerprints,
-                "fixedWork": match budget {
-                    Budget::FixedWork { explore_bites, compress_bites, attempts_per_bite,
-                                        iterations_per_separation } => json!({
-                        "exploreBites": explore_bites,
-                        "compressBites": compress_bites,
-                        "attemptsPerBite": attempts_per_bite,
-                        "iterationsPerSeparation": iterations_per_separation,
-                    }),
-                    Budget::Wall { .. } => Value::Null,
+                "wallBudgetSeconds": match mode.as_str() {
+                    "wall" | "calibrated" => json!(wall_budget_s),
+                    _ => Value::Null,
                 },
+                "exploreTimeRatio": schedule.explore_time_ratio,
+                "exploreIterationsWithoutImprovement": explore_iterations,
+                "exploreStrikes": explore_strikes,
+                "compressIterationsWithoutImprovement": compress_iterations,
+                "compressStrikes": compress_strikes,
+                "recordFingerprints": schedule.record_fingerprints,
+                "fixedWork": budget_json,
+                // ---------------------------------- the two-arm gate's key --
+                "arm": arm,
+                "armLabel": schedule.strikes.arm(),
+                "strikePolicy": {
+                    "explore": {
+                        "patience": explore_kind,
+                        "iterationsWithoutImprovement": explore_iterations,
+                        "workQuantumSampleEvaluations": explore_quantum,
+                        "strikes": explore_strikes,
+                    },
+                    "compress": {
+                        "patience": compress_kind,
+                        "iterationsWithoutImprovement": compress_iterations,
+                        "workQuantumSampleEvaluations": compress_quantum,
+                        "strikes": compress_strikes,
+                    },
+                    "improvingResetRatio": 0.98,
+                    // The tripwire on all six frozen numbers, evaluated by the
+                    // binary that ran rather than asserted by the reader.
+                    "frozenLiteralsIntact": frozen_literals_intact(),
+                },
+                "calibratedPlan": plan_document,
+                "calibratedAttemptsPerBite": calibrated_attempts_per_bite,
             });
-            document["outcome"] = schedule_json(&outcome, &constructor_fingerprint);
+            document["outcome"] = schedule_json(
+                &outcome,
+                &constructor_fingerprint,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    contract: &contract,
+                    revalidate: options.integer("revalidate", 0)? != 0,
+                },
+            );
             document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+
+            // **The calibration entry point.** A wall trajectory measures two
+            // per-phase rates and writes them; a `--mode=calibrated` run in a
+            // *different process* reads them and constructs no clock. The two
+            // halves never meet: this branch cannot spend a plan and the
+            // calibrated branch above cannot measure one.
+            if let Some(path) = options.get("icscal") {
+                let plan = calibration_plan(
+                    &request_sha256,
+                    &executable_sha256().unwrap_or_default(),
+                    workers,
+                    &outcome,
+                    options.number("icscalsafety", 0.80)?,
+                )?;
+                let bytes = plan.to_bytes()?;
+                fs::write(path, &bytes)?;
+                document["icscal"] = json!({
+                    "path": path,
+                    "summary": plan.summary(),
+                    "sha256": format!("{:x}", Sha256::digest(&bytes)),
+                    "plan": serde_json::to_value(&plan)?,
+                });
+            }
+
             // The first-bite canary's own clause, computed by the driver rather
             // than by the python that reads it, so the binary and the tripwire
             // cannot disagree about what `0.999 * D*` is.
@@ -1274,6 +2000,211 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     && total_rate >= 0.80,
             });
         }
+        // ------------------------------------------------ the profile census --
+        //
+        // **The spawn-tax cell.** docs/economics-round-spec.md funds a persistent
+        // executor only behind a measured gate: "profile easy + bite-22 hard
+        // states, workers 1/2/4/8, identical fixed work (prep, dispatch/join,
+        // sweeps, merge+GLS, exact/repair separately). Build iff prep+dispatch
+        // >= 10% of hard-state wall."
+        //
+        // The density is the whole point, and it is the spec's own pre-named
+        // defect (3): "probe-on-cheap-bites (calibrating on bites 1-21
+        // overstates iters/s ~1.5x; the probe is 400 iterations AT the 179
+        // shelf)". So this cell does not run bites 1-21 and time them. It runs
+        // the constructor, takes the 21 published 0.1 % bites that land the
+        // trajectory on the 179 shelf, and then spends `--probeiters` master
+        // iterations on the 22nd bite - the one that does not publish - with
+        // the phase clock running. Both halves are reported: the cheap prefix
+        // is the number the defect would have calibrated on, and printing it
+        // beside the shelf is how a reader sees the 1.5x rather than being
+        // told about it.
+        //
+        // The phase timers only exist under `--features ics-profile`. Without
+        // it this cell still runs and still reports work and iterations, and
+        // every duration is zero with `measured: false` beside it - which is a
+        // refusal to answer, not an answer of zero.
+        "spawntax" => {
+            let constructor_started = Instant::now();
+            let placements = ShortSideFirst.layout(&pieces, settings)?;
+            let constructor_seconds = constructor_started.elapsed().as_secs_f64();
+            wall.insert("constructorSeconds".to_owned(), json!(constructor_seconds));
+            let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+            let constructor_fingerprint = placement_fingerprint(&placements);
+            // **Two quotas, and two worker counts, on purpose.**
+            //
+            // The PREFIX is the audit's committed fixed-work replay exactly -
+            // `bites=21, attempts=1, iters=400` - and it always runs at the
+            // frozen eight workers, whatever `--workers` says. That is what
+            // makes the ladder a measurement: all four arms enter the shelf
+            // from the *identical* state, the 8-worker parent whose depth is
+            // 179.16566573285345 on seed 0, and only the probe's worker count
+            // differs. A prefix run at the arm's own worker count would enter
+            // four different states, and the 1/2/4/8 comparison would be a
+            // comparison of four layouts rather than of the machinery.
+            //
+            // The PROBE is a second `run_cutclose` on the same engine: one
+            // explore bite from the published shelf parent, `--probeiters`
+            // master iterations, one attempt. It is a fresh 0.1 % cut from the
+            // exact-valid incumbent, which is what a 22nd bite is.
+            let workers = options.integer("workers", 8)? as usize;
+            let prefix_workers = options.integer("prefixworkers", 8)? as usize;
+            let shelf_bites = options.integer("shelfbites", 21)?;
+            let prefix_iterations = options.integer("prefixiters", 400)?;
+            let probe_iterations = options.integer("probeiters", 200)?;
+            let record_fingerprints = options.integer("fingerprints", 0)? != 0;
+            let config = IcsConfig {
+                target_depth_mm: constructor_depth,
+                proposal_budget: 0,
+                relocate_eval_budget: u64::MAX,
+                checkpoint_every_sweeps: u64::MAX,
+                descent: descent_config(&options, &contract, &sources, seed)?,
+                limits: publication_limits(&options)?,
+            };
+            let mut engine = Engine::from_constructor_at_depth(
+                &pieces,
+                settings,
+                &placements,
+                constructor_depth,
+                config,
+            )?;
+            let prefix_started = Instant::now();
+            let prefix_outcome = engine.run_cutclose(
+                ScheduleConfig {
+                    workers: prefix_workers,
+                    record_fingerprints,
+                    ..ScheduleConfig::default()
+                },
+                Budget::FixedWork {
+                    explore_bites: shelf_bites,
+                    compress_bites: 0,
+                    attempts_per_bite: 1,
+                    iterations_per_separation: prefix_iterations,
+                },
+            );
+            let prefix_seconds = prefix_started.elapsed().as_secs_f64();
+            wall.insert("prefixSeconds".to_owned(), json!(prefix_seconds));
+            let search_started = Instant::now();
+            let outcome = engine.run_cutclose(
+                ScheduleConfig {
+                    workers,
+                    record_fingerprints,
+                    ..ScheduleConfig::default()
+                },
+                Budget::FixedWork {
+                    explore_bites: 1,
+                    compress_bites: 0,
+                    attempts_per_bite: 1,
+                    iterations_per_separation: probe_iterations,
+                },
+            );
+            let search_seconds = search_started.elapsed().as_secs_f64();
+            wall.insert("searchSeconds".to_owned(), json!(search_seconds));
+
+            let shelf_index = 0usize;
+            let prefix: Vec<&_> = prefix_outcome.bites.iter().collect();
+            let shelf = outcome.bites.first();
+            let mut cheap = PhaseProfile::default();
+            for row in &prefix {
+                cheap.add(&row.profile);
+            }
+            let hard = shelf.map(|row| row.profile).unwrap_or_default();
+            let published_prefix = prefix.iter().filter(|row| row.published.is_some()).count();
+            document["constructor"] = json!({
+                "rawSourceDepthMm": constructor_depth,
+                "placementFingerprint": constructor_fingerprint,
+                "placementCount": placements.len(),
+                "lowerScaleMm": lower_scale_mm,
+                "seconds": constructor_seconds,
+            });
+            document["spawnTax"] = json!({
+                "workers": workers,
+                "prefixWorkers": prefix_workers,
+                "shelfBites": shelf_bites,
+                "prefixIterations": prefix_iterations,
+                "probeIterations": probe_iterations,
+                "profileFeature": cfg!(feature = "ics-profile"),
+                // The prefix has to have done what it was asked to do before
+                // any duration below means anything: 21 bites, 21 publications,
+                // and the shelf depth the committed replay records.
+                "prefixBites": prefix.len(),
+                "prefixPublications": published_prefix,
+                "prefixAllPublished": published_prefix == prefix.len()
+                    && prefix.len() == shelf_bites as usize,
+                "prefixDepthMm": prefix_outcome.depth_mm,
+                "prefixFingerprint": prefix_outcome.incumbent.placement_fingerprint,
+                "shelfDepthMm": outcome.depth_mm,
+                "shelfEntryWidthMm": shelf.map(|row| row.bite.width_after_mm),
+                "shelfPublished": shelf.map(|row| row.published.is_some()),
+                "shelfIterations": shelf.map(|row| row.master_iterations),
+                "shelfStrikes": shelf.map(|row| row.strikes),
+                "shelfBandEntries": shelf.map(|row| row.exact_band_entries),
+                "shelfCheckpointCalls": shelf.map(|row| row.exact_checkpoint_calls),
+                // The two arms of the census. `cheapPrefix` is bites 1-21 -
+                // the window the pre-named probe defect would calibrate on -
+                // and `hardState` is the 22nd bite alone.
+                "cheapPrefix": phase_census_json(&cheap),
+                "hardState": phase_census_json(&hard),
+                "prefixPerBite": prefix_outcome.bites.iter().map(|row| json!({
+                    "ordinal": row.ordinal,
+                    "published": row.published.is_some(),
+                    "masterIterations": row.master_iterations,
+                    "widthAfterMm": row.bite.width_after_mm,
+                    "census": phase_census_json(&row.profile),
+                })).collect::<Vec<_>>(),
+                // The work each arm really did, so a reader can normalise the
+                // 1/2/4/8 ladder by work instead of by iteration count. At
+                // eight workers one master iteration buys eight sweeps.
+                // `work` is the engine's cumulative vector and therefore
+                // includes the prefix; the per-window currency terms inside
+                // `hardState` and `cheapPrefix` are the ones that do not.
+                "work": work_json(&outcome.trace.work),
+                "prefixWork": work_json(&prefix_outcome.trace.work),
+            });
+            document["outcome"] = schedule_json(
+                &outcome,
+                &constructor_fingerprint,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    contract: &contract,
+                    revalidate: options.integer("revalidate", 0)? != 0,
+                },
+            );
+            document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+
+            // **The icscal write path, exercised on a real measurement.**
+            //
+            // Schema and writer only, per the spec: no reader exists in this
+            // round and no pacer consumes this file. The currency is
+            // `U0-sample-evaluations`, which is what Wave 1 can honestly
+            // measure - the spec's `U` needs B/E/R/D from microbenchmarks that
+            // have not been run - and the rate is taken from the SHELF, never
+            // from the cheap prefix.
+            if let Some(path) = options.get("icscal") {
+                let plan = shelf_work_plan(
+                    &request_sha256,
+                    &executable_sha256().unwrap_or_default(),
+                    workers,
+                    &outcome,
+                    shelf_index,
+                    shelf_bites + 1,
+                    search_seconds,
+                    options.number("icscalsafety", 0.80)?,
+                    // Wave 1's plan, unchanged: the spawn-tax cell measures no
+                    // compress phase and its file must stay the bytes the
+                    // census committed.
+                    None,
+                )?;
+                fs::write(path, plan.to_bytes()?)?;
+                document["icscal"] = json!({
+                    "path": path,
+                    "summary": plan.summary(),
+                    "sha256": format!("{:x}", Sha256::digest(&plan.to_bytes()?)),
+                    "plan": serde_json::to_value(&plan)?,
+                });
+            }
+        }
         "throughput" => {
             let constructor_started = Instant::now();
             let placements = ShortSideFirst.layout(&pieces, settings)?;
@@ -1306,10 +2237,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json!(started.elapsed().as_secs_f64()),
     );
     document["wall"] = Value::Object(wall);
-    document["executableSha256"] = json!(env::current_exe()
-        .ok()
-        .and_then(|path| fs::read(path).ok())
-        .map(|bytes| format!("{:x}", Sha256::digest(&bytes))));
+    document["executableSha256"] = json!(executable_sha256());
+    document["buildFeatures"] = json!(build_features());
     println!("{}", serde_json::to_string_pretty(&document)?);
     Ok(())
 }

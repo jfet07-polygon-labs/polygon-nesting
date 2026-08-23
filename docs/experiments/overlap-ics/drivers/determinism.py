@@ -84,15 +84,46 @@ def main():
             'exitB': status_b,
             'digestA': lib.digest(first, STRIP),
             'digestB': lib.digest(second, STRIP),
+            # RV3: the two cell documents this row reduced, by sha. A
+            # two-BINARY comparison is the one place a reader most needs to be
+            # able to check which bytes each side actually read.
+            'sourceShaA': lib.source_sha256(f'{out}/{name}-a.json'),
+            'sourceShaB': lib.source_sha256(f'{out}/{name}-b.json'),
             'bitIdentical': same,
             'stderrA': err_a[-400:] if err_a else '',
             'stderrB': err_b[-400:] if err_b else '',
         })
+    # **Whether this battery compared two binaries at all.**
+    #
+    # The economics round ran it with `binary_b` built from the same source and
+    # the same feature set into a second `CARGO_TARGET_DIR`, and got a
+    # byte-identical executable: `2c5da1ac…` both sides. On a toolchain whose
+    # builds are reproducible that is the normal outcome, and it makes every
+    # row below **trivially** true - the comparison is a binary against itself,
+    # which is the "false-green tests (literals checked, transitions not)"
+    # shape the evidence audit's F9 names.
+    #
+    # It is not a reason to stop running this; a build that stopped being
+    # reproducible is worth knowing about too. It is a reason for the document
+    # to SAY which of the two things it measured, instead of letting
+    # `TWO_BINARY_IDENTICAL: true` be read as a cross-build claim when the two
+    # builds are one file. Additive fields only; no verdict depends on them.
+    sha_a, sha_b = lib.source_sha256(binary_a), lib.source_sha256(binary_b)
     document = {
         'experiment': 'overlap-ics',
         'battery': 'two-binary-determinism',
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'binaryA': binary_a,
         'binaryB': binary_b,
+        'binaryASha256': sha_a,
+        'binaryBSha256': sha_b,
+        # `false` means the two builds produced one executable, so the cells
+        # below re-prove single-binary determinism and nothing more.
+        'binariesDiffer': (None if sha_a is None or sha_b is None
+                           else sha_a != sha_b),
         'proposalBudget': budget,
         'strippedFields': STRIP,
         'cells': rows,

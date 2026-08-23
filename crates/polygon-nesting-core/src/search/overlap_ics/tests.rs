@@ -22,6 +22,9 @@ use super::state::{
     Pose,
 };
 use super::{Engine, IcsConfig};
+use crate::search::overlap_ics_meter::strike_meter::{
+    Patience, StrikeConfig, COMPRESS_WORK_QUANTUM, EXPLORE_WORK_QUANTUM,
+};
 
 fn polygon(points: &[[f64; 2]]) -> PolygonSet {
     PolygonSet::from_outer(
@@ -2664,8 +2667,27 @@ fn the_strike_caps_are_the_published_two_hundred_three_and_one_hundred_five() {
     assert_eq!(super::STRIKE_IMPROVEMENT_RATIO, 0.98);
     let default = ScheduleConfig::default();
     assert_eq!(default.workers, 8, "eight workers from the start");
-    assert_eq!(default.explore, SeparateLimits::EXPLORE);
-    assert_eq!(default.compress, SeparateLimits::COMPRESS);
+    // Wave 3 moved the two phases' limits inside the arm. The default arm is
+    // the control, and the control arm *is* the shipped `SeparateLimits`, so
+    // the assertion is the same sentence read through one more accessor.
+    assert_eq!(
+        default.strikes,
+        StrikeConfig::IterationStrikes {
+            explore: SeparateLimits::EXPLORE,
+            compress: SeparateLimits::COMPRESS,
+        },
+        "the default arm is the control, on the frozen literals"
+    );
+    assert_eq!(
+        default.strikes.rule(Phase::Explore).patience,
+        Patience::Iterations(200)
+    );
+    assert_eq!(default.strikes.rule(Phase::Explore).strikes, 3);
+    assert_eq!(
+        default.strikes.rule(Phase::Compress).patience,
+        Patience::Iterations(100)
+    );
+    assert_eq!(default.strikes.rule(Phase::Compress).strikes, 5);
     assert!(
         !default.record_fingerprints,
         "the wall run does not pay for the per-iteration record"
@@ -2825,4 +2847,415 @@ fn the_no_improvement_counter_pauses_on_a_marginal_minimum_and_resets_only_on_tw
     assert!(RawObservation::Substantial.is_new_minimum());
     assert!(RawObservation::Marginal.is_new_minimum());
     assert!(!RawObservation::None.is_new_minimum());
+}
+
+// ======================= the economics round's integration wave (Wave 3) ======
+//
+// docs/economics-round-spec.md funds three changes. Two of them are wired into
+// `run_cutclose` here and the third - the persistent executor - is not, because
+// its pre-committed gate said no (`economics-round/census/README.md`: largest
+// prep+dispatch share 5.082 % against a 10.000 % bar).
+//
+// These vectors prove the *wiring*. The primitives themselves are proved in
+// `search::overlap_ics_meter::` against independent references, and the claim
+// that the control arm is bit-identical to the pre-Wave-3 trajectory is a
+// **cross-binary** measurement that no in-process test can make:
+// `economics-round/integration/armgate.py` runs the round's base binary against
+// this one on four fixed-work cells.
+
+/// A calibrated plan for the tournament fixture: two phases, small enough that
+/// the vector runs in a debug build, keyed to nothing real.
+///
+/// The rates are chosen, not measured, and the plan says so in `derivation`.
+/// That is legitimate here and nowhere else: this is a test of the *pacer's*
+/// arithmetic, and a plan that had to be measured first would make the vector a
+/// test of the machine.
+fn test_plan(explore_units: u64, compress_units: u64) -> super::icscal::WorkPlan {
+    use super::icscal::{BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase};
+    super::icscal::WorkPlan::new(
+        PlanKey {
+            request_sha256: "a".repeat(64),
+            currency_version: CurrencyVersion::U0Samples,
+            binary_key: BinaryKey {
+                executable_sha256: "b".repeat(64),
+                features: vec!["overlap-ics".to_owned()],
+            },
+            workers: 8,
+            executor: Executor::EphemeralScope,
+        },
+        vec![
+            PhasePlan::from_measurement(
+                PlanPhase::Explore,
+                explore_units,
+                1.0,
+                1.0,
+                "a vector's chosen rate, not a measurement",
+            )
+            .expect("explore rate"),
+            PhasePlan::from_measurement(
+                PlanPhase::Compress,
+                compress_units,
+                1.0,
+                1.0,
+                "a vector's chosen rate, not a measurement",
+            )
+            .expect("compress rate"),
+        ],
+        "search::overlap_ics::tests",
+    )
+}
+
+/// One calibrated run of the twelve-square fixture: the strip that is
+/// infeasible by area, so `Φ` never reaches zero and the workers really are
+/// compared.
+fn calibrated_run(
+    explore_units: u64,
+    compress_units: u64,
+    strikes: StrikeConfig,
+) -> super::ScheduleOutcome {
+    use crate::search::overlap_ics_meter::currency::Currency;
+    use crate::search::overlap_ics_meter::pacer::{NoClock, WorkPlanPacer};
+
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = (0..pieces.len())
+        .map(|index| Pose {
+            tx_mm: 20.0 + (index % 4) as f64 * 22.0,
+            ty_mm: 20.0 + (index / 4) as f64 * 22.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        })
+        .collect::<Vec<_>>();
+    let config = IcsConfig {
+        target_depth_mm: 40.0,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: 40.0,
+        from_constructor: true,
+        placement_fingerprint: "the-constructor".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    let plan = test_plan(explore_units, compress_units);
+    let pacer = WorkPlanPacer::from_plan(&plan, &Currency::U0, 1.0, 0.8, NoClock)
+        .expect("the vector's plan must be spendable");
+    engine.run_cutclose(
+        ScheduleConfig {
+            workers: 2,
+            strikes,
+            record_fingerprints: true,
+            ..ScheduleConfig::default()
+        },
+        super::Budget::CalibratedWork {
+            plan: Box::new(pacer),
+            attempts_per_bite: 0,
+        },
+    )
+}
+
+/// The work-denominated arm sized for a twelve-square fixture rather than for
+/// the 179 shelf. **Not** the shipped treatment: `StrikeConfig::TREATMENT`
+/// carries `1_630_000` / `815_000`, a quantum that could never fire here, and
+/// that those are the frozen numbers is asserted separately and on every FAST
+/// run by `strike_meter::frozen_literals_intact`.
+const SMALL_WORK_ARM: StrikeConfig = StrikeConfig::WorkStrikes {
+    explore_quantum: 400,
+    compress_quantum: 200,
+    explore_strikes: 3,
+    compress_strikes: 5,
+};
+
+/// **Both arms are reachable from `ScheduleConfig`, and the selection reaches
+/// the trajectory.**
+///
+/// The spec's funded change 1 is a paired comparison of two runs of the same
+/// executor and pacer differing in strike semantics and nothing else. A field
+/// that selected an arm without changing what the trajectory does would make
+/// that comparison vacuous, so this drives one cell twice and requires the
+/// strike accounting to be denominated differently in the two documents.
+#[test]
+fn both_strike_arms_are_reachable_and_the_arm_reaches_the_trajectory() {
+    let control = calibrated_run(60_000, 15_000, StrikeConfig::CONTROL);
+    let treatment = calibrated_run(60_000, 15_000, SMALL_WORK_ARM);
+    assert_eq!(control.strike_arm.arm(), "control-iteration-strikes");
+    assert_eq!(treatment.strike_arm.arm(), "treatment-work-strikes");
+
+    // The control's patience is counted in batches, so what accumulates at a
+    // strike is a batch count: small. The treatment's is counted in sample
+    // evaluations: large. On a fixture where the treatment actually strikes,
+    // the two documents cannot be confused for one another.
+    let treatment_strikes: u32 = treatment.bites.iter().map(|row| row.strikes).sum();
+    let treatment_accumulated: u64 = treatment.bites.iter().map(|r| r.strike_accumulated).sum();
+    assert!(
+        treatment_accumulated >= 400,
+        "a 400-evaluation quantum must have run out at least once, and what accumulated \
+         is sample evaluations rather than batches: {treatment_accumulated} \
+         (strikes {treatment_strikes})"
+    );
+    // And the control, on the same cell, never reaches 200 no-improvement
+    // batches inside its unit allocation - so its strike count is zero and the
+    // arm is the only thing that produced the treatment's strikes.
+    let control_strikes: u32 = control.bites.iter().map(|row| row.strikes).sum();
+    let control_accumulated: u64 = control.bites.iter().map(|r| r.strike_accumulated).sum();
+    assert_eq!(
+        control_accumulated, 0,
+        "the control's 200-batch patience cannot be spent inside this allocation \
+         (strikes {control_strikes})"
+    );
+}
+
+/// **Both arms carry both patience counters**, which is what makes the spec's
+/// paired promotion comparison term by term rather than shape by shape.
+#[test]
+fn both_arms_carry_both_shadow_counters() {
+    for (label, outcome) in [
+        (
+            "control",
+            calibrated_run(60_000, 15_000, StrikeConfig::CONTROL),
+        ),
+        ("treatment", calibrated_run(60_000, 15_000, SMALL_WORK_ARM)),
+    ] {
+        for row in &outcome.bites {
+            let shadow = row.strike_shadow;
+            assert_eq!(
+                shadow.substantial + shadow.marginal + shadow.none,
+                shadow.batches,
+                "{label}: the three classes must partition the turns: {shadow:?}"
+            );
+            assert!(
+                shadow.batches >= row.master_iterations,
+                "{label}: every tournament is preceded by a classification, and the entry \
+                 turn is one more: {shadow:?} vs {} iterations",
+                row.master_iterations
+            );
+            // The meter is charged the batch that produced the reading it is
+            // classifying, so the last tournament of a separation is never
+            // charged to it. It can therefore never exceed the bite's own
+            // sample evaluations.
+            assert!(
+                shadow.charged_work <= row.profile.sample_evaluations,
+                "{label}: the meter cannot be charged work the bite did not do: {} vs {}",
+                shadow.charged_work,
+                row.profile.sample_evaluations
+            );
+        }
+    }
+}
+
+/// **The shipped arms are the ones the spec signed.**
+#[test]
+fn the_shipped_arms_are_the_ones_the_spec_signed() {
+    assert_eq!(
+        StrikeConfig::CONTROL,
+        StrikeConfig::IterationStrikes {
+            explore: SeparateLimits::EXPLORE,
+            compress: SeparateLimits::COMPRESS,
+        }
+    );
+    assert_eq!(
+        StrikeConfig::TREATMENT,
+        StrikeConfig::WorkStrikes {
+            explore_quantum: EXPLORE_WORK_QUANTUM,
+            compress_quantum: COMPRESS_WORK_QUANTUM,
+            explore_strikes: 3,
+            compress_strikes: 5,
+        }
+    );
+    assert_eq!(EXPLORE_WORK_QUANTUM, 1_630_000);
+    assert_eq!(COMPRESS_WORK_QUANTUM, 815_000);
+    assert_eq!(
+        StrikeConfig::TREATMENT.rule(Phase::Explore).patience,
+        Patience::Work(1_630_000)
+    );
+    assert_eq!(
+        StrikeConfig::TREATMENT.rule(Phase::Compress).patience,
+        Patience::Work(815_000)
+    );
+}
+
+/// **A calibrated trajectory reads no clock.**
+///
+/// `search_seconds` and `explore_seconds` are `Pacer::elapsed_s()`, and the
+/// calibrated arm returns `None` from it for the same reason the fixed-work arm
+/// does: there is no `Instant` in the arm to read. Every publication's
+/// `wall_seconds` is `None` for the same reason, which is what makes the
+/// two-process bit identity of a calibrated cell a proof rather than a
+/// coincidence.
+#[test]
+fn a_calibrated_trajectory_has_no_clock() {
+    let outcome = calibrated_run(60_000, 15_000, StrikeConfig::CONTROL);
+    assert!(outcome.search_seconds.is_none(), "a plan does not tick");
+    assert!(outcome.explore_seconds.is_none(), "nor at a phase boundary");
+    for row in &outcome.publications {
+        assert!(
+            row.wall_seconds.is_none(),
+            "a calibrated publication has no second to record: {row:?}"
+        );
+    }
+}
+
+/// **The charge is the delta, never the running total.**
+///
+/// The spec's ranked defect (1): *"persistent-slot leakage / double-debit
+/// ('stable but false' work accounting - the worst class this round has)"*, and
+/// Sol review 19 §5's pre-committed red/green: *"batch two's aggregate must
+/// equal the sum of the eight batch-two deltas, not cumulative slot totals"*.
+///
+/// The persistent executor the defect was named for does not exist - its gate
+/// said no - but the accounting it would have corrupted is now live, because a
+/// calibrated plan is spent out of exactly these numbers. So the identity is
+/// asserted against the trajectory's own work vector: what the plan charged,
+/// plus the tail after the last barrier, is what the engine counted. A pacer
+/// handed a cumulative reading would charge the whole trajectory on every batch
+/// and this sum would exceed the work vector by orders of magnitude.
+#[test]
+fn a_calibrated_plan_charges_deltas_and_they_sum_to_the_trajectory() {
+    let outcome = calibrated_run(60_000, 15_000, StrikeConfig::CONTROL);
+    let ledger = outcome
+        .calibrated
+        .as_ref()
+        .expect("a calibrated run must carry its ledger");
+    assert!(
+        ledger.charge_identity_holds,
+        "charged + tail must equal the trajectory: {ledger:?}"
+    );
+    assert!(
+        ledger.consumed_units_match_charged,
+        "the pacer's units and the currency of what it was handed must agree: {ledger:?}"
+    );
+    assert_eq!(
+        ledger.consumed_units, ledger.charged.sample_evaluations,
+        "under U0 a unit IS a sample evaluation, so the two are the same number"
+    );
+    // The engine's own counters are the third party here: the ledger is built
+    // by the pacer and this is read off `Trace`, so agreement is a fact about
+    // the wiring rather than about one accumulator.
+    assert_eq!(
+        ledger.charged.sample_evaluations + ledger.uncharged_tail.sample_evaluations,
+        outcome.trace.work.sample_evaluations,
+        "the base unit, against the engine's own counter"
+    );
+    assert_eq!(
+        ledger.charged.master_batches + ledger.uncharged_tail.master_batches,
+        outcome.trace.sweeps,
+        "every tournament is charged to exactly one batch"
+    );
+    assert_eq!(
+        ledger.charged.repair_rows + ledger.uncharged_tail.repair_rows,
+        outcome.trace.work.repair_rows
+    );
+    assert_eq!(
+        ledger.charged.actual_publication_attempt_calls
+            + ledger.uncharged_tail.actual_publication_attempt_calls,
+        outcome.trace.work.exact_checkpoints
+    );
+    // Every `charge_batch` call is one master batch, so the pacer's own batch
+    // counters and the currency's `master_batches` term are the same number
+    // reached two ways.
+    assert_eq!(
+        ledger.explore_batches + ledger.compress_batches,
+        ledger.charged.master_batches,
+        "the pacer counted a different number of batches than it charged: {ledger:?}"
+    );
+    assert!(
+        ledger.charged.master_batches > 0,
+        "the vector must actually have spent something: {ledger:?}"
+    );
+}
+
+/// **The plan is what stopped it, and it stopped at a boundary.**
+///
+/// Nothing here asserts an exact stopping point: batch costs vary, which is the
+/// whole reason the currency exists. What it does assert is that the 80/20 was
+/// spent in units at the plan's own rate, and that explore did not stop before
+/// its allocation was gone.
+#[test]
+fn a_calibrated_phase_spends_its_allocation_and_stops_at_a_barrier() {
+    let outcome = calibrated_run(60_000, 15_000, StrikeConfig::CONTROL);
+    let ledger = outcome.calibrated.as_ref().expect("ledger");
+    // 1.0 s of budget, 80/20: explore gets 0.8 s at 60,000 u/s and compress
+    // gets **the remainder**, at 15,000 u/s.
+    assert_eq!(ledger.explore_allocation, 48_000);
+    // 2,999 and not 3,000, and that is the correct number rather than a
+    // rounding wart. Compress takes `budget - explore`, which is what
+    // `Pacer::Wall` does - explore ends at `total * ratio` and compress runs to
+    // `total` - and `1.0 - 0.8` is `0.19999999999999996` in binary. The
+    // alternative, `budget * (1.0 - ratio)`, is not closer to the truth: it is
+    // the same error moved one operation earlier, and it would make the two
+    // pacers disagree about where a phase ends. `floor` then declines to spend
+    // a unit the rate did not promise.
+    assert_eq!(ledger.compress_allocation, 2_999);
+    assert_eq!(ledger.budget_seconds, 1.0);
+    assert_eq!(ledger.explore_ratio, 0.8);
+    assert!(
+        ledger.explore_consumed >= ledger.explore_allocation,
+        "explore ran until its units were spent: {ledger:?}"
+    );
+    // **Overshoot <= one batch**, the spec's clause, against the batch that
+    // actually crossed rather than against an average of them.
+    assert!(
+        ledger.explore_crossing_batch_units > 0,
+        "explore ended by spending its allocation, so a batch crossed it: {ledger:?}"
+    );
+    assert!(
+        ledger.explore_consumed - ledger.explore_allocation
+            <= ledger.explore_crossing_batch_units,
+        "explore overspent by more than the batch that crossed: {ledger:?}"
+    );
+    assert!(
+        outcome.explore_bites > 0 || !outcome.bites.is_empty(),
+        "the trajectory must have taken bites: {ledger:?}"
+    );
+}
+
+/// **Two calibrated runs of the same plan agree bit for bit.** The whole point
+/// of denominating a budget in work: quality is deterministic, wall is a
+/// distribution.
+#[test]
+fn two_calibrated_runs_of_the_same_plan_are_bit_identical() {
+    let first = calibrated_run(60_000, 15_000, StrikeConfig::CONTROL);
+    let second = calibrated_run(60_000, 15_000, StrikeConfig::CONTROL);
+    assert_eq!(
+        first.fingerprints.len(),
+        second.fingerprints.len(),
+        "a calibrated plan must stop at the same batch every time"
+    );
+    assert!(!first.fingerprints.is_empty(), "the cell must have run");
+    for (a, b) in first.fingerprints.iter().zip(&second.fingerprints) {
+        assert_eq!(a, b, "the master state diverged");
+    }
+    assert_eq!(first.depth_mm.to_bits(), second.depth_mm.to_bits());
+    assert_eq!(first.final_raw_phi.to_bits(), second.final_raw_phi.to_bits());
+    assert_eq!(first.calibrated, second.calibrated, "and the ledger too");
+}
+
+/// **The wall and fixed-work arms carry no ledger, and are unchanged.**
+///
+/// `None` is not "nothing was spent": it is "no plan was spending". A reduction
+/// that read a zeroed ledger off a fixed-work cell would be reading a plan that
+/// never existed.
+#[test]
+fn the_other_two_budgets_carry_no_calibrated_ledger() {
+    let pieces_owner = two_squares();
+    let pieces = pieces_owner.pieces();
+    let mut engine = banded_deficit_engine(&pieces, 60.0);
+    let run = engine.run_cutclose(
+        ScheduleConfig {
+            workers: 2,
+            ..ScheduleConfig::default()
+        },
+        TWO_BITES,
+    );
+    assert!(run.calibrated.is_none());
+    assert_eq!(run.strike_arm.arm(), "control-iteration-strikes");
 }

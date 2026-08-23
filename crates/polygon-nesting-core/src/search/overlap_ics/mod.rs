@@ -43,6 +43,16 @@
 //! descent.** Wall mode reads the deadline at a worker-sweep barrier
 //! (arbitration 2) and at a phase boundary, and nowhere else; fixed-work mode
 //! constructs no `Instant` at all and runs the identical trajectory code.
+//!
+//! The one qualification, added by the economics round's profile census and
+//! stated here rather than left for a reader of [`profile`] to discover: under
+//! the **`ics-profile`** cargo feature - off by default, off in the
+//! `overlap-ics` set every gate is measured on - `Engine::tournament` and
+//! `Engine::separate` read a clock around six named regions and add the
+//! nanoseconds to a [`profile::PhaseProfile`] that no engine decision ever
+//! reads. The audit's "an `Instant` appears in exactly one place" stays true of
+//! the shipped binary, and the census asserts the two builds' whole fixed-work
+//! documents against each other rather than asking to be believed.
 
 pub mod broad_phase;
 pub mod contact;
@@ -58,6 +68,18 @@ pub mod diagnostics;
 pub mod disrupt;
 pub mod energy;
 pub mod homotopy;
+/// The persisted calibrated-work plan's file format, and its writer.
+///
+/// Schema and write path only. The **reader** is [`icscal_read`], a separate
+/// compilation unit, because the spec's "read/write separate" is a layout rule
+/// and not a style note. See both module docs.
+pub mod icscal;
+/// The `icscal/v1` **reader**, and nothing else: no writer, no filesystem, no
+/// measurement. Wave 3.
+pub mod icscal_read;
+/// The master-iteration phase census behind the `ics-profile` feature.
+/// Measurement only; every field is zero in a default build.
+pub mod profile;
 pub mod publish;
 /// The routine move: Algorithm 5-6's global relocate of one colliding piece.
 pub mod relocate;
@@ -84,8 +106,13 @@ pub trait InitialLayoutProvider {
     ) -> Result<Vec<GeneralFastPlacement>, String>;
 }
 
+use crate::search::overlap_ics_meter::currency::WorkTerms;
+use crate::search::overlap_ics_meter::pacer::{NoClock, WorkPlanPacer};
+use crate::search::overlap_ics_meter::strike_meter::{ShadowCounters, StrikeConfig, StrikeMeter};
 use descent::{Descent, DescentConfig, SweepOutcome};
 use diagnostics::{ProxySample, QualityPoint, Trace, WorkVector};
+use icscal::PlanPhase;
+use profile::{ics_time, PhaseProfile};
 use publish::{Publication, PublicationLimits};
 use state::{
     build_geometry, pair_count, Contract, ExactIncumbent, Geometry, IcsState, PairRow, PieceSource,
@@ -643,31 +670,46 @@ impl<'a> Engine<'a> {
     /// `(weighted_loss, worker_ordinal)`. A digest between the two would only
     /// reorder exact ties by a hash, which is not more meaningful than the
     /// ordinal and costs a fingerprint per worker per iteration.
-    fn tournament(&mut self, workers: usize, bite: u64) -> (SweepOutcome, Merge) {
+    fn tournament(
+        &mut self,
+        workers: usize,
+        bite: u64,
+        profile: &mut PhaseProfile,
+    ) -> (SweepOutcome, Merge) {
         let workers = workers.max(1);
-        let mut slots: Vec<(IcsState, Descent, WorkVector)> = Vec::with_capacity(workers);
-        for ordinal in 0..workers {
-            let mut descent = self.descent.clone();
-            descent.set_stream(bite, ordinal as u64);
-            slots.push((self.state.clone(), descent, WorkVector::default()));
-        }
+        // **Step 1-2, and the first half of the spawn tax.** A persistent
+        // executor keeps these slots alive across iterations and refills them
+        // with `clone_from`; this loop allocates and clones eight of them every
+        // master iteration. `prep_ns` is what that costs, measured rather than
+        // asserted, and it is one of the two terms in the spec's 10 % clause.
+        let mut slots: Vec<Slot> = ics_time!(profile, prep_ns, {
+            let mut slots: Vec<Slot> = Vec::with_capacity(workers);
+            for ordinal in 0..workers {
+                let mut descent = self.descent.clone();
+                descent.set_stream(bite, ordinal as u64);
+                slots.push(Slot {
+                    state: self.state.clone(),
+                    descent,
+                    work: WorkVector::default(),
+                    sweep_ns: 0,
+                });
+            }
+            slots
+        });
 
         let sources: &[PieceSource] = &self.sources;
         let contract: &Contract = &self.contract;
         let mut outcomes: Vec<SweepOutcome> = Vec::with_capacity(workers);
+        #[cfg(feature = "ics-profile")]
+        let dispatch_started = std::time::Instant::now();
         if workers == 1 {
-            let (state, descent, work) = &mut slots[0];
-            outcomes.push(descent.worker_sweep(state, sources, contract, work));
+            let slot = &mut slots[0];
+            outcomes.push(slot.sweep(sources, contract));
         } else {
             std::thread::scope(|scope| {
                 let handles: Vec<_> = slots
                     .iter_mut()
-                    .map(|slot| {
-                        scope.spawn(move || {
-                            let (state, descent, work) = slot;
-                            descent.worker_sweep(state, sources, contract, work)
-                        })
-                    })
+                    .map(|slot| scope.spawn(move || slot.sweep(sources, contract)))
                     .collect();
                 // The barrier. Joined in ordinal order, so the vector is a
                 // function of the ordinals and not of who finished first.
@@ -676,44 +718,65 @@ impl<'a> Engine<'a> {
                 }
             });
         }
-
-        for (_, _, work) in &slots {
-            self.trace.work.saturating_add(work);
+        // **The second half of the spawn tax.** `std::thread::scope`'s whole
+        // wall minus the *critical-path* sweep is what thread creation, the
+        // scheduler placing eight threads on eight cores, and the join cost.
+        // At `workers == 1` no thread is created and this is zero by
+        // construction - which is what makes the 1/2/4/8 ladder a measurement
+        // of the tax rather than of the box.
+        #[cfg(feature = "ics-profile")]
+        {
+            let scope_ns = dispatch_started.elapsed().as_nanos() as u64;
+            let critical = slots.iter().map(|slot| slot.sweep_ns).max().unwrap_or(0);
+            let total: u64 = slots.iter().map(|slot| slot.sweep_ns).sum();
+            profile.sweep_critical_ns += critical;
+            profile.sweep_total_ns += total;
+            profile.dispatch_ns += scope_ns.saturating_sub(critical);
         }
 
-        let mut winner = 0usize;
-        for ordinal in 1..workers {
-            if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
-                winner = ordinal;
+        for slot in &slots {
+            self.trace.work.saturating_add(&slot.work);
+        }
+
+        // Steps 5-7: the ordinal merge, the install, and one Algorithm-8 pass.
+        // Timed as one region because a persistent executor changes none of it
+        // and the census must not be able to flatter the executor by counting
+        // merge work as dispatch work.
+        ics_time!(profile, merge_gls_ns, {
+            let mut winner = 0usize;
+            for ordinal in 1..workers {
+                if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
+                    winner = ordinal;
+                }
             }
-        }
-        let contested = outcomes
-            .iter()
-            .any(|other| other.totals.guided != outcomes[0].totals.guided);
-        let outcome = outcomes[winner];
-        let merge = Merge {
-            winner,
-            guided: outcome.totals.guided,
-            contested,
-        };
-        let (state, descent, _) = slots.swap_remove(winner);
-        self.state = state;
-        self.descent = descent;
-        self.trace.sweeps += 1;
+            let contested = outcomes
+                .iter()
+                .any(|other| other.totals.guided != outcomes[0].totals.guided);
+            let outcome = outcomes[winner];
+            let merge = Merge {
+                winner,
+                guided: outcome.totals.guided,
+                contested,
+            };
+            let slot = slots.swap_remove(winner);
+            self.state = slot.state;
+            self.descent = slot.descent;
+            self.trace.sweeps += 1;
 
-        // Step 7. One Algorithm-8 pass, on the master, over every row.
-        let active_rows = energy::gls_update(&mut self.state);
-        self.trace.work.weight_updates += 1;
-        let totals = energy::fold(&self.state);
-        (
-            SweepOutcome {
-                active_rows,
-                raw_after: totals.raw,
-                totals,
-                ..outcome
-            },
-            merge,
-        )
+            // Step 7. One Algorithm-8 pass, on the master, over every row.
+            let active_rows = energy::gls_update(&mut self.state);
+            self.trace.work.weight_updates += 1;
+            let totals = energy::fold(&self.state);
+            (
+                SweepOutcome {
+                    active_rows,
+                    raw_after: totals.raw,
+                    totals,
+                    ..outcome
+                },
+                merge,
+            )
+        })
     }
 
     // ------------------------------------------ Algorithm 9: one separation --
@@ -740,12 +803,41 @@ impl<'a> Engine<'a> {
     /// * **the rollback keeps the weights.** `tracker.rs::restore_but_keep_weights`:
     ///   the landscape a separation learned is not undone by a rollback inside
     ///   the same width. Only a width change resets it.
+    ///
+    /// # The two arms, and the one line that differs between them
+    ///
+    /// Wave 3 of docs/economics-round-spec.md replaces the inline strike ladder
+    /// with [`StrikeMeter`]. The ladder is unchanged - the same
+    /// [`observe_raw`], the same `min_raw`/`strike_entry_raw` seeding, the same
+    /// improving reset, the same cap - and the meter is a *transcription* of it
+    /// that the meter's own property vectors check against two independent
+    /// references. What the meter adds is that `patience_exhausted` is a
+    /// **property of the configuration** rather than a literal: the control arm
+    /// asks "200 batches without a 2 % improvement?" and the treatment arm asks
+    /// "1_630_000 sample evaluations of None-batches?", and those are the only
+    /// two sentences that differ between the arms. The classifier, the
+    /// snapshot, the rollback, the ladder and the tournament are shared code.
+    ///
+    /// The control arm is therefore **bit-identical to the pre-Wave-3
+    /// trajectory** and that is a cross-binary measurement, not a claim:
+    /// `economics-round/integration/armgate.py` runs the round's base binary
+    /// against this one on four fixed-work cells.
+    ///
+    /// # Where a calibrated plan is charged, and where it may stop
+    ///
+    /// Exactly at the barrier. `charge_batch` is called after the eight workers
+    /// have joined, on the delta of the trajectory's own five counters since
+    /// the previous charge - never on a cumulative reading, which is the
+    /// spec's worst-ranked defect ("double-debit") - and the verdict it returns
+    /// is consulted at the top of the *next* turn, beside the wall deadline.
+    /// So "stop only between master batches" is where the code can ask, not a
+    /// rule about when it chooses to.
     #[allow(clippy::too_many_arguments)]
     fn separate(
         &mut self,
         phase: Phase,
-        limits: SeparateLimits,
-        pacer: &Pacer,
+        strikes_config: StrikeConfig,
+        pacer: &mut Pacer,
         workers: usize,
         bite: u64,
         attempt: u64,
@@ -755,13 +847,35 @@ impl<'a> Engine<'a> {
         let band = self.config.limits.band_mm;
         let entry_raw = energy::fold(&self.state).raw;
         let mut snapshot = self.state.clone();
-        let mut min_raw = f64::INFINITY;
-        let mut strike_entry_raw = entry_raw;
-        let mut since_improvement = 0u64;
-        let mut strikes = 0u32;
+        let mut meter = StrikeMeter::for_phase(strikes_config, phase, entry_raw);
+        // The cost of the batch that produced the reading the next turn will
+        // classify. The entry turn was produced by no batch and charges `0`.
+        let mut batch_sample_evaluations = 0u64;
+        let mut strike_accumulated = 0u64;
+        let mut strike_overshoot = 0u64;
         let mut iterations = 0u64;
         let mut band_reached = false;
-        let mut exact_attempts = 0u64;
+        // The calibrated plan's verdict, taken at the previous barrier. A
+        // phase that was already spent when the separation opened stops before
+        // its first batch, which is what `entry_boundary` is for.
+        let mut plan_exhausted = pacer.phase_exhausted_at_entry(phase);
+        // **The two numbers the audit's F4 says the funnel was missing.**
+        //
+        // `exact_band_entries` is the counter round 1 shipped under the name
+        // `exact_attempts`: it is incremented when `max_g` falls inside the
+        // 4 µm band, *before* `attempt_publication` is called, and 73 % of its
+        // increments never reach exact geometry at all - the unchanged-pose
+        // digest returns early (`Engine::attempt_publication`), and
+        // `publish::attempt` returns `None` on `max_g > band`, `proxy > T` or
+        // `proxy > incumbent - 1 µm`. `exact_checkpoint_calls` is the delta of
+        // `work.exact_checkpoints`, which `publish::attempt` increments only
+        // once it is past all three gates: **the count of times the exact
+        // authorities were actually asked.** Neither is a rename of the other
+        // and the two are emitted side by side, because the funnel needs both
+        // rungs and had neither.
+        let mut exact_band_entries = 0u64;
+        let mut exact_checkpoint_calls = 0u64;
+        let mut profile = PhaseProfile::default();
         // The clock, read at the previous barrier. Wall mode refreshes it once
         // per master iteration and never inside one.
         let mut elapsed_s = pacer.elapsed_s();
@@ -769,66 +883,137 @@ impl<'a> Engine<'a> {
         let iteration_cap = pacer.iteration_cap();
 
         let stop = loop {
-            let totals = energy::fold(&self.state);
+            // **Barrier to barrier**: the master iteration the spec's 10 %
+            // clause is denominated in, opened here and closed at the bottom
+            // of the turn. Under `ics-profile` only.
+            #[cfg(feature = "ics-profile")]
+            let turn_started = std::time::Instant::now();
+            let totals = ics_time!(profile, band_fold_ns, energy::fold(&self.state));
             // The one transition, from the one place that owns it. A new
             // minimum inside the 2 % band moves the snapshot and leaves the
-            // counter where it is; only a 2 % improvement forgives it.
-            if observe_raw(totals.raw, &mut min_raw, &mut since_improvement).is_new_minimum() {
-                snapshot.clone_from(&self.state);
+            // counter where it is; only a 2 % improvement forgives it. The
+            // meter calls the frozen `observe_raw` and charges the batch that
+            // produced this reading to whichever patience counter its arm
+            // spends; both counters are maintained in both arms.
+            if meter
+                .observe(totals.raw, batch_sample_evaluations)
+                .is_new_minimum()
+            {
+                ics_time!(profile, snapshot_ns, snapshot.clone_from(&self.state));
             }
 
             if totals.max_violation_mm <= band {
                 band_reached = true;
-                exact_attempts += 1;
-                let outcome = self.attempt_publication();
+                exact_band_entries += 1;
+                profile.band_entries += 1;
+                let called_before = self.trace.work.exact_checkpoints;
+                let repaired_before = self.trace.work.repair_rows;
+                let outcome = ics_time!(profile, exact_ns, self.attempt_publication());
+                let called = self.trace.work.exact_checkpoints - called_before;
+                exact_checkpoint_calls += called;
+                profile.exact_calls += called;
+                profile.repair_rows += self.trace.work.repair_rows - repaired_before;
                 if let Some(publication) = outcome.publication {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     return SeparateOutcome {
                         published: Some(publication),
                         stop: SeparateStop::Published,
                         iterations,
-                        strikes,
-                        min_raw,
+                        strikes: meter.strikes(),
+                        min_raw: meter.min_raw(),
                         band_reached,
-                        exact_attempts,
+                        exact_band_entries,
+                        exact_checkpoint_calls,
+                        profile,
+                        strike_shadow: meter.shadow(),
+                        strike_accumulated,
+                        strike_overshoot,
                     };
                 }
                 if totals.raw <= 0.0 {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::Refused;
                 }
             }
 
-            if since_improvement >= limits.iterations_without_improvement {
-                restore_keeping_weights(&mut self.state, &snapshot);
+            // **The only match on the arm in the whole trajectory.** The
+            // rollback, the ladder and the cap below it are shared.
+            if meter.patience_exhausted() {
+                ics_time!(
+                    profile,
+                    snapshot_ns,
+                    restore_keeping_weights(&mut self.state, &snapshot)
+                );
                 // The improving strike: a strike that still beat the previous
                 // strike's entry by 2 % does not count against the cap.
-                if min_raw < STRIKE_IMPROVEMENT_RATIO * strike_entry_raw {
-                    strikes = 0;
-                } else {
-                    strikes += 1;
-                }
-                strike_entry_raw = min_raw;
-                since_improvement = 0;
-                if strikes >= limits.strikes {
+                let event = meter.strike();
+                strike_accumulated = strike_accumulated.saturating_add(event.accumulated);
+                strike_overshoot = strike_overshoot.saturating_add(event.crossing_batch);
+                if event.struck_out {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::Struck;
                 }
             }
 
             if let (Some(elapsed), Some(deadline)) = (elapsed_s, deadline_s) {
                 if elapsed >= deadline {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::Deadline;
                 }
             }
+            // The calibrated plan's own deadline, read from the verdict the
+            // previous barrier returned. Same stop, same place in the turn,
+            // and no clock: `Budget::CalibratedWork` cannot construct one.
+            if plan_exhausted {
+                #[cfg(feature = "ics-profile")]
+                {
+                    profile.barrier_to_barrier_ns += turn_started.elapsed().as_nanos() as u64;
+                }
+                break SeparateStop::Deadline;
+            }
             if let Some(cap) = iteration_cap {
                 if iterations >= cap {
+                    #[cfg(feature = "ics-profile")]
+                    {
+                        profile.barrier_to_barrier_ns +=
+                            turn_started.elapsed().as_nanos() as u64;
+                    }
                     break SeparateStop::WorkCap;
                 }
             }
 
-            let (_, merge) = self.tournament(workers, bite);
+            let samples_before = self.trace.work.sample_evaluations;
+            let (_, merge) = self.tournament(workers, bite, &mut profile);
             iterations += 1;
+            // The currency's two per-batch terms, counted rather than timed,
+            // so a build without `ics-profile` still carries them.
+            profile.iterations += 1;
+            batch_sample_evaluations = self.trace.work.sample_evaluations - samples_before;
+            profile.sample_evaluations += batch_sample_evaluations;
             // **The barrier.** This is the one clock read of a master
             // iteration, and it is after the eight workers have joined.
             elapsed_s = pacer.elapsed_s();
+            // **And the one charge.** The delta of the trajectory's own five
+            // counters since the previous barrier - never a cumulative
+            // reading. In wall and fixed-work mode this is a no-op that
+            // returns `false`.
+            plan_exhausted = pacer.charge_batch(phase, self.work_terms());
             if record_fingerprints {
                 fingerprints.push(IterationFingerprint {
                     bite,
@@ -840,22 +1025,57 @@ impl<'a> Engine<'a> {
                     state: state_fingerprint(&self.state),
                 });
             }
+            // Only a turn that reached the tournament is a *master iteration*;
+            // a turn that broke out above published, struck or ran out of
+            // budget without sweeping, and charging its wall to the iteration
+            // denominator would deflate every phase share. Its wall is still
+            // added to `barrier_to_barrier_ns`, so the shares stay honest
+            // about the whole separation.
+            #[cfg(feature = "ics-profile")]
+            {
+                profile.barrier_to_barrier_ns += turn_started.elapsed().as_nanos() as u64;
+            }
         };
 
         // Whatever stopped it, the state the caller receives is the best raw Φ
         // this separation reached - the pool entry, and the layout a disruption
         // will perturb.
-        if min_raw.is_finite() {
+        if meter.min_raw().is_finite() {
             restore_keeping_weights(&mut self.state, &snapshot);
         }
         SeparateOutcome {
             published: None,
             stop,
             iterations,
-            strikes,
-            min_raw,
+            strikes: meter.strikes(),
+            min_raw: meter.min_raw(),
             band_reached,
-            exact_attempts,
+            exact_band_entries,
+            exact_checkpoint_calls,
+            profile,
+            strike_shadow: meter.shadow(),
+            strike_accumulated,
+            strike_overshoot,
+        }
+    }
+
+    /// **The trajectory's own cumulative five-term work vector.**
+    ///
+    /// Every term is a counter that already exists and is already summed by
+    /// the engine, so a calibrated plan is charged out of the same numbers the
+    /// evidence documents print. `master_batches` is `Trace::sweeps`, which
+    /// [`Engine::tournament`] increments exactly once per master iteration.
+    ///
+    /// This is deliberately *cumulative*: the pacer takes the delta itself, in
+    /// one place, which is what makes "batch two's aggregate equals the sum of
+    /// its deltas" a property of the wiring rather than of the caller's care.
+    fn work_terms(&self) -> WorkTerms {
+        WorkTerms {
+            sample_evaluations: self.trace.work.sample_evaluations,
+            master_batches: self.trace.sweeps,
+            actual_publication_attempt_calls: self.trace.work.exact_checkpoints,
+            repair_rows: self.trace.work.repair_rows,
+            disruption_moves: self.trace.work.disruption_moves,
         }
     }
 
@@ -883,7 +1103,14 @@ impl<'a> Engine<'a> {
     pub fn run_cutclose(&mut self, schedule: ScheduleConfig, budget: Budget) -> ScheduleOutcome {
         let seed = self.config.descent.seed;
         let workers = schedule.workers.max(1);
-        let pacer = Pacer::new(budget, schedule.explore_time_ratio);
+        let strikes_config = schedule.strikes;
+        let mut pacer = Pacer::new(budget, schedule.explore_time_ratio);
+        // A calibrated plan charges deltas against the trajectory's own
+        // counters, and this engine may already carry some: `run_cutclose` is
+        // called twice on one engine by the spawn-tax cell. The cursor opens
+        // where the trajectory is now, so the plan is never charged for work
+        // it did not pace.
+        pacer.open_at(self.work_terms());
         let mut bites: Vec<BiteRecord> = Vec::new();
         let mut publications: Vec<PublishedBite> = Vec::new();
         let mut fingerprints: Vec<IterationFingerprint> = Vec::new();
@@ -930,7 +1157,12 @@ impl<'a> Engine<'a> {
                 strikes: 0,
                 min_raw_phi: f64::INFINITY,
                 proxy_band_reached: false,
-                exact_attempts: 0,
+                exact_band_entries: 0,
+                exact_checkpoint_calls: 0,
+                profile: PhaseProfile::default(),
+                strike_shadow: ShadowCounters::default(),
+                strike_accumulated: 0,
+                strike_overshoot: 0,
                 published: None,
             };
             let mut pool: Vec<PoolEntry> = Vec::new();
@@ -940,8 +1172,8 @@ impl<'a> Engine<'a> {
             loop {
                 let separation = self.separate(
                     Phase::Explore,
-                    schedule.explore,
-                    &pacer,
+                    strikes_config,
+                    &mut pacer,
                     workers,
                     bite_ordinal,
                     attempt,
@@ -950,7 +1182,10 @@ impl<'a> Engine<'a> {
                 );
                 record.master_iterations += separation.iterations;
                 record.strikes += separation.strikes;
-                record.exact_attempts += separation.exact_attempts;
+                record.exact_band_entries += separation.exact_band_entries;
+                record.exact_checkpoint_calls += separation.exact_checkpoint_calls;
+                record.profile.add(&separation.profile);
+                record.add_strike_accounting(&separation);
                 record.proxy_band_reached |= separation.band_reached;
                 record.min_raw_phi = record.min_raw_phi.min(separation.min_raw);
                 if let Some(publication) = separation.published {
@@ -985,6 +1220,7 @@ impl<'a> Engine<'a> {
                     ref descent,
                     ..
                 } = *self;
+                let moves_before = trace.work.disruption_moves;
                 let disruption = disrupt::disrupt(
                     state,
                     sources,
@@ -995,6 +1231,8 @@ impl<'a> Engine<'a> {
                     attempt,
                     &mut trace.work,
                 );
+                // The currency's `D` term, charged to the bite that paid it.
+                record.profile.disruption_moves += trace.work.disruption_moves - moves_before;
                 if disruption.fired {
                     record.disruptions += 1;
                 }
@@ -1040,6 +1278,9 @@ impl<'a> Engine<'a> {
             energy::reset_weights(&mut self.state);
             self.last_attempt_pose_digest = None;
             let step = pacer.compress_step(compress_bites, phase_started_s);
+            // The calibrated plan's decay is `time_based_step` of the consumed
+            // compress fraction, and it is read here, between bites, exactly
+            // where the wall mode reads its clock.
             let bite = homotopy::compress_bite(
                 &self.sources,
                 &mut self.state.poses,
@@ -1054,8 +1295,8 @@ impl<'a> Engine<'a> {
 
             let separation = self.separate(
                 Phase::Compress,
-                schedule.compress,
-                &pacer,
+                strikes_config,
+                &mut pacer,
                 workers,
                 bite_ordinal,
                 0,
@@ -1072,7 +1313,12 @@ impl<'a> Engine<'a> {
                 strikes: separation.strikes,
                 min_raw_phi: separation.min_raw,
                 proxy_band_reached: separation.band_reached,
-                exact_attempts: separation.exact_attempts,
+                exact_band_entries: separation.exact_band_entries,
+                exact_checkpoint_calls: separation.exact_checkpoint_calls,
+                profile: separation.profile,
+                strike_shadow: separation.strike_shadow,
+                strike_accumulated: separation.strike_accumulated,
+                strike_overshoot: separation.strike_overshoot,
                 published: None,
             };
             compress_bites += 1;
@@ -1101,7 +1347,7 @@ impl<'a> Engine<'a> {
         // ends as well as of its middle, and no reader can mistake an
         // interrupted child's proxy depth for progress. What that child reached
         // is not lost - every bite record carries its own `min_raw_phi`,
-        // `proxy_band_reached` and `exact_attempts`, which is the funnel row the
+        // `proxy_band_reached` and its two exact counters, which is the funnel row the
         // failure license asks for, and `final_width_mm` below is the target it
         // was reaching for.
         self.install_poses(&parent_poses, depth_mm);
@@ -1111,6 +1357,11 @@ impl<'a> Engine<'a> {
             .last()
             .map(|row| row.bite.width_after_mm)
             .unwrap_or(start_depth_mm);
+        // The plan's closing ledger, including the tail: everything the
+        // trajectory counted after the last barrier and therefore never
+        // charged. `charged + uncharged_tail` is the trajectory's own work
+        // vector, which is the double-debit identity written down.
+        let calibrated = pacer.close(self.work_terms());
         ScheduleOutcome {
             incumbent: self.incumbent.clone(),
             trace: self.trace.clone(),
@@ -1131,6 +1382,8 @@ impl<'a> Engine<'a> {
             rejection_census: self.descent.rejection_census().clone(),
             search_seconds: pacer.elapsed_s(),
             explore_seconds,
+            strike_arm: strikes_config,
+            calibrated,
         }
     }
 
@@ -1161,6 +1414,7 @@ impl<'a> Engine<'a> {
             improved_incumbent: self.incumbent.placement_fingerprint
                 == publication.placement_fingerprint,
             wall_seconds,
+            poses: publication.poses.clone(),
         }
     }
 }
@@ -1365,8 +1619,21 @@ pub struct ScheduleConfig {
     /// Round 2's remaining refusal is the one-worker version, and the 150.165
     /// log this regime is a test of is `--workers 8`.
     pub workers: usize,
-    pub explore: SeparateLimits,
-    pub compress: SeparateLimits,
+    /// **Which strike arm this trajectory runs.**
+    ///
+    /// docs/economics-round-spec.md funded change 1: the control arm is the
+    /// frozen literals `200 / 3 / 100 / 5 / 0.98`, the treatment arm is the
+    /// work-denominated impatient policy at the KNOB quanta `1_630_000` /
+    /// `815_000`, and *strike semantics are the only delta between the arms*.
+    /// This field is that delta, and the only one: the executor, the pacer,
+    /// the classifier, the ladder and the tournament are shared code.
+    ///
+    /// The default is [`StrikeConfig::CONTROL`], so a caller that says nothing
+    /// gets the member exactly as it was closed. The two phases' limits used
+    /// to be two fields here; they are inside the control variant now, still
+    /// read off [`SeparateLimits::EXPLORE`] and [`SeparateLimits::COMPRESS`],
+    /// because two places to write `200` is one place for them to drift.
+    pub strikes: StrikeConfig,
     /// The share of the post-constructor wall that belongs to exploration.
     pub explore_time_ratio: f64,
     /// Record a pose+weight fingerprint and a winning ordinal for **every**
@@ -1384,20 +1651,27 @@ impl Default for ScheduleConfig {
     fn default() -> Self {
         Self {
             workers: 8,
-            explore: SeparateLimits::EXPLORE,
-            compress: SeparateLimits::COMPRESS,
+            strikes: StrikeConfig::CONTROL,
             explore_time_ratio: homotopy::EXPLORE_TIME_RATIO,
             record_fingerprints: false,
         }
     }
 }
 
-/// **The two budgets, sharing one trajectory.**
+/// **The three budgets, sharing one trajectory.**
 ///
-/// The gate runs the wall arm; every FAST cell runs the fixed-work arm. They
-/// are the same code with the same schedule: the only difference is what stops
-/// a phase, and in the fixed-work arm nothing anywhere constructs an `Instant`.
-#[derive(Clone, Copy, Debug)]
+/// The reported curves run the wall arm; every FAST cell runs the fixed-work
+/// arm; the economics round's third funded change adds the calibrated-work
+/// arm. They are the same code with the same schedule: the only difference is
+/// what stops a phase, and in **two** of the three arms nothing anywhere
+/// constructs an `Instant`.
+///
+/// It is no longer `Copy`: [`Budget::CalibratedWork`] carries a plan, and a
+/// plan carries the sha256 and the feature list of the binary it was measured
+/// on. A caller that wants to print the budget after spending it prints it
+/// first - which is the right order anyway, because a spent plan's consumption
+/// is in [`ScheduleOutcome::calibrated`] and not here.
+#[derive(Debug)]
 pub enum Budget {
     /// Fixed work, no clock. Two processes agree bit for bit.
     FixedWork {
@@ -1418,6 +1692,36 @@ pub enum Budget {
     /// (arbitration 3 - a load-dependent start would break the determinism
     /// contract).
     Wall { remaining_seconds: f64 },
+    /// **The 10-second calibrated work plan.** No clock: two processes agree
+    /// bit for bit, exactly as [`Budget::FixedWork`] does, while the quantity
+    /// being counted down is a wall budget converted at a *previously
+    /// measured* rate.
+    ///
+    /// docs/economics-round-spec.md, funded change 3. The pacer is handed in
+    /// already built, because [`WorkPlanPacer::from_plan`] can refuse - a plan
+    /// for a different currency, a plan missing a phase, a budget that is not
+    /// a positive number of seconds - and a refusal belongs at the caller's
+    /// boundary where it can be reported, never inside a trajectory as a
+    /// panic. **The engine therefore cannot acquire a plan**: it cannot read a
+    /// file, it cannot measure a rate, and it cannot construct this variant
+    /// out of anything it holds. That is "read/write separate; no live probe
+    /// on a gated trajectory" as a type rather than as a rule.
+    ///
+    /// The wording the spec fixes: *"10-second calibrated work plan" - quality
+    /// deterministic, wall a distribution (no governor exists)*.
+    CalibratedWork {
+        plan: Box<WorkPlanPacer<NoClock>>,
+        /// **A termination guard, not a schedule knob.** `0` is unlimited,
+        /// which is what [`Budget::Wall`] does, and is the setting every gate
+        /// cell uses. A calibrated phase ends when its units are spent, and
+        /// every master batch spends some; but a separation that returns
+        /// without reaching a barrier - [`SeparateStop::Refused`] on its entry
+        /// state - spends nothing, and wall mode is protected from an
+        /// unbounded retry loop there only by a clock that this arm does not
+        /// have. Naming the guard is cheaper than proving the loop cannot
+        /// happen.
+        attempts_per_bite: u64,
+    },
 }
 
 /// Where a publication sat in the fixed-work coordinate system, so a wall run
@@ -1456,6 +1760,21 @@ pub struct PublishedBite {
     /// Seconds since the loop entered, in wall mode; `None` in fixed work.
     /// A publication whose seconds exceed a checkpoint does not count for it.
     pub wall_seconds: Option<f64>,
+    /// **The repaired layout itself.** The evidence audit's revalidation
+    /// chapter closes on this sentence: "No pose is recorded for any of the
+    /// 1,701 publications. `161.05499`, `163.56062`, `167.31508` and
+    /// `167.95169` are re-validatable only by the process that produced them."
+    /// They are recorded now.
+    ///
+    /// These are the **post-repair** poses - `Publication::poses`, the same
+    /// array `install_publication` installs - so
+    /// `placements_of(sources, &poses)` reproduces `Publication::placements`
+    /// exactly (`publish::attempt` re-derives the placements from the poses
+    /// after every repair row), and therefore reproduces both
+    /// `placement_fingerprint` and, through `raw_depth_of`,
+    /// `published_raw_depth_mm`. A reader with the request and this array can
+    /// re-run both exact authorities without the process that produced it.
+    pub poses: Vec<Pose>,
 }
 
 /// One bite, successful or not: the funnel row
@@ -1474,8 +1793,53 @@ pub struct BiteRecord {
     pub min_raw_phi: f64,
     /// `max_g` fell inside the 4 µm band at least once.
     pub proxy_band_reached: bool,
-    pub exact_attempts: u64,
+    /// **Entries into the 4 µm band**, not calls to the exact authorities.
+    /// This is the counter round 1 emitted as `exactAttempts`; the value is
+    /// unchanged and the name now says what it counts (audit F4).
+    pub exact_band_entries: u64,
+    /// **Calls that reached exact geometry.** Measured as the delta of
+    /// `work.exact_checkpoints`, so `sum(exact_checkpoint_calls)` over the
+    /// bites reconciles exactly with the work vector's own total, and
+    /// `exact_checkpoint_calls <= exact_band_entries` always.
+    pub exact_checkpoint_calls: u64,
+    /// Where this bite's master iterations went. All zeros without
+    /// `ics-profile`; never read by the engine.
+    pub profile: PhaseProfile,
+    /// **Both arms' patience counters, for the paired comparison.**
+    ///
+    /// The control arm carries the treatment's work counter and the treatment
+    /// carries the control's batch counter, because the spec's promotion
+    /// clause is a paired comparison of two runs that differ in one sentence,
+    /// and a comparison whose two documents do not carry the same terms is not
+    /// paired. Shadow only: nothing here is read by a decision.
+    pub strike_shadow: ShadowCounters,
+    /// The patience that had accumulated at each strike of this bite, summed:
+    /// batches in the control arm, sample evaluations in the treatment. The
+    /// evidence document's `strikeCost`.
+    pub strike_accumulated: u64,
+    /// The cost of the batch that crossed the threshold, summed over this
+    /// bite's strikes. `strike_accumulated - strike_overshoot` is strictly
+    /// below `strikes * quantum`, which **is** the spec's overshoot clause.
+    pub strike_overshoot: u64,
     pub published: Option<PublishedBite>,
+}
+
+impl BiteRecord {
+    fn add_strike_accounting(&mut self, separation: &SeparateOutcome) {
+        let shadow = separation.strike_shadow;
+        self.strike_shadow.batches += shadow.batches;
+        self.strike_shadow.charged_work =
+            self.strike_shadow.charged_work.saturating_add(shadow.charged_work);
+        self.strike_shadow.substantial += shadow.substantial;
+        self.strike_shadow.marginal += shadow.marginal;
+        self.strike_shadow.none += shadow.none;
+        self.strike_accumulated = self
+            .strike_accumulated
+            .saturating_add(separation.strike_accumulated);
+        self.strike_overshoot = self
+            .strike_overshoot
+            .saturating_add(separation.strike_overshoot);
+    }
 }
 
 /// The fingerprint of one master iteration: what the eight-worker merge
@@ -1534,6 +1898,72 @@ pub struct ScheduleOutcome {
     /// the caller's to report; both go in the evidence.
     pub search_seconds: Option<f64>,
     pub explore_seconds: Option<f64>,
+    /// Which strike arm ran. Emitted so that a paired document can never be
+    /// mislabelled by the driver that wrote it.
+    pub strike_arm: StrikeConfig,
+    /// The calibrated plan's ledger, or `None` in the wall and fixed-work
+    /// arms. `None` is not "nothing was spent": it is "no plan was spending".
+    pub calibrated: Option<CalibratedSummary>,
+}
+
+/// **What a calibrated plan spent, and what it did not charge.**
+///
+/// This is the spec's worst-ranked defect written as two identities a reader
+/// can check without the engine:
+///
+/// > batch two's aggregate == the sum of the eight batch-two deltas, **not**
+/// > cumulative slot totals.
+///
+/// * `charged + uncharged_tail == trajectory`, term by term. `charged` is
+///   built one delta at a time as the trajectory runs; `trajectory` is one
+///   subtraction of this run's two endpoints. They agree only while the cursor
+///   is advanced by `charge_batch` and by nothing else.
+/// * `currency(charged) == consumed_units`. The pacer's own scalars against
+///   the currency applied to the vector it was handed - two accumulations that
+///   never touch, so a batch charged to the wrong phase or a saturating add
+///   shows up as a disagreement instead of as a plausible number.
+///
+/// If either stopped holding, work would be being charged twice, or to nobody,
+/// and every rate derived from it would be stable and false.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CalibratedSummary {
+    pub explore_allocation: u64,
+    pub compress_allocation: u64,
+    pub explore_consumed: u64,
+    pub compress_consumed: u64,
+    pub explore_batches: u64,
+    pub compress_batches: u64,
+    /// **The spec's overshoot clause, as a number rather than a mean.**
+    ///
+    /// The units of the batch that first spent the phase's allocation, or `0`
+    /// if the phase ended some other way. `consumed - allocation` can never
+    /// exceed it, because the verdict is only read at a barrier and the phase
+    /// stops at the next one.
+    pub explore_crossing_batch_units: u64,
+    pub compress_crossing_batch_units: u64,
+    /// Every delta the pacer charged, summed. Its `master_batches` is the
+    /// number of times `charge_batch` was called.
+    pub charged: WorkTerms,
+    /// What the trajectory counted after the last barrier and therefore never
+    /// charged: the closing publication commit, the final restore, and - when
+    /// a phase ended between separations - a disruption.
+    pub uncharged_tail: WorkTerms,
+    /// **This trajectory's own five counters**, as one subtraction of its two
+    /// endpoints - the opening reading and the closing one. It does not pass
+    /// through the per-batch accumulation, which is the whole point: it is the
+    /// other side of the identity, not a restatement of it.
+    pub trajectory: WorkTerms,
+    /// `charged + uncharged_tail == trajectory`, term by term.
+    pub charge_identity_holds: bool,
+    /// `explore_consumed + compress_consumed`: what the pacer believes it
+    /// spent, in units.
+    pub consumed_units: u64,
+    /// `currency(charged) == consumed_units`: the second identity.
+    pub consumed_units_match_charged: bool,
+    pub plan_key: icscal::PlanKey,
+    pub currency_version: icscal::CurrencyVersion,
+    pub budget_seconds: f64,
+    pub explore_ratio: f64,
 }
 
 /// Why a separation stopped.
@@ -1565,6 +1995,42 @@ struct Merge {
     contested: bool,
 }
 
+/// One competitive worker's private world for one master iteration.
+///
+/// It was an anonymous `(IcsState, Descent, WorkVector)` triple until the
+/// profile census needed somewhere to put a per-worker duration that is
+/// **written by the worker thread itself**, before the join, so that the
+/// critical-path sweep can be separated from the dispatch that surrounds it.
+/// Naming the triple is the whole change; the contents, the ordering and the
+/// merge are untouched.
+struct Slot {
+    state: IcsState,
+    descent: Descent,
+    work: WorkVector,
+    /// Nanoseconds this worker spent inside `worker_sweep`. Written only under
+    /// `ics-profile`; one `u64` in an already-allocated vector otherwise, and
+    /// read by nothing the engine decides on.
+    #[cfg_attr(not(feature = "ics-profile"), allow(dead_code))]
+    sweep_ns: u64,
+}
+
+impl Slot {
+    /// Step 3: one complete sequential relocate sweep, in this worker's own
+    /// state, descent and work vector.
+    fn sweep(&mut self, sources: &[PieceSource], contract: &Contract) -> SweepOutcome {
+        #[cfg(feature = "ics-profile")]
+        let started = std::time::Instant::now();
+        let outcome = self
+            .descent
+            .worker_sweep(&mut self.state, sources, contract, &mut self.work);
+        #[cfg(feature = "ics-profile")]
+        {
+            self.sweep_ns = started.elapsed().as_nanos() as u64;
+        }
+        outcome
+    }
+}
+
 struct SeparateOutcome {
     published: Option<Publication>,
     stop: SeparateStop,
@@ -1572,7 +2038,19 @@ struct SeparateOutcome {
     strikes: u32,
     min_raw: f64,
     band_reached: bool,
-    exact_attempts: u64,
+    /// Turns that entered the 4 µm band. Round 1's `exact_attempts`, renamed
+    /// for what it counts (audit F4).
+    exact_band_entries: u64,
+    /// Band entries that reached exact geometry: the delta of
+    /// `work.exact_checkpoints` across `attempt_publication`.
+    exact_checkpoint_calls: u64,
+    profile: PhaseProfile,
+    /// Both arms' patience counters. Shadow only.
+    strike_shadow: ShadowCounters,
+    /// Patience accumulated at each strike of this separation, summed.
+    strike_accumulated: u64,
+    /// The crossing batch's cost at each strike, summed: the overshoot.
+    strike_overshoot: u64,
 }
 
 /// One entry of the least-infeasible pool.
@@ -1641,6 +2119,29 @@ enum Pacer {
         explore_deadline_s: f64,
         total_s: f64,
     },
+    /// **The calibrated plan.** Units in at every barrier, a verdict out, and
+    /// no clock anywhere - `elapsed_s` and `deadline_s` are `None` here for
+    /// the same reason they are `None` in [`Pacer::FixedWork`].
+    Calibrated {
+        plan: Box<WorkPlanPacer<NoClock>>,
+        attempts_per_bite: u64,
+        /// The trajectory's cumulative five counters at the previous charge.
+        /// **The one subtraction in the wiring**, so no caller can hand the
+        /// pacer a running total by mistake.
+        cursor: WorkTerms,
+        /// Where the cursor started. Kept beside it so that the closing ledger
+        /// can reach this trajectory's work by a route that does not pass
+        /// through the per-batch accumulation it is checking.
+        opened_at: WorkTerms,
+        charged: WorkTerms,
+        /// The units of the batch that first spent a phase's allocation, per
+        /// phase, `0` while the phase still has room. It is the numerator of
+        /// the spec's *"overshoot <= one batch"* clause, and emitting it is
+        /// what makes that clause checkable from the document instead of
+        /// being asserted about a mean.
+        explore_crossing_batch_units: u64,
+        compress_crossing_batch_units: u64,
+    },
 }
 
 impl Pacer {
@@ -1667,20 +2168,151 @@ impl Pacer {
                     total_s,
                 }
             }
+            Budget::CalibratedWork {
+                plan,
+                attempts_per_bite,
+            } => Pacer::Calibrated {
+                plan,
+                attempts_per_bite,
+                opened_at: WorkTerms::default(),
+                cursor: WorkTerms::default(),
+                charged: WorkTerms::default(),
+                explore_crossing_batch_units: 0,
+                compress_crossing_batch_units: 0,
+            },
+        }
+    }
+
+    /// Open the charging cursor where the trajectory already is.
+    ///
+    /// One engine may run more than one `run_cutclose` - the spawn-tax cell
+    /// runs a prefix and then a probe - and `Trace` is cumulative across both.
+    /// Without this the second trajectory's first batch would be charged for
+    /// the whole of the first one, which is the double-debit defect arriving
+    /// by the front door.
+    fn open_at(&mut self, now: WorkTerms) {
+        if let Pacer::Calibrated {
+            opened_at, cursor, ..
+        } = self
+        {
+            *opened_at = now;
+            *cursor = now;
+        }
+    }
+
+    /// The plan's ledger, and the tail it never charged. `None` unless a plan
+    /// was spending.
+    fn close(&self, now: WorkTerms) -> Option<CalibratedSummary> {
+        let Pacer::Calibrated {
+            plan,
+            opened_at,
+            cursor,
+            charged,
+            explore_crossing_batch_units,
+            compress_crossing_batch_units,
+            ..
+        } = self
+        else {
+            return None;
+        };
+        let uncharged_tail = now.since(cursor);
+        // **Two independent routes to the same vector.** `charged` was built
+        // batch by batch, adding one delta at a time; `trajectory` is a single
+        // subtraction of this trajectory's two endpoints, and `now` is
+        // cumulative over the whole engine so the opening reading has to come
+        // off it. They agree only while the cursor is advanced by
+        // `charge_batch` and by nothing else - the moment some other line
+        // moves it, or a batch is charged from a stale reading, the sum stops
+        // telescoping and this goes red.
+        let trajectory = now.since(opened_at);
+        let mut sum = *charged;
+        sum.add(&uncharged_tail);
+        // And the third route: what the pacer *believes* it consumed, in
+        // units, against the currency applied to the terms it was handed. The
+        // two accumulate separately - scalars inside `WorkPlanPacer`, vectors
+        // here - so a batch charged to the wrong phase, or a saturation, shows
+        // up as a disagreement rather than as a plausible number.
+        let consumed_units = plan
+            .consumed(PlanPhase::Explore)
+            .saturating_add(plan.consumed(PlanPhase::Compress));
+        Some(CalibratedSummary {
+            explore_allocation: plan.allocation(PlanPhase::Explore),
+            compress_allocation: plan.allocation(PlanPhase::Compress),
+            explore_consumed: plan.consumed(PlanPhase::Explore),
+            compress_consumed: plan.consumed(PlanPhase::Compress),
+            explore_batches: plan.batches(PlanPhase::Explore),
+            compress_batches: plan.batches(PlanPhase::Compress),
+            explore_crossing_batch_units: *explore_crossing_batch_units,
+            compress_crossing_batch_units: *compress_crossing_batch_units,
+            charged: *charged,
+            uncharged_tail,
+            trajectory,
+            charge_identity_holds: sum == trajectory,
+            consumed_units,
+            consumed_units_match_charged: plan.currency().units(charged) == consumed_units,
+            plan_key: plan.key().clone(),
+            currency_version: plan.currency().version,
+            budget_seconds: plan.budget_seconds(),
+            explore_ratio: plan.explore_ratio(),
+        })
+    }
+
+    /// **Charge one completed master batch**, at the barrier, on the delta.
+    ///
+    /// Returns whether the phase has no room for another batch. `false` in
+    /// every arm that is not a plan, which is why the caller needs no branch.
+    fn charge_batch(&mut self, phase: Phase, now: WorkTerms) -> bool {
+        let Pacer::Calibrated {
+            plan,
+            cursor,
+            charged,
+            explore_crossing_batch_units,
+            compress_crossing_batch_units,
+            ..
+        } = self
+        else {
+            return false;
+        };
+        let delta = now.since(cursor);
+        *cursor = now;
+        charged.add(&delta);
+        let phase = plan_phase(phase);
+        let boundary = plan.charge_batch(phase, &delta);
+        // The first batch to spend the allocation is the crossing batch, and
+        // only the first: a later one would report the overshoot of a phase
+        // that had already ended.
+        let crossing = match phase {
+            PlanPhase::Explore => explore_crossing_batch_units,
+            PlanPhase::Compress => compress_crossing_batch_units,
+        };
+        if boundary.phase_exhausted && *crossing == 0 {
+            *crossing = boundary.units_charged;
+        }
+        boundary.phase_exhausted || batch_ceiling_reached(plan, phase)
+    }
+
+    /// Whether the phase was already spent when a separation opened, so that a
+    /// separation cannot run one batch past the allocation just by starting.
+    fn phase_exhausted_at_entry(&self, phase: Phase) -> bool {
+        match self {
+            Pacer::Calibrated { plan, .. } => {
+                plan.entry_boundary(plan_phase(phase)).phase_exhausted
+            }
+            _ => false,
         }
     }
 
     /// The clock, read **only** at a worker-sweep barrier or a phase boundary.
     fn elapsed_s(&self) -> Option<f64> {
         match self {
-            Pacer::FixedWork { .. } => None,
+            Pacer::FixedWork { .. } | Pacer::Calibrated { .. } => None,
             Pacer::Wall { start, .. } => Some(start.elapsed().as_secs_f64()),
         }
     }
 
     fn deadline_s(&self, phase: Phase) -> Option<f64> {
         match self {
-            Pacer::FixedWork { .. } => None,
+            Pacer::FixedWork { .. } | Pacer::Calibrated { .. } => None,
             Pacer::Wall {
                 explore_deadline_s,
                 total_s,
@@ -1714,6 +2346,13 @@ impl Pacer {
                 };
                 elapsed >= deadline
             }
+            // Between bites, the plan's own question: has this phase any units
+            // left? It is the same verdict `charge_batch` returns at a
+            // barrier, asked at the other place a phase may end.
+            Pacer::Calibrated { plan, .. } => {
+                let phase = plan_phase(phase);
+                plan.remaining(phase) == 0 || batch_ceiling_reached(plan, phase)
+            }
         }
     }
 
@@ -1723,6 +2362,11 @@ impl Pacer {
                 attempts_per_bite, ..
             } => attempts >= *attempts_per_bite,
             Pacer::Wall { .. } => false,
+            // `0` is unlimited, matching `Pacer::Wall`. See the guard's note
+            // on `Budget::CalibratedWork`.
+            Pacer::Calibrated {
+                attempts_per_bite, ..
+            } => *attempts_per_bite != 0 && attempts >= *attempts_per_bite,
         }
     }
 
@@ -1732,7 +2376,10 @@ impl Pacer {
                 iterations_per_separation,
                 ..
             } => Some(*iterations_per_separation),
-            Pacer::Wall { .. } => None,
+            // The unit allocation is the cap. A second one denominated in
+            // iterations would be the probe-on-cheap-bites defect wearing the
+            // calibrated plan's clothes.
+            Pacer::Wall { .. } | Pacer::Calibrated { .. } => None,
         }
     }
 
@@ -1752,7 +2399,37 @@ impl Pacer {
                 let elapsed = self.elapsed_s().unwrap_or(0.0) - phase_started_s;
                 homotopy::time_based_step(elapsed, (total_s - phase_started_s).max(0.0))
             }
+            // **Compress decay by consumed compress-work**, the spec's own
+            // words, through the same frozen `time_based_step` the other two
+            // arms call. The pacer computes it; nothing here re-derives it.
+            Pacer::Calibrated { plan, .. } => plan.compress_step(),
         }
+    }
+}
+
+/// **The termination guard, and why a plan needs one at all.**
+///
+/// A calibrated phase ends when its units are spent, and a master batch always
+/// spends some - a state with `Φ > 0` has a non-empty colliding set, and
+/// relocating it costs sample evaluations. "Always" there is an argument about
+/// the operator, though, not a property of the pacer, and a plan that could not
+/// terminate would hang a gate rather than fail it.
+///
+/// So: a phase is also over once it has charged as many batches as it has
+/// units. One unit is the cheapest possible non-zero batch, so the ceiling is
+/// unreachable by any trajectory that charges anything at all - the shelf's own
+/// batches are five to six orders of magnitude above it - and it bounds the
+/// loop even if some future batch charged nothing forever.
+fn batch_ceiling_reached(plan: &WorkPlanPacer<NoClock>, phase: PlanPhase) -> bool {
+    plan.batches(phase) >= plan.allocation(phase)
+}
+
+/// The engine's `Phase` in the plan file's vocabulary. One function, so the
+/// two enums cannot drift into disagreeing about which phase is which.
+fn plan_phase(phase: Phase) -> PlanPhase {
+    match phase {
+        Phase::Explore => PlanPhase::Explore,
+        Phase::Compress => PlanPhase::Compress,
     }
 }
 

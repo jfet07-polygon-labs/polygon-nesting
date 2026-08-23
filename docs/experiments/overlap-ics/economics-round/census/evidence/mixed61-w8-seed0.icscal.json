@@ -1,0 +1,28 @@
+{
+  "schema": "icscal/v1",
+  "key": {
+    "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "currencyVersion": "U0-sample-evaluations",
+    "binaryKey": {
+      "executableSha256": "d9ef083e41beeee1cf189773a04ce7d789fc238dadcb349c6ad05e55cbd8120d",
+      "features": [
+        "overlap-ics",
+        "ics-profile"
+      ]
+    },
+    "workers": 8,
+    "executor": "ephemeral-scope"
+  },
+  "phases": [
+    {
+      "phase": "explore",
+      "safeUnitsPerSecond": 2248285.0111872046,
+      "measuredUnitsPerSecond": 2810356.2639840054,
+      "safetyFactor": 0.8,
+      "observedUnits": 3622579,
+      "observedSeconds": 1.289010595,
+      "derivation": "trajectory bite 22 (the 179 shelf) alone, 200 master iterations, barrier-to-barrier wall from the ics-profile timers, sampleEvaluations charged to that bite. NOT the cheap 0.1 % prefix: spec defect (3)."
+    }
+  ],
+  "provenance": "docs/experiments/overlap-ics/economics-round/census/, the spawntax cell. Schema and writer only: this round builds no reader and no pacer."
+}

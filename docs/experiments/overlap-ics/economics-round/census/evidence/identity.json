@@ -1,0 +1,555 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-census-trajectory-identity",
+ "baseBinary": "/var/lib/t3/tmp/census-wave1/before/overlap_ics_benchmark-base",
+ "headBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-1/target/release/examples/overlap_ics_benchmark",
+ "profileBinary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_1dcd8867-51c-1/target/profile-build/release/examples/overlap_ics_benchmark",
+ "cells": {
+  "A": [
+   "--mode=fixed",
+   "--bites=8",
+   "--attempts=1",
+   "--iters=400",
+   "--compressbites=0",
+   "--workers=8",
+   "--seed=0"
+  ],
+  "B": [
+   "--mode=fixed",
+   "--bites=21",
+   "--attempts=1",
+   "--iters=400",
+   "--compressbites=0",
+   "--workers=8",
+   "--seed=0"
+  ],
+  "C": [
+   "--mode=fixed",
+   "--bites=21",
+   "--attempts=1",
+   "--iters=400",
+   "--compressbites=0",
+   "--workers=8",
+   "--seed=5"
+  ],
+  "D": [
+   "--mode=fixed",
+   "--bites=8",
+   "--attempts=1",
+   "--iters=400",
+   "--compressbites=0",
+   "--workers=1",
+   "--seed=0"
+  ]
+ },
+ "processExits": [
+  {
+   "cell": "A",
+   "binary": "base",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "A",
+   "binary": "base",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "A",
+   "binary": "head",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "A",
+   "binary": "head",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "A",
+   "binary": "profile",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "A",
+   "binary": "profile",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "B",
+   "binary": "base",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "B",
+   "binary": "base",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "B",
+   "binary": "head",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "B",
+   "binary": "head",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "B",
+   "binary": "profile",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "B",
+   "binary": "profile",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "C",
+   "binary": "base",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "C",
+   "binary": "base",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "C",
+   "binary": "head",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "C",
+   "binary": "head",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "C",
+   "binary": "profile",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "C",
+   "binary": "profile",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "D",
+   "binary": "base",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "D",
+   "binary": "base",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "D",
+   "binary": "head",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "D",
+   "binary": "head",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "D",
+   "binary": "profile",
+   "process": "a",
+   "exit": 0,
+   "stderr": ""
+  },
+  {
+   "cell": "D",
+   "binary": "profile",
+   "process": "b",
+   "exit": 0,
+   "stderr": ""
+  }
+ ],
+ "vectors": [
+  {
+   "vector": "D1-A",
+   "question": "every field the pre-Wave-1 binary emitted, reproduced bit for bit",
+   "subsetComparison": true,
+   "ignoredKeys": [
+    "buildFeatures",
+    "executableSha256",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D2-A",
+   "question": "two processes of the default build agree bit for bit",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D3-A",
+   "question": "the ics-profile build takes the default build's trajectory",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D4-A",
+   "question": "two processes of the ics-profile build agree on everything but time",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D1-B",
+   "question": "every field the pre-Wave-1 binary emitted, reproduced bit for bit",
+   "subsetComparison": true,
+   "ignoredKeys": [
+    "buildFeatures",
+    "executableSha256",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D2-B",
+   "question": "two processes of the default build agree bit for bit",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D3-B",
+   "question": "the ics-profile build takes the default build's trajectory",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D4-B",
+   "question": "two processes of the ics-profile build agree on everything but time",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D1-C",
+   "question": "every field the pre-Wave-1 binary emitted, reproduced bit for bit",
+   "subsetComparison": true,
+   "ignoredKeys": [
+    "buildFeatures",
+    "executableSha256",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D2-C",
+   "question": "two processes of the default build agree bit for bit",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D3-C",
+   "question": "the ics-profile build takes the default build's trajectory",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D4-C",
+   "question": "two processes of the ics-profile build agree on everything but time",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D1-D",
+   "question": "every field the pre-Wave-1 binary emitted, reproduced bit for bit",
+   "subsetComparison": true,
+   "ignoredKeys": [
+    "buildFeatures",
+    "executableSha256",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D2-D",
+   "question": "two processes of the default build agree bit for bit",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D3-D",
+   "question": "the ics-profile build takes the default build's trajectory",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  },
+  {
+   "vector": "D4-D",
+   "question": "two processes of the ics-profile build agree on everything but time",
+   "subsetComparison": false,
+   "ignoredKeys": [
+    "bandFoldNs",
+    "barrierToBarrierNs",
+    "barrierToBarrierNsPerIteration",
+    "buildFeatures",
+    "dispatchNs",
+    "exactNs",
+    "executableSha256",
+    "measured",
+    "mergeGlsNs",
+    "ns",
+    "prepNs",
+    "prepPlusDispatchNs",
+    "prepPlusDispatchShare",
+    "residualNs",
+    "sampleEvaluationsPerSecond",
+    "share",
+    "snapshotNs",
+    "sweepCriticalNs",
+    "sweepTotalNs",
+    "wall"
+   ],
+   "differences": 0,
+   "detail": [],
+   "pass": true
+  }
+ ],
+ "allExitsZero": true,
+ "IDENTITY_PASS": true
+}

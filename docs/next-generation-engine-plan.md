@@ -8689,3 +8689,109 @@ round's instrumentation budget (split the counter, emit poses with
 publications, pin per-cell source hashes); the latent clearance shape goes
 to a future licensed round. The three signatures stand on corrected
 numbers. Evidence: docs/experiments/overlap-ics/evidence-audit/.
+
+## The economics round: two of three gates said no before the quality battery, and the round stopped without a gate number
+
+The round the first three-model quorum signed funded exactly three changes,
+and each of the three carried its own pre-committed mechanical gate. **Two of
+those gates fired NO, and the second one stopped the round.** The wave that
+was to run the nine-seed two-arm battery never spent a wall second on it.
+
+Wave 1's census rendered funded change 2's clause — "build iff prep+dispatch
+≥10% of hard-state wall" — before anything downstream could read it: the
+largest reading over every seed that reached shelf density and both of its
+processes, which is the reading most favourable to building, is **5.082%
+against a 10.000% bar**; the smallest is 4.088%. The useful part is the shape
+rather than the verdict: preparing eight slots and dispatching eight threads
+costs a near-constant **309–331 µs per master iteration** at every seed, and
+what varies is the sweep it is divided by — 5.9–7.5 ms at the 179 shelf,
+2.9 ms at a stalled cheap width. So the off-shelf arms read 5.2–12.5% not
+because dispatch is expensive there but because their sweeps are cheap, and a
+persistent executor would help most exactly where the trajectory spends least.
+`BUILD_PERSISTENT_EXECUTOR: false`, and per the spec the 5/9 clause did **not**
+drop to 4/9.
+
+Waves 2b and 3 built the other two changes and wired them, and the
+instrumentation half is the part that will outlive the round. The two strike
+arms sit behind one field that defaults to the control, with exactly one
+`match` on the arm in the whole trajectory (`patience_exhausted`), and the
+claim that the control is the trajectory the member closed is a **measurement
+across two binaries** rather than a reading of the diff: four fixed-work cells
+through the round's base binary and the new one, **zero field differences on
+all four**. The calibrated-work pacer reads no clock three ways over — the
+module contains no `std::time` (a FAST hygiene stage), it is handed a clock it
+never calls, and a whole two-phase trajectory is driven under a clock that
+panics if read. The spec's worst-ranked defect, double-debit "stable but false"
+work accounting, became three independent identities in the emitted ledger, and
+the first of them was a check of a value against itself for most of an
+afternoon before it was caught — written down because that is exactly the shape
+the defect takes.
+
+**Then wave 4 ran funded change 3's own reject rule, and it fired.** "REJECT
+the currency if wall-prediction error >10% on any transfer fixture" — three
+independent runs on a quiet box, both the five-term `U1` and the degenerate
+`U0` the shipped pacer actually spends, all six ordered fixture pairs:
+**rejected every time, exit 1**. `U1`'s worst pair reads **236.90 / 280.95 /
+300.52%** across the three runs and `U0`'s **213.40 / 256.02 / 277.80%**. The
+obvious objection is that triangle-20's cell is five master batches and six
+milliseconds, so the same clause was re-applied to mixed-61 and shapes-17
+alone — the heavy pair the spec's transfer story is actually about: **twelve
+readings, two currencies, two directions, three runs, every one between 10.48%
+and 18.28%, every one over the bar.** The cells are fixed-work, so the five
+counters are a deterministic function of request and seed, and they came back
+**bit-identical across all three runs and across wave 2b's committed cells in a
+different worktree from a differently built binary** — 6,977,140 / 514 / 50 /
+20 / 8 on mixed-61 and so on. Four independent readings of the rule over one
+design matrix; only the seconds moved.
+
+The shape of that failure is one sentence: **`U` has no per-bite term.**
+triangle-20's 34 bites publish in zero or one master iteration each, so nearly
+all of its search is per-bite work — the cut, the pose install, the commit, the
+row rebuild — which `U` prices at zero. Adding a term is a different currency
+and therefore a different proposal, so nothing was retuned. One thing the check
+says in passing is worth keeping: `R`, the repair-row coefficient, moves
+**19 → 85 → 131 ns** between repetitions of its own calibration, a 6.89× spread,
+because the three cells contain twenty repair rows between them and all of them
+on one fixture. `B`, `E` and `D` are stable to within a fifth. `R` was never a
+price. It is also not the reason for the rejection, which survives at `U0`
+where all four coefficients are zero.
+
+**§0's gate is a "10 s calibrated-work" plan, so there was no denomination left
+to spend it in**, and Sol review 19 §5 forbids the alternative by name: "the
+calibration fails rather than silently inventing another exchange rate". So the
+nine 10 s cells, the 5×9 p95 repetitions, the 30 s clauses, the 3/10/30 curves
+and the AB/BA control were not run, and this round contributes **no depth, no
+quorum and no p95**. The two-arm experiment is built, wired, reachable and
+proven not to have moved the control arm by one bit — and it is unmeasured.
+Attribution is therefore undecided, which by the spec's own promotion clause
+means the impatient work-quanta policy is **not promoted** and the control's
+frozen `200/3/100/5/0.98` remains the member: the same outcome a failed
+attribution would have produced, reached by a shorter route with less evidence
+behind it. No line-level defect was found, so the failure license was not
+invoked; a valid miss closes funded change 3's funding.
+
+The boundary floor was run anyway, because three waves of engine work sit
+between the round's base and its last commit and a round that stops still owes
+the tree an account of what it did on the way. FAILURES=0 everywhere: the four
+pinned engine gates on both builds, identical as **whole documents** and not
+merely on their pinned scalars; the five release suites at 1,293 / 1,357 / 20 /
+1,429 / 1,239 passed and **zero failed** over 216 targets with no flaky rerun
+needed; and the FAST union green with the first-bite canary licensing it.
+
+The floor also gave up a false green of its own. **The campaign's "two-binary
+determinism" battery had been comparing a binary with itself**: same source and
+same feature set into a second target directory yields a byte-identical
+executable on this toolchain, so `TWO_BINARY_IDENTICAL: true` was re-proving
+single-binary determinism, and nothing said so because the document recorded
+the two paths and not the two hashes — the audit's F9 shape, one directory
+over. `determinism.py` now emits both `sha256`s and `binariesDiffer`, and the
+round ran the comparison that was missing: `2c5da1ac…` against `a100542f…`,
+genuinely different executables, **all five cells bit-identical including this
+round's own member**. Two smaller corrections while passing:
+`shipped-surface.md` still carried the rerun's pre-errata headline
+`167.31508`, which the audit had moved to `167.31678` in the rerun's own README
+but not in the surface document deriving from it; and the economics round's own
+index quoted the census's spawn-tax maximum as 5.154 %, a number from the
+census's load-repeat band rather than its committed verdict of 5.082 %.
+Evidence: docs/experiments/overlap-ics/economics-round/ (census/, meter/,
+integration/, gate/).

@@ -15,12 +15,17 @@
 #                                             `jagua`/`Xoshiro`/`rand::` in the
 #                                             member's own source)
 #   3. one release feature combo             (`--features overlap-ics`)
-#   4. the module's unit vectors + the three pinned vector suites
+#   4. the module's unit vectors + the meter primitives + the three pinned
+#      vector suites
 #   5. the 1,000-state deterministic contact corpus
 #   6. the two-process fixed-work smoke, S0 canary and S1 locked strip
 #   7. the `CutCloseRelocate` additions (`cutclose.py`): the first-bite canary,
 #      the four driver-level tripwires, the K=8 two-process bite sequence and
 #      the eight-worker merge across two processes
+#   8. the economics round's integration stages (`armplan.py`): the two strike
+#      arms on one cell, the calibrated plan's hit/miss and two-process
+#      identity, and the K >= 1,024 batch identity with strike, pool restore
+#      and disruption
 #
 # **Stage 7's canary is a stop, not a report.** Grok review 12 Round 2 §6.3.4:
 # "FAIL here is a member fail; do not run the 9-seed wall." `wall.py` reads
@@ -115,21 +120,73 @@ fi
 # the provenance the no-copying ruling asks for, and a check that punished the
 # citation would be pushing the evidence out of the source. Stripping can only
 # hide a match inside a string literal, and there is no such literal here.
+#
+# `search/overlap_ics_meter/` is in the same wall. It is a sibling module
+# rather than a child only because Sol review 19 §5 gives
+# `search/overlap_ics/mod.rs` to one integration agent; it is the same member's
+# code and the same rule applies to it.
 : > "$LOG/rng-hygiene.log"
-for source in "$ROOT"/crates/polygon-nesting-core/src/search/overlap_ics/*.rs; do
+for source in "$ROOT"/crates/polygon-nesting-core/src/search/overlap_ics/*.rs \
+              "$ROOT"/crates/polygon-nesting-core/src/search/overlap_ics_meter/*.rs; do
   sed 's://.*::' "$source" | grep -n -E 'Xoshiro|rand::|jagua' | sed "s:^:$source\::" \
     >> "$LOG/rng-hygiene.log"
 done
 if [ -s "$LOG/rng-hygiene.log" ]; then
-  note "source hygiene: jagua/Xoshiro/rand:: PRESENT in search/overlap_ics/  <-- FAILED"
+  note "source hygiene: jagua/Xoshiro/rand:: PRESENT in search/overlap_ics*/  <-- FAILED"
   FAILURES=$((FAILURES + 1))
 else
-  note "source hygiene: jagua/Xoshiro/rand:: ABSENT from search/overlap_ics/ EXIT=0"
+  note "source hygiene: jagua/Xoshiro/rand:: ABSENT from search/overlap_ics*/ EXIT=0"
+fi
+
+# **The clock rule, structurally.** The economics round's pacer is the one
+# component with a motive to break the audit's clean finding - "`Instant`
+# appears in exactly one place under `search/overlap_ics/`, `Pacer::Wall` … a
+# fixed-work trajectory cannot read a clock at all" - because the thing it
+# replaces is the one component that legitimately reads one. The meter's
+# clock-poison unit vector proves the pacer does not *call* a clock; this
+# proves the module does not *contain* one, which is the half a unit test
+# cannot reach.
+#
+# Comments are stripped first, for the same reason the RNG grep strips them:
+# the module docs name `Instant` and `Pacer::Wall` by name, and a check that
+# punished the citation would push the evidence out of the source.
+: > "$LOG/clock-hygiene.log"
+for source in "$ROOT"/crates/polygon-nesting-core/src/search/overlap_ics_meter/*.rs; do
+  sed 's://.*::' "$source" | grep -n -E 'std::time|Instant|SystemTime' \
+    | sed "s:^:$source\::" >> "$LOG/clock-hygiene.log"
+done
+if [ -s "$LOG/clock-hygiene.log" ]; then
+  note "clock hygiene: std::time PRESENT in search/overlap_ics_meter/  <-- FAILED"
+  FAILURES=$((FAILURES + 1))
+else
+  note "clock hygiene: std::time/Instant ABSENT from search/overlap_ics_meter/ EXIT=0"
 fi
 
 # ------------------------------------------------------------------ 3/4. tests --
 cargo test -p polygon-nesting-core --release --features overlap-ics --lib search::overlap_ics:: > "$LOG/unit.log" 2>&1
 record "module unit vectors" $?
+
+# **The economics round's meter primitives.** Three of the spec's FAST-union
+# additions live in this one stage, because all three are pure functions with
+# no trajectory behind them:
+#
+#   * "strike meter with variable batch costs" - both arms against two
+#     independent reference implementations (one from the spec text, one a
+#     transcription of `Engine::separate`'s own strike block) over 1,024
+#     vectors per phase, plus the overshoot <= one batch property and the
+#     frozen-literal tripwire on 200/3/100/5/0.98 and the KNOB quanta;
+#   * the currency's five-term identity, its conservative rounding, the
+#     non-negative publication split and the >10 % transfer clause;
+#   * "calibrated-plan hit/miss/version/clock-poison" - every plan-key field as
+#     a miss on its own, and a whole synthetic two-phase trajectory driven
+#     under a clock that panics if it is read.
+#
+# It is a separate `cargo test` filter and not part of the stage above because
+# `search::overlap_ics::` does not match `search::overlap_ics_meter::`: the
+# module is a sibling, so a reader who assumed the filter covered it would be
+# running none of these.
+cargo test -p polygon-nesting-core --release --features overlap-ics --lib search::overlap_ics_meter:: > "$LOG/meter.log" 2>&1
+record "meter primitives (strike arms, currency, pacer clock-poison)" $?
 
 cargo test -p polygon-nesting-core --release --features overlap-ics --test validation_vectors sat_penetration_matches_ts_oracle > "$LOG/sat-oracle.log" 2>&1
 record "validation_vectors::sat_penetration_matches_ts_oracle" $?
@@ -171,6 +228,34 @@ else
 fi
 record "cutclose FAST additions (canary, tripwires, K=8 bites, 8-worker merge)" \
   "$CUTCLOSE_STATUS"
+
+# ------------------------------- 8. the economics round's integration wave --
+# Three of the spec's FAST-union additions that need the shipped binary rather
+# than a unit vector, because all three are claims about a *trajectory*:
+#
+#   * the two arms on one fixed-work cell, with everything outside the strike
+#     policy identical, and the default invocation - no `--arm` at all - being
+#     the control. If that last one ever went red, every committed cell in the
+#     campaign would have changed arm without anyone saying so.
+#   * the calibrated plan: one wall process writes an `icscal/v1` file, two
+#     later processes spend it and must agree bit for bit, and six tampered or
+#     mismatched copies of it must each be REFUSED by name. A miss that fell
+#     back to measuring a fresh rate would be the live probe on a gated
+#     trajectory the spec forbids, so the refusal is an exit status.
+#   * K >= 1,024 master batches, two processes, bit-identical, on a cell that
+#     really struck, really restored a pooled layout and really disrupted. The
+#     spec asks for this as an ephemeral/persistent comparison; the persistent
+#     executor was refused by its own measured gate, so this is the half of the
+#     clause that has an executor to run on.
+#
+# The **cross-binary** half of the control-arm claim - that its trajectory is
+# bit-identical to the round's base binary, field for field - is not here,
+# because FAST cannot cheaply build a second binary. It is
+# `economics-round/integration/armgate.py <base-binary>`, and the integration
+# wave's evidence records its verdict.
+ICS_OUT="$OUT" python3 "$ROOT/docs/experiments/overlap-ics/drivers/armplan.py" \
+  > "$LOG/armplan.log" 2>&1
+record "economics round (two arms, calibrated plan hit/miss, K>=1,024 identity)" $?
 
 note "logs in $LOG"
 note "FAILURES=$FAILURES"

@@ -94,38 +94,29 @@ def cell(out, seed, budget):
     #   * `requestSecondsLower = constructorSeconds + wallSeconds` - the
     #     constructor alone; excludes the engine construction between the two
     #     clock reads, so it is a LOWER bound on a publication's age.
-    #   * `requestSecondsUpper = (totalSeconds - searchSeconds) + wallSeconds` -
-    #     everything outside `run_cutclose`, which includes the document build
-    #     after it, so it is an UPPER bound.
+    #   * `requestSecondsUpper = loopEntrySeconds + wallSeconds` - the offset
+    #     itself, emitted by the driver one statement before the `Pacer`
+    #     exists. Cells written before the economics round do not carry it and
+    #     fall back to `(totalSeconds - searchSeconds) + wallSeconds`, which
+    #     also includes the document build and is a much looser bound.
     #
     # The verdict uses the lower bound: a publication is excluded only when it
     # is *certainly* late. A publication whose two bounds straddle the budget
     # is counted, and reported in `publicationsUndecidedByFrame` so the reader
     # can see that the document could not settle it.
+    #
+    # **The arithmetic now lives in `lib.within_budget`**, unchanged in every
+    # bit, because `control.py` had the same defect one step milder and two
+    # copies of a repair drift. `frame_vector.py` in the economics round's
+    # census re-derives this cell's four frame fields for all 27 committed raw
+    # cells through both the old inline code and the shared helper, and
+    # requires them to be identical.
     limit = SECONDS[budget]
     constructor_s = doc.get('wall', {}).get('constructorSeconds')
     search_s = doc.get('wall', {}).get('searchSeconds')
     total_s = doc.get('wall', {}).get('totalSeconds')
-    lower_offset = constructor_s
-    upper_offset = (None if total_s is None or search_s is None
-                    else total_s - search_s)
-
-    def request_seconds(row, offset):
-        loop_s = row.get('wallSeconds')
-        if loop_s is None or offset is None:
-            return None
-        return offset + loop_s
-
-    within, late, undecided = [], [], []
-    for row in publications:
-        low = request_seconds(row, lower_offset)
-        high = request_seconds(row, upper_offset)
-        if low is not None and low > limit:
-            late.append(row)
-            continue
-        within.append(row)
-        if low is not None and high is not None and high > limit:
-            undecided.append(row)
+    lower_offset, upper_offset = lib.checkpoint_frame(doc)
+    within, late, undecided = lib.within_budget(publications, doc, limit)
     strict = [row for row in within
               if row['placementFingerprint']
               != constructor.get('placementFingerprint')]
@@ -138,6 +129,11 @@ def cell(out, seed, budget):
         'budgetSeconds': limit,
         'exit': status,
         'valid': True,
+        # RV3: the reduction names the bytes it reduced. The audit's
+        # revalidation had to re-derive all 702 committed cell-row fields to
+        # bind this document to the raw cells it came from.
+        'sourcePath': f'{out}/{tag}.json',
+        'sourceSha256': lib.source_sha256(f'{out}/{tag}.json'),
         'constructorDepthMm': constructor.get('rawSourceDepthMm'),
         'constructorSeconds': constructor_s,
         'searchSeconds': search_s,
@@ -165,9 +161,9 @@ def cell(out, seed, budget):
             'publicationsExcludedAsLate': len(late),
             'publicationsUndecidedByFrame': len(undecided),
             'bestStrictChildRequestSecondsLower': min(
-                (request_seconds(row, lower_offset) for row in strict
+                (lib.request_seconds(row, lower_offset) for row in strict
                  if row['publishedRawDepthMm'] == best
-                 and request_seconds(row, lower_offset) is not None),
+                 and lib.request_seconds(row, lower_offset) is not None),
                 default=None),
         },
         'exploreBites': outcome.get('exploreBites'),
@@ -327,6 +323,10 @@ def main():
         'experiment': 'overlap-ics',
         'battery': 'cutclose-round1-wall',
         'binary': lib.BIN,
+        # RV3: every cell document this reduction spawned, with its
+        # sha256, so a reader can bind any row here to the bytes it
+        # came from without re-deriving the reduction.
+        'cellSources': lib.MANIFEST,
         'canaryLicence': where,
         'workers': WORKERS,
         'seeds': SEEDS,
