@@ -8410,3 +8410,35 @@ publication pipeline, and four autopsy-grade instrument corrections. The
 overlap-ICS line closes as Gate0-stopped; docs/shipped-surface.md carries
 the row. Reviews verbatim: docs/sol-review-16-the-verdict-stands.md,
 docs/grok-review-11-the-verdict-stands.md.
+
+## Reading Sparrow: the quorum, and the member both consultants signed
+
+The owner overruled the reading half of the Chinese wall ("Sparrow manages
+it, so can we — re-read Sparrow's code where necessary") and funded a round
+with quorum discipline: both consultants read the source that produced the
+committed 150.165 (rev 14f4868f, upstream-identical, /tmp backup cloned),
+designed independently, exchanged verbatim, converged. The source rewrote
+both prior hypotheses: Sparrow has NO coordinated moves — no joint PGS, no
+chain compaction, no gradient at all. Its member is sequential single-piece
+GLOBAL RELOCATES (25 focused + 50 container-wide samples, axis coordinate
+descent, accept-equal), all-rows multiplicative GLS every iteration, a rare
+two-large-piece swap on failed separation, and a split-and-close shrink at
+0.1% bites in explore (350 legal children in 8 s on the retained x86 log)
+with 0.05%→0.001% time-decayed compression. Its LBF constructor is 31 mm
+WORSE than ours — the whole 10 s win is the loop. Its published 10 s
+excludes import+constructor (main.rs:38); ours will not. The 1.6 mm
+attractor that killed the PGS member was an artifact of a 6.7 mm one-shot
+the proven regime never takes: 0.1% bites are 0.18 mm — inside the basin
+our S1 cell already closes. Sol changed position in round 2 ("Grok is right
+on the main member"), withdrawing joint projection/component-Y; the
+no-copying ruling both sign is that the member implements the PUBLISHED
+Algorithms 4-13 of arXiv:2509.13329, cited, on our exact signed-gap Φ and
+dual-valid publication — the Egeblad/Imamichi practice. The quorum spec —
+CutCloseRelocate, eight tournament workers, the frozen regime, the
+≥3/9 ≤168.484@10s gate, the FAST tripwires with the pre-named
+neutered-relocate defect — is docs/cutclose-relocate-spec.md; consultations
+verbatim in docs/sol-review-17-reading-sparrow.md and
+docs/grok-review-12-reading-sparrow.md. This commit is the spec commit both
+demanded (including the fast.sh root fix); the implementation workflow
+follows it: core, then schedule, then evidence/red-team, then their review
+of the implementation.

@@ -31,7 +31,11 @@
 
 set -u
 
-ROOT="${ICS_ROOT:-/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-1}"
+# ROOT resolves to the repository containing this script (sol-review-17: a
+# stale hard-coded worktree default let the strongest tripwires validate the
+# wrong tree). ICS_ROOT still overrides explicitly.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${ICS_ROOT:-$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel)}"
 OUT="${ICS_OUT:-/var/lib/t3/tmp/overlapics/fast}"
 LOG="$OUT/log"
 mkdir -p "$LOG"
