@@ -1405,7 +1405,6 @@ pub fn calibrate_prime(
     if base_count == 0 || base_nanos == 0 {
         return Err("no sample-evaluation timing: `U'` has no base unit".to_owned());
     }
-    let base_ns = base_nanos as f64 / base_count as f64;
 
     let per_fixture = |pick_ns: fn(&FixtureTimingInput) -> u64,
                        pick_count: fn(&FixtureTimingInput) -> u64|
@@ -1439,6 +1438,18 @@ pub fn calibrate_prime(
         |row| row.sweep_critical_ns,
         |row| row.sample_evaluations,
     );
+    // **One base, used for both the report and the arithmetic.** An earlier
+    // draft computed the divisor a second way (totals over totals, including
+    // any fixture that swept without evaluating) and printed this one. The two
+    // agree on every cell the campaign has, which is exactly why the
+    // duplication was worth removing rather than worth keeping: a divisor that
+    // is not the number beside it is a document that cannot be checked by hand.
+    let base_ns = base_pooled;
+    if !base_ns.is_finite() || base_ns <= 0.0 {
+        return Err(format!(
+            "the base unit is {base_ns} ns, which prices nothing"
+        ));
+    }
     let mut selected = vec![TermPricePrime {
         term: TermPrime::SampleEvaluation,
         fixtures: base_fixtures,
@@ -1475,9 +1486,16 @@ pub fn calibrate_prime(
     for row in inputs {
         if row.exact_checkpoint_calls == 0 {
             skipped.push(SkippedTiming {
+                // `SkippedTiming` is `U`'s type and its enum has no
+                // `ExactCheckpointCall` variant; `PublicationAttemptCall` is
+                // the same counter under the older name, and the reason string
+                // says which so the document is not read as a claim about a
+                // term `U'` does not have.
                 fixture: row.fixture.clone(),
                 term: Term::PublicationAttemptCall,
-                reason: "the cell never reached exact geometry: no call to price".to_owned(),
+                reason: "E (exact_checkpoint_calls): the cell never reached exact geometry, \
+                         so there is no call to price"
+                    .to_owned(),
             });
         }
     }
