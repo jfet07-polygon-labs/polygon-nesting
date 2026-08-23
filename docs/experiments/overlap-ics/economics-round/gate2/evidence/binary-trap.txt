@@ -1,0 +1,8 @@
+# §4 trap: run-suites.sh rebuilds the shared target/, so any driver that
+# takes lib.BIN's default after a suite run measures a binary nobody named.
+before: c9a84cd57523c0c34cb7c02fb11d7bf83e64d4d138c2b14191238d0408592632  /var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark
+after:  cc710f1106dd07bcebd66f493e848ffad75b5ac8581bd9ec898ee3747094e03b  /var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark
+SUITE_CLOBBERED_THE_BINARY: true
+# The gate battery ran BEFORE this script, against the 'before' sha, and
+# gate.py records the binary's hash on both sides of every battery.
+c9a84cd57523c0c34cb7c02fb11d7bf83e64d4d138c2b14191238d0408592632  /var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark

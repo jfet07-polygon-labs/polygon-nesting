@@ -610,6 +610,79 @@ That is the cost of the 0.80 safety factor stated as a measurement rather than
 as an excuse, and it is why §4's failure is reported as a **quality** failure and
 not as a budget artefact: even at 1 of 18 the wall arm is nowhere near 5 of 9.
 
+## 8. The boundary HEAVY — `FAILURES=0`, exit 0 over eighteen steps
+
+This wave produced gate numbers, so the floor is not a consolation report: it is
+what says the engine-side change — a purely additive `U'` section in the
+**meter** — cost the member nothing.
+
+**The trajectory did not move, and that is a `git diff` rather than an
+argument.** `search/overlap_ics/` — `run_cutclose`, the pacer wiring, the
+document schema, the whole trajectory — is **byte-for-byte identical to
+`e4da8c5`**: `TRAJECTORY_UNCHANGED: true`, zero files. The entire engine-side
+diff of this wave is `examples/ics_meter.rs` and
+`search/overlap_ics_meter/currency.rs`, and `overlap_ics_meter` is behind
+`#[cfg(feature = "overlap-ics")]` with nothing in `overlap_ics` naming it.
+
+**FAST union**: `FAILURES=0`, exit 0, 16 numbered stages — including the clock
+hygiene stage that requires `std::time`/`Instant` to be **absent** from
+`search/overlap_ics_meter/`, which `U'` had to stay inside, and the economics
+round's own stage (two arms on one cell, the calibrated plan's hit/miss and
+two-process identity, the K ≥ 1,024 batch identity with strike, pool restore and
+disruption).
+
+**The four pinned gates, on both builds.** `base` is the gate binary's feature
+set with `overlap-ics` **absent** (`32302ec6…`); `meas` has it compiled and
+unarmed (`800f44c1…`). `BASE_ALL_PASS: true`, `MEAS_ALL_PASS: true`, and
+`WHOLE_DOCUMENT_IDENTITY: true` — all four gates identical as **whole
+documents**, not merely on their pinned scalars. g1 206.869 mm /
+`8a773738…`, g2 159.09233022733062, g3 159.07876040364795, g4
+164.0375677990678.
+
+**The five release suites**: `SUITES_PASS: true`, **5,356 passed, 0 failed**
+across **216 targets** — 1,293 / 1,357 / 20 / 1,438 / 1,248 — with no rerun of
+the campaign's known flaky eviction test needed on any of them.
+
+**Determinism, in both forms.** The *required* cell is same-source,
+same-feature-set, two target directories, and it is tautological on this
+toolchain: `c9a84cd5…` on both sides, `binariesDiffer: false`, which re-proves
+single-binary determinism and says so out loud. Then the real one:
+`c9a84cd5…` (`overlap-ics`) against `7d99ffd3…`
+(`jagua-experimental,overlap-ics`), **genuinely different executables**,
+`binariesDiffer: true`, and **all five cells — S0, S1, C175, triangle-20 and
+`cutclose` — bit-identical**.
+
+### The §4 trap fired, and it caught something else on the way
+
+`../gate/README.md` §4 warns that `run-suites.sh` rebuilds the shared `target/`,
+so any driver taking `lib.BIN`'s default after a suite run measures a binary
+nobody named. `heavy.sh` now records the canonical example's sha256 on **both
+sides** of the suite step, and it is a measurement:
+**`SUITE_CLOBBERED_THE_BINARY: true`** — `c9a84cd5…` before, `cc710f11…` after,
+`c9a84cd5…` again once the canonical example is rebuilt. Every determinism cell
+runs before the suites for that reason.
+
+Recording shas on both sides then caught a second thing, which is this wave's
+own mistake and is written down rather than quietly fixed:
+
+* the gate battery ran on **`93cc1a7c…`**, and `evidence/gate2.icscal.json` is
+  keyed to `93cc1a7c…`;
+* **two meter-only edits made after the battery** — a de-duplicated base-unit
+  divisor and a comment — changed the executable to `c9a84cd5…`, which is the
+  sha `evidence/binary-trap.txt` and the two determinism documents recorded;
+* a plan whose `binaryKey` does not match is a **hard error** by design, so the
+  committed plan would have refused to run from `HEAD`. The gate's numbers would
+  still have been true and would no longer have been reproducible from the
+  committed source.
+
+Both edits were reverted. `HEAD` builds **`93cc1a7c…`** again — the binary the
+plan names, the batteries used, and every one of the five battery documents
+records on both sides of itself (`binaryUnchangedDuringBattery: true`, five for
+five). The two determinism documents and `binary-trap.txt` are left **exactly as
+`heavy.sh` produced them**, carrying `c9a84cd5…`; they are true measurements of
+the binary that existed while they ran, and editing a produced artefact to agree
+with a later state is the failure this paragraph exists to prevent.
+
 ## 9. The files
 
 | file | what |
