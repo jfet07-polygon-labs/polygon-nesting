@@ -1,0 +1,337 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "cutclose-fast-additions",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7126ae13-aad-1/target/release/examples/overlap_ics_benchmark",
+ "stages": [
+  {
+   "stage": "canary",
+   "exit": 0,
+   "constructorDepthMm": 182.976,
+   "pinnedConstructorDepthMm": 182.976,
+   "pinnedFirstBiteTargetMm": 182.793024,
+   "measured": {
+    "constructorDepthMm": 182.976,
+    "dualValid": true,
+    "expectedTargetMm": 182.793024,
+    "published": true,
+    "publishedRawDepthMm": 182.793024,
+    "strictChild": true,
+    "targetDepthMm": 182.793024,
+    "targetMatchesExpected": true,
+    "withinTarget": true
+   },
+   "firstBite": {
+    "attempts": 0,
+    "deltaMm": -0.18297599999999647,
+    "disruptions": 0,
+    "exactAttempts": 1,
+    "masterIterations": 4,
+    "minRawPhi": 0.0,
+    "movedPieces": 34,
+    "ordinal": 1,
+    "phase": "explore",
+    "proxyBandReached": true,
+    "published": true,
+    "splitYMm": 91.488,
+    "step": 0.001,
+    "strikes": 0,
+    "widthAfterMm": 182.793024,
+    "widthBeforeMm": 182.976
+   },
+   "funnel": {
+    "bitesStarted": 1,
+    "dualValidPublished": 1,
+    "exactAttempted": 1,
+    "proxyBandReached": 1
+   },
+   "invalidPublications": 0,
+   "wallSeconds": 2.351728904992342,
+   "searchSeconds": 0.022509777,
+   "constructorSeconds": 2.325743925,
+   "pass": true
+  },
+  {
+   "stage": "tripwires",
+   "options": {
+    "mode": "fixed",
+    "bites": 8,
+    "attempts": 2,
+    "iters": 400,
+    "compressbites": 2,
+    "workers": 8,
+    "seed": 0
+   },
+   "neuteredRelocate": {
+    "relocates": 590,
+    "containerSamples": 29500,
+    "focusedSamples": 14750,
+    "containerSamplesPerRelocate": 50.0,
+    "focusedSamplesPerRelocate": 25.0,
+    "containerWinners": 3,
+    "containerCommits": 3,
+    "focusedWinners": 84,
+    "stayPutWinners": 503,
+    "pass": true
+   },
+   "exactParentDrift": {
+    "links": [
+     {
+      "bite": 1,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 2,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 3,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 4,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 5,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 6,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 7,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 8,
+      "phase": "explore",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 9,
+      "phase": "compress",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     },
+     {
+      "bite": 10,
+      "phase": "compress",
+      "parentMatches": true,
+      "targetFromPublishedDepth": true,
+      "publishedWithinTarget": true,
+      "repairRows": 0
+     }
+    ],
+    "firstParentIsConstructor": true,
+    "pass": true
+   },
+   "cutCloseBits": {
+    "bites": [
+     {
+      "ordinal": 1,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 2,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 3,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 4,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 5,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 6,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 7,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 8,
+      "phase": "explore",
+      "deltaExact": true,
+      "splitIsMidDepth": true,
+      "stepIsExploreStep": true,
+      "movedPieces": 34
+     },
+     {
+      "ordinal": 9,
+      "phase": "compress",
+      "deltaExact": true,
+      "splitIsMidDepth": null,
+      "stepIsExploreStep": null,
+      "movedPieces": 39
+     },
+     {
+      "ordinal": 10,
+      "phase": "compress",
+      "deltaExact": true,
+      "splitIsMidDepth": null,
+      "stepIsExploreStep": null,
+      "movedPieces": 28
+     }
+    ],
+    "pass": true
+   },
+   "shrinkOnPhiZero": {
+    "exploreBites": 8,
+    "explorePublications": 8,
+    "unpublishedExploreBites": 0,
+    "everyPublishedBiteEndedAtItsTarget": true,
+    "atMostOneUnpublishedAndItIsLast": true,
+    "pass": true
+   },
+   "invalidPublications": 0,
+   "pass": true
+  },
+  {
+   "stage": "bites",
+   "options": {
+    "mode": "fixed",
+    "bites": 8,
+    "attempts": 2,
+    "iters": 400,
+    "compressbites": 2,
+    "workers": 8,
+    "seed": 0
+   },
+   "twoProcess": {
+    "exitA": 0,
+    "exitB": 0,
+    "stderrA": "",
+    "stderrB": "",
+    "digestA": "9f6c15efc3d7dfd415560cf9bdb908a6d104a6912e458e568555c7c7c3a2338d",
+    "digestB": "9f6c15efc3d7dfd415560cf9bdb908a6d104a6912e458e568555c7c7c3a2338d",
+    "strippedFields": [
+     "wall"
+    ],
+    "bitIdentical": true
+   },
+   "exploreBites": 8,
+   "compressBites": 2,
+   "publicationCount": 10,
+   "funnel": {
+    "bitesStarted": 10,
+    "dualValidPublished": 10,
+    "exactAttempted": 10,
+    "proxyBandReached": 10
+   },
+   "depthMm": 181.3802826722524,
+   "pass": true
+  },
+  {
+   "stage": "merge",
+   "options": {
+    "mode": "fixed",
+    "bites": 3,
+    "attempts": 1,
+    "iters": 12,
+    "compressbites": 1,
+    "workers": 8,
+    "seed": 0,
+    "fingerprints": 1
+   },
+   "twoProcess": {
+    "exitA": 0,
+    "exitB": 0,
+    "stderrA": "",
+    "stderrB": "",
+    "digestA": "e350264d1eb36db174a2cae07733ae5bc71766f5361270233098b106e0848ed0",
+    "digestB": "e350264d1eb36db174a2cae07733ae5bc71766f5361270233098b106e0848ed0",
+    "strippedFields": [
+     "wall"
+    ],
+    "bitIdentical": true
+   },
+   "iterations": 9,
+   "iterationsB": 9,
+   "winnerOrdinalsIdentical": true,
+   "masterStateFingerprintsIdentical": true,
+   "winnerGuidedIdentical": true,
+   "exactParentChainIdentical": true,
+   "contestedIterations": 9,
+   "distinctWinners": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "workers": 8,
+   "pass": true
+  }
+ ],
+ "failures": [],
+ "CANARY_PASS": true,
+ "CUTCLOSE_FAST_PASS": true
+}
