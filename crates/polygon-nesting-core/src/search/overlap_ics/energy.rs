@@ -268,6 +268,70 @@ pub fn incident_raw(state: &IcsState, piece: usize) -> f64 {
     incident_totals(state, piece).0
 }
 
+/// The negative gradient of the incident guided energy at one piece:
+/// `(force_x, force_y, torque)`, with the torque `tau = (p - c) x (w v n)`
+/// about the piece's transformed **centroid**.
+///
+/// **This is a probe of the field, not a move of the member.** Nothing in
+/// `relocate.rs`, `descent.rs` or `disrupt.rs` calls it and no acceptance path
+/// can reach it: `CutCloseRelocate` samples and coordinate-descends, and the
+/// gradient proposal it replaced is deleted. What survives is the *claim* the
+/// numeric-soundness corpus makes about Φ itself - that a step along Φ's own
+/// negative gradient reduces a violation measured by a completely independent
+/// scorer, on whole transformed rings, by ray-cast containment, in a linear
+/// rather than a squared metric. That claim is a fact about the field and it
+/// stays in the regression floor whatever the search does with it
+/// (docs/cutclose-relocate-spec.md, "The gate": the soundness populations keep
+/// their literal thresholds). `corpus::gradient_probe_step` is the only caller,
+/// and it lives in the corpus for the same reason `homotopy::compressed` stays
+/// a corpus factory rather than a live start.
+pub fn incident_gradient(state: &IcsState, piece: usize) -> [f64; 3] {
+    let count = state.poses.len();
+    let centre = state.geometry.centroids[piece];
+    let mut force = [0.0f64, 0.0];
+    let mut torque = 0.0f64;
+    for other in 0..count {
+        if other == piece {
+            continue;
+        }
+        let (first, second) = if other < piece {
+            (other, piece)
+        } else {
+            (piece, other)
+        };
+        let row = &state.pair_rows[pair_index(count, first, second)];
+        if row.violation_mm <= 0.0 {
+            continue;
+        }
+        let contact = if piece == first {
+            row.contact
+        } else {
+            row.contact.reversed()
+        };
+        let scale = 2.0 * row.weight * row.violation_mm;
+        force[0] += scale * contact.normal[0];
+        force[1] += scale * contact.normal[1];
+        let arm = [
+            contact.witness_a[0] - centre[0],
+            contact.witness_a[1] - centre[1],
+        ];
+        torque += scale * (arm[0] * contact.normal[1] - arm[1] * contact.normal[0]);
+    }
+    for edge in 0..4 {
+        let row = state.edge_rows[piece][edge];
+        if row.violation_mm <= 0.0 {
+            continue;
+        }
+        let normal = super::state::EDGE_NORMALS[edge];
+        let scale = 2.0 * row.weight * row.violation_mm;
+        force[0] += scale * normal[0];
+        force[1] += scale * normal[1];
+        let arm = [row.witness[0] - centre[0], row.witness[1] - centre[1]];
+        torque += scale * (arm[0] * normal[1] - arm[1] * normal[0]);
+    }
+    [force[0], force[1], torque]
+}
+
 /// Algorithm 8's published multipliers, read off Sparrow `consts.rs`
 /// (`GLS_WEIGHT_MIN_INC_RATIO`, `GLS_WEIGHT_MAX_INC_RATIO`, `GLS_WEIGHT_DECAY`,
 /// rev `14f4868f`) and frozen before any wall number exists. They are the

@@ -23,12 +23,111 @@ use crate::validation::round_envelope::{
 };
 
 use super::descent::counter_hash;
-use super::energy::{fold, rebuild_all, rebuild_piece_rows};
+use super::energy::{fold, incident_gradient, incident_guided, rebuild_all, rebuild_piece_rows};
 use super::diagnostics::WorkVector;
 use super::state::{
-    build_geometry, pair_count, transform_piece, Contract, EdgeRow, Geometry, IcsState, PairRow,
-    PieceSource, Pose,
+    build_geometry, compose_proposal, pair_count, transform_piece, Contract, EdgeRow, Geometry,
+    IcsState, PairRow, PieceSource, Pose,
 };
+
+/// The probe ladder's bottom rung, 0.25 µm - Sol review 14 §1's floor, and the
+/// number the force-correlation cell was pinned against.
+pub const LADDER_BOTTOM_MM: f64 = 0.00025;
+
+/// **One step along Φ's own negative gradient, for the force-correlation cell
+/// and for nothing else.**
+///
+/// The cell's question is about the *field*: does a step along Φ's negative
+/// gradient reduce a violation measured by the independent scorer above - whole
+/// transformed rings, ray-cast containment, a **linear** metric rather than Φ's
+/// squared hinge? A sign error, a wrong torque arm or a mis-oriented contact
+/// normal would show up as a step that raises the independent number, and no
+/// amount of Φ auditing itself would catch it.
+///
+/// It lives here rather than in `descent.rs` because it is not a move. The
+/// member's routine move is a global relocate ([`super::relocate`]) whose
+/// objective is the *lexicographic* incident weighted Φ, and a relocate is
+/// explicitly permitted to trade one deep overlap for several shallow ones -
+/// which lowers `Σ w v²` while raising `Σ v`, so it cannot answer this cell's
+/// question and measuring it here would silently retarget the regression floor
+/// from the field to the search. Grok review 12 Round 2 §6.2 keeps
+/// `corpus.rs` intact and keeps affine compression as a corpus factory for the
+/// same reason: a probe is allowed to use machinery the live path does not.
+///
+/// The step is the retired backtracking ladder, exactly: the SE(2)-normalized
+/// direction under the metric `|dt|² + (R dθ)²`, rungs halving from
+/// `ladder_top_mm` to `ladder_bottom_mm`, and the first rung that strictly
+/// lowers the incident guided energy wins. Nothing in `search::overlap_ics`
+/// outside this function can reach it.
+pub fn gradient_probe_step(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    piece: usize,
+    allow_rotation: bool,
+    ladder_top_mm: f64,
+    ladder_bottom_mm: f64,
+    work: &mut WorkVector,
+) -> bool {
+    let before = incident_guided(state, piece);
+    if before <= 0.0 {
+        return false;
+    }
+    let gradient = incident_gradient(state, piece);
+    let radius = sources[piece].max_radius_mm.max(1e-9);
+    let angular = if allow_rotation {
+        gradient[2] / (radius * radius)
+    } else {
+        0.0
+    };
+    let norm = libm::hypot(libm::hypot(gradient[0], gradient[1]), radius * angular);
+    if !(norm > 0.0) || !norm.is_finite() {
+        return false;
+    }
+    let direction = [gradient[0] / norm, gradient[1] / norm, angular / norm];
+    let original = state.poses[piece];
+    // Read once, before the first rung overwrites the cached geometry: every
+    // rung walks the same direction from the same pose and must turn about the
+    // same point.
+    let pivot = state.geometry.centroids[piece];
+    // The retired `DescentConfig::ladder()`, rebuilt here so the cell's rung
+    // sequence is the one it was pinned against: halving from the top while
+    // strictly above the bottom, then the bottom itself.
+    let mut rungs = Vec::new();
+    let mut step = ladder_top_mm;
+    while step > ladder_bottom_mm {
+        rungs.push(step);
+        step /= 2.0;
+    }
+    rungs.push(ladder_bottom_mm);
+    for step in rungs {
+        let candidate = compose_proposal(
+            original,
+            pivot,
+            step * direction[0],
+            step * direction[1],
+            (step * direction[2]).to_degrees(),
+        );
+        if !candidate.tx_mm.is_finite()
+            || !candidate.ty_mm.is_finite()
+            || !candidate.theta_deg.is_finite()
+        {
+            continue;
+        }
+        state.poses[piece] = candidate;
+        transform_piece(sources, &mut state.geometry, &state.poses, piece);
+        work.pose_transforms += 1;
+        rebuild_piece_rows(state, contract, piece, work);
+        if incident_guided(state, piece) < before {
+            return true;
+        }
+    }
+    state.poses[piece] = original;
+    transform_piece(sources, &mut state.geometry, &state.poses, piece);
+    work.pose_transforms += 1;
+    rebuild_piece_rows(state, contract, piece, work);
+    false
+}
 
 /// The independent measurement of one layout.
 #[derive(Clone, Copy, Debug, Default)]
@@ -610,16 +709,32 @@ pub fn run(
         {
             report.incremental_mismatches += 1;
         }
-        // Force correlation: one accepted step from the descent's own ladder.
+        // Force correlation: one accepted step along Φ's own negative gradient.
+        //
+        // The probe is the retired ladder and it is deliberately **not** the
+        // member's relocate. This clause audits the field - the sign of the
+        // contact normal, the arm of the torque, the direction of the force -
+        // against a second implementation in a different metric, and the
+        // member's relocate answers a different question: it minimizes
+        // `Σ w v²` lexicographically and is explicitly allowed to trade one
+        // deep overlap for several shallow ones, which raises the independent
+        // scorer's `Σ v` while lowering Φ. Scoring the relocate here would
+        // silently retarget a regression-floor cell from the geometry to the
+        // search. See `gradient_probe_step`.
         let before_active = independent_incident(&state.geometry, contract, target_depth_mm, piece);
         let before_total = independent.total_violation_mm;
         let mut stepped = state.clone();
         let config = super::descent::DescentConfig::derive(contract, sources, seed);
-        let mut descent = super::descent::Descent::new(
-            config,
-            pieces.iter().map(|piece| piece.allow_rotation).collect(),
-        );
-        if descent.propose(&mut stepped, sources, contract, piece, &mut work) {
+        if gradient_probe_step(
+            &mut stepped,
+            sources,
+            contract,
+            piece,
+            pieces[piece].allow_rotation,
+            config.ladder_top_mm,
+            LADDER_BOTTOM_MM,
+            &mut work,
+        ) {
             let slot = match entry.family {
                 Family::Compressed => 0,
                 Family::Grazing => 1,
