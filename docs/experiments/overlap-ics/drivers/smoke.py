@@ -42,6 +42,22 @@ S1_LOCKED_W_MM = 150.16547
 S1_MAX_REPAIR_MM = 0.016
 S1_MAX_GIVEBACK_MM = 0.050
 
+# **S1's quota, re-denominated.** Grok review 12 Round 1 §4.3: "Work quota for
+# S1: 200,000 **relocate-evals** (not PGS proposals)". Both numbers are passed
+# and the document says which one bound the run, because they are not
+# interchangeable and neither alone is sufficient:
+#
+#   * `relocateevals` is the *work* the operator is licensed to spend, and it is
+#     the unit the spec names. It is a cap S1 does not reach - the cell converges
+#     at ~83.6 K - which is the honest reading of "quota", not a defect;
+#   * `budget` is what makes a converged cell **stop**. Once Phi = 0 the
+#     colliding set is empty, every further sweep relocates nothing and spends
+#     zero relocate-evals, so a relocate-eval quota alone never terminates. With
+#     the backstop removed this cell ran 10^9 empty slots in 155 seconds and
+#     still finished 116 K relocate-evals short of the cap.
+S1_RELOCATE_EVAL_QUOTA = 200_000
+
+
 
 def two_process(cell, out, **options):
     first, _, status_a, err_a = lib.run(
@@ -95,12 +111,13 @@ def main():
 
     s1_compare, s1 = two_process(
         's1', out, poses=lib.SPARROW_POSES, target=S1_LOCKED_W_MM,
-        budget=budget, seed=0, perturbmm=0.5, perturbdeg=2.0,
-        checkpointevery=1)
+        budget=budget, relocateevals=S1_RELOCATE_EVAL_QUOTA, seed=0,
+        perturbmm=0.5, perturbdeg=2.0, checkpointevery=1)
     s1_rows = lib.published(s1)
     outcome = s1.get('outcome', {})
     s1_measured = {
         'lockedWmm': S1_LOCKED_W_MM,
+        'quota': s1.get('quota'),
         'perturbationMm': 0.5,
         'perturbationDeg': 2.0,
         'perturbedPoseDigest': s1.get('poses', {}).get('perturbedPoseDigest'),

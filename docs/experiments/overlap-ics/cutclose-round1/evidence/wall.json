@@ -1,0 +1,2944 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "cutclose-round1-wall",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8a00dcff-f1d-3/target/release/examples/overlap_ics_benchmark",
+ "canaryLicence": "/var/lib/t3/tmp/overlapics/round1/cutclose-fast.json",
+ "workers": 8,
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8
+ ],
+ "request": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8a00dcff-f1d-3/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "cells": {
+  "3": {
+   "budgetSeconds": 3.0,
+   "seeds": [
+    {
+     "seed": 0,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.331322782,
+     "searchSeconds": 0.673959497,
+     "totalSeconds": 3.005586876,
+     "processWallSeconds": 3.010236567002721,
+     "bestStrictChildMm": 179.00811954010112,
+     "incumbentMm": 179.00811954010112,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 23,
+     "publicationsTotal": 23,
+     "strictChildren": 23,
+     "exploreBites": 21,
+     "compressBites": 3,
+     "funnel": {
+      "bitesStarted": 25,
+      "dualValidPublished": 23,
+      "exactAttempted": 23,
+      "proxyBandReached": 23
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 12.10577722627207,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5580,
+      "containerCommits": 16,
+      "containerSamples": 385750,
+      "containerWinners": 16,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 192875,
+      "focusedWinners": 416,
+      "relocates": 7715,
+      "sampleEvaluations": 1960299,
+      "sampleEvaluationsPerRelocate": 254.08930654569022,
+      "stayPutWinners": 7283
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 24,
+      "iteration": 13,
+      "proposals": 8479
+     },
+     "finalWidthMm": 178.97251227394446,
+     "minRawPhiOfLastBite": 0.0012980783506106187,
+     "qualifies": false
+    },
+    {
+     "seed": 1,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.3186692349999998,
+     "searchSeconds": 0.684514511,
+     "totalSeconds": 3.003454947,
+     "processWallSeconds": 3.0077697839587927,
+     "bestStrictChildMm": 179.5294528682599,
+     "incumbentMm": 179.5294528682599,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 19,
+     "publicationsTotal": 19,
+     "strictChildren": 19,
+     "exploreBites": 19,
+     "compressBites": 1,
+     "funnel": {
+      "bitesStarted": 21,
+      "dualValidPublished": 19,
+      "exactAttempted": 19,
+      "proxyBandReached": 19
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 8.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5884,
+      "containerCommits": 30,
+      "containerSamples": 380650,
+      "containerWinners": 30,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 190325,
+      "focusedWinners": 376,
+      "relocates": 7613,
+      "sampleEvaluations": 1917195,
+      "sampleEvaluationsPerRelocate": 251.83173518980692,
+      "stayPutWinners": 7207
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 19,
+      "iteration": 3,
+      "proposals": 6283
+     },
+     "finalWidthMm": 179.43974643898528,
+     "minRawPhiOfLastBite": 0.00032234467482440075,
+     "qualifies": false
+    },
+    {
+     "seed": 2,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.331774222,
+     "searchSeconds": 0.670159633,
+     "totalSeconds": 3.002244776,
+     "processWallSeconds": 3.0066649559885263,
+     "bestStrictChildMm": 179.006173062948,
+     "incumbentMm": 179.006173062948,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 25,
+     "publicationsTotal": 25,
+     "strictChildren": 25,
+     "exploreBites": 20,
+     "compressBites": 6,
+     "funnel": {
+      "bitesStarted": 27,
+      "dualValidPublished": 25,
+      "exactAttempted": 25,
+      "proxyBandReached": 25
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 8.249879116140601,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5892,
+      "containerCommits": 26,
+      "containerSamples": 369800,
+      "containerWinners": 26,
+      "disruptionMoves": 3,
+      "disruptions": 1,
+      "focusedSamples": 184900,
+      "focusedWinners": 344,
+      "relocates": 7396,
+      "sampleEvaluations": 1877480,
+      "sampleEvaluationsPerRelocate": 253.85073012439156,
+      "stayPutWinners": 7026
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 26,
+      "iteration": 16,
+      "proposals": 10309
+     },
+     "finalWidthMm": 178.9892894553128,
+     "minRawPhiOfLastBite": 0.0005535612438905982,
+     "qualifies": false
+    },
+    {
+     "seed": 3,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.35484488,
+     "searchSeconds": 0.651477605,
+     "totalSeconds": 3.006595763,
+     "processWallSeconds": 3.0112420670920983,
+     "bestStrictChildMm": 179.05644832657865,
+     "incumbentMm": 179.05644832657865,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 22,
+      "proxyBandReached": 22
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 9.228094564014803,
+     "repairMaxGivebackMm": 0.0017717065389319941,
+     "relocateEconomics": {
+      "acceptedMoves": 6123,
+      "containerCommits": 20,
+      "containerSamples": 373750,
+      "containerWinners": 20,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 186875,
+      "focusedWinners": 404,
+      "relocates": 7475,
+      "sampleEvaluations": 1877899,
+      "sampleEvaluationsPerRelocate": 251.2239464882943,
+      "stayPutWinners": 7051
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 5,
+      "proposals": 7625
+     },
+     "finalWidthMm": 178.97913635277692,
+     "minRawPhiOfLastBite": 0.001061404238339703,
+     "qualifies": false
+    },
+    {
+     "seed": 4,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.332880204,
+     "searchSeconds": 0.667699682,
+     "totalSeconds": 3.000891554,
+     "processWallSeconds": 3.0049668829888105,
+     "bestStrictChildMm": 179.0586658211151,
+     "incumbentMm": 179.0586658211151,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 26,
+     "publicationsTotal": 26,
+     "strictChildren": 26,
+     "exploreBites": 21,
+     "compressBites": 6,
+     "funnel": {
+      "bitesStarted": 28,
+      "dualValidPublished": 26,
+      "exactAttempted": 28,
+      "proxyBandReached": 28
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 12.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5346,
+      "containerCommits": 26,
+      "containerSamples": 385000,
+      "containerWinners": 26,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 192500,
+      "focusedWinners": 316,
+      "relocates": 7700,
+      "sampleEvaluations": 1932640,
+      "sampleEvaluationsPerRelocate": 250.99220779220778,
+      "stayPutWinners": 7358
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 28,
+      "iteration": 1,
+      "proposals": 8174
+     },
+     "finalWidthMm": 179.0586658211151,
+     "minRawPhiOfLastBite": 0.0,
+     "qualifies": false
+    },
+    {
+     "seed": 5,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.33072456,
+     "searchSeconds": 0.670106869,
+     "totalSeconds": 3.001110519,
+     "processWallSeconds": 3.0054381960071623,
+     "bestStrictChildMm": 179.0717380554816,
+     "incumbentMm": 179.0717380554816,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 22,
+      "proxyBandReached": 22
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 9.880295748838746,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5798,
+      "containerCommits": 27,
+      "containerSamples": 366600,
+      "containerWinners": 27,
+      "disruptionMoves": 4,
+      "disruptions": 1,
+      "focusedSamples": 183300,
+      "focusedWinners": 435,
+      "relocates": 7332,
+      "sampleEvaluations": 1862078,
+      "sampleEvaluationsPerRelocate": 253.9659028914348,
+      "stayPutWinners": 6870
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 3,
+      "proposals": 8845
+     },
+     "finalWidthMm": 178.99237414746852,
+     "minRawPhiOfLastBite": 0.00017155018884613713,
+     "qualifies": false
+    },
+    {
+     "seed": 6,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.331294544,
+     "searchSeconds": 0.669613017,
+     "totalSeconds": 3.001189703,
+     "processWallSeconds": 3.005550881032832,
+     "bestStrictChildMm": 179.05431351860946,
+     "incumbentMm": 179.05431351860946,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 22,
+      "proxyBandReached": 22
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 9.000000000000002,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5760,
+      "containerCommits": 25,
+      "containerSamples": 382550,
+      "containerWinners": 25,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 191275,
+      "focusedWinners": 402,
+      "relocates": 7651,
+      "sampleEvaluations": 1933845,
+      "sampleEvaluationsPerRelocate": 252.75715592732976,
+      "stayPutWinners": 7224
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 6,
+      "proposals": 7137
+     },
+     "finalWidthMm": 178.98033355731297,
+     "minRawPhiOfLastBite": 0.002522852375929994,
+     "qualifies": false
+    },
+    {
+     "seed": 7,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.318024746,
+     "searchSeconds": 0.686889514,
+     "totalSeconds": 3.005212472,
+     "processWallSeconds": 3.009651236003265,
+     "bestStrictChildMm": 179.0059282827089,
+     "incumbentMm": 179.0059282827089,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 23,
+     "publicationsTotal": 23,
+     "strictChildren": 23,
+     "exploreBites": 21,
+     "compressBites": 3,
+     "funnel": {
+      "bitesStarted": 25,
+      "dualValidPublished": 23,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 8.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 5380,
+      "containerCommits": 24,
+      "containerSamples": 411150,
+      "containerWinners": 24,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 205575,
+      "focusedWinners": 361,
+      "relocates": 8223,
+      "sampleEvaluations": 2047067,
+      "sampleEvaluationsPerRelocate": 248.94405934573757,
+      "stayPutWinners": 7838
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 24,
+      "iteration": 11,
+      "proposals": 7686
+     },
+     "finalWidthMm": 178.95992620034735,
+     "minRawPhiOfLastBite": 0.0035492907893153475,
+     "qualifies": false
+    },
+    {
+     "seed": 8,
+     "budgetSeconds": 3.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.30759628,
+     "searchSeconds": 0.69621266,
+     "totalSeconds": 3.004093254,
+     "processWallSeconds": 3.008441100944765,
+     "bestStrictChildMm": 179.08215287431932,
+     "incumbentMm": 179.08215287431932,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 6.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 6078,
+      "containerCommits": 26,
+      "containerSamples": 402500,
+      "containerWinners": 26,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 201250,
+      "focusedWinners": 396,
+      "relocates": 8050,
+      "sampleEvaluations": 2005648,
+      "sampleEvaluationsPerRelocate": 249.1488198757764,
+      "stayPutWinners": 7628
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 2,
+      "proposals": 6527
+     },
+     "finalWidthMm": 178.99846165687177,
+     "minRawPhiOfLastBite": 2.0215915499789224e-05,
+     "qualifies": false
+    }
+   ],
+   "qualifyingSeeds": [],
+   "qualifyingCount": 0,
+   "invalidPublicationsAcrossAllSeeds": 0,
+   "allSeedsValid": true,
+   "isTheGate": false
+  },
+  "10": {
+   "budgetSeconds": 10.0,
+   "seeds": [
+    {
+     "seed": 0,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.317540369,
+     "searchSeconds": 7.68620885,
+     "totalSeconds": 10.004025478,
+     "processWallSeconds": 10.007613327004947,
+     "bestStrictChildMm": 179.07685886849248,
+     "incumbentMm": 179.07685886849248,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 3,
+     "funnel": {
+      "bitesStarted": 25,
+      "dualValidPublished": 22,
+      "exactAttempted": 23,
+      "proxyBandReached": 23
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 12.10577722627207,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 27521,
+      "containerCommits": 113,
+      "containerSamples": 4061050,
+      "containerWinners": 113,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 2030525,
+      "focusedWinners": 949,
+      "relocates": 81221,
+      "sampleEvaluations": 19902887,
+      "sampleEvaluationsPerRelocate": 245.04607182871425,
+      "stayPutWinners": 80159
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 24,
+      "iteration": 4,
+      "proposals": 86132
+     },
+     "finalWidthMm": 178.99087919178316,
+     "minRawPhiOfLastBite": 9.169140316342914e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 1,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.323268355,
+     "searchSeconds": 7.681722136,
+     "totalSeconds": 10.00527447,
+     "processWallSeconds": 10.009742205031216,
+     "bestStrictChildMm": 179.0809920513318,
+     "incumbentMm": 179.0809920513318,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 23,
+      "proxyBandReached": 23
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 8.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 22375,
+      "containerCommits": 153,
+      "containerSamples": 4328500,
+      "containerWinners": 153,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 2164250,
+      "focusedWinners": 921,
+      "relocates": 86570,
+      "sampleEvaluations": 21309676,
+      "sampleEvaluationsPerRelocate": 246.1554349081668,
+      "stayPutWinners": 85496
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 5,
+      "proposals": 57279
+     },
+     "finalWidthMm": 178.99250526441168,
+     "minRawPhiOfLastBite": 6.746110247189841e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 2,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.320940483,
+     "searchSeconds": 7.683222135,
+     "totalSeconds": 10.004440689,
+     "processWallSeconds": 10.007797196973115,
+     "bestStrictChildMm": 179.07957475716356,
+     "incumbentMm": 179.07957475716356,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 6.500000000000001,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 26987,
+      "containerCommits": 150,
+      "containerSamples": 3782550,
+      "containerWinners": 150,
+      "disruptionMoves": 3,
+      "disruptions": 1,
+      "focusedSamples": 1891275,
+      "focusedWinners": 916,
+      "relocates": 75651,
+      "sampleEvaluations": 18628901,
+      "sampleEvaluationsPerRelocate": 246.2479147664935,
+      "stayPutWinners": 74585
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 4,
+      "proposals": 115595
+     },
+     "finalWidthMm": 178.99076750078234,
+     "minRawPhiOfLastBite": 0.00013083189840243598,
+     "qualifies": false
+    },
+    {
+     "seed": 3,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.328335323,
+     "searchSeconds": 7.673373181,
+     "totalSeconds": 10.002271605,
+     "processWallSeconds": 10.006156858988106,
+     "bestStrictChildMm": 169.21859535746108,
+     "incumbentMm": 169.21859535746108,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 85,
+     "publicationsTotal": 85,
+     "strictChildren": 85,
+     "exploreBites": 72,
+     "compressBites": 14,
+     "funnel": {
+      "bitesStarted": 87,
+      "dualValidPublished": 85,
+      "exactAttempted": 85,
+      "proxyBandReached": 85
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 11.5,
+     "repairMaxGivebackMm": 0.0017717065389319941,
+     "relocateEconomics": {
+      "acceptedMoves": 42466,
+      "containerCommits": 344,
+      "containerSamples": 3222000,
+      "containerWinners": 344,
+      "disruptionMoves": 34,
+      "disruptions": 11,
+      "focusedSamples": 1611000,
+      "focusedWinners": 2867,
+      "relocates": 64440,
+      "sampleEvaluations": 16345560,
+      "sampleEvaluationsPerRelocate": 253.6554934823091,
+      "stayPutWinners": 61229
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 86,
+      "iteration": 6,
+      "proposals": 57950
+     },
+     "finalWidthMm": 169.15651967070258,
+     "minRawPhiOfLastBite": 9.909624139249458e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 4,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.312276343,
+     "searchSeconds": 7.688625432,
+     "totalSeconds": 10.001176189,
+     "processWallSeconds": 10.005312409019098,
+     "bestStrictChildMm": 179.08123135262687,
+     "incumbentMm": 179.08123135262687,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 9.5,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 35493,
+      "containerCommits": 88,
+      "containerSamples": 4305850,
+      "containerWinners": 88,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 2152925,
+      "focusedWinners": 616,
+      "relocates": 86117,
+      "sampleEvaluations": 21162653,
+      "sampleEvaluationsPerRelocate": 245.74303563756285,
+      "stayPutWinners": 85413
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 8,
+      "proposals": 70272
+     },
+     "finalWidthMm": 178.9944000429658,
+     "minRawPhiOfLastBite": 5.563211402764353e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 5,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.361949021,
+     "searchSeconds": 7.639345011,
+     "totalSeconds": 10.001597616,
+     "processWallSeconds": 10.00600477505941,
+     "bestStrictChildMm": 179.0717029381329,
+     "incumbentMm": 179.0717029381329,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 22,
+      "proxyBandReached": 22
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 9.880295748838746,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 27330,
+      "containerCommits": 213,
+      "containerSamples": 4387550,
+      "containerWinners": 213,
+      "disruptionMoves": 4,
+      "disruptions": 1,
+      "focusedSamples": 2193775,
+      "focusedWinners": 1237,
+      "relocates": 87751,
+      "sampleEvaluations": 21702475,
+      "sampleEvaluationsPerRelocate": 247.318833973402,
+      "stayPutWinners": 86301
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 4,
+      "proposals": 60817
+     },
+     "finalWidthMm": 178.98314041247568,
+     "minRawPhiOfLastBite": 0.0006110567908515528,
+     "qualifies": false
+    },
+    {
+     "seed": 6,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.3560745020000002,
+     "searchSeconds": 7.647323034,
+     "totalSeconds": 10.004225498,
+     "processWallSeconds": 10.008682564017363,
+     "bestStrictChildMm": 169.00245541207775,
+     "incumbentMm": 169.00245541207775,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 89,
+     "publicationsTotal": 89,
+     "strictChildren": 89,
+     "exploreBites": 74,
+     "compressBites": 19,
+     "funnel": {
+      "bitesStarted": 94,
+      "dualValidPublished": 89,
+      "exactAttempted": 94,
+      "proxyBandReached": 94
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 12.130238941486418,
+     "repairMaxGivebackMm": 0.0014270505969307123,
+     "relocateEconomics": {
+      "acceptedMoves": 49628,
+      "containerCommits": 455,
+      "containerSamples": 3748950,
+      "containerWinners": 455,
+      "disruptionMoves": 34,
+      "disruptions": 12,
+      "focusedSamples": 1874475,
+      "focusedWinners": 3730,
+      "relocates": 74979,
+      "sampleEvaluations": 18993605,
+      "sampleEvaluationsPerRelocate": 253.3189959855426,
+      "stayPutWinners": 70794
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 93,
+      "iteration": 8,
+      "proposals": 92476
+     },
+     "finalWidthMm": 169.00072584974114,
+     "minRawPhiOfLastBite": 1.5661642043838394e-06,
+     "qualifies": false
+    },
+    {
+     "seed": 7,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.3282248,
+     "searchSeconds": 7.673857384,
+     "totalSeconds": 10.002381228,
+     "processWallSeconds": 10.00662868609652,
+     "bestStrictChildMm": 179.08210583279535,
+     "incumbentMm": 179.08210583279535,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 8.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 11821,
+      "containerCommits": 77,
+      "containerSamples": 4507200,
+      "containerWinners": 77,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 2253600,
+      "focusedWinners": 636,
+      "relocates": 90144,
+      "sampleEvaluations": 22095330,
+      "sampleEvaluationsPerRelocate": 245.11148828541002,
+      "stayPutWinners": 89431
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 4,
+      "proposals": 58926
+     },
+     "finalWidthMm": 178.993457314591,
+     "minRawPhiOfLastBite": 4.4204340293595825e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 8,
+     "budgetSeconds": 10.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.31751442,
+     "searchSeconds": 7.688058679,
+     "totalSeconds": 10.005840939,
+     "processWallSeconds": 10.010269372956827,
+     "bestStrictChildMm": 179.08210534663405,
+     "incumbentMm": 179.08210534663405,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 6.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 24496,
+      "containerCommits": 169,
+      "containerSamples": 4301100,
+      "containerWinners": 169,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 2150550,
+      "focusedWinners": 1050,
+      "relocates": 86022,
+      "sampleEvaluations": 21150660,
+      "sampleEvaluationsPerRelocate": 245.87500871869986,
+      "stayPutWinners": 84803
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 3,
+      "proposals": 60146
+     },
+     "finalWidthMm": 178.99318738776893,
+     "minRawPhiOfLastBite": 6.669000455169863e-05,
+     "qualifies": false
+    }
+   ],
+   "qualifyingSeeds": [],
+   "qualifyingCount": 0,
+   "invalidPublicationsAcrossAllSeeds": 0,
+   "allSeedsValid": true,
+   "isTheGate": true
+  },
+  "30": {
+   "budgetSeconds": 30.0,
+   "seeds": [
+    {
+     "seed": 0,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.31516438,
+     "searchSeconds": 27.686864951,
+     "totalSeconds": 30.002894789,
+     "processWallSeconds": 30.007570571964607,
+     "bestStrictChildMm": 164.00235729994253,
+     "incumbentMm": 164.00235729994253,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 114,
+     "publicationsTotal": 114,
+     "strictChildren": 114,
+     "exploreBites": 107,
+     "compressBites": 17,
+     "funnel": {
+      "bitesStarted": 125,
+      "dualValidPublished": 114,
+      "exactAttempted": 120,
+      "proxyBandReached": 120
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 14.803526310993753,
+     "repairMaxGivebackMm": 0.0011115000449422041,
+     "relocateEconomics": {
+      "acceptedMoves": 115912,
+      "containerCommits": 428,
+      "containerSamples": 11888500,
+      "containerWinners": 428,
+      "disruptionMoves": 25,
+      "disruptions": 9,
+      "focusedSamples": 5944250,
+      "focusedWinners": 4340,
+      "relocates": 237770,
+      "sampleEvaluations": 58202366,
+      "sampleEvaluationsPerRelocate": 244.78431257097193,
+      "stayPutWinners": 233002
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 123,
+      "iteration": 6,
+      "proposals": 467321
+     },
+     "finalWidthMm": 164.000691067755,
+     "minRawPhiOfLastBite": 3.396842501414427e-07,
+     "qualifies": true
+    },
+    {
+     "seed": 1,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.31875325,
+     "searchSeconds": 27.68454863,
+     "totalSeconds": 30.00357842,
+     "processWallSeconds": 30.007148538948968,
+     "bestStrictChildMm": 179.08098966482868,
+     "incumbentMm": 179.08098966482868,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 23,
+      "proxyBandReached": 23
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 8.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 38432,
+      "containerCommits": 215,
+      "containerSamples": 14761300,
+      "containerWinners": 215,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 7380650,
+      "focusedWinners": 1266,
+      "relocates": 295226,
+      "sampleEvaluations": 72057992,
+      "sampleEvaluationsPerRelocate": 244.07739155765412,
+      "stayPutWinners": 293745
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 5,
+      "proposals": 333121
+     },
+     "finalWidthMm": 178.99171158091403,
+     "minRawPhiOfLastBite": 8.711729414414859e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 2,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.328522487,
+     "searchSeconds": 27.67390467,
+     "totalSeconds": 30.003454249,
+     "processWallSeconds": 30.008324722992256,
+     "bestStrictChildMm": 168.66302725692722,
+     "incumbentMm": 168.66302725692722,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 109,
+     "publicationsTotal": 109,
+     "strictChildren": 109,
+     "exploreBites": 65,
+     "compressBites": 62,
+     "funnel": {
+      "bitesStarted": 128,
+      "dualValidPublished": 109,
+      "exactAttempted": 127,
+      "proxyBandReached": 127
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 13.315551446990979,
+     "repairMaxGivebackMm": 0.0002768005093400916,
+     "relocateEconomics": {
+      "acceptedMoves": 52444,
+      "containerCommits": 187,
+      "containerSamples": 11621350,
+      "containerWinners": 187,
+      "disruptionMoves": 6,
+      "disruptions": 2,
+      "focusedSamples": 5810675,
+      "focusedWinners": 1528,
+      "relocates": 232427,
+      "sampleEvaluations": 57108175,
+      "sampleEvaluationsPerRelocate": 245.7037048191475,
+      "stayPutWinners": 230712
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 124,
+      "iteration": 13,
+      "proposals": 538813
+     },
+     "finalWidthMm": 168.66111806456527,
+     "minRawPhiOfLastBite": 4.894802981599178e-09,
+     "qualifies": false
+    },
+    {
+     "seed": 3,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.321791652,
+     "searchSeconds": 27.679984347,
+     "totalSeconds": 30.002604511,
+     "processWallSeconds": 30.00625304307323,
+     "bestStrictChildMm": 164.00577099398862,
+     "incumbentMm": 164.00577099398862,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 110,
+     "publicationsTotal": 110,
+     "strictChildren": 110,
+     "exploreBites": 109,
+     "compressBites": 6,
+     "funnel": {
+      "bitesStarted": 116,
+      "dualValidPublished": 110,
+      "exactAttempted": 111,
+      "proxyBandReached": 111
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 13.358803899635133,
+     "repairMaxGivebackMm": 0.0017717065389319941,
+     "relocateEconomics": {
+      "acceptedMoves": 168238,
+      "containerCommits": 1689,
+      "containerSamples": 12333150,
+      "containerWinners": 1689,
+      "disruptionMoves": 68,
+      "disruptions": 23,
+      "focusedSamples": 6166575,
+      "focusedWinners": 10331,
+      "relocates": 246663,
+      "sampleEvaluations": 60478079,
+      "sampleEvaluationsPerRelocate": 245.18504599392693,
+      "stayPutWinners": 234643
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 114,
+      "iteration": 4,
+      "proposals": 240157
+     },
+     "finalWidthMm": 163.99788392388888,
+     "minRawPhiOfLastBite": 6.716667162090899e-06,
+     "qualifies": true
+    },
+    {
+     "seed": 4,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.310608748,
+     "searchSeconds": 27.690337017,
+     "totalSeconds": 30.001718513,
+     "processWallSeconds": 30.005939631024376,
+     "bestStrictChildMm": 165.05517798318172,
+     "incumbentMm": 165.05517798318172,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 106,
+     "publicationsTotal": 106,
+     "strictChildren": 106,
+     "exploreBites": 101,
+     "compressBites": 16,
+     "funnel": {
+      "bitesStarted": 118,
+      "dualValidPublished": 106,
+      "exactAttempted": 117,
+      "proxyBandReached": 117
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 13.976657637737043,
+     "repairMaxGivebackMm": 0.000962805672088507,
+     "relocateEconomics": {
+      "acceptedMoves": 122656,
+      "containerCommits": 542,
+      "containerSamples": 12040600,
+      "containerWinners": 542,
+      "disruptionMoves": 39,
+      "disruptions": 13,
+      "focusedSamples": 6020300,
+      "focusedWinners": 4615,
+      "relocates": 240812,
+      "sampleEvaluations": 60201796,
+      "sampleEvaluationsPerRelocate": 249.99500024915702,
+      "stayPutWinners": 235655
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 115,
+      "iteration": 23,
+      "proposals": 326899
+     },
+     "finalWidthMm": 165.0534625153904,
+     "minRawPhiOfLastBite": 3.887995676665711e-07,
+     "qualifies": true
+    },
+    {
+     "seed": 5,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.304641799,
+     "searchSeconds": 27.695473561,
+     "totalSeconds": 30.001014872,
+     "processWallSeconds": 30.004906749003567,
+     "bestStrictChildMm": 163.69241745649347,
+     "incumbentMm": 163.69241745649347,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 116,
+     "publicationsTotal": 116,
+     "strictChildren": 116,
+     "exploreBites": 109,
+     "compressBites": 24,
+     "funnel": {
+      "bitesStarted": 134,
+      "dualValidPublished": 116,
+      "exactAttempted": 134,
+      "proxyBandReached": 134
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 15.768574336810643,
+     "repairMaxGivebackMm": 0.0022081649618712618,
+     "relocateEconomics": {
+      "acceptedMoves": 128578,
+      "containerCommits": 935,
+      "containerSamples": 13732650,
+      "containerWinners": 935,
+      "disruptionMoves": 44,
+      "disruptions": 15,
+      "focusedSamples": 6866325,
+      "focusedWinners": 7093,
+      "relocates": 274653,
+      "sampleEvaluations": 69019347,
+      "sampleEvaluationsPerRelocate": 251.29653417221002,
+      "stayPutWinners": 266625
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 125,
+      "iteration": 41,
+      "proposals": 219600
+     },
+     "finalWidthMm": 163.69069621661592,
+     "minRawPhiOfLastBite": 4.950126685381228e-06,
+     "qualifies": true
+    },
+    {
+     "seed": 6,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.313683647,
+     "searchSeconds": 27.687031731,
+     "totalSeconds": 30.001998387,
+     "processWallSeconds": 30.006543348077685,
+     "bestStrictChildMm": 164.00971553636725,
+     "incumbentMm": 164.00971553636725,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 116,
+     "publicationsTotal": 116,
+     "strictChildren": 116,
+     "exploreBites": 105,
+     "compressBites": 20,
+     "funnel": {
+      "bitesStarted": 126,
+      "dualValidPublished": 116,
+      "exactAttempted": 125,
+      "proxyBandReached": 125
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 16.0,
+     "repairMaxGivebackMm": 0.0014270505969307123,
+     "relocateEconomics": {
+      "acceptedMoves": 161349,
+      "containerCommits": 1328,
+      "containerSamples": 11656800,
+      "containerWinners": 1328,
+      "disruptionMoves": 97,
+      "disruptions": 32,
+      "focusedSamples": 5828400,
+      "focusedWinners": 9932,
+      "relocates": 233136,
+      "sampleEvaluations": 58216034,
+      "sampleEvaluationsPerRelocate": 249.70847059227233,
+      "stayPutWinners": 221876
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 125,
+      "iteration": 12,
+      "proposals": 252601
+     },
+     "finalWidthMm": 163.99954142426606,
+     "minRawPhiOfLastBite": 2.1029170376241062e-07,
+     "qualifies": true
+    },
+    {
+     "seed": 7,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.342578295,
+     "searchSeconds": 27.661603392,
+     "totalSeconds": 30.004434636,
+     "processWallSeconds": 30.007984612020664,
+     "bestStrictChildMm": 179.08210211575124,
+     "incumbentMm": 179.08210211575124,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 9.000000000000002,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 13878,
+      "containerCommits": 59,
+      "containerSamples": 16329900,
+      "containerWinners": 59,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 8164950,
+      "focusedWinners": 537,
+      "relocates": 326598,
+      "sampleEvaluations": 79788530,
+      "sampleEvaluationsPerRelocate": 244.3019553089731,
+      "stayPutWinners": 326002
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 8,
+      "proposals": 243024
+     },
+     "finalWidthMm": 178.99303689150463,
+     "minRawPhiOfLastBite": 7.134548450668103e-05,
+     "qualifies": false
+    },
+    {
+     "seed": 8,
+     "budgetSeconds": 30.0,
+     "exit": 0,
+     "valid": true,
+     "constructorDepthMm": 182.976,
+     "constructorSeconds": 2.338246747,
+     "searchSeconds": 27.665507231,
+     "totalSeconds": 30.004036961,
+     "processWallSeconds": 30.008572254911996,
+     "bestStrictChildMm": 179.08210214351493,
+     "incumbentMm": 179.08210214351493,
+     "incumbentIsConstructor": false,
+     "publicationsWithinBudget": 22,
+     "publicationsTotal": 22,
+     "strictChildren": 22,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "funnel": {
+      "bitesStarted": 24,
+      "dualValidPublished": 22,
+      "exactAttempted": 24,
+      "proxyBandReached": 24
+     },
+     "invalidPublications": 0,
+     "repairMaxUm": 6.0,
+     "repairMaxGivebackMm": 0.0,
+     "relocateEconomics": {
+      "acceptedMoves": 47606,
+      "containerCommits": 263,
+      "containerSamples": 15322250,
+      "containerWinners": 263,
+      "disruptionMoves": 2,
+      "disruptions": 1,
+      "focusedSamples": 7661125,
+      "focusedWinners": 1234,
+      "relocates": 306445,
+      "sampleEvaluations": 75029759,
+      "sampleEvaluationsPerRelocate": 244.8392337939924,
+      "stayPutWinners": 304948
+     },
+     "lastPublicationOrdinal": {
+      "attempt": 0,
+      "bite": 23,
+      "iteration": 4,
+      "proposals": 237290
+     },
+     "finalWidthMm": 178.99278934015982,
+     "minRawPhiOfLastBite": 7.45868923633598e-05,
+     "qualifies": false
+    }
+   ],
+   "qualifyingSeeds": [
+    0,
+    3,
+    4,
+    5,
+    6
+   ],
+   "qualifyingCount": 5,
+   "invalidPublicationsAcrossAllSeeds": 0,
+   "allSeedsValid": true,
+   "isTheGate": false
+  }
+ },
+ "fixedWorkReplay": [
+  {
+   "seed": 0,
+   "skipped": false,
+   "replayedBites": 24,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "a4a781741e41dbebdb050ff9a692f2886a47b663ddfe8ea7718d55ddb2fe1a4f",
+   "digestB": "a4a781741e41dbebdb050ff9a692f2886a47b663ddfe8ea7718d55ddb2fe1a4f",
+   "bitIdentical": true,
+   "replayPublications": 21,
+   "replayDepthMm": 179.16566573285345,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 4,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 2,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 2,
+     "proposals": 488
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 1,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 610
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 1,
+     "proposals": 671
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 1,
+     "proposals": 732
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 1,
+     "proposals": 793
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 1,
+     "proposals": 854
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 4,
+     "proposals": 1098
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 3,
+     "proposals": 1281
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 5,
+     "proposals": 1586
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 4,
+     "proposals": 1830
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 9,
+     "proposals": 2379
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 5,
+     "proposals": 2684
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 14,
+     "proposals": 3538
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 15,
+     "proposals": 4453
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 3,
+     "proposals": 4636
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 6,
+     "proposals": 5002
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 9,
+     "proposals": 5551
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 9,
+     "proposals": 6100
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 1,
+   "skipped": false,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "05549d13bb40fb7728d2a263ec00a962d163e6b8b76f74be392d8edcaa91e0ae",
+   "digestB": "05549d13bb40fb7728d2a263ec00a962d163e6b8b76f74be392d8edcaa91e0ae",
+   "bitIdentical": true,
+   "replayPublications": 21,
+   "replayDepthMm": 179.17057349197626,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 3,
+     "proposals": 183
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 1,
+     "proposals": 305
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 2,
+     "proposals": 427
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 488
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 1,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 2,
+     "proposals": 671
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 2,
+     "proposals": 793
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 4,
+     "proposals": 1037
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 4,
+     "proposals": 1281
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 5,
+     "proposals": 1586
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 6,
+     "proposals": 1952
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 9,
+     "proposals": 2501
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 4,
+     "proposals": 2745
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 5,
+     "proposals": 3050
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 18,
+     "proposals": 4148
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 31,
+     "proposals": 6039
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 1,
+     "proposals": 6100
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 3,
+     "proposals": 6283
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 32,
+     "proposals": 8235
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 2,
+     "proposals": 8357
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 2,
+   "skipped": false,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "3e7d9f365d5f3211dfabc75bedcde2cc6899957b82caa760051311379f44b22a",
+   "digestB": "3e7d9f365d5f3211dfabc75bedcde2cc6899957b82caa760051311379f44b22a",
+   "bitIdentical": true,
+   "replayPublications": 14,
+   "replayDepthMm": 180.4309203955292,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 3,
+     "proposals": 183
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 2,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 2,
+     "proposals": 488
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 1,
+     "proposals": 610
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 1,
+     "proposals": 671
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 2,
+     "proposals": 793
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 2,
+     "proposals": 915
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 3,
+     "proposals": 1098
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 4,
+     "proposals": 1342
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 4,
+     "proposals": 1586
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 6,
+     "proposals": 1952
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 17,
+     "proposals": 2989
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 3,
+   "skipped": false,
+   "replayedBites": 86,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "a31185706bcc6c59992ce326683f489eb4f632542d048264e107fc7fa1f25bf2",
+   "digestB": "a31185706bcc6c59992ce326683f489eb4f632542d048264e107fc7fa1f25bf2",
+   "bitIdentical": true,
+   "replayPublications": 37,
+   "replayDepthMm": 176.2908856176903,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 2,
+     "proposals": 122
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 3,
+     "proposals": 305
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 2,
+     "proposals": 427
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 1,
+     "proposals": 488
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 1,
+     "proposals": 610
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 1,
+     "proposals": 671
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 2,
+     "proposals": 793
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 2,
+     "proposals": 915
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 2,
+     "proposals": 1037
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 5,
+     "proposals": 1342
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 2,
+     "proposals": 1464
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 7,
+     "proposals": 1891
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 4,
+     "proposals": 2135
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 5,
+     "proposals": 2440
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 9,
+     "proposals": 2989
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 28,
+     "proposals": 4697
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 29,
+     "proposals": 6466
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 5,
+     "proposals": 6771
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 3,
+     "proposals": 6954
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 2,
+     "proposals": 7076
+    },
+    {
+     "attempt": 0,
+     "bite": 22,
+     "iteration": 137,
+     "proposals": 15433
+    },
+    {
+     "attempt": 0,
+     "bite": 23,
+     "iteration": 2,
+     "proposals": 15555
+    },
+    {
+     "attempt": 0,
+     "bite": 24,
+     "iteration": 2,
+     "proposals": 15677
+    },
+    {
+     "attempt": 0,
+     "bite": 25,
+     "iteration": 2,
+     "proposals": 15799
+    },
+    {
+     "attempt": 0,
+     "bite": 26,
+     "iteration": 4,
+     "proposals": 16043
+    },
+    {
+     "attempt": 0,
+     "bite": 27,
+     "iteration": 5,
+     "proposals": 16348
+    },
+    {
+     "attempt": 0,
+     "bite": 28,
+     "iteration": 6,
+     "proposals": 16714
+    },
+    {
+     "attempt": 0,
+     "bite": 29,
+     "iteration": 8,
+     "proposals": 17202
+    },
+    {
+     "attempt": 0,
+     "bite": 30,
+     "iteration": 13,
+     "proposals": 17995
+    },
+    {
+     "attempt": 0,
+     "bite": 31,
+     "iteration": 6,
+     "proposals": 18361
+    },
+    {
+     "attempt": 0,
+     "bite": 32,
+     "iteration": 8,
+     "proposals": 18849
+    },
+    {
+     "attempt": 0,
+     "bite": 33,
+     "iteration": 10,
+     "proposals": 19459
+    },
+    {
+     "attempt": 0,
+     "bite": 34,
+     "iteration": 6,
+     "proposals": 19825
+    },
+    {
+     "attempt": 0,
+     "bite": 35,
+     "iteration": 7,
+     "proposals": 20252
+    },
+    {
+     "attempt": 0,
+     "bite": 36,
+     "iteration": 20,
+     "proposals": 21472
+    },
+    {
+     "attempt": 0,
+     "bite": 37,
+     "iteration": 20,
+     "proposals": 22692
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 4,
+   "skipped": false,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "7d849e3603ab0972d4e1e92929bc6e2e09b9191aa3feb35a783fb4e132f7f86e",
+   "digestB": "7d849e3603ab0972d4e1e92929bc6e2e09b9191aa3feb35a783fb4e132f7f86e",
+   "bitIdentical": true,
+   "replayPublications": 21,
+   "replayDepthMm": 179.17081210545416,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 4,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 305
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 1,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 1,
+     "proposals": 427
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 488
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 1,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 2,
+     "proposals": 671
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 1,
+     "proposals": 732
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 1,
+     "proposals": 793
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 4,
+     "proposals": 1037
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 5,
+     "proposals": 1342
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 3,
+     "proposals": 1525
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 4,
+     "proposals": 1769
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 4,
+     "proposals": 2013
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 6,
+     "proposals": 2379
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 5,
+     "proposals": 2684
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 14,
+     "proposals": 3538
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 2,
+     "proposals": 3660
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 3,
+     "proposals": 3843
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 2,
+     "proposals": 3965
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 7,
+     "proposals": 4392
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 5,
+   "skipped": false,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "7a12ecf9c802eeec94258014e9068a62c9ba7e5aab24cbec2b7b73370cca1246",
+   "digestB": "7a12ecf9c802eeec94258014e9068a62c9ba7e5aab24cbec2b7b73370cca1246",
+   "bitIdentical": true,
+   "replayPublications": 8,
+   "replayDepthMm": 181.51730509414207,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 3,
+     "proposals": 183
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 2,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 2,
+     "proposals": 488
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 8,
+     "proposals": 976
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 3,
+     "proposals": 1159
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 3,
+     "proposals": 1342
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 3,
+     "proposals": 1525
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 6,
+   "skipped": false,
+   "replayedBites": 93,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "2e64c03a6a26ba6057368b68c931245ceaede2e249fab70dfda89dac6184bf86",
+   "digestB": "2e64c03a6a26ba6057368b68c931245ceaede2e249fab70dfda89dac6184bf86",
+   "bitIdentical": true,
+   "replayPublications": 60,
+   "replayDepthMm": 172.22368027771859,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 3,
+     "proposals": 183
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 1,
+     "proposals": 305
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 1,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 427
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 2,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 1,
+     "proposals": 610
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 2,
+     "proposals": 732
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 2,
+     "proposals": 854
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 2,
+     "proposals": 976
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 2,
+     "proposals": 1098
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 3,
+     "proposals": 1281
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 8,
+     "proposals": 1769
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 3,
+     "proposals": 1952
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 3,
+     "proposals": 2135
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 7,
+     "proposals": 2562
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 48,
+     "proposals": 5490
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 1,
+     "proposals": 5551
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 1,
+     "proposals": 5612
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 2,
+     "proposals": 5734
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 3,
+     "proposals": 5917
+    },
+    {
+     "attempt": 0,
+     "bite": 22,
+     "iteration": 131,
+     "proposals": 13908
+    },
+    {
+     "attempt": 0,
+     "bite": 23,
+     "iteration": 1,
+     "proposals": 13969
+    },
+    {
+     "attempt": 0,
+     "bite": 24,
+     "iteration": 1,
+     "proposals": 14030
+    },
+    {
+     "attempt": 0,
+     "bite": 25,
+     "iteration": 1,
+     "proposals": 14091
+    },
+    {
+     "attempt": 0,
+     "bite": 26,
+     "iteration": 2,
+     "proposals": 14213
+    },
+    {
+     "attempt": 0,
+     "bite": 27,
+     "iteration": 1,
+     "proposals": 14274
+    },
+    {
+     "attempt": 0,
+     "bite": 28,
+     "iteration": 2,
+     "proposals": 14396
+    },
+    {
+     "attempt": 0,
+     "bite": 29,
+     "iteration": 3,
+     "proposals": 14579
+    },
+    {
+     "attempt": 0,
+     "bite": 30,
+     "iteration": 1,
+     "proposals": 14640
+    },
+    {
+     "attempt": 0,
+     "bite": 31,
+     "iteration": 2,
+     "proposals": 14762
+    },
+    {
+     "attempt": 0,
+     "bite": 32,
+     "iteration": 4,
+     "proposals": 15006
+    },
+    {
+     "attempt": 0,
+     "bite": 33,
+     "iteration": 6,
+     "proposals": 15372
+    },
+    {
+     "attempt": 0,
+     "bite": 34,
+     "iteration": 5,
+     "proposals": 15677
+    },
+    {
+     "attempt": 0,
+     "bite": 35,
+     "iteration": 2,
+     "proposals": 15799
+    },
+    {
+     "attempt": 0,
+     "bite": 36,
+     "iteration": 2,
+     "proposals": 15921
+    },
+    {
+     "attempt": 0,
+     "bite": 37,
+     "iteration": 3,
+     "proposals": 16104
+    },
+    {
+     "attempt": 0,
+     "bite": 38,
+     "iteration": 3,
+     "proposals": 16287
+    },
+    {
+     "attempt": 0,
+     "bite": 39,
+     "iteration": 4,
+     "proposals": 16531
+    },
+    {
+     "attempt": 0,
+     "bite": 40,
+     "iteration": 3,
+     "proposals": 16714
+    },
+    {
+     "attempt": 0,
+     "bite": 41,
+     "iteration": 2,
+     "proposals": 16836
+    },
+    {
+     "attempt": 0,
+     "bite": 42,
+     "iteration": 5,
+     "proposals": 17141
+    },
+    {
+     "attempt": 0,
+     "bite": 43,
+     "iteration": 7,
+     "proposals": 17568
+    },
+    {
+     "attempt": 0,
+     "bite": 44,
+     "iteration": 8,
+     "proposals": 18056
+    },
+    {
+     "attempt": 0,
+     "bite": 45,
+     "iteration": 23,
+     "proposals": 19459
+    },
+    {
+     "attempt": 0,
+     "bite": 46,
+     "iteration": 4,
+     "proposals": 19703
+    },
+    {
+     "attempt": 0,
+     "bite": 47,
+     "iteration": 8,
+     "proposals": 20191
+    },
+    {
+     "attempt": 0,
+     "bite": 48,
+     "iteration": 11,
+     "proposals": 20862
+    },
+    {
+     "attempt": 0,
+     "bite": 49,
+     "iteration": 10,
+     "proposals": 21472
+    },
+    {
+     "attempt": 0,
+     "bite": 50,
+     "iteration": 10,
+     "proposals": 22082
+    },
+    {
+     "attempt": 0,
+     "bite": 51,
+     "iteration": 11,
+     "proposals": 22753
+    },
+    {
+     "attempt": 0,
+     "bite": 52,
+     "iteration": 15,
+     "proposals": 23668
+    },
+    {
+     "attempt": 0,
+     "bite": 53,
+     "iteration": 19,
+     "proposals": 24827
+    },
+    {
+     "attempt": 0,
+     "bite": 54,
+     "iteration": 19,
+     "proposals": 25986
+    },
+    {
+     "attempt": 0,
+     "bite": 55,
+     "iteration": 19,
+     "proposals": 27145
+    },
+    {
+     "attempt": 0,
+     "bite": 56,
+     "iteration": 27,
+     "proposals": 28792
+    },
+    {
+     "attempt": 0,
+     "bite": 57,
+     "iteration": 5,
+     "proposals": 29097
+    },
+    {
+     "attempt": 0,
+     "bite": 58,
+     "iteration": 6,
+     "proposals": 29463
+    },
+    {
+     "attempt": 0,
+     "bite": 59,
+     "iteration": 5,
+     "proposals": 29768
+    },
+    {
+     "attempt": 0,
+     "bite": 60,
+     "iteration": 4,
+     "proposals": 30012
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 7,
+   "skipped": false,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "c714c2307958dc2c7f95c3c3776e35b8c799930729e1c8be05e9fed19de082d8",
+   "digestB": "c714c2307958dc2c7f95c3c3776e35b8c799930729e1c8be05e9fed19de082d8",
+   "bitIdentical": true,
+   "replayPublications": 21,
+   "replayDepthMm": 179.1716866933179,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 3,
+     "proposals": 183
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 2,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 1,
+     "proposals": 427
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 2,
+     "proposals": 549
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 1,
+     "proposals": 610
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 3,
+     "proposals": 793
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 3,
+     "proposals": 976
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 5,
+     "proposals": 1281
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 5,
+     "proposals": 1586
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 2,
+     "proposals": 1708
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 3,
+     "proposals": 1891
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 3,
+     "proposals": 2074
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 1,
+     "proposals": 2135
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 3,
+     "proposals": 2318
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 7,
+     "proposals": 2745
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 18,
+     "proposals": 3843
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 1,
+     "proposals": 3904
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 2,
+     "proposals": 4026
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 2,
+     "proposals": 4148
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 2,
+     "proposals": 4270
+    }
+   ],
+   "invalidPublications": 0
+  },
+  {
+   "seed": 8,
+   "skipped": false,
+   "replayedBites": 23,
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "661d64c35f1cfbc6f4fed14e38336d98b681a6b104a205978acb64e2cc518021",
+   "digestB": "661d64c35f1cfbc6f4fed14e38336d98b681a6b104a205978acb64e2cc518021",
+   "bitIdentical": true,
+   "replayPublications": 21,
+   "replayDepthMm": 179.1716866933179,
+   "replayOrdinals": [
+    {
+     "attempt": 0,
+     "bite": 1,
+     "iteration": 3,
+     "proposals": 183
+    },
+    {
+     "attempt": 0,
+     "bite": 2,
+     "iteration": 1,
+     "proposals": 244
+    },
+    {
+     "attempt": 0,
+     "bite": 3,
+     "iteration": 1,
+     "proposals": 305
+    },
+    {
+     "attempt": 0,
+     "bite": 4,
+     "iteration": 1,
+     "proposals": 366
+    },
+    {
+     "attempt": 0,
+     "bite": 5,
+     "iteration": 1,
+     "proposals": 427
+    },
+    {
+     "attempt": 0,
+     "bite": 6,
+     "iteration": 3,
+     "proposals": 610
+    },
+    {
+     "attempt": 0,
+     "bite": 7,
+     "iteration": 4,
+     "proposals": 854
+    },
+    {
+     "attempt": 0,
+     "bite": 8,
+     "iteration": 2,
+     "proposals": 976
+    },
+    {
+     "attempt": 0,
+     "bite": 9,
+     "iteration": 3,
+     "proposals": 1159
+    },
+    {
+     "attempt": 0,
+     "bite": 10,
+     "iteration": 2,
+     "proposals": 1281
+    },
+    {
+     "attempt": 0,
+     "bite": 11,
+     "iteration": 3,
+     "proposals": 1464
+    },
+    {
+     "attempt": 0,
+     "bite": 12,
+     "iteration": 2,
+     "proposals": 1586
+    },
+    {
+     "attempt": 0,
+     "bite": 13,
+     "iteration": 2,
+     "proposals": 1708
+    },
+    {
+     "attempt": 0,
+     "bite": 14,
+     "iteration": 3,
+     "proposals": 1891
+    },
+    {
+     "attempt": 0,
+     "bite": 15,
+     "iteration": 4,
+     "proposals": 2135
+    },
+    {
+     "attempt": 0,
+     "bite": 16,
+     "iteration": 1,
+     "proposals": 2196
+    },
+    {
+     "attempt": 0,
+     "bite": 17,
+     "iteration": 3,
+     "proposals": 2379
+    },
+    {
+     "attempt": 0,
+     "bite": 18,
+     "iteration": 1,
+     "proposals": 2440
+    },
+    {
+     "attempt": 0,
+     "bite": 19,
+     "iteration": 14,
+     "proposals": 3294
+    },
+    {
+     "attempt": 0,
+     "bite": 20,
+     "iteration": 3,
+     "proposals": 3477
+    },
+    {
+     "attempt": 0,
+     "bite": 21,
+     "iteration": 4,
+     "proposals": 3721
+    }
+   ],
+   "invalidPublications": 0
+  }
+ ],
+ "replayAllBitIdentical": true,
+ "verdict": {
+  "barMm": 168.484,
+  "quorumRequired": 3,
+  "quorumReached": 0,
+  "qualifyingSeeds": [],
+  "everyPublicationDualValid": true,
+  "invalidPublicationsAcrossEveryCell": 0,
+  "allNineSeedsValid": true,
+  "GATE_PASS": false
+ }
+}

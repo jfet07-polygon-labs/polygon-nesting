@@ -7,8 +7,12 @@ same request, the same pinned positional tail, the same four gates, the same
 `doc_digest` with the elapsed-derived summary statistics and
 `engineWorktreeStatus` stripped.
 
-Point `ROOT` at the worktree; every driver takes the benchmark binary as an
-argument so a paired A/B can hold two of them side by side.
+`ROOT` defaults to the repository containing **this file**, for the reason Sol
+review 17 Round 2 §2 gives about `fast.sh`: a hard-coded worktree default is a
+round-validity defect, and the four pinned engine gates are exactly the
+regression floor a wrong-tree run would silently launder. Every driver takes the
+benchmark binary as an argument so a paired A/B can hold two of them side by
+side; `ICS_ROOT` still overrides explicitly.
 """
 import hashlib
 import json
@@ -18,7 +22,8 @@ import time
 
 ROOT = os.environ.get(
     'ICS_ROOT',
-    '/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-1')
+    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                 '..', '..', '..', '..')))
 REQ = f'{ROOT}/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json'
 TRUE = (f'{ROOT}/docs/experiments/persistent-vacancy-descent/exact-contract/'
         'true-contract')

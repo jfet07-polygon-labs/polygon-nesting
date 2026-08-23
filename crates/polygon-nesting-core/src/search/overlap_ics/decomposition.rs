@@ -280,6 +280,125 @@ pub fn minimum_width(ring: &[[f64; 2]]) -> f64 {
     }
 }
 
+/// A **guaranteed interior witness** of the material: the area centroid of the
+/// first positive-area cell of the decomposition.
+///
+/// Arbitration 1 of docs/cutclose-relocate-spec.md. Sparrow's disruption
+/// follower test asks whether a piece's *pole of inaccessibility* lies inside a
+/// swapped shape (`optimizer/explore.rs::practically_contained_items`, rev
+/// `14f4868f`); a POI is by construction interior. Grok review 12 Round 1 §2.1
+/// proposed the piece's area centroid instead and flagged the gap himself: the
+/// area centroid of a nonconvex ring can lie **outside** the material, so a
+/// centroid-in-ring follower test both misses real followers and moves pieces
+/// that are not inside anything.
+///
+/// We do not have a POI and we are not porting one. What we do have is the
+/// deterministic ear clip above, and a cell of it is convex with positive area
+/// by construction ([`ear_clip`] retains only positive-area triangles), so the
+/// cell's own area centroid is strictly inside that cell and therefore strictly
+/// inside the material. "First" is the ear clip's own emission order, which is
+/// a pure function of the ring - so this witness is as replayable as Φ is.
+///
+/// For a convex piece the single cell *is* the ring and this is the ring
+/// centroid, which is interior because the ring is convex.
+pub fn interior_witness(decomposition: &Decomposition) -> [f64; 2] {
+    for cell in &decomposition.cells {
+        let points = decomposition.cell_points(*cell);
+        if signed_area(points) > 0.0 {
+            return centroid(points);
+        }
+    }
+    // Unreachable for a decomposition this module produced: `decompose` errors
+    // rather than return a cell set with no positive-area cell. The fallback is
+    // the ring centroid so that a future decomposer cannot make this panic.
+    centroid(&decomposition.ring)
+}
+
+/// The counter-clockwise convex hull of a ring, by monotone chain.
+///
+/// Deterministic: points are ordered by `(x, y)` with a total order that breaks
+/// `f64` ties by index, and the turn test is the same `cross` the ear clip uses.
+/// Collinear points are dropped (`<= 0.0`), so the hull is the minimal vertex
+/// set.
+pub fn convex_hull(ring: &[[f64; 2]]) -> Vec<[f64; 2]> {
+    if ring.len() < 3 {
+        return ring.to_vec();
+    }
+    let mut ordered: Vec<[f64; 2]> = ring.to_vec();
+    ordered.sort_by(|left, right| {
+        left[0]
+            .partial_cmp(&right[0])
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then(
+                left[1]
+                    .partial_cmp(&right[1])
+                    .unwrap_or(std::cmp::Ordering::Equal),
+            )
+    });
+    ordered.dedup_by(|left, right| left[0] == right[0] && left[1] == right[1]);
+    if ordered.len() < 3 {
+        return ordered;
+    }
+    let mut hull: Vec<[f64; 2]> = Vec::with_capacity(ordered.len() * 2);
+    for point in ordered.iter() {
+        while hull.len() >= 2 && cross(hull[hull.len() - 2], hull[hull.len() - 1], *point) <= 0.0 {
+            hull.pop();
+        }
+        hull.push(*point);
+    }
+    let lower = hull.len() + 1;
+    for point in ordered.iter().rev().skip(1) {
+        while hull.len() >= lower && cross(hull[hull.len() - 2], hull[hull.len() - 1], *point) <= 0.0
+        {
+            hull.pop();
+        }
+        hull.push(*point);
+    }
+    hull.pop();
+    hull
+}
+
+/// The area of the ring's convex hull: the "large item" measure of Sparrow's
+/// disruption (`optimizer/explore.rs::disrupt_solution`, which reads
+/// `surrogate().convex_hull_area`).
+pub fn convex_hull_area(ring: &[[f64; 2]]) -> f64 {
+    signed_area(&convex_hull(ring))
+}
+
+/// The ring's diameter: the largest distance between any two of its points.
+///
+/// The two farthest points are always hull vertices, so this is the hull's own
+/// pairwise maximum. `jagua_rs`'s `SPolygon::calculate_diameter` (which Sparrow
+/// reads through `shape.diameter`) uses the same fact; the loop is ours.
+pub fn diameter(ring: &[[f64; 2]]) -> f64 {
+    let hull = convex_hull(ring);
+    let mut worst = 0.0f64;
+    for (index, first) in hull.iter().enumerate() {
+        for second in &hull[index + 1..] {
+            worst = worst.max(libm::hypot(second[0] - first[0], second[1] - first[1]));
+        }
+    }
+    worst
+}
+
+/// The axis-aligned bounds of a ring in its own source frame,
+/// `[min x, min y, max x, max y]`.
+pub fn ring_bounds(ring: &[[f64; 2]]) -> [f64; 4] {
+    let mut out = [
+        f64::INFINITY,
+        f64::INFINITY,
+        f64::NEG_INFINITY,
+        f64::NEG_INFINITY,
+    ];
+    for point in ring {
+        out[0] = out[0].min(point[0]);
+        out[1] = out[1].min(point[1]);
+        out[2] = out[2].max(point[0]);
+        out[3] = out[3].max(point[1]);
+    }
+    out
+}
+
 /// The area centroid of a counter-clockwise ring, in source coordinates.
 pub fn centroid(ring: &[[f64; 2]]) -> [f64; 2] {
     let count = ring.len();

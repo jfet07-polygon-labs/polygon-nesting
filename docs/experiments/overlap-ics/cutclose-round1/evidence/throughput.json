@@ -1,0 +1,43 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "gate-0",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8a00dcff-f1d-3/target/release/examples/overlap_ics_benchmark",
+ "cells": [
+  {
+   "cell": "throughput",
+   "fatal": true,
+   "pass": true,
+   "acceptedMovesDuringProposals": 2817,
+   "acceptedRelocates": 2817,
+   "cellGapAtLeast1MPerSecond": true,
+   "coldPhiMicroseconds": 31.974933333333333,
+   "coldPhiUnder200us": true,
+   "containerCommits": 4,
+   "containerWinners": 4,
+   "convexCellGapEvaluations": 36952,
+   "convexCellGapEvaluationsPerSecond": 7438834.249800451,
+   "focusedWinners": 80,
+   "lockedTargetMm": 173.8272,
+   "movedPieceRowRebuildMicroseconds": 1.1177726666666667,
+   "pieceProposals": 20000,
+   "pieceProposalsPerSecond": 7680.714171237356,
+   "projectedAtLeast100K": false,
+   "projectedProposalsInEightSeconds": 61445.71336989885,
+   "projectedRelocateEvalsInEightSeconds": 5327414.011740605,
+   "rawPhiAfterProposals": 65.01279617164288,
+   "rawPhiBeforeProposals": 565.3763292381366,
+   "relocateEvalsAtLeast100K": true,
+   "relocateEvalsPerSecond": 665926.7514675757,
+   "relocates": 7071,
+   "relocatesPerSecond": 2715.516495240967,
+   "retiredProposalPinNote": "pieceProposals now buys one whole relocate (75 pool samples + 4 coordinate descents), not one gradient + ladder. The 100K/8s pin is re-denominated into relocateEvals per docs/cutclose-relocate-spec.md arbitration 4; this field is reported under its old meaning and is not a pass clause.",
+   "rowRebuildUnder20us": true,
+   "sampleEvaluations": 1734023,
+   "sampleEvaluationsPerRelocate": 245.23023617592986,
+   "stayPutWinners": 6987,
+   "wallSeconds": 4.945955222006887
+  }
+ ],
+ "fatalFailures": [],
+ "GATE0_PASS": true
+}

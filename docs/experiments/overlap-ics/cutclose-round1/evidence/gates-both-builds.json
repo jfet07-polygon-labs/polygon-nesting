@@ -1,0 +1,121 @@
+{
+ "baseDir": "/var/lib/t3/tmp/overlapics/round1/gates/base",
+ "measDir": "/var/lib/t3/tmp/overlapics/round1/gates/meas",
+ "baseLabel": "base",
+ "measLabel": "meas",
+ "gates": {
+  "g1": {
+   "pinnedDepthMm": 206.869,
+   "pinnedFingerprintPrefix": "8a7737381238fa4d",
+   "base": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fingerprints": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true
+   },
+   "meas": {
+    "depths": [
+     206.869,
+     207.239,
+     211.194,
+     211.825,
+     213.073,
+     214.207,
+     214.738,
+     222.116
+    ],
+    "fingerprints": [
+     "87dd48f28fac99ca4983bd19fe943175d7627a19abe7eab95b01376531d87f73",
+     "8a7737381238fa4d4979cbd95a4f08500b6608039475243c0a24c45828f9e437"
+    ],
+    "hit": true
+   },
+   "baseDocDigest": "1f4c6ba672fb60b348ed2c6682fb232f92bed59acc1ff051e015ba95da3435d1",
+   "measDocDigest": "1f4c6ba672fb60b348ed2c6682fb232f92bed59acc1ff051e015ba95da3435d1",
+   "documentsIdentical": true
+  },
+  "g2": {
+   "pinnedDepthMm": 159.09233022733062,
+   "pinnedFingerprintPrefix": "fa01012af1d559ae09c",
+   "base": {
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "depth": 159.092,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "meas": {
+    "raw": 159.09233022733062,
+    "fp": "fa01012af1d559ae09ce7295c146f0cdc6569cfad6f24b6154f0153c4393dbbc",
+    "depth": 159.092,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "baseDocDigest": "de3607e75e638b59a7ca12ba54b8aed85de089e5e12a0e672eaeaf134415b8e5",
+   "measDocDigest": "de3607e75e638b59a7ca12ba54b8aed85de089e5e12a0e672eaeaf134415b8e5",
+   "documentsIdentical": true
+  },
+  "g3": {
+   "pinnedDepthMm": 159.07876040364795,
+   "pinnedFingerprintPrefix": "e28fba007f8031d49f",
+   "base": {
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "depth": 159.079,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "meas": {
+    "raw": 159.07876040364795,
+    "fp": "e28fba007f8031d49f1a8bb54a2776cd972196448aaa02a4251838b617c8237b",
+    "depth": 159.079,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "baseDocDigest": "173b2bd1899b10de6fd1f1874f22eac562dc760f05652d976a0a3d985fc9ec16",
+   "measDocDigest": "173b2bd1899b10de6fd1f1874f22eac562dc760f05652d976a0a3d985fc9ec16",
+   "documentsIdentical": true
+  },
+  "g4": {
+   "pinnedDepthMm": 164.0375677990678,
+   "pinnedFingerprintPrefix": "49f094d7e59a9008",
+   "base": {
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "depth": 164.038,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "meas": {
+    "raw": 164.0375677990678,
+    "fp": "49f094d7e59a90082ddaf2d853afea6ca49bca536f2f9b1f3a35d91556e68624",
+    "depth": 164.038,
+    "exactValid": true,
+    "contractValid": true,
+    "hit": true
+   },
+   "baseDocDigest": "109c961c9fb09c62eeeaa149647f0dc09c6b8842aacd52f2bed1934e61365a5d",
+   "measDocDigest": "109c961c9fb09c62eeeaa149647f0dc09c6b8842aacd52f2bed1934e61365a5d",
+   "documentsIdentical": true
+  }
+ },
+ "BASE_ALL_PASS": true,
+ "MEAS_ALL_PASS": true,
+ "WHOLE_DOCUMENT_IDENTITY": true
+}

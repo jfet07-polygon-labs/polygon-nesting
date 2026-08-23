@@ -1,0 +1,75 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "two-process-fixed-work-smoke",
+ "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8a00dcff-f1d-3/target/release/examples/overlap_ics_benchmark",
+ "proposalBudget": 200000,
+ "s0": {
+  "pins": {
+   "placementCount": 61,
+   "rawSourceDepthMm": 150.16451,
+   "phiBits": 0,
+   "twoRMicron": 5000.0,
+   "pairClearanceMm": 5.0,
+   "kernelExclusiveValid": true,
+   "contractValid": true,
+   "repairRows": 0,
+   "repairDepthGivebackMm": 0.0
+  },
+  "twoProcess": {
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "b31db9448b735dea4b2446ed8f50a41b478dcde9dc83f523e8c864fda109a7f6",
+   "digestB": "b31db9448b735dea4b2446ed8f50a41b478dcde9dc83f523e8c864fda109a7f6",
+   "strippedFields": [
+    "wall"
+   ],
+   "bitIdentical": true
+  },
+  "pass": true
+ },
+ "s1": {
+  "measured": {
+   "lockedWmm": 150.16547,
+   "quota": {
+    "pieceProposalsSpent": 199958,
+    "proposalBudget": 200000,
+    "relocateEvalBudget": 200000,
+    "relocatesSpent": 320,
+    "sampleEvaluationsPerRelocate": 261.23125,
+    "sampleEvaluationsSpent": 83594,
+    "stopReason": "proposalBudget"
+   },
+   "perturbationMm": 0.5,
+   "perturbationDeg": 2.0,
+   "perturbedPoseDigest": "79a26aaf44fdef2d467819934744c8c2fd8edb1e2245d0bd4dbcba4441357a2c",
+   "entryRawPhi": 433.4919406020829,
+   "finalRawPhi": 0.0,
+   "finalMaxViolationMm": 0.0,
+   "finalRawDepthMm": 150.16496410352048,
+   "republished": true,
+   "publishedRawDepthMm": 150.16547,
+   "maxRepairMm": 0.00796838911755026,
+   "maxGivebackMm": 0.0005058964795239262,
+   "invalidPublications": 0,
+   "exactCheckpoints": 1
+  },
+  "twoProcess": {
+   "exitA": 0,
+   "exitB": 0,
+   "stderrA": "",
+   "stderrB": "",
+   "digestA": "9eab0744794db4374e147ad08139d34296e4792384b23f933b5c1388667bd191",
+   "digestB": "9eab0744794db4374e147ad08139d34296e4792384b23f933b5c1388667bd191",
+   "strippedFields": [
+    "wall"
+   ],
+   "bitIdentical": true
+  },
+  "invariantsHold": true,
+  "pass": true
+ },
+ "SMOKE_PASS": true,
+ "INVARIANTS_PASS": true
+}

@@ -8442,3 +8442,77 @@ docs/grok-review-12-reading-sparrow.md. This commit is the spec commit both
 demanded (including the fast.sh root fix); the implementation workflow
 follows it: core, then schedule, then evidence/red-team, then their review
 of the implementation.
+
+## CutCloseRelocate: the quorum member ran, and the gate said no
+
+Three waves after the spec commit — core (relocate, GLS, disruption), schedule
+(homotopy, the explore/compress loop, the eight-worker tournament, the exact
+parent install) and evidence/red-team (the driver, the FAST union, the frozen
+wall) — the member both consultants signed was measured against the reading
+they pre-committed. **It FAILED: 0 of 9 seeds published a strict
+non-constructor child at or below 168.484 mm inside 10.000 seconds**, against a
+quorum of 3. Best 10 s depth 169.00246 (seed 6), then 169.21860 (seed 3);
+seven of nine sat at 179.07–179.08. The whole battery is
+docs/experiments/overlap-ics/cutclose-round1/, whose §0 is the gate copied
+verbatim and committed before a single wall second was spent.
+
+**Nothing about the failure is a defect, and that is the load-bearing claim.**
+1,269 publications across 27 wall cells (nine seeds × 3/10/30 s) and **zero
+invalid** — every one accepted by Exclusive r=2.500 at allowance 0 and by the
+untouched contract validator. Max repair 16.000 µm, at the 4·ε cap on 2 of
+1,269 and never over it; max giveback 0.002208 mm against a 0.050 clause. Max
+deadline overrun **+6.6 ms across 27 cells**, which is what arbitration 2's
+worker-sweep barrier bought against the pivot round's 2.223 s on a 2 s clause.
+The regression floor is green in every clause: S0 byte-identical to a build of
+the pre-wave tree, S1 and triangle-20 re-denominated into relocate-evals and
+still inside their locks, 1k and 10k soundness all zeros, four pinned engine
+gates on both the default and the feature-compiled-unarmed build with **whole
+document identity**, five suites exit 0, `jagua-rs`/`Xoshiro`/`rand::` absent.
+
+The failure license granted one funnel autopsy and one rerun only for a
+line-level violation with a red/green vector. The autopsy says the funnel does
+not leak — 98 % of bites reach the 4 µm band, 100 % of those attempt, 94–96 %
+of those publish — and the hunt closed **both** pre-named defects on the
+round's own evidence: container-wide samples commit 1,762 times out of 1,762
+container winners (Grok's neutered relocate), and the exact-parent chain is
+unbroken across all 1,269 publications of which **329 carried nonzero repair**
+(Sol's `mod.rs:295` drift). Every other clause of the frozen member was
+re-checked against measurement. No violation was found and no rerun is claimed.
+
+What the funnel says instead is a **basin barrier at one width**. Seven of nine
+trajectories publish exactly 21 explore bites in about 0.3 seconds and then
+spend their entire remaining budget on the 22nd, at W ≈ 178.99, which they
+cannot separate — seed 8 burns 922 master iterations at 10 s and 3,825 at 30 s
+and its 3 s, 10 s and 30 s answers agree to seven significant figures. The six
+that do cross it cascade: 105–109 explore bites and 163.69–165.06 mm.
+Throughput of the operator is not the constraint (2.63 million relocate-evals
+per second, 210× the re-denominated pin; the retired proposal pin is reported
+at 61,446/8 s under its original meaning and is no longer a pass clause, per
+arbitration 4).
+
+**5 of 9 seeds go below the bar at 30 s.** That satisfies the antecedent of
+Grok R1 §4.5's one exception exactly — strict dual-valid children, a tight band
+above the bar, first bites publishing — so the correct diagnosis is
+*throughput, not basin*: the basin exists, the member reaches it, and what it
+lacks is about 3× the funded wall. The constructor is not the explanation
+either; it costs 2.31–2.36 s of the ten and returning all of it would not close
+a 3× gap. But Sol review 17 Round 2 §6 pre-committed the amendment that voids
+the exception's remedy — *"because workers=8 are already present, it does not
+license a scaling follow-up"* — so the diagnosis is recorded, not cashed. The
+interleaved AB/BA control is reported and cannot move the bar: arm B reproduces
+**168.48360** on seed 0, so the box is healthy and 168.484 is not stale, while
+its nine seeds span 13.977 mm, which is the variability Grok R1 §4.2 refused to
+build a clause on.
+
+The kill, in the words §0.3 requires: **Sparrow-faithful relocate + 0.1 %
+split-and-close, on our Φ and our dual-valid judge, did not beat 168.484 at
+10 s on 3 of 9 seeds.** It beat it on 5 of 9 at 30 s. The `CutCloseRelocate`
+member closes; joint projection, component-Y, a different sampler and a
+different homotopy remain separately funded proposals, and this round argues
+for none of them. Two artifacts survive the round in better shape than they
+entered it: the loop itself (legal-to-legal, atomically installed exact
+parents, deterministic across two processes with eight OS threads each) and the
+**provenance table** the spec asked for and neither earlier wave wrote —
+concept → paper algorithm → source-confirmed default at `14f4868f` → our
+difference, including the one nobody had written down, that Sparrow's compiled
+`n_workers` default is 3 while ours (and the 150.165 log's flag) is 8.

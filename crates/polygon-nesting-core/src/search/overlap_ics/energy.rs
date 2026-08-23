@@ -1,4 +1,4 @@
-//! Φ: the raw squared-hinge penalty, the guided integer weights, and the
+//! Φ: the raw squared-hinge penalty, the continuous guided weights, and the
 //! fixed-order fold that makes the incremental cache honest.
 //!
 //! ```text
@@ -7,9 +7,10 @@
 //! Phi_guided = sum over pairs of w_ij v_ij^2 + sum over piece-edges of w_ie v_ie^2
 //! ```
 //!
-//! `w = 1 + p`, `p` an integer incremented by the guided update in
-//! `descent.rs`. The two are stored separately and only the raw one is ever
-//! compared against a stall; neither is ever reported as quality.
+//! `w` is an `f64` row scalar at or above 1, driven by [`gls_update`] - the
+//! published Algorithm 8 schedule of arXiv:2509.13329, all rows, every sweep.
+//! The two totals are folded together and only the raw one is ever compared
+//! against a stall; neither is ever reported as quality.
 //!
 //! **The fixed-order fold is not an optimization, it is the defence.** A move
 //! recomputes only the moving piece's `n-1` rows - but the totals are then
@@ -24,7 +25,7 @@ use super::contact::{box_gap, convex_cell_gap, Contact};
 use super::diagnostics::WorkVector;
 use super::state::{
     pair_index, Contract, EdgeRow, Geometry, IcsState, PairRow, EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT,
-    EDGE_TOP,
+    EDGE_TOP, GLS_WEIGHT_FLOOR,
 };
 
 /// The two folded totals plus the largest single residual.
@@ -100,7 +101,7 @@ pub fn measure_edges(
     let ring = geometry.ring_slice(piece);
     let mut rows = [EdgeRow::default(); 4];
     for edge in 0..4 {
-        rows[edge].penalty = previous[edge].penalty;
+        rows[edge].weight = previous[edge].weight;
         rows[edge].violation_mm = residuals[edge];
         if residuals[edge] <= 0.0 {
             continue;
@@ -196,7 +197,7 @@ pub fn fold(state: &IcsState) -> Totals {
         }
         let square = violation * violation;
         totals.raw += square;
-        totals.guided += (1 + row.penalty) as f64 * square;
+        totals.guided += row.weight * square;
         if violation > totals.max_violation_mm {
             totals.max_violation_mm = violation;
         }
@@ -209,7 +210,7 @@ pub fn fold(state: &IcsState) -> Totals {
             }
             let square = violation * violation;
             totals.raw += square;
-            totals.guided += (1 + row.penalty) as f64 * square;
+            totals.guided += row.weight * square;
             if violation > totals.max_violation_mm {
                 totals.max_violation_mm = violation;
             }
@@ -218,16 +219,18 @@ pub fn fold(state: &IcsState) -> Totals {
     totals
 }
 
-/// The guided energy incident on one piece: its `n-1` pair rows and its four
-/// boundary rows, folded in the same fixed order.
+/// The raw **and** guided energy incident on one piece: its `n-1` pair rows and
+/// its four boundary rows, folded in the same fixed order.
 ///
-/// This is what a backtracking step is accepted against - not the global total
-/// - because a one-piece move can only change these rows and re-folding 1,830
-/// scalars per ladder rung would be the ladder's cost rather than the
-/// geometry's.
-pub fn incident_guided(state: &IcsState, piece: usize) -> f64 {
+/// This pair is a relocate's whole objective. Grok review 12 Round 2 §6.3 makes
+/// the sample score lexicographic - "incident Φ = 0 beats any positive; else min
+/// incident **weighted** Φ" - which is Algorithm 5/6's `Clear < Collision{loss}`
+/// on our field, and it needs both halves of the fold at once. Computing them
+/// together also means one pass over the same `n+3` rows instead of two.
+pub fn incident_totals(state: &IcsState, piece: usize) -> (f64, f64) {
     let count = state.poses.len();
-    let mut total = 0.0;
+    let mut raw = 0.0;
+    let mut guided = 0.0;
     for other in 0..count {
         if other == piece {
             continue;
@@ -239,23 +242,49 @@ pub fn incident_guided(state: &IcsState, piece: usize) -> f64 {
         };
         let row = &state.pair_rows[pair_index(count, first, second)];
         if row.violation_mm > 0.0 {
-            total += (1 + row.penalty) as f64 * row.violation_mm * row.violation_mm;
+            let square = row.violation_mm * row.violation_mm;
+            raw += square;
+            guided += row.weight * square;
         }
     }
     for row in &state.edge_rows[piece] {
         if row.violation_mm > 0.0 {
-            total += (1 + row.penalty) as f64 * row.violation_mm * row.violation_mm;
+            let square = row.violation_mm * row.violation_mm;
+            raw += square;
+            guided += row.weight * square;
         }
     }
-    total
+    (raw, guided)
+}
+
+/// The guided energy incident on one piece.
+pub fn incident_guided(state: &IcsState, piece: usize) -> f64 {
+    incident_totals(state, piece).1
+}
+
+/// The **raw** energy incident on one piece: the `loss > 0` test that decides
+/// whether a piece is in the sweep's colliding set at all.
+pub fn incident_raw(state: &IcsState, piece: usize) -> f64 {
+    incident_totals(state, piece).0
 }
 
 /// The negative gradient of the incident guided energy at one piece:
-/// `(force_x, force_y, torque)`.
+/// `(force_x, force_y, torque)`, with the torque `tau = (p - c) x (w v n)`
+/// about the piece's transformed **centroid**.
 ///
-/// The torque of a contact is Sol review 14 §1's `tau = (p - c) x (w v n)`,
-/// which is exactly `d/dtheta` of the same squared hinge - the witness moves
-/// with the piece and the normal does not.
+/// **This is a probe of the field, not a move of the member.** Nothing in
+/// `relocate.rs`, `descent.rs` or `disrupt.rs` calls it and no acceptance path
+/// can reach it: `CutCloseRelocate` samples and coordinate-descends, and the
+/// gradient proposal it replaced is deleted. What survives is the *claim* the
+/// numeric-soundness corpus makes about Φ itself - that a step along Φ's own
+/// negative gradient reduces a violation measured by a completely independent
+/// scorer, on whole transformed rings, by ray-cast containment, in a linear
+/// rather than a squared metric. That claim is a fact about the field and it
+/// stays in the regression floor whatever the search does with it
+/// (docs/cutclose-relocate-spec.md, "The gate": the soundness populations keep
+/// their literal thresholds). `corpus::gradient_probe_step` is the only caller,
+/// and it lives in the corpus for the same reason `homotopy::compressed` stays
+/// a corpus factory rather than a live start.
 pub fn incident_gradient(state: &IcsState, piece: usize) -> [f64; 3] {
     let count = state.poses.len();
     let centre = state.geometry.centroids[piece];
@@ -279,7 +308,7 @@ pub fn incident_gradient(state: &IcsState, piece: usize) -> [f64; 3] {
         } else {
             row.contact.reversed()
         };
-        let scale = 2.0 * (1 + row.penalty) as f64 * row.violation_mm;
+        let scale = 2.0 * row.weight * row.violation_mm;
         force[0] += scale * contact.normal[0];
         force[1] += scale * contact.normal[1];
         let arm = [
@@ -294,7 +323,7 @@ pub fn incident_gradient(state: &IcsState, piece: usize) -> [f64; 3] {
             continue;
         }
         let normal = super::state::EDGE_NORMALS[edge];
-        let scale = 2.0 * (1 + row.penalty) as f64 * row.violation_mm;
+        let scale = 2.0 * row.weight * row.violation_mm;
         force[0] += scale * normal[0];
         force[1] += scale * normal[1];
         let arm = [row.witness[0] - centre[0], row.witness[1] - centre[1]];
@@ -303,46 +332,97 @@ pub fn incident_gradient(state: &IcsState, piece: usize) -> [f64; 3] {
     [force[0], force[1], torque]
 }
 
-/// The lexicographically first maximum-utility row, `u = v / (1 + p)`, and the
-/// increment of its integer penalty. This is the guided local search update:
-/// it changes the landscape while allowing raw overlap to worsen temporarily.
-pub fn guided_update(state: &mut IcsState) -> Option<(usize, usize)> {
-    let mut best_utility = 0.0f64;
-    let mut best: Option<(usize, usize)> = None;
-    for (index, row) in state.pair_rows.iter().enumerate() {
-        if row.violation_mm <= 0.0 {
-            continue;
-        }
-        let utility = row.violation_mm / (1 + row.penalty) as f64;
-        if utility > best_utility {
-            best_utility = utility;
-            best = Some((0, index));
+/// Algorithm 8's published multipliers, read off Sparrow `consts.rs`
+/// (`GLS_WEIGHT_MIN_INC_RATIO`, `GLS_WEIGHT_MAX_INC_RATIO`, `GLS_WEIGHT_DECAY`,
+/// rev `14f4868f`) and frozen before any wall number exists. They are the
+/// paper's, not ours, and changing them is a forbidden rescue
+/// (docs/cutclose-relocate-spec.md, "The gate").
+pub const GLS_WEIGHT_MIN_INC_RATIO: f64 = 1.2;
+pub const GLS_WEIGHT_MAX_INC_RATIO: f64 = 2.0;
+pub const GLS_WEIGHT_DECAY: f64 = 0.95;
+
+/// The weight cap, `2^20`. Grok review 12 Round 2 M24 takes it as a harmless
+/// knob from Sol: it bounds a pathological row that stays active for tens of
+/// thousands of sweeps, and it is far above anything a healthy schedule reaches
+/// (`1.2^k > 2^20` needs `k > 79` consecutive active sweeps at the *minimum*
+/// ratio).
+pub const GLS_WEIGHT_CAP: f64 = 1_048_576.0;
+
+/// **Algorithm 8, on our `v`: every pair row and every boundary row, every
+/// sweep.**
+///
+/// ```text
+/// v == 0 : w <- max(1, 0.95 w)
+/// v >  0 : w <- min(2^20, w * (1.2 + 0.8 * v / v_max))
+/// ```
+///
+/// Source of the schedule: arXiv:2509.13329 Algorithm 8, as read at Sparrow
+/// `quantify/tracker.rs::update_weights` (rev `14f4868f`), which runs it on
+/// every pair *and* every container-item entry of its tracker after every
+/// separator iteration. Our differences, stated rather than hidden:
+///
+/// * their `loss` is a pole-based overlap-**area proxy** (Algorithms 3-4) in
+///   `f32`; ours is the source-ring signed-gap violation `v` in `f64`, and
+///   `guided = w v^2`. We do not port the proxy.
+/// * their container leak is a bbox-area term; ours is the four boundary rows,
+///   which are already part of Φ, so "outside the strip" is weighted by the
+///   same schedule as a pair overlap rather than by a second rule.
+///
+/// What this **replaces** is the previous round's `guided_update`: one integer
+/// increment on the single lexicographically-first maximum-utility row, and
+/// only on a stalled sweep. Grok review 12 Round 1 §1.5 measured that as the
+/// wrong dialect; Round 2 M4 and Sol review 17 Round 2 §1 both signed the
+/// published one. There is now no second schedule to leak.
+///
+/// `v_max` is the largest violation over **all** rows, so the ratio is the
+/// row's share of the worst pressure in the layout. With no active row the
+/// whole pass is a decay, which is the correct behaviour at `Φ = 0`: nothing to
+/// punish, and every weight relaxes one step toward the floor.
+///
+/// Returns how many rows were **active** (the `v > 0` branch), which is the
+/// number a diagnostics line reports beside `weightUpdates`.
+pub fn gls_update(state: &mut IcsState) -> u64 {
+    let mut max_violation = 0.0f64;
+    for row in &state.pair_rows {
+        if row.violation_mm > max_violation {
+            max_violation = row.violation_mm;
         }
     }
-    for (piece, rows) in state.edge_rows.iter().enumerate() {
-        for (edge, row) in rows.iter().enumerate() {
-            if row.violation_mm <= 0.0 {
-                continue;
+    for rows in &state.edge_rows {
+        for row in rows {
+            if row.violation_mm > max_violation {
+                max_violation = row.violation_mm;
             }
-            let utility = row.violation_mm / (1 + row.penalty) as f64;
-            if utility > best_utility {
-                best_utility = utility;
-                best = Some((1, piece * 4 + edge));
-            }
         }
     }
-    match best {
-        Some((0, index)) => {
-            state.pair_rows[index].penalty = state.pair_rows[index].penalty.saturating_add(1);
-            Some((0, index))
+    let span = GLS_WEIGHT_MAX_INC_RATIO - GLS_WEIGHT_MIN_INC_RATIO;
+    let mut active = 0u64;
+    // The closure is the whole schedule, written once so a pair row and a
+    // boundary row cannot drift into two dialects the way `penalty` and a
+    // hypothetical `weight` would have.
+    let mut update = |violation: f64, weight: &mut f64| {
+        if violation <= 0.0 {
+            *weight = (*weight * GLS_WEIGHT_DECAY).max(GLS_WEIGHT_FLOOR);
+            return;
         }
-        Some((1, slot)) => {
-            let row = &mut state.edge_rows[slot / 4][slot % 4];
-            row.penalty = row.penalty.saturating_add(1);
-            Some((1, slot))
-        }
-        _ => None,
+        active += 1;
+        let share = if max_violation > 0.0 {
+            violation / max_violation
+        } else {
+            0.0
+        };
+        let ratio = GLS_WEIGHT_MIN_INC_RATIO + span * share;
+        *weight = (*weight * ratio).min(GLS_WEIGHT_CAP);
+    };
+    for row in &mut state.pair_rows {
+        update(row.violation_mm, &mut row.weight);
     }
+    for rows in &mut state.edge_rows {
+        for row in rows {
+            update(row.violation_mm, &mut row.weight);
+        }
+    }
+    active
 }
 
 /// The piece carrying the most incident guided energy: the jump's target and
@@ -384,15 +464,22 @@ pub fn cold_totals(state: &mut IcsState, contract: &Contract, work: &mut WorkVec
     fold(state)
 }
 
-/// Zeroes every guided penalty. Used when a new strip target is locked so the
-/// weights of a previous strip cannot leak into a new landscape.
-pub fn clear_penalties(state: &mut IcsState) {
+/// Returns every guided weight to the floor.
+///
+/// **Called on a successful width change, and nowhere else.** Grok review 12
+/// Round 2 §6.4: weights persist across a rollback *inside* a width - Sparrow's
+/// `tracker.rs::restore_but_keep_weights` is explicit about it, and a schedule
+/// that forgot the pressure it had learned on every failed separation would be
+/// a different algorithm - and reset when the landscape itself changes, because
+/// their tracker is rebuilt by `change_strip_width`. The schedule agent owns
+/// both call sites; this module owns the meaning.
+pub fn reset_weights(state: &mut IcsState) {
     for row in &mut state.pair_rows {
-        row.penalty = 0;
+        row.weight = GLS_WEIGHT_FLOOR;
     }
     for rows in &mut state.edge_rows {
         for row in rows {
-            row.penalty = 0;
+            row.weight = GLS_WEIGHT_FLOOR;
         }
     }
 }
@@ -422,7 +509,15 @@ pub struct RowCensus {
     pub active_edges: usize,
     pub max_pair_violation_mm: f64,
     pub max_edge_violation_mm: f64,
-    pub max_penalty: u32,
+    /// The largest guided weight on any row.
+    ///
+    /// **Keeps the field name `max_penalty` and changes its type to `f64`.**
+    /// The evidence document's `maxGuidedPenalty` therefore keeps pointing at
+    /// "the biggest number the guided schedule has put on a row", which is the
+    /// only thing anybody read it for; what changed underneath is that the
+    /// schedule is now Algorithm 8's continuous multiplier rather than an
+    /// integer increment, so the value is `w` itself and no longer `1 + p`.
+    pub max_penalty: f64,
     /// Active row counts, `[left, right, bottom, top]`.
     pub active_edges_by_side: [usize; 4],
     /// The worst violation on each side, `[left, right, bottom, top]`.
@@ -434,9 +529,12 @@ pub struct RowCensus {
 }
 
 pub fn census(state: &IcsState) -> RowCensus {
-    let mut out = RowCensus::default();
+    let mut out = RowCensus {
+        max_penalty: GLS_WEIGHT_FLOOR,
+        ..RowCensus::default()
+    };
     for row in &state.pair_rows {
-        out.max_penalty = out.max_penalty.max(row.penalty);
+        out.max_penalty = out.max_penalty.max(row.weight);
         if row.violation_mm > 0.0 {
             out.active_pairs += 1;
             out.max_pair_violation_mm = out.max_pair_violation_mm.max(row.violation_mm);
@@ -445,7 +543,7 @@ pub fn census(state: &IcsState) -> RowCensus {
     for rows in &state.edge_rows {
         let mut active = [false; 4];
         for (edge, row) in rows.iter().enumerate() {
-            out.max_penalty = out.max_penalty.max(row.penalty);
+            out.max_penalty = out.max_penalty.max(row.weight);
             if row.violation_mm > 0.0 {
                 active[edge] = true;
                 out.active_edges += 1;
