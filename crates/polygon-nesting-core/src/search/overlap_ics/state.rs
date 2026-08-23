@@ -76,6 +76,53 @@ pub fn apply_pose(point: [f64; 2], mirrored: bool, sin: f64, cos: f64, tx: f64, 
     ]
 }
 
+/// Composes one SE(2) proposal onto a pose: a rotation of `dtheta_deg` **about
+/// `pivot`**, then a translation of `(dtx, dty)`.
+///
+/// `pivot` is a point in the *transformed* frame, and the descent hands it the
+/// piece's transformed centroid. That is not a preference, it is the only
+/// choice that agrees with the force model:
+/// [`super::energy::incident_gradient`] takes its torque as the converged
+/// spec's `tau = (p − c_i) x (w v n)`, whose `c_i` is the transformed centroid,
+/// and the SE(2) metric `|dt|^2 + (R_i dtheta)^2` measures `R_i` as the largest
+/// source-vertex radius **about that same centroid** ([`PieceSource`]). A
+/// composition that instead turned the piece about the pose origin `(tx, ty)`
+/// would be walking a different vector field from the one the gradient
+/// measured, by `|c_i − t| * dtheta` of unmodelled rigid translation - which on
+/// this campaign's fixtures is 1.00 to 1.35 times the modelled rotational
+/// displacement `R_i * dtheta`, on every piece of both. That was the defect
+/// `gate0-rerun/README.md` §2.2 named and §2.3 declined to repair; this is the
+/// repair, and it is on the coordinate rather than on the torque, because the
+/// torque is what the spec wrote down.
+///
+/// The composition is the standard rigid one, `p -> pivot + R(dtheta)(p − pivot)
+/// + dt`, expressed on the pose:
+///
+/// ```text
+/// theta' = theta + dtheta
+/// t'     = pivot + R(dtheta) (t − pivot) + dt
+/// ```
+///
+/// which reproduces it exactly for every material point, because
+/// `R(theta') M p_s + t' = pivot + R(dtheta) (R(theta) M p_s + t − pivot) + dt`.
+/// It is therefore mirror-agnostic - a rigid post-composition does not see `M`
+/// - and it moves the pivot itself by exactly `dt` and nothing else, to all
+/// orders rather than to first.
+///
+/// The angle stays in degrees and goes through [`pose_sin_cos`], so nothing
+/// here weakens the identity with the publication transform.
+#[inline]
+pub fn compose_proposal(pose: Pose, pivot: [f64; 2], dtx: f64, dty: f64, dtheta_deg: f64) -> Pose {
+    let (sin, cos) = pose_sin_cos(dtheta_deg);
+    let arm = [pose.tx_mm - pivot[0], pose.ty_mm - pivot[1]];
+    Pose {
+        tx_mm: pivot[0] + (arm[0] * cos - arm[1] * sin) + dtx,
+        ty_mm: pivot[1] + (arm[0] * sin + arm[1] * cos) + dty,
+        theta_deg: pose.theta_deg + dtheta_deg,
+        mirrored: pose.mirrored,
+    }
+}
+
 /// The request's own clearance contract, in the engine's units.
 #[derive(Clone, Copy, Debug)]
 pub struct Contract {

@@ -1,0 +1,12 @@
+[fast] default-build compile check EXIT=0
+[fast] cargo tree --features overlap-ics EXIT=0
+[fast] dependency hygiene: jagua-rs ABSENT EXIT=0
+[fast] module unit vectors EXIT=0
+[fast] validation_vectors::sat_penetration_matches_ts_oracle EXIT=0
+[fast] canonical_grid_vectors EXIT=0
+[fast] collision_builder_vectors EXIT=0
+[fast] release example build EXIT=0
+[fast] 1,000-state contact corpus EXIT=0
+[fast] two-process fixed-work smoke (S0 canary, S1 locked strip) EXIT=0
+[fast] logs in /var/lib/t3/tmp/pivot/fast2/log
+[fast] FAILURES=0

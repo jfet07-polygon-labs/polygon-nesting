@@ -845,3 +845,295 @@ fn the_lower_scale_carries_one_physical_edge_and_one_depth_inset() {
     // which is why mixed-61's `L` - and therefore C175's target - does not move.
     assert!((exact - 70.0).abs() < 1e-9, "exact {exact}");
 }
+
+// ------------------------------------------------------------------- pivot ---
+//
+// The three vectors of the torque pivot.
+//
+// `gate0-rerun/README.md` §2.2 named a defect and §2.3 refused to repair it in
+// the round that found it: `incident_gradient` takes its torque about the
+// piece's transformed **centroid**, while the proposal composition rotated
+// about the pose **origin** `(tx, ty)`. The two coincide only when the source
+// ring's centroid sits at the source origin, and on this campaign's two
+// fixtures it never does - the offset is 1.00 to 1.35 circumradii on every
+// piece of both. §2.3 also said exactly what would settle it:
+//
+//     "What would settle it is a unit vector - 'a step of `s` along the SE(2)
+//      direction lowers the incident guided energy for small `s`' - and that
+//      vector cannot be committed in this round, because on this code it would
+//      be RED."
+//
+// These are that vector and its two companions. The first two were run against
+// the un-fixed tree first and are red there;
+// `gate0-pivot-rerun/evidence/pivot-red.log` is the transcript.
+
+/// One piece whose source ring is given explicitly, so a test can put the ring
+/// far from its own pose origin - which is where both campaign fixtures put
+/// theirs.
+fn one_piece(ring: &[[f64; 2]]) -> Fixture {
+    Fixture {
+        polygons: vec![polygon(ring)],
+        ids: vec!["piece-00".to_owned()],
+    }
+}
+
+/// The same state builder as [`state_of`], at an explicit pose.
+fn state_at(fixture: &Fixture, pose: Pose, target: f64) -> (Vec<PieceSource>, Contract, IcsState) {
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = sources.iter().map(|_| pose).collect::<Vec<_>>();
+    let geometry = build_geometry(&sources, &poses);
+    let count = poses.len();
+    let mut state = IcsState {
+        poses,
+        geometry,
+        pair_rows: vec![PairRow::default(); pair_count(count)],
+        edge_rows: vec![[EdgeRow::default(); 4]; count],
+        target_depth_mm: target,
+    };
+    let mut work = WorkVector::default();
+    rebuild_all(&mut state, &contract, &mut work);
+    (sources, contract, state)
+}
+
+/// **The pivot vector.** A step along the SE(2) direction the gradient produced
+/// must lower the incident guided energy that gradient was taken from.
+///
+/// The fixture is this campaign's geometry in miniature and every number in it
+/// is asserted rather than assumed: one 20 mm square whose source ring sits
+/// 141.421 mm from its pose origin (10 circumradii, against the fixtures'
+/// 1.00-1.35), placed with exactly one active row - the bottom, at 2.000 mm.
+///
+/// At that state the gradient is `force = (0, 4)` and `torque = -40` **about
+/// the transformed centroid**, so the SE(2)-normalized direction is
+/// `(0, 0.816497, -0.0408248 rad/mm)`: a 0.577 rotational share against a
+/// 0.816 translational one. The arithmetic of the two pivots is not close.
+///
+/// * about the **centroid**, the bottom-most material rises at 0.408 mm per mm
+///   of step: 0.816 of lift from the translation, less 0.408 at the corner the
+///   10 mm arm carries downward — which is the corner that *becomes* the lowest
+///   one, so the min is taken there. The row closes and the step is accepted on
+///   the first rung;
+/// * about the **origin**, the 141.421 mm arm drags the same material *down* at
+///   3.674 mm per mm - nine times faster, in the opposite direction - so the row
+///   opens on every rung of the ladder, from 1.25 mm to 0.25 µm.
+///
+/// The second bullet is the C175 census signature exactly: `Δ(incident guided)`
+/// positive and **linear in the step** all the way to the bottom rung, on a
+/// direction that a correct steepest descent gives first-order coefficient
+/// `−|∇|`. The failure message prints the rungs, so a red run of this test is
+/// itself the measurement.
+#[test]
+fn a_ladder_step_descends_the_energy_its_own_gradient_was_taken_from() {
+    let fixture = one_piece(&square(90.0, 90.0, 20.0));
+    let (sources, contract, mut state) = state_at(
+        &fixture,
+        Pose { tx_mm: 0.0, ty_mm: -87.0, theta_deg: 0.0, mirrored: false },
+        300.0,
+    );
+
+    // The fixture: a centroid ten circumradii from the pose origin, and one
+    // active row.
+    let offset = libm::hypot(sources[0].centroid[0], sources[0].centroid[1]);
+    let radius = sources[0].max_radius_mm;
+    assert!((offset - 141.42135623730951).abs() < 1e-9, "centroid offset {offset}");
+    assert!((radius - 14.142135623730951).abs() < 1e-9, "circumradius {radius}");
+    let census = super::energy::census(&state);
+    assert_eq!(census.active_pairs, 0, "one piece has no pair rows");
+    assert_eq!(
+        census.active_edges_by_side, [0, 0, 1, 0],
+        "exactly one active row, and it is the bottom one"
+    );
+    let violation = state.edge_rows[0][super::state::EDGE_BOTTOM].violation_mm;
+    assert!((violation - 2.0).abs() < 1e-12, "bottom violation {violation}");
+
+    // The gradient, before anything is armed or stepped.
+    let gradient = super::energy::incident_gradient(&state, 0);
+    assert!(gradient[0].abs() < 1e-12, "force_x {}", gradient[0]);
+    assert!((gradient[1] - 4.0).abs() < 1e-12, "force_y {}", gradient[1]);
+    assert!((gradient[2] + 40.0).abs() < 1e-12, "torque {}", gradient[2]);
+
+    let config = DescentConfig::derive(&contract, &sources, 0);
+    let mut descent = super::descent::Descent::new(config, vec![true]);
+    let mut work = WorkVector::default();
+    // Arm the rejection census through its own shipped path, so a refusal
+    // records every rung it refused on. One guided update fires with it and
+    // that is harmless here: it multiplies the single active row's weight by
+    // exactly 2, and the SE(2) direction is invariant under a rescaling of the
+    // whole gradient.
+    descent.on_stalled_sweep(&mut state, &sources, &contract, &mut work);
+    let before = super::energy::incident_guided(&state, 0);
+    let accepted = descent.propose(&mut state, &sources, &contract, 0, &mut work);
+    let after = super::energy::incident_guided(&state, 0);
+    let rungs: Vec<(f64, f64)> = descent
+        .rejection_census()
+        .records
+        .first()
+        .map(|record| {
+            record
+                .rungs
+                .iter()
+                .map(|rung| (rung.step_mm, rung.delta_incident_guided))
+                .collect()
+        })
+        .unwrap_or_default();
+    assert!(
+        accepted,
+        "the ladder refused every rung of the direction its own gradient \
+         produced; (step_mm, delta_incident_guided) = {rungs:?}"
+    );
+    assert!(
+        after < before,
+        "incident guided energy {before} -> {after}; rungs {rungs:?}"
+    );
+}
+
+/// **The pivot, measured kinematically.** A proposal's translational component
+/// is the whole of what it moves the piece's centroid by; a rotation about the
+/// centroid moves the centroid not at all.
+///
+/// This one uses a fixture the *un-fixed* composition still accepts, so what is
+/// red is not "the step was refused" but the displacement itself: a 2x20 mm
+/// bar, source centroid 78.102 mm from its pose origin, one active bottom row
+/// at 2.000 mm, whose gradient direction is 0.995 translation and 0.099
+/// rotation. On the accepted first rung of 1.25 mm the proposal's own
+/// translational component is 1.2438575 mm - and rotating about the pose origin
+/// lands the centroid **0.9618590 mm** away from there, 77.3 % of the entire
+/// modelled translation, as an unmodelled rigid drift the gradient never
+/// accounted for.
+///
+/// The tolerance is derived and not fitted: 1 nm is 1/250 of the ladder's
+/// bottom rung and 1/1000 of the publication band's canonical grid, so it is
+/// the largest displacement this engine has no vocabulary for. The residual it
+/// is compared against is round-off: the composition is exact, so the identity
+/// `c_after = c_before + dt` holds to all orders and not merely to first.
+#[test]
+fn a_proposal_moves_the_transformed_centroid_by_its_translation_alone() {
+    // 1 nm: below the 0.25 µm bottom rung and below the 1 µm canonical grid.
+    const ROUND_OFF_MM: f64 = 1e-6;
+
+    let fixture = one_piece(&[[49.0, 50.0], [51.0, 50.0], [51.0, 70.0], [49.0, 70.0]]);
+    let (sources, contract, mut state) = state_at(
+        &fixture,
+        Pose { tx_mm: 0.0, ty_mm: -47.0, theta_deg: 0.0, mirrored: false },
+        300.0,
+    );
+    let offset = libm::hypot(sources[0].centroid[0], sources[0].centroid[1]);
+    assert!((offset - 78.10249675906654).abs() < 1e-9, "centroid offset {offset}");
+    assert_eq!(
+        super::energy::census(&state).active_edges_by_side,
+        [0, 0, 1, 0],
+        "exactly one active row, and it is the bottom one"
+    );
+
+    // The direction the ladder will walk, recomputed here exactly as
+    // `Descent::propose` derives it, so the test knows what the step claimed.
+    let gradient = super::energy::incident_gradient(&state, 0);
+    let radius = sources[0].max_radius_mm;
+    let angular = gradient[2] / (radius * radius);
+    let norm = libm::hypot(libm::hypot(gradient[0], gradient[1]), radius * angular);
+    let direction = [gradient[0] / norm, gradient[1] / norm, angular / norm];
+    // In closed form: the witness arm about the centroid is `(-1, -10)` against
+    // an inward normal of `(0, 1)`, so `|f| = 2wv` and `tau = -2wv`, and with
+    // `R^2 = 101` the translational share is
+    // `|f| / hypot(|f|, tau/R) = sqrt(101/102)`.
+    assert!(
+        (libm::hypot(direction[0], direction[1]) - (101.0f64 / 102.0).sqrt()).abs() < 1e-9,
+        "translational share {direction:?}"
+    );
+
+    let config = DescentConfig::derive(&contract, &sources, 0);
+    let step = config.ladder()[0];
+    assert!((step - 1.25).abs() < 1e-12, "top rung {step}");
+    let centroid_before = state.geometry.centroids[0];
+    let theta_before = state.poses[0].theta_deg;
+
+    let mut descent = super::descent::Descent::new(config, vec![true]);
+    let mut work = WorkVector::default();
+    let accepted = descent.propose(&mut state, &sources, &contract, 0, &mut work);
+    assert!(accepted, "this fixture is chosen so that both pivots accept");
+    let turned_deg = state.poses[0].theta_deg - theta_before;
+    assert!(
+        (turned_deg - (step * direction[2]).to_degrees()).abs() < 1e-12,
+        "the accepted rung is the ladder top: turned {turned_deg} deg"
+    );
+
+    let centroid_after = state.geometry.centroids[0];
+    let translation = [step * direction[0], step * direction[1]];
+    let drift = libm::hypot(
+        centroid_after[0] - centroid_before[0] - translation[0],
+        centroid_after[1] - centroid_before[1] - translation[1],
+    );
+    assert!(
+        drift <= ROUND_OFF_MM,
+        "the proposal translated by {translation:?} and the transformed \
+         centroid moved from {centroid_before:?} to {centroid_after:?}: \
+         {drift} mm of rigid drift the gradient never modelled, against a \
+         modelled translation of {} mm",
+        libm::hypot(translation[0], translation[1])
+    );
+}
+
+/// The invariant the previous two tests are two consequences of: a proposal
+/// with `dt = 0` leaves the transformed centroid exactly where it was.
+///
+/// The composition is a rigid rotation *about* that centroid, so this is not a
+/// first-order statement and the tolerance is not a linearization error - it is
+/// round-off, and the assertion holds at 180° as firmly as at 0.25 µm worth of
+/// turn. 1 nm is the derived floor: 1/250 of the ladder's bottom rung and
+/// 1/1000 of the publication band's 1 µm canonical grid.
+///
+/// It is checked across the whole ladder's worth of angles, past a full turn,
+/// at both mirror flags and at a non-zero starting rotation - because the
+/// composition has to be mirror-agnostic (a rigid post-composition does not see
+/// the mirror) and has to work from a pose that is already turned, which every
+/// pose in the S0 import is.
+#[test]
+fn a_pure_rotation_proposal_leaves_the_transformed_centroid_where_it_was() {
+    const ROUND_OFF_MM: f64 = 1e-6;
+
+    let fixture = one_piece(&square(90.0, 90.0, 20.0));
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let mut worst = 0.0f64;
+    for mirrored in [false, true] {
+        for theta_deg in [0.0, 17.5, -123.75, 359.0] {
+            let pose = Pose { tx_mm: 31.5, ty_mm: -87.25, theta_deg, mirrored };
+            let mut geometry = build_geometry(&sources, &[pose]);
+            let pivot = geometry.centroids[0];
+            for dtheta_deg in [
+                1e-6, 0.001, 0.5, 2.0, 30.0, 90.0, 180.0, 359.9, -45.0, -270.0,
+            ] {
+                let turned = super::state::compose_proposal(pose, pivot, 0.0, 0.0, dtheta_deg);
+                assert_eq!(
+                    turned.theta_deg.to_bits(),
+                    (theta_deg + dtheta_deg).to_bits(),
+                    "the angle coordinate is the plain sum, in degrees"
+                );
+                assert_eq!(turned.mirrored, mirrored, "a rigid step never mirrors");
+                let poses = [turned];
+                transform_piece(&sources, &mut geometry, &poses, 0);
+                let moved = libm::hypot(
+                    geometry.centroids[0][0] - pivot[0],
+                    geometry.centroids[0][1] - pivot[1],
+                );
+                worst = worst.max(moved);
+                assert!(
+                    moved <= ROUND_OFF_MM,
+                    "a pure rotation of {dtheta_deg} deg about {pivot:?} \
+                     (mirrored {mirrored}, theta {theta_deg}) moved the \
+                     transformed centroid by {moved} mm"
+                );
+                // Restore the geometry for the next angle: every iteration
+                // composes from the same pose, never from the previous one.
+                let poses = [pose];
+                transform_piece(&sources, &mut geometry, &poses, 0);
+            }
+        }
+    }
+    // The invariance is exact-to-round-off, not merely inside the band. If this
+    // ever reads micrometres the composition has stopped being rigid.
+    assert!(worst < 1e-12, "worst centroid excursion {worst} mm");
+}

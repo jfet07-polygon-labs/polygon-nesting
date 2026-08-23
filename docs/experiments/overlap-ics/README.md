@@ -8,6 +8,19 @@
 > re-run's own new instrumentation found and deliberately did not fix are in
 > `gate0-rerun/README.md`. Every number below is still what this round
 > measured; several of them are no longer what the engine does.
+>
+> **And superseded again, this time on the verdict itself.** The defect the
+> re-run reported unrepaired — the torque taken about the transformed centroid
+> while the proposal turned about the pose origin — is fixed, and Gate 0 was
+> re-run whole against it: `gate0-pivot-rerun/README.md`. S1 and triangle-20
+> publish sooner, deeper, and **without firing a jump at all**; C175 is 0/3
+> with all three of its pre-committed antecedents satisfied, and a jump-free
+> A/B against the un-fixed binary shows the corrected descent converging from
+> three independent entries to a fixed point **399x outside** the 4 µm
+> publication band, with **zero** publication attempts on any trajectory of
+> either arm. **That round calls C175 the family separator.** §8 below —
+> "what the next round would have to change" — is the section most changed by
+> it; see `gate0-pivot-rerun/README.md` §2 before acting on it.
 
 **Verdict: STOP.** Three of the six fatal cells fail: **S1**, **C175** and the
 **triangle-20 canary**. The other three fatal cells — S0, numeric soundness,

@@ -1,5 +1,32 @@
 # Gate 0, re-run under the frozen fix list
 
+> **Superseded on three specific claims, and left standing as the record of its
+> own round.** §2's defect — the torque pivot — was fixed in the next round and
+> Gate 0 re-run whole against it: `../gate0-pivot-rerun/README.md`. Three
+> things below are no longer true of the engine, and one of them is a
+> correction to a claim this document over-stated:
+>
+> 1. **§3's refusal to call C175 paradigm evidence has been discharged.** §2.4
+>    declined the conclusion because "a failure measured on a move set that is
+>    not the specified one is not evidence about the specified one". It is the
+>    specified one now, and C175 is still 0/3 — with all three antecedents
+>    satisfied on all three seeds, where this round could only claim two.
+> 2. **§4's headline A/B no longer separates anything.** "The *only* difference
+>    between republishing and freezing at 12.635 µm is whether the jump is
+>    allowed to commit" was true of the code that measured it. With the pivot
+>    corrected, S1 never reaches a second guided stall, never licenses a jump,
+>    and republishes on the descent alone; both arms are byte-equal on all six
+>    passing rungs of the basin.
+> 3. **§2.1's second row is scoped more narrowly than it was stated.** The
+>    rejection census arms on the *first* stalled sweep and fills immediately,
+>    so `activeIncidentPenaltyMax = 0` describes proposal ordinals
+>    22,633–22,708 of 239,974 — 9.5 % into the trajectory — and not the
+>    deadlock the cell dies in. See `../gate0-pivot-rerun/README.md` §3.2.
+>
+> §2.3's promise — *"writing [the unit vector] is the first thing the next
+> round should do, before the fix, so that the fix has something to turn
+> green"* — was kept: `../gate0-pivot-rerun/evidence/pivot-red.log`.
+
 This document is written in two halves and the halves were written at different
 times, on purpose.
 

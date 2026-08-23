@@ -364,19 +364,37 @@ impl Descent {
         };
         let mut rungs = Vec::new();
         let original = state.poses[piece];
+        // **The pivot, read once per proposal, before the ladder overwrites the
+        // cached geometry with the first rung's transform.**
+        //
+        // Every rung of this ladder walks the *same* direction from the *same*
+        // pose, so it must also turn about the same point; reading
+        // `centroids[piece]` inside the loop would pivot rung `k+1` about rung
+        // `k`'s centroid and make the ladder path-dependent. It is a pure
+        // function of the cached transformed geometry, so the trajectory stays
+        // a function of `(request, seed, binary, quota)` alone.
+        let pivot = state.geometry.centroids[piece];
         for rung in 0..self.ladder.len() {
             let step = self.ladder[rung];
-            let candidate = Pose {
-                tx_mm: original.tx_mm + step * direction[0],
-                ty_mm: original.ty_mm + step * direction[1],
-                // The direction's angular component is in radians per unit of
-                // SE(2) step, because the metric `|dt|^2 + (R dtheta)^2` is a
-                // statement about arc length. It is converted once, here, so
-                // the stored coordinate stays the degrees the publication
-                // transform reads.
-                theta_deg: original.theta_deg + (step * direction[2]).to_degrees(),
-                mirrored: original.mirrored,
-            };
+            // The rotation is taken about the piece's transformed centroid,
+            // which is where `incident_gradient` took its torque. See
+            // `state::compose_proposal`: composing about the pose origin
+            // instead carried `|c − t| * dtheta` of unmodelled translation on
+            // every rotational step, which on both campaign fixtures is at
+            // least as large as the rotation it was modelling.
+            //
+            // The direction's angular component is in radians per unit of
+            // SE(2) step, because the metric `|dt|^2 + (R dtheta)^2` is a
+            // statement about arc length. It is converted once, here, so the
+            // stored coordinate stays the degrees the publication transform
+            // reads.
+            let candidate = super::state::compose_proposal(
+                original,
+                pivot,
+                step * direction[0],
+                step * direction[1],
+                (step * direction[2]).to_degrees(),
+            );
             if !candidate.tx_mm.is_finite()
                 || !candidate.ty_mm.is_finite()
                 || !candidate.theta_deg.is_finite()
