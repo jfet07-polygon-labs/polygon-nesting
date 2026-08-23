@@ -1,5 +1,17 @@
 # `CutCloseRelocate`, round 1 — the frozen wall
 
+> **SUPERSEDED, in one row and one claim, by
+> [`../cutclose-rerun/`](../cutclose-rerun/README.md).** Sol review 18 §P0 and
+> Grok review 13 flag 3 both found a line-level defect in the member this round
+> measured: `Engine::separate` reset its no-improvement counter on any new raw-Φ
+> minimum where the frozen spec requires 2 %. **§13's "separator strikes" row —
+> *"identical / none"* — was therefore wrong**, and the test this round cited as
+> covering it (`the_strike_caps_are_the_published_…`) checked only literals.
+> Both are corrected in the rerun, which re-measures this identical gate on the
+> repaired binary and lands on 2 of 9. The numbers below are left exactly as they
+> were measured; nothing here has been edited to agree with the later round, and
+> §0 is untouched by construction.
+
 The round the quorum spec funds: Sparrow-faithful relocate plus a 0.1 %
 split-and-close homotopy, on our Φ, our sampler and our dual-valid judge,
 against a pre-committed 168.484 at 10 seconds.
@@ -473,7 +485,7 @@ semantics.
 | **GLS** | Alg. 8 | `GLS_WEIGHT_MIN_INC_RATIO 1.2`, `GLS_WEIGHT_MAX_INC_RATIO 2.0`, `GLS_WEIGHT_DECAY 0.95` (`consts.rs:4-6`) | `energy::gls_update`, same three constants in `f64` | cap `2²⁰` and floor `1.0` are ours (theirs are implicit in `f32`). All rows every master iteration; **the stall-only integer increment of the previous round is deleted**. |
 | **tournament** | Alg. 10 | `n_workers: 3` (`config.rs:66`, `config.rs:83`) — the published 150.165 mixed-61 log used `--workers 8` | **8**, `Engine::tournament` | **ours is 8, the source's compiled default is 3.** Not a difference from the *run* the bar is a test of; it is a difference from the struct literal, and it is named here rather than left for someone to find. Arbitrated: Sol review 17 Round 2 refuses to sign a one-worker version. |
 | **tie break** | Alg. 10 merge | minimum weighted loss | `(weighted, worker ordinal)` | Grok M6 asked for `(weighted, fingerprint, ordinal)`. A digest between the two would only reorder exact ties by a hash and costs a fingerprint per worker per iteration. Stated at the call site. |
-| **separator strikes** | Alg. 9 | `iter_no_imprv_limit: 200 / 100`, `strike_limit: 3 / 5` (`config.rs:63-64`, `config.rs:80-81`) | `SeparateLimits::EXPLORE` / `::COMPRESS`, identical | none. The 2 % improving-strike reset (`min_loss < 0.98 * initial_strike_loss`) is `STRIKE_IMPROVEMENT_RATIO`. |
+| **separator strikes** | Alg. 9 | `iter_no_imprv_limit: 200 / 100`, `strike_limit: 3 / 5` (`config.rs:63-64`, `config.rs:80-81`) | `SeparateLimits::EXPLORE` / `::COMPRESS`, identical | ~~none. The 2 % improving-strike reset (`min_loss < 0.98 * initial_strike_loss`) is `STRIKE_IMPROVEMENT_RATIO`.~~ **WRONG, and corrected in the rerun.** The *outer* 0.98 on the strike count shipped; the *inner* one — `separator.rs:106-108`, `loss < min_loss * 0.98` gating `n_iter_no_improvement` — did not. Round 1 reset the 200-counter on any new minimum. See [`../cutclose-rerun/README.md`](../cutclose-rerun/README.md) §4–§5. |
 | **explore shrink** | Alg. 11–12 | `shrink_step: 0.001`, `split_position: None` ⇒ centre (`config.rs:58`) | `EXPLORE_SHRINK_STEP`, `centre_cut_mm` | **success is stricter than theirs.** Their bite advances on a proxy-feasible separation; ours advances **only on a dual-valid publication at the new `W`**. Deliberate, and it costs us. |
 | **split-and-close** | `separator.rs::change_strip_width` | far side translates by `δ` along the strip axis | `homotopy::split_and_close` | their strip *width* is our long-axis *depth*; their split is an `x`, ours a `y`; `t_x`, `θ` and the mirror are copied through bit for bit. |
 | **explore failure pool** | Alg. 12 | `solution_pool_distribution_stddev: 0.25` (`config.rs:61`), `max_conseq_failed_attempts: None` | `normal_biased_rank`, `Normal(0, 0.25)` by Box–Muller on two `counter_hash` uniforms | no `rand_distr`, no `Xoshiro`. Pool capacity **64** is ours, a memory guard keeping the best entries; no run inside a 30 s wall reaches it. **The restore puts back the pooled entry's own weights**, not the tracker's current ones — Sol review 17 Round 2 §5's reading of the explore-fail path. The *rollback inside* a separation keeps the current weights, which is theirs. |

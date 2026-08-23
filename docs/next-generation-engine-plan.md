@@ -8545,3 +8545,93 @@ now-faithful member stands either way. The 30 s column (5/9 at
 163.69-165.06, first run) is owner-facing evidence, not a rescue.
 Reviews verbatim: docs/sol-review-18-the-strike-predicate.md,
 docs/grok-review-13-the-strike-predicate.md.
+
+## The one licensed repair, and the identical rerun: 2 of 9, and the member closes on a faithful negative
+
+The failure license granted exactly one thing and it was spent on exactly one
+thing. `Engine::separate` reset its no-improvement counter on **any** new raw-Φ
+minimum; Grok review 12 Round 2 §6.5 froze *"200 iterations without 2 % raw-Φ
+improvement vs strike-best"* and Sparrow's `separator.rs:102-115` at `14f4868f`
+is where that 2 % comes from — a new best inside the 2 % band updates the
+incumbent and falls through **without touching** the counter, and only a
+non-improvement increments it. Round 1 shipped the *outer* 0.98, on the strike
+count; the *inner* one, on the 200-counter, was missing. The transition now
+lives in one function, `observe_raw`, which returns which of three things
+happened — `Substantial` (reset), `Marginal` (a real new minimum that **pauses**
+the counter) and `None` (increment) — and both `separate` and the state-machine
+vector call it, so no test can pass by agreeing with a second copy of the rule.
+Nothing else in the engine moved: the default-build gate binary is
+`61befdc5…`, **byte-for-byte round 1's**, and the control's arm-B binary is
+`b44eb7fd…`, also byte-for-byte round 1's.
+
+**The vector, red and green, is committed as transcripts.** Sol review 18 §P0's
+sketch — repeated blocks of nine non-minima followed by one 0.01 %-better
+minimum. Round 1's rule: 10,000 observations, 1,000 resets, counter ends at
+**0**, the 200 never once reached, `cargo test` exit **101**. The repaired rule:
+the strike arrives on observation **222**, after exactly 200 non-minima, with 22
+microscopic minima having paused rather than forgiven it, exit **0**. Round 1's
+counter on that vector is provably the longest run of consecutive non-minima in
+it, which is **nine** against a limit of 200 — asserted in the tree without a
+second copy of the predicate. `evidence/strike-red.log` carries both halves and
+`evidence/strike-red.patch` is the one-token diff that reproduces the red.
+
+**The gate: FAIL, 2 of 9 at ≤168.484 in 10.000 s, against a quorum of 3.** Best
+167.31508 (seed 3), then 167.95169 (seed 2); seed 6 misses by 0.688 mm and the
+other six are still welded at 179.07–179.08. Round 1 was 0 of 9 with a best of
+169.00246. 1,701 publications across 27 cells and **zero invalid**; max repair
+16.000 µm at the 4·ε cap and never over it; max deadline overrun **+8.07 ms**
+across 27 cells; the floor green in every clause — S0 bit-for-bit, S1 and
+triangle-20 inside their locks, 1k and 10k soundness all zeros, four pinned
+gates on both builds with whole-document identity, five suites exit 0.
+
+**The green vector held, and that is the load-bearing part of this round.** On
+the exact cell both reviewers named — seed 1, 30 s, bite 22 — round 1 burned
+**5,319 master iterations with 0 strikes and 0 disruptions** and never published.
+The rerun: **3,059 iterations, 6 strikes, 2 disruptions, published**, which is
+why seed 1's 30 s answer moves 14.075 mm to 165.00578. Across the round: 145
+strikes and 164 disruptions against 88 and 122. Seeds 7 and 8 are the honest
+counterweight — at 30 s their 22nd bite now gets **six separation attempts and
+five disruptions** where it used to get one, and it **still does not cross**. The
+starvation was real and is fixed; the shelf at `W ≈ 178.99` is not a starvation
+artifact for every seed. At 10 s the six rows that remain stuck still read
+`disruptions: 0`, because three strikes need ≥600 non-improving iterations and
+those cells hit the explore deadline after 800–1,400 — the strike counts moved
+0–1 → 2, one strike short of firing. That half of Grok's secondary check is
+reported as unmet rather than dressed up.
+
+**The 30 s column, which is not a gate clause and is not offered as one:** 7 of 9
+under the bar against round 1's 5, and **161.05499** on seed 0 — the best depth
+this member has ever produced on mixed-61.
+
+Three things were named by the reviews and deliberately **not** done, because
+the license was for one semantic change: the `exactAttempts` overclaim is
+*recorded* — the funnel's `exactAttempted` counts bites with ≥1 attempt, and
+seed 2's 1,313 attempts collapse to 174, which is now reconstructible from
+committed evidence — and the counters are not renamed; the per-master-iteration
+thread spawn is left for a separate measurement; and the pool-restore weight
+policy stays a declared frozen difference. Sol's other non-gating risk is
+discharged rather than deferred: `wall.py` now keeps `outcome.bites` verbatim on
+every cell, and `bites.py` lifted round 1's rows out of its surviving raw files
+into `round1-bites-red.json`, so both the 5,319/0/0 red and every per-bite claim
+in either document are readable from the repository.
+
+**§0.6 was pre-committed before any wall second and it decides this:** fewer than
+3 of 9 with the floor green and the green vector holding means the member
+**closes on a now-faithful FAIL**, and no further license exists. The kill, in
+the words §0.3 requires: *Sparrow-faithful relocate + 0.1 % split-and-close, on
+our Φ and our dual-valid judge, with the frozen 2 % strike predicate implemented
+as specified, did not beat 168.484 at 10 s on 3 of 9 seeds.* Grok's own
+expectation — *"I do not expect that rerun to pass 3/9"* — held, and the reason
+it matters that the rerun happened anyway is that the negative is now a
+statement about the member rather than about a comparison someone got wrong.
+Joint projection, component-Y, a different sampler and a different homotopy
+remain separately funded proposals; this round argues for none of them.
+
+One caveat a future reader should not have to dig for: the 10 s outcome of a
+single seed is **not reproducible run to run**. The AB/BA control's arm A is the
+same binary, seed and budget in a different process, and it returned 169.21217
+on seed 3 where the wall cell returned 167.31508. "2 of 9" is one draw of nine,
+which is exactly what §0 fixed in advance, and it is not a constant of the
+member. The battery is docs/experiments/overlap-ics/cutclose-rerun/, whose §0 is
+round 1's §0 copied verbatim — 7,796 bytes, byte-identical — and committed before
+a single wall second of the rerun was spent.
