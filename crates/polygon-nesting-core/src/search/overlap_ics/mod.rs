@@ -37,6 +37,10 @@ pub mod corpus;
 pub mod decomposition;
 pub mod descent;
 pub mod diagnostics;
+/// Algorithm 12's fail path: swap two large pieces and carry their interior
+/// followers with the same rigid map. Fired by the explore loop on a failed
+/// separation, never by a stalled sweep.
+pub mod disrupt;
 pub mod energy;
 pub mod homotopy;
 pub mod publish;
