@@ -829,6 +829,8 @@
    "quorumReached": 0
   }
  },
+ "claimsChecked": 30,
  "failures": [],
+ "prefixCellsMeasured": 27,
  "what": "round 1 against the rerun, from both committed reductions"
 }

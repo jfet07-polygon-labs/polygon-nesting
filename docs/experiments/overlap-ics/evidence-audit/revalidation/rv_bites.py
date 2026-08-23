@@ -78,7 +78,10 @@ def main():
     r1doc, r1 = round1_cells()
     fails = []
 
+    claims = [0]
+
     def want(tag, got, expected):
+        claims[0] += 1
         if got != expected:
             fails.append({'claim': tag, 'recomputed': got,
                           'readmeSays': expected})
@@ -182,6 +185,7 @@ def main():
         got, emitted = funnel_of(cell), cell['funnel']
         b8.append({'cell': f'{budget}s-seed{seed}', 'recomputed': got,
                    'emitted': emitted})
+        claims[0] += 1
         if got != emitted:
             fails.append({'claim': f'B8 funnel {budget}s-seed{seed}',
                           'recomputed': got, 'readmeSays': emitted})
@@ -203,6 +207,7 @@ def main():
                      'ratio': attempts_sum
                      / seed2['funnel']['exactAttempted']},
         'B8_funnelPerCell': b8,
+        'claimsChecked': claims[0],
         'failures': fails,
         'ALL_README_BITE_CLAIMS_REPRODUCE': not fails,
     }
@@ -216,6 +221,7 @@ def main():
     print('               seed1 30s bite22 round1 =', b4[1]['round1'])
     print('seed2 overclaim: perBite sum', attempts_sum, 'vs funnel',
           seed2['funnel']['exactAttempted'])
+    print('claims checked:', claims[0])
     print('failures:', len(fails))
     for f in fails[:40]:
         print('  FAIL', f)

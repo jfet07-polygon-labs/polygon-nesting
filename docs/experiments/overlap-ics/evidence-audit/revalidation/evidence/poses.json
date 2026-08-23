@@ -775,8 +775,11 @@
    "twoRMicron": 5000.0
   }
  ],
+ "armBDepthsBitIdenticalToRecordedIncumbent": 18,
+ "armBLayoutsDualValid": 18,
  "binary": "/var/lib/t3/tmp/rv-audit-target/release/examples/overlap_ics_benchmark",
  "binarySha256": "fd5206ae7e75add3fdf7914b9df30ea66db6be63e9d982698a278fbfc63aeeaa",
+ "claimsChecked": 76,
  "contractFirstRefusalDeltaMm": null,
  "kernelFirstRefusalDeltaMm": null,
  "ladderNote": "null kernel/contract verdicts mean no checkpoint was emitted: the 4 um proxy band refused before either authority was consulted. See authorities.json for the authorities refusing on the committed round.",

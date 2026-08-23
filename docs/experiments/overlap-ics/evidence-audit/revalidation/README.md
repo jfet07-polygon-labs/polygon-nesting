@@ -195,7 +195,25 @@ it was shown, and the second authority is doing independent work. `0 invalid of
 
 ---
 
-# VERIFIED CLEAN — 19,700 recomputed identities and claims, all green
+# VERIFIED CLEAN — 19,672 recomputed identities and claims, all green
+
+The total is counted by the scripts, not by hand; each writes its own
+`claimsChecked` (or `fieldsChecked`/`identitiesChecked`) into its evidence file.
+
+| stage | counted | file |
+|---|---:|---|
+| the reduction, field by field | 702 | `evidence/reduction.json` |
+| publications and exact checkpoints | 18,665 | `evidence/publications.json` |
+| the rerun README's per-bite claims | 103 | `evidence/bites.json` |
+| cross-round claims | 30 | `evidence/crossround.json` |
+| the AB/BA control | 42 | `evidence/control.json` |
+| recorded pose sets | 76 | `evidence/poses.json` |
+| the fixed-work replays | 54 | `evidence/replay.json` |
+| **total** | **19,672** | |
+
+Not in that total, because they are measurements rather than pass/fail clauses:
+27 shared-prefix measurements (`evidence/crossround.json`) and 3,298 checkpoint
+classifications (`evidence/authorities.json`).
 
 **The reduction (702 fields, `evidence/reduction.json`).** Every field of all 27
 committed cell rows re-derived from the raw documents: floats compared by their

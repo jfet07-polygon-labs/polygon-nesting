@@ -206,6 +206,17 @@ def main():
                       'authority was consulted. See authorities.json for the '
                       'authorities refusing on the committed round.',
         'S0_PINS_REPRODUCE': s0_check['ALL_PINS_REPRODUCE'],
+        # Nine S0 pins, three clauses per arm-B layout (kernel, contract, and
+        # the imported depth against the recorded incumbent, bit for bit), and
+        # one rung each on the ladder.
+        'claimsChecked': len(pins) + 3 * len(arm_b) + len(ladder),
+        'armBLayoutsDualValid': sum(
+            1 for r in arm_b
+            if r.get('kernelExclusiveValid') and r.get('contractValid')),
+        'armBDepthsBitIdenticalToRecordedIncumbent': sum(
+            1 for r in arm_b
+            if r.get('importedRawSourceDepthMm')
+            == r.get('armBIncumbentRawDepthMm')),
         'ARM_B_LAYOUTS_JUDGED': [
             {'round': r.get('round'), 'seed': r.get('seed'),
              'importedDepthMm': r.get('importedRawSourceDepthMm'),

@@ -11,4 +11,5 @@ arm A under the engine deadline:
   seed6 committed=169.08133644252246 filtered=169.08133644252246 late=0 moves=False
   seed7 committed=179.0821043163991 filtered=179.0821043163991 late=0 moves=False
   seed8 committed=179.0821075901454 filtered=179.0821075901454 late=0 moves=False
+claims checked: 42
 failures: 0

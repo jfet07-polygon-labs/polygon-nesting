@@ -53,7 +53,10 @@ def main():
     r1b = load('cutclose-rerun/evidence/round1-bites-red.json')
     fails = []
 
+    claims = [0]
+
     def want(tag, got, exp):
+        claims[0] += 1
         if got != exp:
             fails.append({'claim': tag, 'recomputed': got, 'readmeSays': exp})
 
@@ -104,6 +107,7 @@ def main():
             got = (round(b1[seed], 5), round(b2[seed], 5),
                    round(b2[seed] - b1[seed], 3))
             c2[budget][seed] = got
+            claims[0] += 1
             exp = printed[budget][seed]
             # `-0.000` and `+0.000` print differently and compare equal at 0.0
             if (got[0], got[1]) != (exp[0], exp[1]) or \
@@ -173,6 +177,8 @@ def main():
                 {p['identicalPrefix'] for p in prefixes}),
         },
         'C6_totals': {'round1': t1, 'rerun': t2},
+        'claimsChecked': claims[0],
+        'prefixCellsMeasured': len(prefixes),
         'failures': fails,
         'ALL_CROSS_ROUND_CLAIMS_REPRODUCE': not fails,
     }
@@ -189,6 +195,7 @@ def main():
               + ('identical' if fd is None
                  else f"first diff at ordinal {fd['ordinal']} ({fd['phase']}): "
                       + ','.join(fd['fields'])))
+    print('claims checked:', claims[0], ' prefix cells:', len(prefixes))
     print('failures:', len(fails))
     for f in fails:
         print('  FAIL', f)

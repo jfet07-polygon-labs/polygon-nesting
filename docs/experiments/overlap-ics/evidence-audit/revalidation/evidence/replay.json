@@ -2,6 +2,7 @@
  "ALL_NINE_REPRODUCE_BIT_FOR_BIT": true,
  "binary": "/var/lib/t3/tmp/rv-audit-target/release/examples/overlap_ics_benchmark",
  "binarySha256": "fd5206ae7e75add3fdf7914b9df30ea66db6be63e9d982698a278fbfc63aeeaa",
+ "claimsChecked": 54,
  "failures": [],
  "roundBinarySha256": "b42c10afca031ce24fac4cb2a85a752462c6fffb1eee42956e523ee846376f03",
  "rows": [

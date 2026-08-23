@@ -28,4 +28,5 @@ prefix summary: {'cellsWithIdenticalPrefixAtLeast21': 25, 'cellsWholeTrajectoryI
      30s-seed6  r1=126 re=121 prefix=105 first diff at ordinal 106 (explore): masterIterations
      30s-seed7  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): attempts,disruptions,masterIterations,strikes,minRawPhi,exactAttempts
      30s-seed8  r1= 24 re= 34 prefix= 21 first diff at ordinal 22 (explore): attempts,disruptions,masterIterations,strikes,minRawPhi,exactAttempts
+claims checked: 30  prefix cells: 27
 failures: 0

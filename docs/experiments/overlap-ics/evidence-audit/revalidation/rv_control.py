@@ -44,7 +44,10 @@ def main():
         r1 = json.load(h)
     fails = []
 
+    claims = [0]
+
     def want(tag, got, exp, tol=0.0):
+        claims[0] += 1
         ok = got == exp if tol == 0.0 else abs(got - exp) <= tol
         if not ok:
             fails.append({'claim': tag, 'recomputed': got, 'readmeSays': exp})
@@ -126,6 +129,7 @@ def main():
             'qualifiesUnfiltered': unfiltered <= BAR_MM,
             'qualifiesFiltered': filtered is not None and filtered <= BAR_MM,
         })
+        claims[0] += 1
         if abs(unfiltered - a[seed]) > 1e-12:
             fails.append({'claim': f'K6 armA seed{seed} matches committed',
                           'recomputed': unfiltered, 'readmeSays': a[seed]})
@@ -141,6 +145,7 @@ def main():
         'K4_round1ArmB': b1,
         'K6_armAUnderEngineDeadline': k6,
         'K6_cellsThatMove': [r for r in k6 if r.get('moves')],
+        'claimsChecked': claims[0],
         'failures': fails,
         'ALL_CONTROL_CLAIMS_REPRODUCE': not fails,
     }
@@ -161,6 +166,7 @@ def main():
               f"filtered={r['underEngineDeadlineMm']} "
               f"late={r['publicationsPastEngineDeadline']} "
               f"moves={r['moves']}")
+    print('claims checked:', claims[0])
     print('failures:', len(fails))
     for f in fails:
         print('  FAIL', f)

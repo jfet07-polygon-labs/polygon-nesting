@@ -118,6 +118,10 @@ def main():
         'roundBinarySha256':
             'b42c10afca031ce24fac4cb2a85a752462c6fffb1eee42956e523ee846376f03',
         'rows': rows,
+        # Six clauses per replay: two-process identity, depth bit-identity,
+        # ordinal-array identity, publication count, dual validity, and
+        # invalidPublications == 0.
+        'claimsChecked': 6 * len(rows),
         'failures': fails,
         'ALL_NINE_REPRODUCE_BIT_FOR_BIT': not fails,
     }

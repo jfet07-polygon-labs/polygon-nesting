@@ -824,6 +824,7 @@
    }
   }
  ],
+ "claimsChecked": 103,
  "failures": [],
  "sources": [
   "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-2/docs/experiments/overlap-ics/cutclose-rerun/evidence/wall.json",
