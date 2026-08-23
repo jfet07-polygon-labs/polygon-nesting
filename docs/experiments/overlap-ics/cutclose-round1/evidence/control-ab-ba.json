@@ -1,0 +1,287 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "cutclose-round1-ab-ba-wall-control",
+ "diagnosticOnly": true,
+ "note": "The bar is the pinned 168.484 and this control can neither raise nor lower it (docs/cutclose-relocate-spec.md, \"The gate\"). It is reported to expose session drift: arm B is the campaign's published wall arm, which reproduces 0 of 3, so its spread today is a statement about the box.",
+ "seconds": 10.0,
+ "armA": {
+  "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_8a00dcff-f1d-3/target/release/examples/overlap_ics_benchmark",
+  "sha256": "6f102a043820a2c45cd410700f48f1eb362d3eb2656964b0866f9a61cc343e68",
+  "what": "CutCloseRelocate, feature overlap-ics, 8 workers"
+ },
+ "armB": {
+  "binary": "target/release/examples/general_request_benchmark",
+  "sha256": "b44eb7fd3da62c4b7562c9d386d81ce80e9578e808cf90689d73b47f598d0ea1",
+  "what": "the campaign wall arm, combo features, wall=<ms>,v3=1"
+ },
+ "publishedWallArmMm": 168.484,
+ "pairs": [
+  {
+   "seed": 0,
+   "order": "AB",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 0,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.07608653029408,
+    "incumbentMm": 179.07608653029408,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.006869620992802,
+    "totalSeconds": 10.003215791
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 0,
+    "spec": "wall=10000,cells=13:15:17:19,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 168.4836008374388,
+    "dualGateValid": true,
+    "independentDepthMm": 168.484,
+    "coordinatorSeconds": 9.943546849,
+    "processWallSeconds": 9.983228608965874
+   },
+   "deltaMm": 10.592485692855291
+  },
+  {
+   "seed": 1,
+   "order": "BA",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 1,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.08099192151158,
+    "incumbentMm": 179.08099192151158,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.009045547922142,
+    "totalSeconds": 10.004789517
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 1,
+    "spec": "wall=10000,cells=11:15:21:27,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 165.65577826491065,
+    "dualGateValid": true,
+    "independentDepthMm": 165.656,
+    "coordinatorSeconds": 10.340157042,
+    "processWallSeconds": 10.377442329074256
+   },
+   "deltaMm": 13.425213656600931
+  },
+  {
+   "seed": 2,
+   "order": "AB",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 2,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.07957804545876,
+    "incumbentMm": 179.07957804545876,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.008289250079542,
+    "totalSeconds": 10.003888729
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 2,
+    "spec": "wall=10000,cells=15:23:31:39,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 174.28,
+    "dualGateValid": true,
+    "independentDepthMm": 174.28,
+    "coordinatorSeconds": 9.802506881,
+    "processWallSeconds": 9.83668420102913
+   },
+   "deltaMm": 4.799578045458759
+  },
+  {
+   "seed": 3,
+   "order": "BA",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 3,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 169.1899492778307,
+    "incumbentMm": 169.1899492778307,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.00620133697521,
+    "totalSeconds": 10.001994139
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 3,
+    "spec": "wall=10000,cells=13:15:17:19,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 169.58499999999998,
+    "dualGateValid": true,
+    "independentDepthMm": 169.585,
+    "coordinatorSeconds": 9.550620289,
+    "processWallSeconds": 9.588520476943813
+   },
+   "deltaMm": -0.3950507221692874
+  },
+  {
+   "seed": 4,
+   "order": "AB",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 4,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.08123139152298,
+    "incumbentMm": 179.08123139152298,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.008044488029554,
+    "totalSeconds": 10.003626967
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 4,
+    "spec": "wall=10000,cells=11:15:21:27,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 172.12900000000002,
+    "dualGateValid": true,
+    "independentDepthMm": 172.129,
+    "coordinatorSeconds": 9.794275758,
+    "processWallSeconds": 9.830271619022824
+   },
+   "deltaMm": 6.952231391522957
+  },
+  {
+   "seed": 5,
+   "order": "BA",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 5,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.0717050203847,
+    "incumbentMm": 179.0717050203847,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.00823161599692,
+    "totalSeconds": 10.004535522
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 5,
+    "spec": "wall=10000,cells=15:23:31:39,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.63299999999998,
+    "dualGateValid": true,
+    "independentDepthMm": 179.633,
+    "coordinatorSeconds": 9.221548483,
+    "processWallSeconds": 9.258132440038025
+   },
+   "deltaMm": -0.5612949796152691
+  },
+  {
+   "seed": 6,
+   "order": "AB",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 6,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 169.6555049466753,
+    "incumbentMm": 169.6555049466753,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.005819112062454,
+    "totalSeconds": 10.00117985
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 6,
+    "spec": "wall=10000,cells=13:15:17:19,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 168.468,
+    "dualGateValid": true,
+    "independentDepthMm": 168.468,
+    "coordinatorSeconds": 9.211561814,
+    "processWallSeconds": 9.248606608947739
+   },
+   "deltaMm": 1.1875049466753183
+  },
+  {
+   "seed": 7,
+   "order": "BA",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 7,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.08210428935487,
+    "incumbentMm": 179.08210428935487,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.009353030007333,
+    "totalSeconds": 10.004996557
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 7,
+    "spec": "wall=10000,cells=11:15:21:27,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 169.229,
+    "dualGateValid": true,
+    "independentDepthMm": 169.229,
+    "coordinatorSeconds": 9.301642221,
+    "processWallSeconds": 9.334193194983527
+   },
+   "deltaMm": 9.85310428935486
+  },
+  {
+   "seed": 8,
+   "order": "AB",
+   "A": {
+    "arm": "A-cutclose",
+    "seed": 8,
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 179.08210585410848,
+    "incumbentMm": 179.08210585410848,
+    "incumbentIsConstructor": false,
+    "invalidPublications": 0,
+    "processWallSeconds": 10.00912847800646,
+    "totalSeconds": 10.004545117
+   },
+   "B": {
+    "arm": "B-old-stack-wall",
+    "seed": 8,
+    "spec": "wall=10000,cells=15:23:31:39,v3=1",
+    "exit": 0,
+    "stderr": "",
+    "rawDepthMm": 169.03158571496175,
+    "dualGateValid": true,
+    "independentDepthMm": 169.032,
+    "coordinatorSeconds": 10.021771679,
+    "processWallSeconds": 10.061824618955143
+   },
+   "deltaMm": 10.050520139146727
+  }
+ ],
+ "armAMedianMm": 179.07957804545876,
+ "armBMedianMm": 169.229,
+ "armBSpreadMm": 13.97722173508933,
+ "armBMedianDriftFromPublishedMm": 0.7450000000000045,
+ "armBDualValidEverywhere": true,
+ "armAInvalidPublications": 0
+}

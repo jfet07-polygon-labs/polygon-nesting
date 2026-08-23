@@ -32,7 +32,15 @@
 # anyone else - and `--lib --tests` is the scope that asks the question suite 5
 # is for.
 set -u
-W="${ICS_ROOT:-/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_7f77514b-f9a-1}"
+# The same repair `fast.sh` and `lib.py` got in the spec commit, for the same
+# reason (Sol review 17 Round 2 §2's mandatory addition 3): a hard-coded
+# worktree default is a round-validity defect, not a knob, and this script's
+# default still named `wf_7f77514b-f9a-1` - a worktree that still exists on this
+# box, so a wrong-tree suite run would have been silent rather than loud. `W`
+# now resolves to the repository containing THIS FILE; `ICS_ROOT` still
+# overrides explicitly.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+W="${ICS_ROOT:-$(cd "$SCRIPT_DIR" && git rev-parse --show-toplevel)}"
 E="$W/docs/experiments/overlap-ics/evidence"
 mkdir -p "$E"
 cd "$W" || exit 3
