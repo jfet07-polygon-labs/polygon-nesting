@@ -1,0 +1,833 @@
+{
+ "ALL_README_BITE_CLAIMS_REPRODUCE": true,
+ "B1_exploreBitesPublished": {
+  "10s-seed0": 21,
+  "10s-seed1": 21,
+  "10s-seed2": 63,
+  "10s-seed3": 72,
+  "10s-seed4": 21,
+  "10s-seed5": 21,
+  "10s-seed6": 74,
+  "10s-seed7": 21,
+  "10s-seed8": 21,
+  "30s-seed0": 120,
+  "30s-seed1": 76,
+  "30s-seed2": 111,
+  "30s-seed3": 109,
+  "30s-seed4": 109,
+  "30s-seed5": 117,
+  "30s-seed6": 105,
+  "30s-seed7": 21,
+  "30s-seed8": 21,
+  "3s-seed0": 21,
+  "3s-seed1": 19,
+  "3s-seed2": 21,
+  "3s-seed3": 21,
+  "3s-seed4": 21,
+  "3s-seed5": 21,
+  "3s-seed6": 21,
+  "3s-seed7": 21,
+  "3s-seed8": 21
+ },
+ "B2_totals": {
+  "rerun": {
+   "bites": 1825,
+   "disruptions": 164,
+   "strikes": 145
+  },
+  "round1": {
+   "bites": 1391,
+   "disruptions": 122,
+   "strikes": 88
+  }
+ },
+ "B4_thirtySecondBite22": {
+  "0": {
+   "rerun": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 1424,
+    "minRawPhi": 1.1992955066947794e-05,
+    "phase": "explore",
+    "published": true,
+    "strikes": 2
+   },
+   "round1": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 2061,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 2
+   }
+  },
+  "1": {
+   "rerun": {
+    "attempts": 2,
+    "disruptions": 2,
+    "masterIterations": 3059,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 6
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 5319,
+    "minRawPhi": 3.695709020949532e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   }
+  },
+  "2": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 1,
+    "masterIterations": 1283,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 3
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 1,
+    "masterIterations": 7450,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 3
+   }
+  },
+  "3": {
+   "rerun": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 137,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 137,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   }
+  },
+  "4": {
+   "rerun": {
+    "attempts": 2,
+    "disruptions": 2,
+    "masterIterations": 2032,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 6
+   },
+   "round1": {
+    "attempts": 2,
+    "disruptions": 2,
+    "masterIterations": 3622,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 6
+   }
+  },
+  "5": {
+   "rerun": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 1142,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 1700,
+    "minRawPhi": 1.5805794137300585e-05,
+    "phase": "explore",
+    "published": true,
+    "strikes": 2
+   }
+  },
+  "6": {
+   "rerun": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 131,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 131,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   }
+  },
+  "7": {
+   "rerun": {
+    "attempts": 6,
+    "disruptions": 5,
+    "masterIterations": 5638,
+    "minRawPhi": 1.8675042075611397e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 17
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 3906,
+    "minRawPhi": 6.163514289718313e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   }
+  },
+  "8": {
+   "rerun": {
+    "attempts": 6,
+    "disruptions": 5,
+    "masterIterations": 6483,
+    "minRawPhi": 1.8676093462303335e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 15
+   },
+   "round1": {
+    "attempts": 2,
+    "disruptions": 1,
+    "masterIterations": 3825,
+    "minRawPhi": 6.163727568026612e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 4
+   }
+  }
+ },
+ "B5_tenSecondBite22": {
+  "0": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 1408,
+    "minRawPhi": 6.0822604221878824e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 2
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 1290,
+    "minRawPhi": 0.00012151479546341587,
+    "phase": "explore",
+    "published": false,
+    "strikes": 1
+   }
+  },
+  "1": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 809,
+    "minRawPhi": 8.14478758534553e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 797,
+    "minRawPhi": 0.00010639252287825683,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   }
+  },
+  "2": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 1,
+    "masterIterations": 1283,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 3
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 1754,
+    "minRawPhi": 3.343452629896077e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   }
+  },
+  "3": {
+   "rerun": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 137,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 137,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   }
+  },
+  "4": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 1125,
+    "minRawPhi": 6.988383636392119e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 2
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 1072,
+    "minRawPhi": 6.988570805679046e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 1
+   }
+  },
+  "5": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 854,
+    "minRawPhi": 0.00015991505698488993,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 855,
+    "minRawPhi": 0.00015991505698488993,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   }
+  },
+  "6": {
+   "rerun": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 131,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   },
+   "round1": {
+    "attempts": 0,
+    "disruptions": 0,
+    "masterIterations": 131,
+    "minRawPhi": 0.0,
+    "phase": "explore",
+    "published": true,
+    "strikes": 0
+   }
+  },
+  "7": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 893,
+    "minRawPhi": 8.100828837587119e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 2
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 892,
+    "minRawPhi": 8.093670338857854e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 0
+   }
+  },
+  "8": {
+   "rerun": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 925,
+    "minRawPhi": 6.350079162449856e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 2
+   },
+   "round1": {
+    "attempts": 1,
+    "disruptions": 0,
+    "masterIterations": 922,
+    "minRawPhi": 6.350079162449856e-05,
+    "phase": "explore",
+    "published": false,
+    "strikes": 1
+   }
+  }
+ },
+ "B6_gateFunnel": {
+  "bitesStarted": 607,
+  "dualValidPublished": 584,
+  "exactAttempted": 601,
+  "proxyBandReached": 601
+ },
+ "B6_round1GateBites": 350,
+ "B7_seed2": {
+  "funnelExactAttempted": 174,
+  "perBiteExactAttemptsSum": 1313,
+  "ratio": 7.545977011494253
+ },
+ "B8_funnelPerCell": [
+  {
+   "cell": "10s-seed0",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   }
+  },
+  {
+   "cell": "10s-seed1",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "10s-seed2",
+   "emitted": {
+    "bitesStarted": 175,
+    "dualValidPublished": 168,
+    "exactAttempted": 174,
+    "proxyBandReached": 174
+   },
+   "recomputed": {
+    "bitesStarted": 175,
+    "dualValidPublished": 168,
+    "exactAttempted": 174,
+    "proxyBandReached": 174
+   }
+  },
+  {
+   "cell": "10s-seed3",
+   "emitted": {
+    "bitesStarted": 181,
+    "dualValidPublished": 180,
+    "exactAttempted": 180,
+    "proxyBandReached": 180
+   },
+   "recomputed": {
+    "bitesStarted": 181,
+    "dualValidPublished": 180,
+    "exactAttempted": 180,
+    "proxyBandReached": 180
+   }
+  },
+  {
+   "cell": "10s-seed4",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "10s-seed5",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   }
+  },
+  {
+   "cell": "10s-seed6",
+   "emitted": {
+    "bitesStarted": 107,
+    "dualValidPublished": 104,
+    "exactAttempted": 107,
+    "proxyBandReached": 107
+   },
+   "recomputed": {
+    "bitesStarted": 107,
+    "dualValidPublished": 104,
+    "exactAttempted": 107,
+    "proxyBandReached": 107
+   }
+  },
+  {
+   "cell": "10s-seed7",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "10s-seed8",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "3s-seed0",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   }
+  },
+  {
+   "cell": "3s-seed1",
+   "emitted": {
+    "bitesStarted": 26,
+    "dualValidPublished": 25,
+    "exactAttempted": 25,
+    "proxyBandReached": 25
+   },
+   "recomputed": {
+    "bitesStarted": 26,
+    "dualValidPublished": 25,
+    "exactAttempted": 25,
+    "proxyBandReached": 25
+   }
+  },
+  {
+   "cell": "3s-seed2",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 23,
+    "proxyBandReached": 23
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 23,
+    "proxyBandReached": 23
+   }
+  },
+  {
+   "cell": "3s-seed3",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   }
+  },
+  {
+   "cell": "3s-seed4",
+   "emitted": {
+    "bitesStarted": 27,
+    "dualValidPublished": 24,
+    "exactAttempted": 27,
+    "proxyBandReached": 27
+   },
+   "recomputed": {
+    "bitesStarted": 27,
+    "dualValidPublished": 24,
+    "exactAttempted": 27,
+    "proxyBandReached": 27
+   }
+  },
+  {
+   "cell": "3s-seed5",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   }
+  },
+  {
+   "cell": "3s-seed6",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 22,
+    "proxyBandReached": 22
+   }
+  },
+  {
+   "cell": "3s-seed7",
+   "emitted": {
+    "bitesStarted": 25,
+    "dualValidPublished": 23,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 25,
+    "dualValidPublished": 23,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "3s-seed8",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "30s-seed0",
+   "emitted": {
+    "bitesStarted": 155,
+    "dualValidPublished": 139,
+    "exactAttempted": 155,
+    "proxyBandReached": 155
+   },
+   "recomputed": {
+    "bitesStarted": 155,
+    "dualValidPublished": 139,
+    "exactAttempted": 155,
+    "proxyBandReached": 155
+   }
+  },
+  {
+   "cell": "30s-seed1",
+   "emitted": {
+    "bitesStarted": 152,
+    "dualValidPublished": 144,
+    "exactAttempted": 150,
+    "proxyBandReached": 150
+   },
+   "recomputed": {
+    "bitesStarted": 152,
+    "dualValidPublished": 144,
+    "exactAttempted": 150,
+    "proxyBandReached": 150
+   }
+  },
+  {
+   "cell": "30s-seed2",
+   "emitted": {
+    "bitesStarted": 134,
+    "dualValidPublished": 114,
+    "exactAttempted": 134,
+    "proxyBandReached": 134
+   },
+   "recomputed": {
+    "bitesStarted": 134,
+    "dualValidPublished": 114,
+    "exactAttempted": 134,
+    "proxyBandReached": 134
+   }
+  },
+  {
+   "cell": "30s-seed3",
+   "emitted": {
+    "bitesStarted": 116,
+    "dualValidPublished": 110,
+    "exactAttempted": 111,
+    "proxyBandReached": 111
+   },
+   "recomputed": {
+    "bitesStarted": 116,
+    "dualValidPublished": 110,
+    "exactAttempted": 111,
+    "proxyBandReached": 111
+   }
+  },
+  {
+   "cell": "30s-seed4",
+   "emitted": {
+    "bitesStarted": 123,
+    "dualValidPublished": 113,
+    "exactAttempted": 119,
+    "proxyBandReached": 119
+   },
+   "recomputed": {
+    "bitesStarted": 123,
+    "dualValidPublished": 113,
+    "exactAttempted": 119,
+    "proxyBandReached": 119
+   }
+  },
+  {
+   "cell": "30s-seed5",
+   "emitted": {
+    "bitesStarted": 137,
+    "dualValidPublished": 125,
+    "exactAttempted": 137,
+    "proxyBandReached": 137
+   },
+   "recomputed": {
+    "bitesStarted": 137,
+    "dualValidPublished": 125,
+    "exactAttempted": 137,
+    "proxyBandReached": 137
+   }
+  },
+  {
+   "cell": "30s-seed6",
+   "emitted": {
+    "bitesStarted": 121,
+    "dualValidPublished": 114,
+    "exactAttempted": 118,
+    "proxyBandReached": 118
+   },
+   "recomputed": {
+    "bitesStarted": 121,
+    "dualValidPublished": 114,
+    "exactAttempted": 118,
+    "proxyBandReached": 118
+   }
+  },
+  {
+   "cell": "30s-seed7",
+   "emitted": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   },
+   "recomputed": {
+    "bitesStarted": 24,
+    "dualValidPublished": 22,
+    "exactAttempted": 24,
+    "proxyBandReached": 24
+   }
+  },
+  {
+   "cell": "30s-seed8",
+   "emitted": {
+    "bitesStarted": 34,
+    "dualValidPublished": 32,
+    "exactAttempted": 34,
+    "proxyBandReached": 34
+   },
+   "recomputed": {
+    "bitesStarted": 34,
+    "dualValidPublished": 32,
+    "exactAttempted": 34,
+    "proxyBandReached": 34
+   }
+  }
+ ],
+ "failures": [],
+ "sources": [
+  "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-2/docs/experiments/overlap-ics/cutclose-rerun/evidence/wall.json",
+  "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-2/docs/experiments/overlap-ics/cutclose-rerun/evidence/round1-bites-red.json"
+ ],
+ "what": "the rerun README's per-bite claims, recomputed from the committed raw bite rows by an independent reduction"
+}

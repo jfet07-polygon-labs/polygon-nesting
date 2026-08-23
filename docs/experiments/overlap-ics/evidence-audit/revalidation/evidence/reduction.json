@@ -1,0 +1,171 @@
+{
+ "GATE_PASS": false,
+ "REDUCTION_FAITHFUL": true,
+ "committed": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_ce7bab1a-78a-2/docs/experiments/overlap-ics/cutclose-rerun/evidence/wall.json",
+ "committedVerdict": {
+  "GATE_PASS": false,
+  "allNineSeedsValid": true,
+  "barMm": 168.484,
+  "everyPublicationDualValid": true,
+  "invalidPublicationsAcrossEveryCell": 0,
+  "qualifyingSeeds": [
+   2,
+   3
+  ],
+  "quorumReached": 2,
+  "quorumRequired": 3
+ },
+ "curveFromRaw": {
+  "10": {
+   "0": {
+    "bestStrictChildMm": 179.07608616998863,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "1": {
+    "bestStrictChildMm": 179.08099195763165,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "2": {
+    "bestStrictChildMm": 167.95168759173592,
+    "exploreBites": 63,
+    "qualifies": true
+   },
+   "3": {
+    "bestStrictChildMm": 167.31508386152518,
+    "exploreBites": 72,
+    "qualifies": true
+   },
+   "4": {
+    "bestStrictChildMm": 179.08123140950642,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "5": {
+    "bestStrictChildMm": 179.0717029291493,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "6": {
+    "bestStrictChildMm": 169.17185684363832,
+    "exploreBites": 74,
+    "qualifies": false
+   },
+   "7": {
+    "bestStrictChildMm": 179.08210456493268,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "8": {
+    "bestStrictChildMm": 179.08210417372916,
+    "exploreBites": 21,
+    "qualifies": false
+   }
+  },
+  "3": {
+   "0": {
+    "bestStrictChildMm": 179.07613590122702,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "1": {
+    "bestStrictChildMm": 179.4218627654813,
+    "exploreBites": 19,
+    "qualifies": false
+   },
+   "2": {
+    "bestStrictChildMm": 179.07962329158124,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "3": {
+    "bestStrictChildMm": 179.05641854710265,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "4": {
+    "bestStrictChildMm": 179.0684238924533,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "5": {
+    "bestStrictChildMm": 179.07174849386692,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "6": {
+    "bestStrictChildMm": 179.05431801840956,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "7": {
+    "bestStrictChildMm": 179.00420779038618,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "8": {
+    "bestStrictChildMm": 179.0821534761036,
+    "exploreBites": 21,
+    "qualifies": false
+   }
+  },
+  "30": {
+   "0": {
+    "bestStrictChildMm": 161.05499022653123,
+    "exploreBites": 120,
+    "qualifies": true
+   },
+   "1": {
+    "bestStrictChildMm": 165.00577546031232,
+    "exploreBites": 76,
+    "qualifies": true
+   },
+   "2": {
+    "bestStrictChildMm": 163.5606202778077,
+    "exploreBites": 111,
+    "qualifies": true
+   },
+   "3": {
+    "bestStrictChildMm": 164.00460689333514,
+    "exploreBites": 109,
+    "qualifies": true
+   },
+   "4": {
+    "bestStrictChildMm": 164.0009369416342,
+    "exploreBites": 109,
+    "qualifies": true
+   },
+   "5": {
+    "bestStrictChildMm": 162.40476799392454,
+    "exploreBites": 117,
+    "qualifies": true
+   },
+   "6": {
+    "bestStrictChildMm": 164.00930377707948,
+    "exploreBites": 105,
+    "qualifies": true
+   },
+   "7": {
+    "bestStrictChildMm": 179.08210212615109,
+    "exploreBites": 21,
+    "qualifies": false
+   },
+   "8": {
+    "bestStrictChildMm": 179.0599971429851,
+    "exploreBites": 21,
+    "qualifies": false
+   }
+  }
+ },
+ "fieldsChecked": 702,
+ "gateQualifyingSeeds": [
+  2,
+  3
+ ],
+ "gateQuorumReached": 2,
+ "gateQuorumRequired": 3,
+ "mismatches": [],
+ "raw": "/var/lib/t3/tmp/overlapics/rerun",
+ "what": "committed wall.json vs the raw cell documents it reduced"
+}

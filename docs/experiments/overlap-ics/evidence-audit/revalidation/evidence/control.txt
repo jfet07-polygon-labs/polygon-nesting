@@ -1,0 +1,14 @@
+arm A median 179.07170281281208  arm B median 170.45272923584588  spread 13.977
+arm A wins on seeds [2, 3, 5]  arm B unchanged from round 1 on [1, 2, 4, 5, 6, 8]
+round 1 arm B seed 0 = 168.4836008374388  rerun arm B seed 0 = 170.45272923584588
+arm A under the engine deadline:
+  seed0 committed=179.07608636315194 filtered=179.07608636315194 late=0 moves=False
+  seed1 committed=179.08099197324236 filtered=179.08099197324236 late=0 moves=False
+  seed2 committed=167.91944457139817 filtered=167.9211357734413 late=1 moves=True
+  seed3 committed=169.21216834104436 filtered=169.21216834104436 late=0 moves=False
+  seed4 committed=175.00538424856015 filtered=175.00538424856015 late=0 moves=False
+  seed5 committed=179.07170281281208 filtered=179.07170281281208 late=0 moves=False
+  seed6 committed=169.08133644252246 filtered=169.08133644252246 late=0 moves=False
+  seed7 committed=179.0821043163991 filtered=179.0821043163991 late=0 moves=False
+  seed8 committed=179.0821075901454 filtered=179.0821075901454 late=0 moves=False
+failures: 0

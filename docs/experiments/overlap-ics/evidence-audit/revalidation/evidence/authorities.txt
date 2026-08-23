@@ -1,0 +1,11 @@
+{
+ "published": 1701,
+ "kernelRefused": 1227,
+ "contractRefused": 361,
+ "targetRefused": 9
+}
+CONTRACT_VALIDATOR_IS_LIVE: True  KERNEL_IS_LIVE: True  unclassified: 0
+  contract refusal: 3s-seed0 3477 pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and 54345eb7-a37e-45eb-b0fd
+  contract refusal: 3s-seed0 4941 piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 crosses the sheet clearance 
+  contract refusal: 3s-seed0 5490 piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 crosses the sheet clearance 
+  contract refusal: 3s-seed1 1525 pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and 54345eb7-a37e-45eb-b0fd

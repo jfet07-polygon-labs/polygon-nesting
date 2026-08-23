@@ -1,0 +1,3 @@
+fields checked: 702  mismatches: 0
+gate qualifying seeds from raw: [2, 3] GATE_PASS: False
+committed verdict: {'barMm': 168.484, 'quorumRequired': 3, 'quorumReached': 2, 'qualifyingSeeds': [2, 3], 'everyPublicationDualValid': True, 'invalidPublicationsAcrossEveryCell': 0, 'allNineSeedsValid': True, 'GATE_PASS': False}

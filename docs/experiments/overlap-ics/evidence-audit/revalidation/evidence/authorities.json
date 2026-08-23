@@ -1,0 +1,242 @@
+{
+ "CONTRACT_VALIDATOR_IS_LIVE": true,
+ "KERNEL_IS_LIVE": true,
+ "contractValidatorRefusalExamples": [
+  {
+   "cell": "3s-seed0",
+   "maxViolationMm": 1.812243278731529e-05,
+   "proposalOrdinal": 3477,
+   "refusal": "pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4 violate the required clearance",
+   "repairMaxDisplacementMm": 0.0,
+   "repairRows": 0
+  },
+  {
+   "cell": "3s-seed0",
+   "maxViolationMm": 0.0010648553218883805,
+   "proposalOrdinal": 4941,
+   "refusal": "piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 crosses the sheet clearance boundary",
+   "repairMaxDisplacementMm": 0.005,
+   "repairRows": 2
+  },
+  {
+   "cell": "3s-seed0",
+   "maxViolationMm": 0.00018540090702678924,
+   "proposalOrdinal": 5490,
+   "refusal": "piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 crosses the sheet clearance boundary",
+   "repairMaxDisplacementMm": 0.0,
+   "repairRows": 0
+  },
+  {
+   "cell": "3s-seed1",
+   "maxViolationMm": 0.00016822765832635866,
+   "proposalOrdinal": 1525,
+   "refusal": "pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4 violate the required clearance",
+   "repairMaxDisplacementMm": 0.0,
+   "repairRows": 0
+  },
+  {
+   "cell": "3s-seed2",
+   "maxViolationMm": 0.000995460799237513,
+   "proposalOrdinal": 1891,
+   "refusal": "piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 crosses the sheet clearance boundary",
+   "repairMaxDisplacementMm": 0.006,
+   "repairRows": 2
+  },
+  {
+   "cell": "3s-seed2",
+   "maxViolationMm": 0.00012530120242626452,
+   "proposalOrdinal": 2867,
+   "refusal": "pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4 violate the required clearance",
+   "repairMaxDisplacementMm": 0.0,
+   "repairRows": 0
+  },
+  {
+   "cell": "3s-seed2",
+   "maxViolationMm": 0.00017712354582499756,
+   "proposalOrdinal": 4514,
+   "refusal": "piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 crosses the sheet clearance boundary",
+   "repairMaxDisplacementMm": 0.005,
+   "repairRows": 1
+  },
+  {
+   "cell": "3s-seed2",
+   "maxViolationMm": 9.008072067384632e-05,
+   "proposalOrdinal": 8296,
+   "refusal": "pieces 28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3 and d06db288-d2d6-4f40-874e-98287f516d93-copy-16 violate the required clearance",
+   "repairMaxDisplacementMm": 0.0,
+   "repairRows": 0
+  }
+ ],
+ "perCell": [
+  {
+   "cell": "3s-seed0",
+   "contractRefused": 3,
+   "kernelRefused": 10,
+   "published": 22
+  },
+  {
+   "cell": "3s-seed1",
+   "contractRefused": 1,
+   "kernelRefused": 5,
+   "published": 25
+  },
+  {
+   "cell": "3s-seed2",
+   "contractRefused": 4,
+   "kernelRefused": 27,
+   "published": 22
+  },
+  {
+   "cell": "3s-seed3",
+   "kernelRefused": 1,
+   "published": 22
+  },
+  {
+   "cell": "3s-seed4",
+   "contractRefused": 1,
+   "kernelRefused": 19,
+   "published": 24
+  },
+  {
+   "cell": "3s-seed5",
+   "contractRefused": 5,
+   "kernelRefused": 7,
+   "published": 22
+  },
+  {
+   "cell": "3s-seed6",
+   "kernelRefused": 1,
+   "published": 22
+  },
+  {
+   "cell": "3s-seed7",
+   "kernelRefused": 2,
+   "published": 23
+  },
+  {
+   "cell": "3s-seed8",
+   "contractRefused": 2,
+   "kernelRefused": 3,
+   "published": 22
+  },
+  {
+   "cell": "10s-seed0",
+   "contractRefused": 3,
+   "kernelRefused": 8,
+   "published": 22
+  },
+  {
+   "cell": "10s-seed1",
+   "contractRefused": 1,
+   "kernelRefused": 5,
+   "published": 22
+  },
+  {
+   "cell": "10s-seed2",
+   "contractRefused": 26,
+   "kernelRefused": 86,
+   "published": 168
+  },
+  {
+   "cell": "10s-seed3",
+   "contractRefused": 25,
+   "kernelRefused": 78,
+   "published": 180
+  },
+  {
+   "cell": "10s-seed4",
+   "kernelRefused": 5,
+   "published": 22
+  },
+  {
+   "cell": "10s-seed5",
+   "contractRefused": 5,
+   "kernelRefused": 7,
+   "published": 22
+  },
+  {
+   "cell": "10s-seed6",
+   "contractRefused": 10,
+   "kernelRefused": 73,
+   "published": 104,
+   "targetRefused": 2
+  },
+  {
+   "cell": "10s-seed7",
+   "published": 22
+  },
+  {
+   "cell": "10s-seed8",
+   "contractRefused": 2,
+   "kernelRefused": 3,
+   "published": 22
+  },
+  {
+   "cell": "30s-seed0",
+   "contractRefused": 55,
+   "kernelRefused": 138,
+   "published": 139,
+   "targetRefused": 1
+  },
+  {
+   "cell": "30s-seed1",
+   "contractRefused": 23,
+   "kernelRefused": 78,
+   "published": 144,
+   "targetRefused": 1
+  },
+  {
+   "cell": "30s-seed2",
+   "contractRefused": 27,
+   "kernelRefused": 181,
+   "published": 114
+  },
+  {
+   "cell": "30s-seed3",
+   "contractRefused": 24,
+   "kernelRefused": 97,
+   "published": 110
+  },
+  {
+   "cell": "30s-seed4",
+   "contractRefused": 21,
+   "kernelRefused": 124,
+   "published": 113,
+   "targetRefused": 1
+  },
+  {
+   "cell": "30s-seed5",
+   "contractRefused": 78,
+   "kernelRefused": 136,
+   "published": 125,
+   "targetRefused": 1
+  },
+  {
+   "cell": "30s-seed6",
+   "contractRefused": 42,
+   "kernelRefused": 129,
+   "published": 114,
+   "targetRefused": 3
+  },
+  {
+   "cell": "30s-seed7",
+   "kernelRefused": 1,
+   "published": 22
+  },
+  {
+   "cell": "30s-seed8",
+   "contractRefused": 3,
+   "kernelRefused": 3,
+   "published": 32
+  }
+ ],
+ "raw": "/var/lib/t3/tmp/overlapics/rerun",
+ "totals": {
+  "contractRefused": 361,
+  "kernelRefused": 1227,
+  "published": 1701,
+  "targetRefused": 9
+ },
+ "unclassified": 0,
+ "what": "exact checkpoints of the committed round, by refusing authority"
+}

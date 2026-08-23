@@ -39,6 +39,7 @@ bash run-all.sh <root> <work-dir>    # explicit paths
 | `funnel-names.py` | what the funnel's rungs actually count | full cell documents |
 | `driver-fix-vector.py` | the red/green for the two driver repairs made here | stage 5's documents |
 | `show.py` | prints a named vector's `detail` out of any audit document | — |
+| [`revalidation/`](revalidation/README.md) | a **second, independent** pass over the same evidence by a different auditor, written without importing anything above; see §5 | committed evidence, plus the raw cell documents where they survive |
 
 `rust-vectors/` carries an empty `[workspace]` table so it is **outside** the
 repository workspace. Nothing under `crates/` changes, and `cargo build` at the
@@ -483,3 +484,60 @@ Both are in `docs/experiments/overlap-ics/drivers/`. Neither touches
 Both were re-run afterwards: `wall.py 3` completes green on nine seeds and now
 emits `checkpointFrame` per cell; `cutclose.py` completes all four stages green
 and reproduces the committed `cutclose-fast.json` numbers exactly.
+
+---
+
+## 5. The independent re-validation, and what it settles
+
+A second auditor re-ran this audit's subject — the committed numbers, not the
+code — from this document's own tip, using the findings above only as leads and
+importing none of the scripts above. Its work is in
+[`revalidation/`](revalidation/README.md); its scripts carry an `rv_` prefix so
+the two sets never collide.
+
+**It settles F2, against F2.** This chapter concluded that whether a
+post-budget publication is actually present in the committed round "cannot be
+determined", because the reduction dropped every per-publication clock reading.
+It can be determined: the raw cell documents `wall.py` reduced still exist at
+`/var/lib/t3/tmp/overlapics/rerun/`, they carry `publications[].wallSeconds`,
+and `rv_reduction.py` binds them to the committed `wall.json` by re-deriving all
+702 of its cell-row fields with zero mismatches. On that binding,
+
+* **three of the 27 committed cells report a publication that completed after
+  the deadline the engine itself was given**, and in all three that publication
+  is the one whose depth the README prints as the cell's answer:
+  10 s seed 3 **167.31508 → 167.31678** (+0.274 ms past the deadline), 3 s
+  seed 1 179.42186 → 179.42767 (+1.547 ms), 30 s seed 8 179.06000 → 179.06179
+  (+0.221 ms), plus a fourth in the diagnostic control arm A;
+* **the gate verdict does not move.** The qualifying set is `[2, 3]` under the
+  committed filter, under the repair's lower bound and under its upper bound;
+  seed 3 stays below the bar on every reading. `GATE_PASS: false`, quorum 2 of 3.
+
+So F1 was right about the mechanism and the size of the hole, and wrong to
+record the overrun as unproduced; the correction is µm-scale and one of the µm
+is under a headline.
+
+**It reframes F6 in this audit's favour.** `invalidPublications` really has no
+reachable witness — but classifying all 3,298 exact checkpoints of the round by
+*which* authority refused shows the gate is not decorative: 1,227 refused by the
+Exclusive r = 2.500 kernel, **361 refused by the untouched
+`validate_placements_against_contract` after the kernel had already passed**, 9
+by the immutable target, 1,701 published. The second authority does independent
+work on 361 real layouts.
+
+**It confirms, from the documents rather than the drivers, that F3 did not touch
+this round:** the committed `cutclose-fast.json` is byte-identical to the file
+`wall.json` names as its licence and carries all four stages, canary included.
+
+**What it adds that this chapter did not have.** All nine fixed-work replays
+re-run bit for bit on a third binary, including all 224 `replayOrdinals`; the
+S0 pose fixture and all 18 recorded arm-B layouts pushed back through both
+authorities with their depths recomputed independently (including round 1's
+`168.4836008374388`); every per-bite claim of the rerun README recomputed by a
+reduction written from the README's text; and the measured shared prefix between
+the two rounds' bite rows — 25 of 27 cells identical for ≥21 bites, first
+divergence at ordinal 22 on 21 of 27.
+
+**What it could not do, and neither could this chapter.** No pose is recorded
+for any of the 1,701 publications. `161.05499`, `163.56062`, `167.31508` and
+`167.95169` are re-validatable only by the process that produced them.

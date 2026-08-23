@@ -1,0 +1,179 @@
+{
+ "ALL_CONTROL_CLAIMS_REPRODUCE": true,
+ "K1_armA": {
+  "0": 179.07608636315194,
+  "1": 179.08099197324236,
+  "2": 167.91944457139817,
+  "3": 169.21216834104436,
+  "4": 175.00538424856015,
+  "5": 179.07170281281208,
+  "6": 169.08133644252246,
+  "7": 179.0821043163991,
+  "8": 179.0821075901454
+ },
+ "K1_armAMedian": 179.07170281281208,
+ "K1_armB": {
+  "0": 170.45272923584588,
+  "1": 165.65577826491065,
+  "2": 174.28,
+  "3": 172.28408738465524,
+  "4": 172.12900000000002,
+  "5": 179.63299999999998,
+  "6": 168.468,
+  "7": 169.35991887765238,
+  "8": 169.03158571496175
+ },
+ "K1_armBMedian": 170.45272923584588,
+ "K1_order": {
+  "0": "AB",
+  "1": "BA",
+  "2": "AB",
+  "3": "BA",
+  "4": "AB",
+  "5": "BA",
+  "6": "AB",
+  "7": "BA",
+  "8": "AB"
+ },
+ "K2_armBSpreadMm": 13.97722173508933,
+ "K3_armAWinsSeeds": [
+  2,
+  3,
+  5
+ ],
+ "K4_armBIdenticalToRound1Seeds": [
+  1,
+  2,
+  4,
+  5,
+  6,
+  8
+ ],
+ "K4_round1ArmB": {
+  "0": 168.4836008374388,
+  "1": 165.65577826491065,
+  "2": 174.28,
+  "3": 169.58499999999998,
+  "4": 172.12900000000002,
+  "5": 179.63299999999998,
+  "6": 168.468,
+  "7": 169.229,
+  "8": 169.03158571496175
+ },
+ "K6_armAUnderEngineDeadline": [
+  {
+   "committedArmAMm": 179.07608636315194,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 0,
+   "underEngineDeadlineMm": 179.07608636315194,
+   "unfilteredMm": 179.07608636315194
+  },
+  {
+   "committedArmAMm": 179.08099197324236,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 1,
+   "underEngineDeadlineMm": 179.08099197324236,
+   "unfilteredMm": 179.08099197324236
+  },
+  {
+   "committedArmAMm": 167.91944457139817,
+   "deltaMm": 0.001691202043133444,
+   "moves": true,
+   "publicationsPastEngineDeadline": 1,
+   "qualifiesFiltered": true,
+   "qualifiesUnfiltered": true,
+   "seed": 2,
+   "underEngineDeadlineMm": 167.9211357734413,
+   "unfilteredMm": 167.91944457139817
+  },
+  {
+   "committedArmAMm": 169.21216834104436,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 3,
+   "underEngineDeadlineMm": 169.21216834104436,
+   "unfilteredMm": 169.21216834104436
+  },
+  {
+   "committedArmAMm": 175.00538424856015,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 4,
+   "underEngineDeadlineMm": 175.00538424856015,
+   "unfilteredMm": 175.00538424856015
+  },
+  {
+   "committedArmAMm": 179.07170281281208,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 5,
+   "underEngineDeadlineMm": 179.07170281281208,
+   "unfilteredMm": 179.07170281281208
+  },
+  {
+   "committedArmAMm": 169.08133644252246,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 6,
+   "underEngineDeadlineMm": 169.08133644252246,
+   "unfilteredMm": 169.08133644252246
+  },
+  {
+   "committedArmAMm": 179.0821043163991,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 7,
+   "underEngineDeadlineMm": 179.0821043163991,
+   "unfilteredMm": 179.0821043163991
+  },
+  {
+   "committedArmAMm": 179.0821075901454,
+   "deltaMm": 0.0,
+   "moves": false,
+   "publicationsPastEngineDeadline": 0,
+   "qualifiesFiltered": false,
+   "qualifiesUnfiltered": false,
+   "seed": 8,
+   "underEngineDeadlineMm": 179.0821075901454,
+   "unfilteredMm": 179.0821075901454
+  }
+ ],
+ "K6_cellsThatMove": [
+  {
+   "committedArmAMm": 167.91944457139817,
+   "deltaMm": 0.001691202043133444,
+   "moves": true,
+   "publicationsPastEngineDeadline": 1,
+   "qualifiesFiltered": true,
+   "qualifiesUnfiltered": true,
+   "seed": 2,
+   "underEngineDeadlineMm": 167.9211357734413,
+   "unfilteredMm": 167.91944457139817
+  }
+ ],
+ "failures": [],
+ "what": "the AB/BA control, recomputed from committed evidence"
+}
