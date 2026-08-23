@@ -639,3 +639,13 @@ required-features = ["round-envelope-kernel", "import-gate-shadow"]
 name = "overlap_ics_benchmark"
 path = "examples/overlap_ics_benchmark.rs"
 required-features = ["overlap-ics"]
+
+# The economics round's currency cell: it derives `B/E/R/D` from census
+# documents another process wrote and runs the spec's >10 % wall-prediction
+# reject check. It reads JSON and prints JSON; it never constructs an engine,
+# so it cannot influence a trajectory. The arithmetic lives in
+# `search::overlap_ics_meter::currency` with its own unit vectors.
+[[example]]
+name = "ics_meter"
+path = "examples/ics_meter.rs"
+required-features = ["overlap-ics"]

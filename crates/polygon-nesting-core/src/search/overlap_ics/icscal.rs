@@ -235,6 +235,21 @@ pub struct WorkPlan {
     pub schema: String,
     pub key: PlanKey,
     pub phases: Vec<PhasePlan>,
+    /// **The `U1` coefficients, when the plan is denominated in `U1`.**
+    ///
+    /// Wave 2b. `key.currency_version` says *which* currency the rates were
+    /// measured in; this says what that currency's exchange rates were, so a
+    /// plan is self-contained and a reader never has to find the calibration
+    /// that produced it. Absent for [`CurrencyVersion::U0Samples`], which has
+    /// no coefficients at all - `U = sample_evaluations` - and the two are
+    /// cross-checked in [`WorkPlan::validate`] rather than left to agree.
+    ///
+    /// `skip_serializing_if` keeps a `U0` plan's bytes exactly what Wave 1
+    /// wrote: the census's committed plan re-serialises byte for byte, and the
+    /// vector in `search/overlap_ics_meter/pacer.rs` proves it against the
+    /// committed file rather than asserting it here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub currency: Option<crate::search::overlap_ics_meter::currency::Coefficients>,
     /// What produced this file. Never parsed; it is the line a human reads
     /// first when a plan turns out to be wrong.
     pub provenance: String,
@@ -246,8 +261,18 @@ impl WorkPlan {
             schema: SCHEMA.to_owned(),
             key,
             phases,
+            currency: None,
             provenance: provenance.into(),
         }
+    }
+
+    /// The same plan, carrying the coefficients its currency version names.
+    pub fn with_currency(
+        mut self,
+        coefficients: crate::search::overlap_ics_meter::currency::Coefficients,
+    ) -> Self {
+        self.currency = Some(coefficients);
+        self
     }
 
     /// The plan's own validity clauses, checked before it is written rather
@@ -277,6 +302,23 @@ impl WorkPlan {
         }
         if self.phases.is_empty() {
             return Err("a plan with no phase rates cannot pace anything".to_owned());
+        }
+        // The currency version and the coefficients have to say the same
+        // thing. A `U1` plan without coefficients is a rate whose exchange
+        // rates nobody can reconstruct; a `U0` plan *with* them is a plan
+        // claiming a currency it was not measured in.
+        match (self.key.currency_version, self.currency.is_some()) {
+            (CurrencyVersion::U1Weighted, false) => {
+                return Err(
+                    "U1 is a weighted vector: the plan must pin B/E/R/D and pins none".to_owned(),
+                );
+            }
+            (CurrencyVersion::U0Samples, true) => {
+                return Err(
+                    "U0 is sample evaluations alone and has no coefficients to pin".to_owned(),
+                );
+            }
+            _ => {}
         }
         for phase in &self.phases {
             if !(phase.safe_units_per_second > 0.0 && phase.safe_units_per_second.is_finite()) {
