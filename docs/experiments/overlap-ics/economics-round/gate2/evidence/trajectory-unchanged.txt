@@ -1,0 +1,7 @@
+# git diff e4da8c5..HEAD over the trajectory. Empty is the claim.
+# names only:
+# and the whole engine-side diff of this wave, for contrast:
+ crates/polygon-nesting-core/examples/ics_meter.rs  |  143 ++-
+ .../src/search/overlap_ics_meter/currency.rs       | 1196 +++++++++++++++++++-
+ 2 files changed, 1296 insertions(+), 43 deletions(-)
+TRAJECTORY_UNCHANGED: true

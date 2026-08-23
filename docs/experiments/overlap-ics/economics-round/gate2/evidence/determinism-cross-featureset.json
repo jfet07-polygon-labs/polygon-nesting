@@ -1,0 +1,164 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "two-binary-determinism",
+ "cellSources": [
+  {
+   "cell": "s0",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/s0-a.json",
+   "sha256": "060a91ba2aba6887b9ebc7bf128bf336e8a79cadac0367d1c0a636ce12e6e887",
+   "bytes": 5361,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "s0",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/s0-b.json",
+   "sha256": "89b6890069f1e733e37e5e5038c131db577faf158667715e542d7fb2271e3d4e",
+   "bytes": 5362,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/g2-crossfeature/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "s1",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/s1-a.json",
+   "sha256": "034dfbeec55bb3a30f2303eede29b51068b1e0702d49094d0f5f4b45d09b22ed",
+   "bytes": 5677,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "s1",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/s1-b.json",
+   "sha256": "0a6411fd4bdb7230cb53b40ff6077c4285b3bbfe8b95eb2ac2d8216af7a153c2",
+   "bytes": 5677,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/g2-crossfeature/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "c175",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/c175-a.json",
+   "sha256": "ae5b39fad3ecb3c3b50afbcb46115078d6c460298e85322422654f701b339d01",
+   "bytes": 5851,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "c175",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/c175-b.json",
+   "sha256": "6842e4349ca3686d82d0daa0a227b97cc1c1d0a2599a0d8bd1b15ced1a279c9a",
+   "bytes": 5851,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/g2-crossfeature/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "triangle",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/triangle-a.json",
+   "sha256": "05d27b350947ab09d0c50c16a041399b758c8efb0d03f6c6efa6d30dff102d00",
+   "bytes": 5717,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "triangle",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/triangle-b.json",
+   "sha256": "8c9c4bc7f83e4e80702f82f5df4af5f5fc2ce745c12593a61b6aa031d4755e28",
+   "bytes": 5717,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/g2-crossfeature/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/cutclose-a.json",
+   "sha256": "b8a85621cd6b73b7ba6c143c391c1418e89803856a9525a6927082bbaacc8f26",
+   "bytes": 297192,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/tmp/overlapics/gate2heavy/determinism/cutclose-b.json",
+   "sha256": "ffa3be200c335b4bd1b9e0fa82f75b4d4cf1bf777f32ada389f7fc21ec075d8f",
+   "bytes": 297192,
+   "exit": 0,
+   "binary": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/g2-crossfeature/release/examples/overlap_ics_benchmark"
+  }
+ ],
+ "binaryA": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/release/examples/overlap_ics_benchmark",
+ "binaryB": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/target/g2-crossfeature/release/examples/overlap_ics_benchmark",
+ "binaryASha256": "c9a84cd57523c0c34cb7c02fb11d7bf83e64d4d138c2b14191238d0408592632",
+ "binaryBSha256": "7d99ffd393715aaa5f0437e1889f693f68fcf734e24bb1ece25195d323de0bcd",
+ "binariesDiffer": true,
+ "proposalBudget": 200000,
+ "strippedFields": [
+  "wall",
+  "executableSha256"
+ ],
+ "cells": [
+  {
+   "cell": "s0",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "c42969b95e3f19903dfe65bcff6a15c3a64a4977ccbdaabf7841aa8eba12e1e0",
+   "digestB": "c42969b95e3f19903dfe65bcff6a15c3a64a4977ccbdaabf7841aa8eba12e1e0",
+   "sourceShaA": "060a91ba2aba6887b9ebc7bf128bf336e8a79cadac0367d1c0a636ce12e6e887",
+   "sourceShaB": "89b6890069f1e733e37e5e5038c131db577faf158667715e542d7fb2271e3d4e",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "s1",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "526e083f1ca3fd3369dafaa4369617baeabc8873d2a533d6af073ee6c14df3f5",
+   "digestB": "526e083f1ca3fd3369dafaa4369617baeabc8873d2a533d6af073ee6c14df3f5",
+   "sourceShaA": "034dfbeec55bb3a30f2303eede29b51068b1e0702d49094d0f5f4b45d09b22ed",
+   "sourceShaB": "0a6411fd4bdb7230cb53b40ff6077c4285b3bbfe8b95eb2ac2d8216af7a153c2",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "c175",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "d0b1b3b7b1709942d6ff2f6b72c962dfd56a923a04adf2faab908d381f756125",
+   "digestB": "d0b1b3b7b1709942d6ff2f6b72c962dfd56a923a04adf2faab908d381f756125",
+   "sourceShaA": "ae5b39fad3ecb3c3b50afbcb46115078d6c460298e85322422654f701b339d01",
+   "sourceShaB": "6842e4349ca3686d82d0daa0a227b97cc1c1d0a2599a0d8bd1b15ced1a279c9a",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "triangle",
+   "request": "triangle-20",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "07083eb6684947e18c6ffc5d0fbf51b24cfecf5bc34f5c2bfa3fd4e613612540",
+   "digestB": "07083eb6684947e18c6ffc5d0fbf51b24cfecf5bc34f5c2bfa3fd4e613612540",
+   "sourceShaA": "05d27b350947ab09d0c50c16a041399b758c8efb0d03f6c6efa6d30dff102d00",
+   "sourceShaB": "8c9c4bc7f83e4e80702f82f5df4af5f5fc2ce745c12593a61b6aa031d4755e28",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  },
+  {
+   "cell": "cutclose",
+   "request": "mixed-61",
+   "exitA": 0,
+   "exitB": 0,
+   "digestA": "4f7dfb8490e8314fbd8ed71ba7b8866c561591511fb09c5c7954ffcf09c96226",
+   "digestB": "4f7dfb8490e8314fbd8ed71ba7b8866c561591511fb09c5c7954ffcf09c96226",
+   "sourceShaA": "b8a85621cd6b73b7ba6c143c391c1418e89803856a9525a6927082bbaacc8f26",
+   "sourceShaB": "ffa3be200c335b4bd1b9e0fa82f75b4d4cf1bf777f32ada389f7fc21ec075d8f",
+   "bitIdentical": true,
+   "stderrA": "",
+   "stderrB": ""
+  }
+ ],
+ "TWO_BINARY_IDENTICAL": true
+}

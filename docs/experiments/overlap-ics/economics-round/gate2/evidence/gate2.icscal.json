@@ -1,0 +1,36 @@
+{
+ "schema": "icscal/v1",
+ "key": {
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "currencyVersion": "U0-sample-evaluations",
+  "binaryKey": {
+   "executableSha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+   "features": [
+    "overlap-ics"
+   ]
+  },
+  "workers": 8,
+  "executor": "ephemeral-scope"
+ },
+ "phases": [
+  {
+   "phase": "explore",
+   "safeUnitsPerSecond": 2192780.807858426,
+   "measuredUnitsPerSecond": 2740976.0098230327,
+   "safetyFactor": 0.8,
+   "observedUnits": 6605800,
+   "observedSeconds": 2.410017445,
+   "derivation": "single-fixture work plan, no transfer claim. THE SHELF PROBE: bite 22 (the 179 shelf) alone, 400 master iterations, the probe bite's own sampleEvaluations over the probe's own searchSeconds, measured on this binary. NOT the cheap 0.1 % prefix: spec defect (3). NOT the writer's own non-profile plan, which divides the cumulative work vector by the probe's wall."
+  },
+  {
+   "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 48 bites, over searchSeconds - exploreSeconds",
+   "measuredUnitsPerSecond": 1464184.2787160347,
+   "observedSeconds": 5.51354916,
+   "observedUnits": 8072852,
+   "phase": "compress",
+   "safeUnitsPerSecond": 1171347.422972828,
+   "safetyFactor": 0.8
+  }
+ ],
+ "provenance": "docs/experiments/overlap-ics/economics-round/gate2/budget.py - the declared fallback of docs/currency-amendment.md. single-fixture work plan, no transfer claim: both rates are mixed-61's own and this plan makes no claim about any other fixture. Explore from the shelf probe (/var/lib/t3/tmp/overlapics/gate2/budget/shelf-probe.json), compress from one wall calibration (/var/lib/t3/tmp/overlapics/gate2/budget/compress-calibration.json)."
+}

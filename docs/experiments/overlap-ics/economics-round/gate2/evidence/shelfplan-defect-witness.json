@@ -1,0 +1,2151 @@
+{
+  "buildFeatures": [
+    "overlap-ics"
+  ],
+  "cell": "spawntax",
+  "constructor": {
+    "lowerScaleMm": 115.83870984650393,
+    "placementCount": 61,
+    "placementFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+    "rawSourceDepthMm": 182.976,
+    "seconds": 2.297586707
+  },
+  "contract": {
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.5,
+    "flatteningSagToleranceMm": 0.0,
+    "pairClearanceMm": 5.0,
+    "physicalEdgeClearanceMm": 5.0,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.0,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5000.0
+  },
+  "executableSha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "9ee3e21d29fd4578db9ef69f4d4b22c8f62b5ba8c05d3eb0815259f0151cbdd7",
+  "icscal": {
+    "path": "/var/lib/t3/tmp/overlapics/gate2/probe/shelf.icscal.json",
+    "plan": {
+      "key": {
+        "binaryKey": {
+          "executableSha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+          "features": [
+            "overlap-ics"
+          ]
+        },
+        "currencyVersion": "U0-sample-evaluations",
+        "executor": "ephemeral-scope",
+        "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+        "workers": 8
+      },
+      "phases": [
+        {
+          "derivation": "whole 1-bite fixed-work trajectory wall; no ics-profile timers, so this rate includes the cheap prefix and is deliberately slower than the shelf's",
+          "measuredUnitsPerSecond": 3200170.626592522,
+          "observedSeconds": 2.404511477,
+          "observedUnits": 7694847,
+          "phase": "explore",
+          "safeUnitsPerSecond": 2560136.5012740176,
+          "safetyFactor": 0.8
+        }
+      ],
+      "provenance": "docs/experiments/overlap-ics/economics-round/census/, the spawntax cell. Schema and writer only: this round builds no reader and no pacer.",
+      "schema": "icscal/v1"
+    },
+    "sha256": "84eedb9c99d81ac86da31ef0d179c126f215b2bb7cf805ffb85857346d753501",
+    "summary": "icscal/v1 U0-sample-evaluations workers=8 executor=ephemeral-scope explore=2560137u/s"
+  },
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 115.83870984650393,
+  "outcome": {
+    "bites": [
+      {
+        "attempts": 1,
+        "deltaMm": -0.17916566573285309,
+        "disruptions": 0,
+        "exactAttempts": 0,
+        "exactBandEntries": 0,
+        "exactCheckpointCalls": 0,
+        "masterIterations": 400,
+        "minRawPhi": 0.00020050998867787888,
+        "movedPieces": 34,
+        "ordinal": 1,
+        "phase": "explore",
+        "profile": {
+          "bandEntries": 0,
+          "bandFoldNs": 0,
+          "barrierToBarrierNs": 0,
+          "dispatchNs": 0,
+          "disruptionMoves": 0,
+          "exactCalls": 0,
+          "exactNs": 0,
+          "iterations": 400,
+          "measured": false,
+          "mergeGlsNs": 0,
+          "prepNs": 0,
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "repairRows": 0,
+          "residualNs": 0,
+          "sampleEvaluations": 6605800,
+          "snapshotNs": 0,
+          "sweepCriticalNs": 0,
+          "sweepTotalNs": 0
+        },
+        "proxyBandReached": false,
+        "published": false,
+        "splitYMm": 89.58283286642673,
+        "step": 0.001,
+        "strikeMeter": {
+          "batches": 401,
+          "chargedWorkSampleEvaluations": 6605800,
+          "marginal": 72,
+          "none": 311,
+          "strikeAccumulated": 200,
+          "strikeOvershoot": 1,
+          "substantial": 18
+        },
+        "strikes": 0,
+        "widthAfterMm": 178.9865000671206,
+        "widthBeforeMm": 179.16566573285345
+      }
+    ],
+    "calibrated": null,
+    "census": {
+      "activeEdgeRows": 0,
+      "activePairRows": 0,
+      "maxEdgeViolationMm": 0.0,
+      "maxGuidedPenalty": 1048576.0,
+      "maxPairViolationMm": 0.0
+    },
+    "compressBites": 0,
+    "contestedIterations": 0,
+    "depthMm": 179.16566573285345,
+    "exactCheckpoints": [
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 244,
+        "proxyRawDepthMm": 182.793024,
+        "publishedRawDepthMm": 182.793024,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 182.793024
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 366,
+        "proxyRawDepthMm": 182.610230976,
+        "publishedRawDepthMm": 182.610230976,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 182.610230976
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 488,
+        "proxyRawDepthMm": 182.427620745024,
+        "publishedRawDepthMm": 182.427620745024,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 182.427620745024
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 549,
+        "proxyRawDepthMm": 182.24519312427898,
+        "publishedRawDepthMm": 182.24519312427898,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 182.24519312427898
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 610,
+        "proxyRawDepthMm": 182.0629479311547,
+        "publishedRawDepthMm": 182.0629479311547,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 182.0629479311547
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 671,
+        "proxyRawDepthMm": 181.88088498322355,
+        "publishedRawDepthMm": 181.88088498322355,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 181.88088498322355
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 732,
+        "proxyRawDepthMm": 181.69900409824032,
+        "publishedRawDepthMm": 181.69900409824032,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 181.69900409824032
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 793,
+        "proxyRawDepthMm": 181.51730509414207,
+        "publishedRawDepthMm": 181.51730509414207,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 181.51730509414207
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 854,
+        "proxyRawDepthMm": 181.33578778904794,
+        "publishedRawDepthMm": 181.33578778904794,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 181.33578778904794
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.0036423645146470562,
+        "proposalOrdinal": 1037,
+        "proxyRawDepthMm": 181.1544520012589,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.008,
+        "repairRows": 1,
+        "targetDepthMm": 181.1544520012589
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0033215320815296323,
+        "proposalOrdinal": 1098,
+        "proxyRawDepthMm": 181.1544520012589,
+        "publishedRawDepthMm": 181.1544520012589,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.006928402783742177,
+        "repairRows": 1,
+        "targetDepthMm": 181.1544520012589
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0027622419361676975,
+        "proposalOrdinal": 1281,
+        "proxyRawDepthMm": 180.97329754925764,
+        "publishedRawDepthMm": 180.97329754925764,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0035,
+        "repairRows": 1,
+        "targetDepthMm": 180.97329754925764
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0003082379279204517,
+        "proposalOrdinal": 1586,
+        "proxyRawDepthMm": 180.79232425170838,
+        "publishedRawDepthMm": 180.79232425170838,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.012105777226272069,
+        "repairRows": 3,
+        "targetDepthMm": 180.79232425170838
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 1830,
+        "proxyRawDepthMm": 180.61153192745667,
+        "publishedRawDepthMm": 180.61153192745667,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0025,
+        "repairRows": 1,
+        "targetDepthMm": 180.61153192745667
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 2379,
+        "proxyRawDepthMm": 180.4309203955292,
+        "publishedRawDepthMm": 180.4309203955292,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 180.4309203955292
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 2684,
+        "proxyRawDepthMm": 180.25048947513366,
+        "publishedRawDepthMm": 180.25048947513366,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 180.25048947513366
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.001251839573043867,
+        "proposalOrdinal": 3172,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005,
+        "repairRows": 1,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.001251839573043867,
+        "proposalOrdinal": 3233,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005,
+        "repairRows": 1,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.001251839573043867,
+        "proposalOrdinal": 3294,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005,
+        "repairRows": 1,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.0015692208268980323,
+        "proposalOrdinal": 3355,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005539004954216977,
+        "repairRows": 1,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.001365584510899076,
+        "proposalOrdinal": 3416,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005835154546297133,
+        "repairRows": 1,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.00001812243278731529,
+        "proposalOrdinal": 3477,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": null,
+        "refusal": "pieces 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3 and 54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4 violate the required clearance",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 3538,
+        "proxyRawDepthMm": 180.07023898565853,
+        "publishedRawDepthMm": 180.07023898565853,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 180.07023898565853
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 4453,
+        "proxyRawDepthMm": 179.89016874667288,
+        "publishedRawDepthMm": 179.89016874667288,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0055,
+        "repairRows": 2,
+        "targetDepthMm": 179.89016874667288
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 4636,
+        "proxyRawDepthMm": 179.7102785779262,
+        "publishedRawDepthMm": 179.7102785779262,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 179.7102785779262
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0010648553218883805,
+        "proposalOrdinal": 4941,
+        "proxyRawDepthMm": 179.5291740699323,
+        "publishedRawDepthMm": null,
+        "refusal": "piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 crosses the sheet clearance boundary",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.005,
+        "repairRows": 2,
+        "targetDepthMm": 179.5305682993483
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 5002,
+        "proxyRawDepthMm": 179.5291740699323,
+        "publishedRawDepthMm": 179.5291740699323,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 179.5305682993483
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.00018540090702678924,
+        "proposalOrdinal": 5490,
+        "proxyRawDepthMm": 179.3489303379231,
+        "publishedRawDepthMm": null,
+        "refusal": "piece 604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2 crosses the sheet clearance boundary",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 179.34964489586238
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 5551,
+        "proxyRawDepthMm": 179.3489303379231,
+        "publishedRawDepthMm": 179.3489303379231,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.004196364489953787,
+        "repairRows": 1,
+        "targetDepthMm": 179.34964489586238
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.0023954352282151703,
+        "proposalOrdinal": 5978,
+        "proxyRawDepthMm": 179.16566573285345,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.006,
+        "repairRows": 1,
+        "targetDepthMm": 179.16958140758516
+      },
+      {
+        "contractValid": false,
+        "kernelExclusiveValid": false,
+        "maxViolationMm": 0.0014946745905950465,
+        "proposalOrdinal": 6039,
+        "proxyRawDepthMm": 179.16566573285345,
+        "publishedRawDepthMm": null,
+        "refusal": "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.007,
+        "repairRows": 1,
+        "targetDepthMm": 179.16958140758516
+      },
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 6100,
+        "proxyRawDepthMm": 179.16566573285345,
+        "publishedRawDepthMm": 179.16566573285345,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 179.16958140758516
+      }
+    ],
+    "exploreBites": 0,
+    "finalWidthMm": 178.9865000671206,
+    "fingerprintCount": 0,
+    "fingerprints": [],
+    "funnel": {
+      "bitesStarted": 1,
+      "bitesWithBandEntry": 0,
+      "dualValidPublished": 0,
+      "exactAttempted": 0,
+      "exactBandEntries": 0,
+      "exactCheckpointCalls": 0,
+      "exactCheckpointCallsReconcile": false,
+      "proxyBandReached": 0,
+      "workExactCheckpoints": 32
+    },
+    "incumbent": {
+      "constructorFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "fingerprintDiffersFromConstructor": true,
+      "fromConstructor": false,
+      "placementCount": 61,
+      "placementFingerprint": "49b58e9ba35b79f3e3624abad70dc5c2069c495cc278e845526ecdbb6040927e",
+      "placements": [
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+          "rotationDeg": 181.04625506347656,
+          "translateLongAxis": 71.85154182058722,
+          "translateShortAxis": 589.861182515345
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+          "rotationDeg": 0.003420527343750021,
+          "translateLongAxis": 4.998958515377389,
+          "translateShortAxis": 579.118989185454
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+          "rotationDeg": 180.4375,
+          "translateLongAxis": 66.18600588203702,
+          "translateShortAxis": 773.2545911964611
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+          "rotationDeg": 0.25,
+          "translateLongAxis": 5.664128471499808,
+          "translateShortAxis": 760.1434762021117
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+          "rotationDeg": 180.873046875,
+          "translateLongAxis": 67.50487848597882,
+          "translateShortAxis": 946.7985847149196
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+          "rotationDeg": 90.984375,
+          "translateLongAxis": 55.06166815502898,
+          "translateShortAxis": 988.4117693213705
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+          "rotationDeg": 315.9326171875,
+          "translateLongAxis": 127.88907437625505,
+          "translateShortAxis": 486.0581783696076
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+          "rotationDeg": 180.00363525390625,
+          "translateLongAxis": 110.00958534646881,
+          "translateShortAxis": 689.9658417673468
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+          "rotationDeg": 288.5016243125,
+          "translateLongAxis": 158.15645332028677,
+          "translateShortAxis": 673.227562632716
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+          "rotationDeg": 180.10407702850952,
+          "translateLongAxis": 111.26871386458251,
+          "translateShortAxis": 847.232766064439
+        },
+        {
+          "mirrored": true,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 66.931,
+          "translateShortAxis": 1102.595
+        },
+        {
+          "mirrored": true,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 66.931,
+          "translateShortAxis": 1208.745
+        },
+        {
+          "mirrored": true,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 66.931,
+          "translateShortAxis": 1314.895
+        },
+        {
+          "mirrored": false,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+          "rotationDeg": 95.8515625,
+          "translateLongAxis": 76.2178385492785,
+          "translateShortAxis": 1412.6472361749734
+        },
+        {
+          "mirrored": false,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+          "rotationDeg": 0.72802734375,
+          "translateLongAxis": 11.557266351706524,
+          "translateShortAxis": 1595.6602377539873
+        },
+        {
+          "mirrored": false,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+          "rotationDeg": 71.07999276791308,
+          "translateLongAxis": 0.25470008112803555,
+          "translateShortAxis": 1574.3385077512555
+        },
+        {
+          "mirrored": false,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 5.644,
+          "translateShortAxis": 1385.661
+        },
+        {
+          "mirrored": false,
+          "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+          "rotationDeg": 181.81066702775576,
+          "translateLongAxis": 174.48220320942136,
+          "translateShortAxis": 927.4853382593267
+        },
+        {
+          "mirrored": false,
+          "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+          "rotationDeg": 180.984375,
+          "translateLongAxis": 171.67280058407079,
+          "translateShortAxis": 882.9865239126067
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+          "rotationDeg": 92.87109375,
+          "translateLongAxis": 10.333077768535624,
+          "translateShortAxis": 1381.5214113892034
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 6.545,
+          "translateShortAxis": 1274.487
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 6.545,
+          "translateShortAxis": 1168.337
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+          "rotationDeg": 90.39443359375,
+          "translateLongAxis": 5.51941619103292,
+          "translateShortAxis": 1063.651759079587
+        },
+        {
+          "mirrored": false,
+          "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+          "rotationDeg": 340.345876,
+          "translateLongAxis": 28.546,
+          "translateShortAxis": 1837.482
+        },
+        {
+          "mirrored": false,
+          "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+          "rotationDeg": 16.8125,
+          "translateLongAxis": 9.411401358910737,
+          "translateShortAxis": 1713.045287005684
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+          "rotationDeg": 1.0703125,
+          "translateLongAxis": 7.046686663942782,
+          "translateShortAxis": 1452.7866566041407
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 7.341,
+          "translateShortAxis": 1487.814
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 10.583,
+          "translateShortAxis": 1557.552
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 10.583,
+          "translateShortAxis": 1592.556
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 13.825,
+          "translateShortAxis": 1662.294
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 100.37669019494042,
+          "translateShortAxis": 1958.451
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+          "rotationDeg": 270.984375,
+          "translateLongAxis": 149.4734612479438,
+          "translateShortAxis": 1279.5271579697032
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 129.38869019494044,
+          "translateShortAxis": 1772.942
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+          "rotationDeg": 182.1875,
+          "translateLongAxis": 174.11048693941925,
+          "translateShortAxis": 1349.9140934628763
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+          "rotationDeg": 99.6875,
+          "translateLongAxis": 139.58082736219737,
+          "translateShortAxis": 1945.2115294767584
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+          "rotationDeg": 99.6875,
+          "translateLongAxis": 143.15049392849016,
+          "translateShortAxis": 1081.8936930601626
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+          "rotationDeg": 89.95703125,
+          "translateLongAxis": 130.32493121192158,
+          "translateShortAxis": 1176.9282711627666
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+          "rotationDeg": 94.6875,
+          "translateLongAxis": 123.86640896708477,
+          "translateShortAxis": 1274.8046344023908
+        },
+        {
+          "mirrored": false,
+          "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+          "rotationDeg": 0.00029526586914061567,
+          "translateLongAxis": 5.040181604694684,
+          "translateShortAxis": 5.113998158301441
+        },
+        {
+          "mirrored": false,
+          "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+          "rotationDeg": 0.009838867187500003,
+          "translateLongAxis": 5.107873489120909,
+          "translateShortAxis": 164.1538754770866
+        },
+        {
+          "mirrored": false,
+          "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+          "rotationDeg": 0.006328124999999997,
+          "translateLongAxis": 5.002820940377276,
+          "translateShortAxis": 331.0684625797982
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+          "rotationDeg": 225.9375,
+          "translateLongAxis": 194.39679814872946,
+          "translateShortAxis": 1435.644013078207
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+          "rotationDeg": 180.05349109726563,
+          "translateLongAxis": 174.13359159543654,
+          "translateShortAxis": 411.44265136743957
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+          "rotationDeg": 305.43610929582127,
+          "translateLongAxis": 139.31774242361487,
+          "translateShortAxis": 1446.9102585850328
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+          "rotationDeg": 187.80068109375,
+          "translateLongAxis": 178.9074863195542,
+          "translateShortAxis": 641.495472456617
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+          "rotationDeg": 186.09482783642193,
+          "translateLongAxis": 177.87568078366024,
+          "translateShortAxis": 1619.1741764006617
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+          "rotationDeg": 324.5625,
+          "translateLongAxis": 123.06118698534256,
+          "translateShortAxis": 715.3114025785494
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+          "rotationDeg": 0.1352519989013672,
+          "translateLongAxis": 113.94059912977755,
+          "translateShortAxis": 388.38057498657054
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+          "rotationDeg": 1.616943359375,
+          "translateLongAxis": 112.13230116620174,
+          "translateShortAxis": 532.9808717443628
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+          "rotationDeg": 0.38770159120605463,
+          "translateLongAxis": 113.65860595773279,
+          "translateShortAxis": 630.6228151146106
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+          "rotationDeg": 5.625,
+          "translateLongAxis": 107.52400556010812,
+          "translateShortAxis": 1515.022016196013
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+          "rotationDeg": 0.9375,
+          "translateLongAxis": 102.36645885844592,
+          "translateShortAxis": 1608.7585856494352
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 103.88369019494043,
+          "translateShortAxis": 1757.928
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+          "rotationDeg": 180.091796875,
+          "translateLongAxis": 174.20871017280766,
+          "translateShortAxis": 77.59027207857062
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+          "rotationDeg": 180.02973632812498,
+          "translateLongAxis": 174.1566454706148,
+          "translateShortAxis": 162.70737829773793
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+          "rotationDeg": 180.068688919375,
+          "translateLongAxis": 174.20762539589802,
+          "translateShortAxis": 322.47365969808766
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+          "rotationDeg": 124.340546875,
+          "translateLongAxis": 144.6854567351804,
+          "translateShortAxis": 876.7916670938894
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+          "rotationDeg": 0.1388671875000001,
+          "translateLongAxis": 113.97859221099385,
+          "translateShortAxis": 51.34633218153089
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+          "rotationDeg": 0.0031250000000000028,
+          "translateLongAxis": 114.14310101610198,
+          "translateShortAxis": 210.2298913327409
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+          "rotationDeg": 179.97594435152342,
+          "translateLongAxis": 174.14674712496398,
+          "translateShortAxis": 238.47920415124787
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+          "rotationDeg": 0.0625,
+          "translateLongAxis": 114.04231270791874,
+          "translateShortAxis": 294.97575252264437
+        }
+      ],
+      "rawSourceDepthMm": 179.16566573285345
+    },
+    "invalidPublications": 0,
+    "proxy": {
+      "guidedPhi": 0.0,
+      "maxViolationMm": 0.0,
+      "rawPhi": 0.0,
+      "rawSourceDepthMm": 179.16566573285345
+    },
+    "publicationCount": 0,
+    "publications": [],
+    "relocateEconomics": {
+      "acceptedMoves": 9086,
+      "containerCommits": 48,
+      "containerSamples": 1559150,
+      "containerWinners": 48,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 779575,
+      "focusedWinners": 559,
+      "relocates": 31183,
+      "sampleEvaluations": 7694847,
+      "sampleEvaluationsPerRelocate": 246.76416637270307,
+      "stayPutWinners": 30576
+    },
+    "repairMaxDisplacementMm": 0.012105777226272069,
+    "repairMaxGivebackMm": 0.0,
+    "startDepthMm": 179.16566573285345,
+    "strikeArm": "control-iteration-strikes",
+    "sweeps": 500,
+    "work": {
+      "acceptedMoves": 9086,
+      "broadPhaseRejects": 432363678,
+      "containerCommits": 48,
+      "containerSamples": 1559150,
+      "containerWinners": 48,
+      "convexCellGapQueries": 52294981,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "exactCheckpoints": 32,
+      "focusedSamples": 779575,
+      "focusedWinners": 559,
+      "jumpProposals": 0,
+      "pairRowProbes": 463649640,
+      "pieceProposals": 244000,
+      "poseTransforms": 7728958,
+      "relocates": 31183,
+      "repairRows": 19,
+      "sampleEvaluations": 7694847,
+      "stayPutWinners": 30576,
+      "weightUpdates": 500
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/src/macs/polygon-nesting/.claude/worktrees/wf_cc523f59-310-1/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+    "pieceCount": 61,
+    "sha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "seed": 0,
+  "spawnTax": {
+    "cheapPrefix": {
+      "bandEntries": 36,
+      "barrierToBarrierNs": 0,
+      "barrierToBarrierNsPerIteration": 0.0,
+      "currencyTerms": {
+        "actualPublicationAttemptCalls": 32,
+        "disruptionMoves": 0,
+        "masterBatches": 100,
+        "repairRows": 19,
+        "sampleEvaluations": 1089047
+      },
+      "exactCalls": 32,
+      "iterations": 100,
+      "measured": false,
+      "ns": {
+        "bandFold": 0,
+        "dispatch": 0,
+        "exact": 0,
+        "mergeGls": 0,
+        "prep": 0,
+        "residual": 0,
+        "snapshot": 0,
+        "sweepCritical": 0,
+        "sweepTotal": 0
+      },
+      "prepPlusDispatchNs": 0,
+      "prepPlusDispatchShare": null,
+      "sampleEvaluationsPerSecond": null,
+      "share": {
+        "bandFold": null,
+        "dispatch": null,
+        "exact": null,
+        "mergeGls": null,
+        "prep": null,
+        "residual": null,
+        "snapshot": null,
+        "sweepCritical": null
+      }
+    },
+    "hardState": {
+      "bandEntries": 0,
+      "barrierToBarrierNs": 0,
+      "barrierToBarrierNsPerIteration": 0.0,
+      "currencyTerms": {
+        "actualPublicationAttemptCalls": 0,
+        "disruptionMoves": 0,
+        "masterBatches": 400,
+        "repairRows": 0,
+        "sampleEvaluations": 6605800
+      },
+      "exactCalls": 0,
+      "iterations": 400,
+      "measured": false,
+      "ns": {
+        "bandFold": 0,
+        "dispatch": 0,
+        "exact": 0,
+        "mergeGls": 0,
+        "prep": 0,
+        "residual": 0,
+        "snapshot": 0,
+        "sweepCritical": 0,
+        "sweepTotal": 0
+      },
+      "prepPlusDispatchNs": 0,
+      "prepPlusDispatchShare": null,
+      "sampleEvaluationsPerSecond": null,
+      "share": {
+        "bandFold": null,
+        "dispatch": null,
+        "exact": null,
+        "mergeGls": null,
+        "prep": null,
+        "residual": null,
+        "snapshot": null,
+        "sweepCritical": null
+      }
+    },
+    "prefixAllPublished": true,
+    "prefixBites": 21,
+    "prefixDepthMm": 179.16566573285345,
+    "prefixFingerprint": "49b58e9ba35b79f3e3624abad70dc5c2069c495cc278e845526ecdbb6040927e",
+    "prefixIterations": 400,
+    "prefixPerBite": [
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 4,
+            "repairRows": 0,
+            "sampleEvaluations": 61277
+          },
+          "exactCalls": 1,
+          "iterations": 4,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 4,
+        "ordinal": 1,
+        "published": true,
+        "widthAfterMm": 182.793024
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 2,
+            "repairRows": 0,
+            "sampleEvaluations": 11668
+          },
+          "exactCalls": 1,
+          "iterations": 2,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 2,
+        "ordinal": 2,
+        "published": true,
+        "widthAfterMm": 182.610230976
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 2,
+            "repairRows": 0,
+            "sampleEvaluations": 18324
+          },
+          "exactCalls": 1,
+          "iterations": 2,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 2,
+        "ordinal": 3,
+        "published": true,
+        "widthAfterMm": 182.427620745024
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 1,
+            "repairRows": 0,
+            "sampleEvaluations": 7678
+          },
+          "exactCalls": 1,
+          "iterations": 1,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 1,
+        "ordinal": 4,
+        "published": true,
+        "widthAfterMm": 182.24519312427898
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 1,
+            "repairRows": 0,
+            "sampleEvaluations": 7395
+          },
+          "exactCalls": 1,
+          "iterations": 1,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 1,
+        "ordinal": 5,
+        "published": true,
+        "widthAfterMm": 182.0629479311547
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 1,
+            "repairRows": 0,
+            "sampleEvaluations": 6933
+          },
+          "exactCalls": 1,
+          "iterations": 1,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 1,
+        "ordinal": 6,
+        "published": true,
+        "widthAfterMm": 181.88088498322355
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 1,
+            "repairRows": 0,
+            "sampleEvaluations": 4214
+          },
+          "exactCalls": 1,
+          "iterations": 1,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 1,
+        "ordinal": 7,
+        "published": true,
+        "widthAfterMm": 181.69900409824032
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 1,
+            "repairRows": 0,
+            "sampleEvaluations": 9462
+          },
+          "exactCalls": 1,
+          "iterations": 1,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 1,
+        "ordinal": 8,
+        "published": true,
+        "widthAfterMm": 181.51730509414207
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 1,
+            "repairRows": 0,
+            "sampleEvaluations": 17828
+          },
+          "exactCalls": 1,
+          "iterations": 1,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 1,
+        "ordinal": 9,
+        "published": true,
+        "widthAfterMm": 181.33578778904794
+      },
+      {
+        "census": {
+          "bandEntries": 2,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 2,
+            "disruptionMoves": 0,
+            "masterBatches": 4,
+            "repairRows": 2,
+            "sampleEvaluations": 15688
+          },
+          "exactCalls": 2,
+          "iterations": 4,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 4,
+        "ordinal": 10,
+        "published": true,
+        "widthAfterMm": 181.1544520012589
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 3,
+            "repairRows": 1,
+            "sampleEvaluations": 36278
+          },
+          "exactCalls": 1,
+          "iterations": 3,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 3,
+        "ordinal": 11,
+        "published": true,
+        "widthAfterMm": 180.97329754925764
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 5,
+            "repairRows": 3,
+            "sampleEvaluations": 44556
+          },
+          "exactCalls": 1,
+          "iterations": 5,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 5,
+        "ordinal": 12,
+        "published": true,
+        "widthAfterMm": 180.79232425170838
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 4,
+            "repairRows": 1,
+            "sampleEvaluations": 36435
+          },
+          "exactCalls": 1,
+          "iterations": 4,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 4,
+        "ordinal": 13,
+        "published": true,
+        "widthAfterMm": 180.61153192745667
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 9,
+            "repairRows": 0,
+            "sampleEvaluations": 108447
+          },
+          "exactCalls": 1,
+          "iterations": 9,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 9,
+        "ordinal": 14,
+        "published": true,
+        "widthAfterMm": 180.4309203955292
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 5,
+            "repairRows": 0,
+            "sampleEvaluations": 67018
+          },
+          "exactCalls": 1,
+          "iterations": 5,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 5,
+        "ordinal": 15,
+        "published": true,
+        "widthAfterMm": 180.25048947513366
+      },
+      {
+        "census": {
+          "bandEntries": 11,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 7,
+            "disruptionMoves": 0,
+            "masterBatches": 14,
+            "repairRows": 5,
+            "sampleEvaluations": 133094
+          },
+          "exactCalls": 7,
+          "iterations": 14,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 14,
+        "ordinal": 16,
+        "published": true,
+        "widthAfterMm": 180.07023898565853
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 15,
+            "repairRows": 2,
+            "sampleEvaluations": 177011
+          },
+          "exactCalls": 1,
+          "iterations": 15,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 15,
+        "ordinal": 17,
+        "published": true,
+        "widthAfterMm": 179.89016874667288
+      },
+      {
+        "census": {
+          "bandEntries": 1,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 1,
+            "disruptionMoves": 0,
+            "masterBatches": 3,
+            "repairRows": 0,
+            "sampleEvaluations": 32528
+          },
+          "exactCalls": 1,
+          "iterations": 3,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 3,
+        "ordinal": 18,
+        "published": true,
+        "widthAfterMm": 179.7102785779262
+      },
+      {
+        "census": {
+          "bandEntries": 2,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 2,
+            "disruptionMoves": 0,
+            "masterBatches": 6,
+            "repairRows": 2,
+            "sampleEvaluations": 67611
+          },
+          "exactCalls": 2,
+          "iterations": 6,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 6,
+        "ordinal": 19,
+        "published": true,
+        "widthAfterMm": 179.5305682993483
+      },
+      {
+        "census": {
+          "bandEntries": 2,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 2,
+            "disruptionMoves": 0,
+            "masterBatches": 9,
+            "repairRows": 1,
+            "sampleEvaluations": 133874
+          },
+          "exactCalls": 2,
+          "iterations": 9,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 9,
+        "ordinal": 20,
+        "published": true,
+        "widthAfterMm": 179.34964489586238
+      },
+      {
+        "census": {
+          "bandEntries": 3,
+          "barrierToBarrierNs": 0,
+          "barrierToBarrierNsPerIteration": 0.0,
+          "currencyTerms": {
+            "actualPublicationAttemptCalls": 3,
+            "disruptionMoves": 0,
+            "masterBatches": 9,
+            "repairRows": 2,
+            "sampleEvaluations": 91728
+          },
+          "exactCalls": 3,
+          "iterations": 9,
+          "measured": false,
+          "ns": {
+            "bandFold": 0,
+            "dispatch": 0,
+            "exact": 0,
+            "mergeGls": 0,
+            "prep": 0,
+            "residual": 0,
+            "snapshot": 0,
+            "sweepCritical": 0,
+            "sweepTotal": 0
+          },
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "sampleEvaluationsPerSecond": null,
+          "share": {
+            "bandFold": null,
+            "dispatch": null,
+            "exact": null,
+            "mergeGls": null,
+            "prep": null,
+            "residual": null,
+            "snapshot": null,
+            "sweepCritical": null
+          }
+        },
+        "masterIterations": 9,
+        "ordinal": 21,
+        "published": true,
+        "widthAfterMm": 179.16958140758516
+      }
+    ],
+    "prefixPublications": 21,
+    "prefixWork": {
+      "acceptedMoves": 3597,
+      "broadPhaseRejects": 61177001,
+      "containerCommits": 10,
+      "containerSamples": 212650,
+      "containerWinners": 10,
+      "convexCellGapQueries": 6224493,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "exactCheckpoints": 32,
+      "focusedSamples": 106325,
+      "focusedWinners": 325,
+      "jumpProposals": 0,
+      "pairRowProbes": 65680350,
+      "pieceProposals": 48800,
+      "poseTransforms": 1096045,
+      "relocates": 4253,
+      "repairRows": 19,
+      "sampleEvaluations": 1089047,
+      "stayPutWinners": 3918,
+      "weightUpdates": 100
+    },
+    "prefixWorkers": 8,
+    "probeIterations": 400,
+    "profileFeature": false,
+    "shelfBandEntries": 0,
+    "shelfBites": 21,
+    "shelfCheckpointCalls": 0,
+    "shelfDepthMm": 179.16566573285345,
+    "shelfEntryWidthMm": 178.9865000671206,
+    "shelfIterations": 400,
+    "shelfPublished": false,
+    "shelfStrikes": 0,
+    "work": {
+      "acceptedMoves": 9086,
+      "broadPhaseRejects": 432363678,
+      "containerCommits": 48,
+      "containerSamples": 1559150,
+      "containerWinners": 48,
+      "convexCellGapQueries": 52294981,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "exactCheckpoints": 32,
+      "focusedSamples": 779575,
+      "focusedWinners": 559,
+      "jumpProposals": 0,
+      "pairRowProbes": 463649640,
+      "pieceProposals": 244000,
+      "poseTransforms": 7728958,
+      "relocates": 31183,
+      "repairRows": 19,
+      "sampleEvaluations": 7694847,
+      "stayPutWinners": 30576,
+      "weightUpdates": 500
+    },
+    "workers": 8
+  },
+  "wall": {
+    "constructorSeconds": 2.297586707,
+    "prefixSeconds": 0.406124697,
+    "searchSeconds": 2.404511477,
+    "totalSeconds": 5.111068682
+  }
+}

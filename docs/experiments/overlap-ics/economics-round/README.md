@@ -14,6 +14,7 @@ waves. This directory holds each wave's evidence.
 | 2 | executor agent ∥ meter agent | [`meter/`](meter/evidence/currency.json) | **done** — executor refused by the census |
 | 3 | one integration agent owns `mod.rs`/`Pacer`/schema | [`integration/`](integration/evidence/armgate.json) | **done** |
 | 4 | evidence agent runs the drivers, edits no engine code | [`gate/`](gate/README.md) | **stopped at the currency reject rule** |
+| 4′ | the same wave under [`../../../currency-amendment.md`](../../../currency-amendment.md) | [`gate2/`](gate2/README.md) | **done — §0 answered, `GATE_PASS: false`** |
 
 ---
 
@@ -40,9 +41,24 @@ byte for byte.*
 > defect with red/green vector → one identical rerun; a valid miss closes
 > this funding.
 
-**No number below or in any subdirectory answers any of those six clauses.**
-Wave 4 stopped one clause earlier, at funded change 3's own reject rule, and
-the reason is [`gate/README.md`](gate/README.md).
+Wave 4 stopped one clause earlier, at funded change 3's own reject rule, and the
+reason is [`gate/README.md`](gate/README.md). **Under the currency amendment the
+same wave ran again and answered all six**; the numbers are
+[`gate2/README.md`](gate2/README.md), which carries its own byte-for-byte copy of
+the block above, written before its first cell ran.
+
+| clause | control | treatment | |
+|---|---|---|---|
+| (1) ≥5/9 exact-valid ≤168.484 mm | 0 / 9 | 0 / 9 | **FAIL** |
+| (2) median ≤168.484 mm | 179.07608 | 179.07957 | **FAIL** |
+| (3) Exclusive r=2.500 + contract-valid | 0 invalid, all revalidated | 0 invalid, all revalidated | PASS |
+| (4) per-seed two-process bit identity | 9/9 | 9/9 | PASS |
+| (5) quiet-box p95 ≤10.000 s over 5×9 | 9.5271 s | 9.4191 s | PASS |
+| (6) attribution | \- | \- | draw, **not promoted** |
+
+`GATE_PASS: false`. The budget was the amendment's declared fallback — a
+mixed-61-only shelf-probed *single-fixture work plan, no transfer claim* —
+because `U'` was rejected by the same rule that rejected `U`.
 
 ---
 
@@ -90,6 +106,36 @@ whole two-phase trajectory is driven under a clock that panics if it is read.
 The spec's worst-ranked defect — double-debit, "stable but false" work
 accounting — is three identities in the emitted ledger, built by routes that do
 not touch each other.
+
+## What wave 4′ settled — the amendment's re-run
+
+**`U'` was rejected too, and the fallback ran the gate anyway.** The amended
+five-term currency — `R` absent, `E` renamed to what it counts, `P·published_bites`
+added — was derived on the same three fixtures under the same timing-only
+discipline and refused by the same >10 % rule: **291.50 % / 301.47 % / 383.68 %**
+worst error over three runs, **six of six ordered pairs over the bar every
+time**, nothing dropped. Rider (i)'s counter was proved bit-identical across two
+processes on all three cells **before** `P` was fitted; rider (ii) did not fire
+(the `E` and `P` design vectors read 50/0/34 against 24/0/34 — ratio spread
+2.083 against a 1.05 bar), so two prices were fitted; rider (iii) makes it the
+last currency this funding sees.
+
+`P` is not `R`: it moves **1.118×** across three repetitions with support on two
+fixtures, where `R` moved 6.89× on twenty rows from one fixture. The term is
+identified and it is small, and no non-negative per-bite term can rescue the
+mixed-61 → triangle-20 pair — triangle-20 already carries too many units for its
+5 ms wall before any coefficient exists, and `P`'s vector is proportionally
+larger there.
+
+So the gate ran on the declared fallback and **§0 has an answer**: three of the
+six clauses pass, including `p95 ≤ 10.000 s` at 9.527 s, and the two quality
+clauses fail at **0 of 9 seeds** under 168.484 mm. Attribution is a **draw with
+a real regression inside it**: six of nine seeds are bit-identical between the
+arms at 10 s, and of the three that differ the treatment wins one seed by
+2.78 mm and loses another by 7.51 mm. The impatient work-quanta policy is **not
+promoted**.
+
+Read [`gate2/README.md`](gate2/README.md).
 
 ## What wave 4 settled
 

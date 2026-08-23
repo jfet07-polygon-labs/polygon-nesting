@@ -1,0 +1,2549 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "economics-round-gate2-verdict",
+ "label": "single-fixture work plan, no transfer claim",
+ "section0": "docs/economics-round-spec.md \u00a70, copied byte-for-byte into gate2/README.md and checked by section0.py",
+ "amendment": "docs/currency-amendment.md: U' failed, so this gate ran on the declared fallback. Clauses (1)(2)(3)(4)(6) bind unchanged; clause (5) binds as a claim; the 30 s shapes-17/triangle-20 equal-work clause is inevaluable and is recorded NOT-RUN.",
+ "bars": {
+  "barMm": 168.484,
+  "quorum": 5,
+  "seeds": 9,
+  "p95CeilingSeconds": 10.0,
+  "median30sMm": 163.00461,
+  "noRegression30s": 7,
+  "pairedGainMm": 1.0,
+  "attributionSeedGain": 2,
+  "exclusiveTwoRMicron": 5000.0
+ },
+ "binarySha256": "93cc1a7cc8cbed2a6655ba9cb15f6e9167908e9e8eae2d90f176ba09c3d6c6e6",
+ "planSha256": "d83e22d1dcd4e9f22243a189d19567caec3718e14b231c8487c93a82ff641fe3",
+ "budgetRetuned": false,
+ "pinnedConstructorSeconds": 2.310938027,
+ "arms": {
+  "control": {
+   "arm": "control",
+   "seeds": [
+    {
+     "seed": 0,
+     "bestStrictChildMm": 179.07608289998703,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.07608289998703,
+      179.07608289998703,
+      179.07608289998703,
+      179.07608289998703,
+      179.07608289998703
+     ],
+     "qualifies": false,
+     "walls": [
+      8.317729467060417,
+      8.230953166028485,
+      8.236038818955421,
+      8.216035082004964,
+      8.251317639951594
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 1,
+     "disruptionsTotal": 0,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15293902,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 1,
+     "bestStrictChildMm": 179.08098820523028,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08098820523028,
+      179.08098820523028,
+      179.08098820523028,
+      179.08098820523028,
+      179.08098820523028
+     ],
+     "qualifies": false,
+     "walls": [
+      7.882030347944237,
+      7.874067005002871,
+      7.836311844061129,
+      7.864270785008557,
+      7.856826110975817
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 0,
+     "disruptionsTotal": 0,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15316954,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 2,
+     "bestStrictChildMm": 171.57159995958426,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      171.57159995958426,
+      171.57159995958426,
+      171.57159995958426,
+      171.57159995958426,
+      171.57159995958426
+     ],
+     "qualifies": false,
+     "walls": [
+      8.744831098942086,
+      8.819955623010173,
+      8.731077527045272,
+      8.754261672031134,
+      8.732684452086687
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 115,
+     "strikesTotal": 3,
+     "disruptionsTotal": 2,
+     "exploreBites": 48,
+     "compressBites": 71,
+     "consumedUnits": 15316275,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 3,
+     "bestStrictChildMm": 169.11880682958397,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      169.11880682958397,
+      169.11880682958397,
+      169.11880682958397,
+      169.11880682958397,
+      169.11880682958397
+     ],
+     "qualifies": false,
+     "walls": [
+      9.529988080030307,
+      9.51577444805298,
+      9.54637204890605,
+      9.509774839971215,
+      9.552043256000616
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 85,
+     "strikesTotal": 0,
+     "disruptionsTotal": 11,
+     "exploreBites": 76,
+     "compressBites": 12,
+     "consumedUnits": 15306739,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 4,
+     "bestStrictChildMm": 179.08122669940144,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08122669940144,
+      179.08122669940144,
+      179.08122669940144,
+      179.08122669940144,
+      179.08122669940144
+     ],
+     "qualifies": false,
+     "walls": [
+      7.906027943012305,
+      7.8974515029694885,
+      7.89871194306761,
+      7.928136773058213,
+      7.929266505991109
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 1,
+     "disruptionsTotal": 0,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15311363,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 5,
+     "bestStrictChildMm": 179.07169841150767,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.07169841150767,
+      179.07169841150767,
+      179.07169841150767,
+      179.07169841150767,
+      179.07169841150767
+     ],
+     "qualifies": false,
+     "walls": [
+      7.497482966980897,
+      7.523066531983204,
+      7.483291974058375,
+      7.557488964986987,
+      7.898359091952443
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 0,
+     "disruptionsTotal": 1,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15316246,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 6,
+     "bestStrictChildMm": 169.69284489003127,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      169.69284489003127,
+      169.69284489003127,
+      169.69284489003127,
+      169.69284489003127,
+      169.69284489003127
+     ],
+     "qualifies": false,
+     "walls": [
+      8.351000545895658,
+      8.43717661302071,
+      8.350582615938038,
+      8.467832420021296,
+      8.452624717028812
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 77,
+     "strikesTotal": 0,
+     "disruptionsTotal": 8,
+     "exploreBites": 74,
+     "compressBites": 8,
+     "consumedUnits": 15296187,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 7,
+     "bestStrictChildMm": 179.08210084997125,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125
+     ],
+     "qualifies": false,
+     "walls": [
+      7.522226874949411,
+      7.57598969200626,
+      7.5108974650502205,
+      7.577902185032144,
+      7.570323363062926
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 1,
+     "disruptionsTotal": 0,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15317198,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 8,
+     "bestStrictChildMm": 179.08210084997125,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125
+     ],
+     "qualifies": false,
+     "walls": [
+      7.852559736929834,
+      7.821457727928646,
+      7.838062445982359,
+      7.902596691972576,
+      7.883029434015043
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 1,
+     "disruptionsTotal": 0,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15307194,
+     "chargeIdentityHolds": true
+    }
+   ],
+   "qualifyingSeeds": [],
+   "quorumReached": 0,
+   "medianMm": 179.07608289998703,
+   "seedsWithNoStrictChild": 0,
+   "wallReadings": 45,
+   "p95Seconds": 9.527145353634841,
+   "maxWallSeconds": 9.552043256000616,
+   "minWallSeconds": 7.483291974058375,
+   "medianWallSeconds": 7.906027943012305,
+   "invalidPublications": 0,
+   "everyPublicationRevalidated": true,
+   "repetitionsAgree": true
+  },
+  "treatment": {
+   "arm": "treatment",
+   "seeds": [
+    {
+     "seed": 0,
+     "bestStrictChildMm": 176.29855727683778,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      176.29855727683778,
+      176.29855727683778,
+      176.29855727683778,
+      176.29855727683778,
+      176.29855727683778
+     ],
+     "qualifies": false,
+     "walls": [
+      8.252710592001677,
+      8.216918582911603,
+      8.247693245997652,
+      8.226052205078304,
+      8.293014279915951
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 46,
+     "strikesTotal": 0,
+     "disruptionsTotal": 0,
+     "exploreBites": 35,
+     "compressBites": 13,
+     "consumedUnits": 15299492,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 1,
+     "bestStrictChildMm": 179.08098820523028,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08098820523028,
+      179.08098820523028,
+      179.08098820523028,
+      179.08098820523028,
+      179.08098820523028
+     ],
+     "qualifies": false,
+     "walls": [
+      7.79344473592937,
+      7.84087452897802,
+      7.783687572926283,
+      7.802103800000623,
+      7.790078046033159
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 0,
+     "disruptionsTotal": 0,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15304650,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 2,
+     "bestStrictChildMm": 179.07957155917717,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.07957155917717,
+      179.07957155917717,
+      179.07957155917717,
+      179.07957155917717,
+      179.07957155917717
+     ],
+     "qualifies": false,
+     "walls": [
+      7.957328147022054,
+      7.933209491893649,
+      7.894699725904502,
+      7.9289033859968185,
+      7.938893319922499
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 0,
+     "disruptionsTotal": 1,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15298534,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 3,
+     "bestStrictChildMm": 169.22504206679707,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      169.22504206679707,
+      169.22504206679707,
+      169.22504206679707,
+      169.22504206679707,
+      169.22504206679707
+     ],
+     "qualifies": false,
+     "walls": [
+      9.389096231083386,
+      9.422962974989787,
+      9.40368358406704,
+      9.440121410996653,
+      9.430223017930984
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 80,
+     "strikesTotal": 0,
+     "disruptionsTotal": 11,
+     "exploreBites": 76,
+     "compressBites": 5,
+     "consumedUnits": 15311892,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 4,
+     "bestStrictChildMm": 179.08122669940144,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08122669940144,
+      179.08122669940144,
+      179.08122669940144,
+      179.08122669940144,
+      179.08122669940144
+     ],
+     "qualifies": false,
+     "walls": [
+      7.904579433030449,
+      8.00323379796464,
+      7.88747095502913,
+      7.994655224028975,
+      7.980175247997977
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 3,
+     "disruptionsTotal": 1,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15314316,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 5,
+     "bestStrictChildMm": 179.07169841150767,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.07169841150767,
+      179.07169841150767,
+      179.07169841150767,
+      179.07169841150767,
+      179.07169841150767
+     ],
+     "qualifies": false,
+     "walls": [
+      7.436003420967609,
+      7.526013536960818,
+      7.44458637398202,
+      7.503259856021032,
+      7.520340799936093
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 0,
+     "disruptionsTotal": 1,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15308909,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 6,
+     "bestStrictChildMm": 169.69284489003127,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      169.69284489003127,
+      169.69284489003127,
+      169.69284489003127,
+      169.69284489003127,
+      169.69284489003127
+     ],
+     "qualifies": false,
+     "walls": [
+      8.369386286009103,
+      8.48572088999208,
+      8.363415822968818,
+      8.432734005036764,
+      8.421391848940402
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 77,
+     "strikesTotal": 0,
+     "disruptionsTotal": 8,
+     "exploreBites": 74,
+     "compressBites": 8,
+     "consumedUnits": 15296187,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 7,
+     "bestStrictChildMm": 179.08210084997125,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125
+     ],
+     "qualifies": false,
+     "walls": [
+      7.612716909032315,
+      7.676687826984562,
+      7.59249821305275,
+      7.659017317928374,
+      7.624779080040753
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 3,
+     "disruptionsTotal": 1,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15305426,
+     "chargeIdentityHolds": true
+    },
+    {
+     "seed": 8,
+     "bestStrictChildMm": 179.08210084997125,
+     "repetitions": 5,
+     "repetitionsAgree": true,
+     "depthsPerRepetition": [
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125,
+      179.08210084997125
+     ],
+     "qualifies": false,
+     "walls": [
+      7.851184295024723,
+      7.882721650996245,
+      7.849031450925395,
+      7.841931415954605,
+      7.833516606013291
+     ],
+     "invalidPublications": 0,
+     "everyPublicationRevalidated": true,
+     "publicationsTotal": 22,
+     "strikesTotal": 3,
+     "disruptionsTotal": 1,
+     "exploreBites": 21,
+     "compressBites": 2,
+     "consumedUnits": 15290386,
+     "chargeIdentityHolds": true
+    }
+   ],
+   "qualifyingSeeds": [],
+   "quorumReached": 0,
+   "medianMm": 179.07957155917717,
+   "seedsWithNoStrictChild": 0,
+   "wallReadings": 45,
+   "p95Seconds": 9.419107096805238,
+   "maxWallSeconds": 9.440121410996653,
+   "minWallSeconds": 7.436003420967609,
+   "medianWallSeconds": 7.904579433030449,
+   "invalidPublications": 0,
+   "everyPublicationRevalidated": true,
+   "repetitionsAgree": true
+  }
+ },
+ "clauses": {
+  "1_quorum": {
+   "control": {
+    "qualifyingSeeds": [],
+    "quorumReached": 0,
+    "required": 5,
+    "pass": false
+   },
+   "treatment": {
+    "qualifyingSeeds": [],
+    "quorumReached": 0,
+    "required": 5,
+    "pass": false
+   }
+  },
+  "2_median": {
+   "control": {
+    "medianMm": 179.07608289998703,
+    "seedsWithNoStrictChild": 0,
+    "pass": false
+   },
+   "treatment": {
+    "medianMm": 179.07957155917717,
+    "seedsWithNoStrictChild": 0,
+    "pass": false
+   }
+  },
+  "3_dualValid": {
+   "control": {
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "revalidateFlag": 1,
+    "pass": true
+   },
+   "treatment": {
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "revalidateFlag": 1,
+    "pass": true
+   }
+  },
+  "4_bitIdentity": {
+   "control": {
+    "cells": [
+     {
+      "seed": 0,
+      "bitIdentical": true,
+      "digest": "9da4e01be33f0183"
+     },
+     {
+      "seed": 1,
+      "bitIdentical": true,
+      "digest": "c57ad08a0b73d029"
+     },
+     {
+      "seed": 2,
+      "bitIdentical": true,
+      "digest": "d00e92f9e58a9fda"
+     },
+     {
+      "seed": 3,
+      "bitIdentical": true,
+      "digest": "90c4befb530a21aa"
+     },
+     {
+      "seed": 4,
+      "bitIdentical": true,
+      "digest": "a41cb323ea874d4e"
+     },
+     {
+      "seed": 5,
+      "bitIdentical": true,
+      "digest": "ba76165fc26fbcd0"
+     },
+     {
+      "seed": 6,
+      "bitIdentical": true,
+      "digest": "9cc9846a0e351663"
+     },
+     {
+      "seed": 7,
+      "bitIdentical": true,
+      "digest": "de80ce2cf13fedd4"
+     },
+     {
+      "seed": 8,
+      "bitIdentical": true,
+      "digest": "7b3d3243cfb4dc35"
+     }
+    ],
+    "pass": true
+   },
+   "treatment": {
+    "cells": [
+     {
+      "seed": 0,
+      "bitIdentical": true,
+      "digest": "487d48a4ad01299d"
+     },
+     {
+      "seed": 1,
+      "bitIdentical": true,
+      "digest": "b7e96ef68b1e88c2"
+     },
+     {
+      "seed": 2,
+      "bitIdentical": true,
+      "digest": "610dc0d10ecb175d"
+     },
+     {
+      "seed": 3,
+      "bitIdentical": true,
+      "digest": "b4b6b8c135bed1db"
+     },
+     {
+      "seed": 4,
+      "bitIdentical": true,
+      "digest": "315765452189e3f4"
+     },
+     {
+      "seed": 5,
+      "bitIdentical": true,
+      "digest": "988d6991a82873c4"
+     },
+     {
+      "seed": 6,
+      "bitIdentical": true,
+      "digest": "7661bc5f9589dbe0"
+     },
+     {
+      "seed": 7,
+      "bitIdentical": true,
+      "digest": "a9de79f7e1598f4c"
+     },
+     {
+      "seed": 8,
+      "bitIdentical": true,
+      "digest": "53d6aaa259cbdcb7"
+     }
+    ],
+    "pass": true
+   }
+  },
+  "5_p95": {
+   "control": {
+    "readings": 45,
+    "p95Seconds": 9.527145353634841,
+    "maxWallSeconds": 9.552043256000616,
+    "medianWallSeconds": 7.906027943012305,
+    "ceilingSeconds": 10.0,
+    "pass": true
+   },
+   "treatment": {
+    "readings": 45,
+    "p95Seconds": 9.419107096805238,
+    "maxWallSeconds": 9.440121410996653,
+    "medianWallSeconds": 7.904579433030449,
+    "ceilingSeconds": 10.0,
+    "pass": true
+   },
+   "loadBefore": [
+    "0.64",
+    "1.11",
+    "1.21"
+   ],
+   "loadAfter": [
+    "4.78",
+    "4.91",
+    "3.54"
+   ],
+   "frame": "the driver's own process wall, request-relative and strictly larger than anything the document reports"
+  },
+  "6_attribution": {
+   "controlQualifying": 0,
+   "treatmentQualifying": 0,
+   "seedGain": 0,
+   "seedGainRequired": 2,
+   "pairedMedianGainMm": 0.0,
+   "pairedGainRequiredMm": 1.0,
+   "pairs": [
+    {
+     "seed": 0,
+     "controlMm": 179.07608289998703,
+     "treatmentMm": 176.29855727683778,
+     "gainMm": 2.777525623149245
+    },
+    {
+     "seed": 1,
+     "controlMm": 179.08098820523028,
+     "treatmentMm": 179.08098820523028,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 2,
+     "controlMm": 171.57159995958426,
+     "treatmentMm": 179.07957155917717,
+     "gainMm": -7.507971599592906
+    },
+    {
+     "seed": 3,
+     "controlMm": 169.11880682958397,
+     "treatmentMm": 169.22504206679707,
+     "gainMm": -0.1062352372130988
+    },
+    {
+     "seed": 4,
+     "controlMm": 179.08122669940144,
+     "treatmentMm": 179.08122669940144,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 5,
+     "controlMm": 179.07169841150767,
+     "treatmentMm": 179.07169841150767,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 6,
+     "controlMm": 169.69284489003127,
+     "treatmentMm": 169.69284489003127,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 7,
+     "controlMm": 179.08210084997125,
+     "treatmentMm": 179.08210084997125,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 8,
+     "controlMm": 179.08210084997125,
+     "treatmentMm": 179.08210084997125,
+     "gainMm": 0.0
+    }
+   ],
+   "comparablePairs": 9,
+   "IMPATIENT_POLICY_PROMOTED": false,
+   "consequence": "a draw: the impatient policy is NOT promoted and the control's frozen 200/3/100/5/0.98 remains the member",
+   "interpretation": "clause (6) passes when attribution was performed and rendered a verdict; a draw is a defined outcome of the promotion sentence, not a failure of it. IMPATIENT_POLICY_PROMOTED carries the decision. On this gate the reading changes nothing: (1) and (2) fail either way.",
+   "pass": true
+  }
+ },
+ "thirtySecond": {
+  "arms": {
+   "control": {
+    "arm": "control",
+    "seeds": [
+     {
+      "seed": 0,
+      "bestStrictChildMm": 160.3050154912143,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       160.3050154912143
+      ],
+      "qualifies": true,
+      "walls": [
+       28.51176032598596
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 167,
+      "strikesTotal": 2,
+      "disruptionsTotal": 12,
+      "exploreBites": 120,
+      "compressBites": 57,
+      "consumedUnits": 55128876,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 1,
+      "bestStrictChildMm": 179.08098820523028,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.08098820523028
+      ],
+      "qualifies": false,
+      "walls": [
+       22.723743707989343
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 6,
+      "disruptionsTotal": 1,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 55063729,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 2,
+      "bestStrictChildMm": 163.54144847616112,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       163.54144847616112
+      ],
+      "qualifies": true,
+      "walls": [
+       28.82026609906461
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 115,
+      "strikesTotal": 3,
+      "disruptionsTotal": 9,
+      "exploreBites": 111,
+      "compressBites": 13,
+      "consumedUnits": 55103483,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 3,
+      "bestStrictChildMm": 164.0018603999364,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.0018603999364
+      ],
+      "qualifies": true,
+      "walls": [
+       27.990777045022696
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 120,
+      "strikesTotal": 10,
+      "disruptionsTotal": 23,
+      "exploreBites": 109,
+      "compressBites": 14,
+      "consumedUnits": 55089974,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 4,
+      "bestStrictChildMm": 164.1922844599753,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.1922844599753
+      ],
+      "qualifies": true,
+      "walls": [
+       25.958231589058414
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 110,
+      "strikesTotal": 6,
+      "disruptionsTotal": 23,
+      "exploreBites": 107,
+      "compressBites": 7,
+      "consumedUnits": 55072230,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 5,
+      "bestStrictChildMm": 162.84793513377997,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       162.84793513377997
+      ],
+      "qualifies": true,
+      "walls": [
+       26.463249454041943
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 123,
+      "strikesTotal": 0,
+      "disruptionsTotal": 8,
+      "exploreBites": 115,
+      "compressBites": 14,
+      "consumedUnits": 55076775,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 6,
+      "bestStrictChildMm": 164.0068913855385,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.0068913855385
+      ],
+      "qualifies": true,
+      "walls": [
+       28.92975325603038
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 118,
+      "strikesTotal": 4,
+      "disruptionsTotal": 32,
+      "exploreBites": 105,
+      "compressBites": 17,
+      "consumedUnits": 55087892,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 7,
+      "bestStrictChildMm": 179.08210084997125,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.08210084997125
+      ],
+      "qualifies": false,
+      "walls": [
+       23.254032994969748
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 12,
+      "disruptionsTotal": 4,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 55073120,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 8,
+      "bestStrictChildMm": 179.0827722548288,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.0827722548288
+      ],
+      "qualifies": false,
+      "walls": [
+       23.053656522999518
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 10,
+      "disruptionsTotal": 3,
+      "exploreBites": 21,
+      "compressBites": 3,
+      "consumedUnits": 55080939,
+      "chargeIdentityHolds": true
+     }
+    ],
+    "qualifyingSeeds": [
+     0,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "quorumReached": 6,
+    "medianMm": 164.0068913855385,
+    "seedsWithNoStrictChild": 0,
+    "wallReadings": 9,
+    "p95Seconds": 28.885958393244074,
+    "maxWallSeconds": 28.92975325603038,
+    "minWallSeconds": 22.723743707989343,
+    "medianWallSeconds": 26.463249454041943,
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "repetitionsAgree": true
+   },
+   "treatment": {
+    "arm": "treatment",
+    "seeds": [
+     {
+      "seed": 0,
+      "bestStrictChildMm": 164.01207162445348,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.01207162445348
+      ],
+      "qualifies": true,
+      "walls": [
+       28.350358580006287
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 109,
+      "strikesTotal": 2,
+      "disruptionsTotal": 16,
+      "exploreBites": 109,
+      "compressBites": 1,
+      "consumedUnits": 55085825,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 1,
+      "bestStrictChildMm": 179.08098820523028,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.08098820523028
+      ],
+      "qualifies": false,
+      "walls": [
+       22.820402554934844
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 12,
+      "disruptionsTotal": 4,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 55068645,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 2,
+      "bestStrictChildMm": 165.1232887114588,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       165.1232887114588
+      ],
+      "qualifies": true,
+      "walls": [
+       27.841508404002525
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 103,
+      "strikesTotal": 3,
+      "disruptionsTotal": 11,
+      "exploreBites": 102,
+      "compressBites": 3,
+      "consumedUnits": 55064243,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 3,
+      "bestStrictChildMm": 164.01443336143248,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.01443336143248
+      ],
+      "qualifies": true,
+      "walls": [
+       27.676709485938773
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 110,
+      "strikesTotal": 8,
+      "disruptionsTotal": 20,
+      "exploreBites": 109,
+      "compressBites": 3,
+      "consumedUnits": 55086293,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 4,
+      "bestStrictChildMm": 169.38404438935538,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       169.38404438935538
+      ],
+      "qualifies": false,
+      "walls": [
+       26.43618191499263
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 106,
+      "strikesTotal": 12,
+      "disruptionsTotal": 25,
+      "exploreBites": 60,
+      "compressBites": 56,
+      "consumedUnits": 55067726,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 5,
+      "bestStrictChildMm": 179.07169841150767,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.07169841150767
+      ],
+      "qualifies": false,
+      "walls": [
+       22.197149601066485
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 13,
+      "disruptionsTotal": 4,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 55073964,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 6,
+      "bestStrictChildMm": 164.0068913855385,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.0068913855385
+      ],
+      "qualifies": true,
+      "walls": [
+       28.849325848044828
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 118,
+      "strikesTotal": 1,
+      "disruptionsTotal": 32,
+      "exploreBites": 105,
+      "compressBites": 17,
+      "consumedUnits": 55087858,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 7,
+      "bestStrictChildMm": 177.90561649854425,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       177.90561649854425
+      ],
+      "qualifies": false,
+      "walls": [
+       39.83158306602854
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 56,
+      "strikesTotal": 6,
+      "disruptionsTotal": 2,
+      "exploreBites": 26,
+      "compressBites": 34,
+      "consumedUnits": 55065327,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 8,
+      "bestStrictChildMm": 179.08210084997125,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.08210084997125
+      ],
+      "qualifies": false,
+      "walls": [
+       22.45745915302541
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 18,
+      "disruptionsTotal": 5,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 55077848,
+      "chargeIdentityHolds": true
+     }
+    ],
+    "qualifyingSeeds": [
+     0,
+     2,
+     3,
+     6
+    ],
+    "quorumReached": 4,
+    "medianMm": 169.38404438935538,
+    "seedsWithNoStrictChild": 0,
+    "wallReadings": 9,
+    "p95Seconds": 35.43868017883506,
+    "maxWallSeconds": 39.83158306602854,
+    "minWallSeconds": 22.197149601066485,
+    "medianWallSeconds": 27.676709485938773,
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "repetitionsAgree": true
+   }
+  },
+  "medianMm": {
+   "control": 164.0068913855385,
+   "treatment": 169.38404438935538
+  },
+  "medianClause": {
+   "control": false,
+   "treatment": false
+  },
+  "noRegression": {
+   "control": {
+    "qualifying": 6,
+    "required": 7,
+    "pass": false
+   },
+   "treatment": {
+    "qualifying": 4,
+    "required": 7,
+    "pass": false
+   }
+  },
+  "pairedGain": {
+   "pairs": [
+    {
+     "seed": 0,
+     "controlMm": 160.3050154912143,
+     "treatmentMm": 164.01207162445348,
+     "gainMm": -3.7070561332391776
+    },
+    {
+     "seed": 1,
+     "controlMm": 179.08098820523028,
+     "treatmentMm": 179.08098820523028,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 2,
+     "controlMm": 163.54144847616112,
+     "treatmentMm": 165.1232887114588,
+     "gainMm": -1.5818402352976761
+    },
+    {
+     "seed": 3,
+     "controlMm": 164.0018603999364,
+     "treatmentMm": 164.01443336143248,
+     "gainMm": -0.012572961496090329
+    },
+    {
+     "seed": 4,
+     "controlMm": 164.1922844599753,
+     "treatmentMm": 169.38404438935538,
+     "gainMm": -5.191759929380083
+    },
+    {
+     "seed": 5,
+     "controlMm": 162.84793513377997,
+     "treatmentMm": 179.07169841150767,
+     "gainMm": -16.2237632777277
+    },
+    {
+     "seed": 6,
+     "controlMm": 164.0068913855385,
+     "treatmentMm": 164.0068913855385,
+     "gainMm": 0.0
+    },
+    {
+     "seed": 7,
+     "controlMm": 179.08210084997125,
+     "treatmentMm": 177.90561649854425,
+     "gainMm": 1.176484351427007
+    },
+    {
+     "seed": 8,
+     "controlMm": 179.0827722548288,
+     "treatmentMm": 179.08210084997125,
+     "gainMm": 0.0006714048575418019
+    }
+   ],
+   "comparablePairs": 9,
+   "medianGainMm": -0.012572961496090329,
+   "meanGainMm": -2.8377596423173532
+  },
+  "pairedClause": false,
+  "zeroInvalidPublications": true,
+  "shapes17Triangle20EqualWork": "NOT-RUN",
+  "shapes17Triangle20Reason": "inevaluable on the declared fallback: a single-fixture work plan has no equal-work denomination on another fixture. docs/currency-amendment.md records it not-run."
+ },
+ "threeSecond": {
+  "gated": false,
+  "arms": {
+   "control": {
+    "arm": "control",
+    "seeds": [
+     {
+      "seed": 0,
+      "bestStrictChildMm": 179.07608289998703,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.07608289998703
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8067251100437716
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 1383697,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 1,
+      "bestStrictChildMm": 180.07023898565853,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       180.07023898565853
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8186964290216565
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 16,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 16,
+      "compressBites": 1,
+      "consumedUnits": 1396544,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 2,
+      "bestStrictChildMm": 179.4292139855292,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.4292139855292
+      ],
+      "qualifies": false,
+      "walls": [
+       2.833226577960886
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 23,
+      "strikesTotal": 0,
+      "disruptionsTotal": 1,
+      "exploreBites": 19,
+      "compressBites": 4,
+      "consumedUnits": 1385175,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 3,
+      "bestStrictChildMm": 179.89016874667288,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.89016874667288
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8133243720512837
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 17,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 17,
+      "compressBites": 1,
+      "consumedUnits": 1375609,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 4,
+      "bestStrictChildMm": 179.07671521168925,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.07671521168925
+      ],
+      "qualifies": false,
+      "walls": [
+       2.817717969068326
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 23,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 1374470,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 5,
+      "bestStrictChildMm": 180.06546327594663,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       180.06546327594663
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8499437840655446
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 16,
+      "strikesTotal": 0,
+      "disruptionsTotal": 1,
+      "exploreBites": 16,
+      "compressBites": 1,
+      "consumedUnits": 1384176,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 6,
+      "bestStrictChildMm": 179.14383312890993,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.14383312890993
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8231076310621575
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 21,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 1,
+      "consumedUnits": 1387549,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 7,
+      "bestStrictChildMm": 179.02532613247206,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.02532613247206
+      ],
+      "qualifies": false,
+      "walls": [
+       2.802225442021154
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 23,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 3,
+      "consumedUnits": 1402290,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 8,
+      "bestStrictChildMm": 179.08210084997125,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.08210084997125
+      ],
+      "qualifies": false,
+      "walls": [
+       2.842836047988385
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 1388017,
+      "chargeIdentityHolds": true
+     }
+    ],
+    "qualifyingSeeds": [],
+    "quorumReached": 0,
+    "medianMm": 179.14383312890993,
+    "seedsWithNoStrictChild": 0,
+    "wallReadings": 9,
+    "p95Seconds": 2.8471006896346807,
+    "maxWallSeconds": 2.8499437840655446,
+    "minWallSeconds": 2.802225442021154,
+    "medianWallSeconds": 2.8186964290216565,
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "repetitionsAgree": true
+   },
+   "treatment": {
+    "arm": "treatment",
+    "seeds": [
+     {
+      "seed": 0,
+      "bestStrictChildMm": 179.07608289998703,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.07608289998703
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8545247319852933
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 1383697,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 1,
+      "bestStrictChildMm": 180.07023898565853,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       180.07023898565853
+      ],
+      "qualifies": false,
+      "walls": [
+       2.809211277985014
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 16,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 16,
+      "compressBites": 1,
+      "consumedUnits": 1396544,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 2,
+      "bestStrictChildMm": 179.4292139855292,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.4292139855292
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8386920229531825
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 23,
+      "strikesTotal": 0,
+      "disruptionsTotal": 1,
+      "exploreBites": 19,
+      "compressBites": 4,
+      "consumedUnits": 1385175,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 3,
+      "bestStrictChildMm": 179.89016874667288,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.89016874667288
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8221438529435545
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 17,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 17,
+      "compressBites": 1,
+      "consumedUnits": 1375609,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 4,
+      "bestStrictChildMm": 179.07671521168925,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.07671521168925
+      ],
+      "qualifies": false,
+      "walls": [
+       2.794943565968424
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 23,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 1374470,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 5,
+      "bestStrictChildMm": 180.06546327594663,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       180.06546327594663
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8507890490582213
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 16,
+      "strikesTotal": 0,
+      "disruptionsTotal": 1,
+      "exploreBites": 16,
+      "compressBites": 1,
+      "consumedUnits": 1384176,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 6,
+      "bestStrictChildMm": 179.14383312890993,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.14383312890993
+      ],
+      "qualifies": false,
+      "walls": [
+       2.821563740959391
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 21,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 1,
+      "consumedUnits": 1387549,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 7,
+      "bestStrictChildMm": 179.02532613247206,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.02532613247206
+      ],
+      "qualifies": false,
+      "walls": [
+       2.800253818044439
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 23,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 3,
+      "consumedUnits": 1402290,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 8,
+      "bestStrictChildMm": 179.08210084997125,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       179.08210084997125
+      ],
+      "qualifies": false,
+      "walls": [
+       2.8200193779775873
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 22,
+      "strikesTotal": 0,
+      "disruptionsTotal": 0,
+      "exploreBites": 21,
+      "compressBites": 2,
+      "consumedUnits": 1388017,
+      "chargeIdentityHolds": true
+     }
+    ],
+    "qualifyingSeeds": [],
+    "quorumReached": 0,
+    "medianMm": 179.14383312890993,
+    "seedsWithNoStrictChild": 0,
+    "wallReadings": 9,
+    "p95Seconds": 2.8530304588144646,
+    "maxWallSeconds": 2.8545247319852933,
+    "minWallSeconds": 2.794943565968424,
+    "medianWallSeconds": 2.821563740959391,
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "repetitionsAgree": true
+   }
+  },
+  "medianMm": {
+   "control": 179.14383312890993,
+   "treatment": 179.14383312890993
+  },
+  "qualifying": {
+   "control": [],
+   "treatment": []
+  },
+  "medianWallSeconds": {
+   "control": 2.8186964290216565,
+   "treatment": 2.821563740959391
+  }
+ },
+ "sixtySecond": {
+  "gated": false,
+  "arms": {
+   "control": {
+    "arm": "control",
+    "seeds": [
+     {
+      "seed": 0,
+      "bestStrictChildMm": 160.59453051367396,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       160.59453051367396
+      ],
+      "qualifies": true,
+      "walls": [
+       60.91149282408878
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 134,
+      "strikesTotal": 2,
+      "disruptionsTotal": 15,
+      "exploreBites": 129,
+      "compressBites": 14,
+      "consumedUnits": 114717526,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 1,
+      "bestStrictChildMm": 164.01172608597145,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.01172608597145
+      ],
+      "qualifies": true,
+      "walls": [
+       49.6207735829521
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 110,
+      "strikesTotal": 24,
+      "disruptionsTotal": 28,
+      "exploreBites": 109,
+      "compressBites": 5,
+      "consumedUnits": 114725794,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 2,
+      "bestStrictChildMm": 159.95398045955292,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       159.95398045955292
+      ],
+      "qualifies": true,
+      "walls": [
+       56.551103736972436
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 146,
+      "strikesTotal": 3,
+      "disruptionsTotal": 16,
+      "exploreBites": 129,
+      "compressBites": 36,
+      "consumedUnits": 114736911,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 3,
+      "bestStrictChildMm": 161.72730676805728,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       161.72730676805728
+      ],
+      "qualifies": true,
+      "walls": [
+       58.65251255198382
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 126,
+      "strikesTotal": 0,
+      "disruptionsTotal": 37,
+      "exploreBites": 123,
+      "compressBites": 24,
+      "consumedUnits": 114735006,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 4,
+      "bestStrictChildMm": 160.9753232593679,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       160.9753232593679
+      ],
+      "qualifies": true,
+      "walls": [
+       57.36052672902588
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 146,
+      "strikesTotal": 6,
+      "disruptionsTotal": 35,
+      "exploreBites": 124,
+      "compressBites": 51,
+      "consumedUnits": 114800927,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 5,
+      "bestStrictChildMm": 159.9734814964529,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       159.9734814964529
+      ],
+      "qualifies": true,
+      "walls": [
+       53.88789384404663
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 138,
+      "strikesTotal": 0,
+      "disruptionsTotal": 17,
+      "exploreBites": 132,
+      "compressBites": 15,
+      "consumedUnits": 114730236,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 6,
+      "bestStrictChildMm": 162.34066510029905,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       162.34066510029905
+      ],
+      "qualifies": true,
+      "walls": [
+       56.85716295207385
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 123,
+      "strikesTotal": 30,
+      "disruptionsTotal": 44,
+      "exploreBites": 118,
+      "compressBites": 20,
+      "consumedUnits": 114723050,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 7,
+      "bestStrictChildMm": 162.49403126346942,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       162.49403126346942
+      ],
+      "qualifies": true,
+      "walls": [
+       51.26413481601048
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 137,
+      "strikesTotal": 27,
+      "disruptionsTotal": 26,
+      "exploreBites": 110,
+      "compressBites": 46,
+      "consumedUnits": 114754778,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 8,
+      "bestStrictChildMm": 167.2954567861273,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       167.2954567861273
+      ],
+      "qualifies": true,
+      "walls": [
+       53.603992328979075
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 106,
+      "strikesTotal": 24,
+      "disruptionsTotal": 24,
+      "exploreBites": 80,
+      "compressBites": 38,
+      "consumedUnits": 114763017,
+      "chargeIdentityHolds": true
+     }
+    ],
+    "qualifyingSeeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "quorumReached": 9,
+    "medianMm": 161.72730676805728,
+    "seedsWithNoStrictChild": 0,
+    "wallReadings": 9,
+    "p95Seconds": 60.0079007152468,
+    "maxWallSeconds": 60.91149282408878,
+    "minWallSeconds": 49.6207735829521,
+    "medianWallSeconds": 56.551103736972436,
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "repetitionsAgree": true
+   },
+   "treatment": {
+    "arm": "treatment",
+    "seeds": [
+     {
+      "seed": 0,
+      "bestStrictChildMm": 159.8697857797745,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       159.8697857797745
+      ],
+      "qualifies": true,
+      "walls": [
+       57.97971869795583
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 157,
+      "strikesTotal": 9,
+      "disruptionsTotal": 26,
+      "exploreBites": 131,
+      "compressBites": 54,
+      "consumedUnits": 114773513,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 1,
+      "bestStrictChildMm": 166.24971536821587,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       166.24971536821587
+      ],
+      "qualifies": true,
+      "walls": [
+       51.106396432965994
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 99,
+      "strikesTotal": 24,
+      "disruptionsTotal": 27,
+      "exploreBites": 94,
+      "compressBites": 18,
+      "consumedUnits": 114722063,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 2,
+      "bestStrictChildMm": 164.5749093585727,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.5749093585727
+      ],
+      "qualifies": true,
+      "walls": [
+       53.23169821698684
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 122,
+      "strikesTotal": 21,
+      "disruptionsTotal": 20,
+      "exploreBites": 103,
+      "compressBites": 44,
+      "consumedUnits": 114747730,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 3,
+      "bestStrictChildMm": 161.74746793467068,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       161.74746793467068
+      ],
+      "qualifies": true,
+      "walls": [
+       54.2017777209403
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 134,
+      "strikesTotal": 10,
+      "disruptionsTotal": 38,
+      "exploreBites": 117,
+      "compressBites": 34,
+      "consumedUnits": 114737663,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 4,
+      "bestStrictChildMm": 160.97173389697048,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       160.97173389697048
+      ],
+      "qualifies": true,
+      "walls": [
+       56.47709451999981
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 157,
+      "strikesTotal": 16,
+      "disruptionsTotal": 46,
+      "exploreBites": 117,
+      "compressBites": 59,
+      "consumedUnits": 114720749,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 5,
+      "bestStrictChildMm": 166.1854998837989,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       166.1854998837989
+      ],
+      "qualifies": true,
+      "walls": [
+       50.43995210004505
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 99,
+      "strikesTotal": 12,
+      "disruptionsTotal": 41,
+      "exploreBites": 95,
+      "compressBites": 16,
+      "consumedUnits": 114732257,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 6,
+      "bestStrictChildMm": 164.0003501020705,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       164.0003501020705
+      ],
+      "qualifies": true,
+      "walls": [
+       56.70025918597821
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 110,
+      "strikesTotal": 30,
+      "disruptionsTotal": 38,
+      "exploreBites": 108,
+      "compressBites": 7,
+      "consumedUnits": 114726215,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 7,
+      "bestStrictChildMm": 176.9921268007808,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       176.9921268007808
+      ],
+      "qualifies": false,
+      "walls": [
+       97.37012789899018
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 36,
+      "strikesTotal": 6,
+      "disruptionsTotal": 5,
+      "exploreBites": 32,
+      "compressBites": 8,
+      "consumedUnits": 114718926,
+      "chargeIdentityHolds": true
+     },
+     {
+      "seed": 8,
+      "bestStrictChildMm": 165.9039381425085,
+      "repetitions": 1,
+      "repetitionsAgree": true,
+      "depthsPerRepetition": [
+       165.9039381425085
+      ],
+      "qualifies": true,
+      "walls": [
+       50.423123348038644
+      ],
+      "invalidPublications": 0,
+      "everyPublicationRevalidated": true,
+      "publicationsTotal": 103,
+      "strikesTotal": 24,
+      "disruptionsTotal": 12,
+      "exploreBites": 96,
+      "compressBites": 34,
+      "consumedUnits": 114725001,
+      "chargeIdentityHolds": true
+     }
+    ],
+    "qualifyingSeeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     8
+    ],
+    "quorumReached": 8,
+    "medianMm": 164.5749093585727,
+    "seedsWithNoStrictChild": 0,
+    "wallReadings": 9,
+    "p95Seconds": 81.61396421857644,
+    "maxWallSeconds": 97.37012789899018,
+    "minWallSeconds": 50.423123348038644,
+    "medianWallSeconds": 54.2017777209403,
+    "invalidPublications": 0,
+    "everyPublicationRevalidated": true,
+    "repetitionsAgree": true
+   }
+  },
+  "medianMm": {
+   "control": 161.72730676805728,
+   "treatment": 164.5749093585727
+  },
+  "qualifying": {
+   "control": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+   ],
+   "treatment": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8
+   ]
+  },
+  "medianWallSeconds": {
+   "control": 56.551103736972436,
+   "treatment": 54.2017777209403
+  }
+ },
+ "abba": {
+  "diagnostic": true,
+  "note": "the old wall arm is never a lane; both orders are run so that a drift in the box during the battery is separable from a difference between the two budgets",
+  "cells": {
+   "AB-calibrated": {
+    "depths": [
+     179.07608289998703,
+     179.08098820523028,
+     171.57159995958426,
+     169.11880682958397,
+     179.08122669940144,
+     179.07169841150767,
+     169.69284489003127,
+     179.08210084997125,
+     179.08210084997125
+    ],
+    "medianWallSeconds": 7.928146334015764,
+    "qualifying": 0
+   },
+   "AB-wall": {
+    "depths": [
+     172.17763637116803,
+     179.0809919439335,
+     167.68274066070543,
+     169.22268572120097,
+     179.08123134856365,
+     179.0717020235184,
+     169.65362867075464,
+     179.08210429798828,
+     179.0821043766194
+    ],
+    "medianWallSeconds": 10.016846648068167,
+    "qualifying": 1
+   },
+   "BA-calibrated": {
+    "depths": [
+     179.07608289998703,
+     179.08098820523028,
+     171.57159995958426,
+     169.11880682958397,
+     179.08122669940144,
+     179.07169841150767,
+     169.69284489003127,
+     179.08210084997125,
+     179.08210084997125
+    ],
+    "medianWallSeconds": 7.904129232047126,
+    "qualifying": 0
+   },
+   "BA-wall": {
+    "depths": [
+     171.88870603055707,
+     179.08099379737706,
+     168.6586799621112,
+     169.22903840784744,
+     179.081230355648,
+     179.0717019262405,
+     169.08954122292792,
+     179.082104414656,
+     179.08210548109628
+    ],
+    "medianWallSeconds": 10.013496026978828,
+    "qualifying": 0
+   }
+  },
+  "pairedBySeed": [
+   {
+    "seed": 0,
+    "AB": {
+     "calibratedMm": 179.07608289998703,
+     "wallMm": 172.17763637116803,
+     "wallMinusCalibratedMm": -6.898446528818994,
+     "calibratedWallSeconds": 8.291709157987498,
+     "wallArmWallSeconds": 10.054072471917607
+    },
+    "BA": {
+     "calibratedMm": 179.07608289998703,
+     "wallMm": 171.88870603055707,
+     "wallMinusCalibratedMm": -7.187376869429954,
+     "calibratedWallSeconds": 8.19440749392379,
+     "wallArmWallSeconds": 10.05252858705353
+    }
+   },
+   {
+    "seed": 1,
+    "AB": {
+     "calibratedMm": 179.08098820523028,
+     "wallMm": 179.0809919439335,
+     "wallMinusCalibratedMm": 3.7387032136848575e-06,
+     "calibratedWallSeconds": 7.838825250044465,
+     "wallArmWallSeconds": 10.015111547079869
+    },
+    "BA": {
+     "calibratedMm": 179.08098820523028,
+     "wallMm": 179.08099379737706,
+     "wallMinusCalibratedMm": 5.592146777644302e-06,
+     "calibratedWallSeconds": 7.827658995985985,
+     "wallArmWallSeconds": 10.009688360034488
+    }
+   },
+   {
+    "seed": 2,
+    "AB": {
+     "calibratedMm": 171.57159995958426,
+     "wallMm": 167.68274066070543,
+     "wallMinusCalibratedMm": -3.8888592988788275,
+     "calibratedWallSeconds": 8.745256470050663,
+     "wallArmWallSeconds": 10.047083824058063
+    },
+    "BA": {
+     "calibratedMm": 171.57159995958426,
+     "wallMm": 168.6586799621112,
+     "wallMinusCalibratedMm": -2.912919997473068,
+     "calibratedWallSeconds": 8.687227347982116,
+     "wallArmWallSeconds": 10.04937731300015
+    }
+   },
+   {
+    "seed": 3,
+    "AB": {
+     "calibratedMm": 169.11880682958397,
+     "wallMm": 169.22268572120097,
+     "wallMinusCalibratedMm": 0.10387889161700059,
+     "calibratedWallSeconds": 9.469255118980072,
+     "wallArmWallSeconds": 10.020549039938487
+    },
+    "BA": {
+     "calibratedMm": 169.11880682958397,
+     "wallMm": 169.22903840784744,
+     "wallMinusCalibratedMm": 0.11023157826346619,
+     "calibratedWallSeconds": 9.590726690017618,
+     "wallArmWallSeconds": 10.027768351021223
+    }
+   },
+   {
+    "seed": 4,
+    "AB": {
+     "calibratedMm": 179.08122669940144,
+     "wallMm": 179.08123134856365,
+     "wallMinusCalibratedMm": 4.6491622072153405e-06,
+     "calibratedWallSeconds": 7.928146334015764,
+     "wallArmWallSeconds": 10.011218343046494
+    },
+    "BA": {
+     "calibratedMm": 179.08122669940144,
+     "wallMm": 179.081230355648,
+     "wallMinusCalibratedMm": 3.6562465481893014e-06,
+     "calibratedWallSeconds": 7.904129232047126,
+     "wallArmWallSeconds": 10.008622611057945
+    }
+   },
+   {
+    "seed": 5,
+    "AB": {
+     "calibratedMm": 179.07169841150767,
+     "wallMm": 179.0717020235184,
+     "wallMinusCalibratedMm": 3.6120107438364357e-06,
+     "calibratedWallSeconds": 7.544500477029942,
+     "wallArmWallSeconds": 10.01158254488837
+    },
+    "BA": {
+     "calibratedMm": 179.07169841150767,
+     "wallMm": 179.0717019262405,
+     "wallMinusCalibratedMm": 3.5147328389939503e-06,
+     "calibratedWallSeconds": 7.5725989589700475,
+     "wallArmWallSeconds": 10.01320319797378
+    }
+   },
+   {
+    "seed": 6,
+    "AB": {
+     "calibratedMm": 169.69284489003127,
+     "wallMm": 169.65362867075464,
+     "wallMinusCalibratedMm": -0.039216219276625,
+     "calibratedWallSeconds": 8.365804483997636,
+     "wallArmWallSeconds": 10.019474421977066
+    },
+    "BA": {
+     "calibratedMm": 169.69284489003127,
+     "wallMm": 169.08954122292792,
+     "wallMinusCalibratedMm": -0.6033036671033472,
+     "calibratedWallSeconds": 8.444095231010579,
+     "wallArmWallSeconds": 10.02446876000613
+    }
+   },
+   {
+    "seed": 7,
+    "AB": {
+     "calibratedMm": 179.08210084997125,
+     "wallMm": 179.08210429798828,
+     "wallMinusCalibratedMm": 3.4480170256756537e-06,
+     "calibratedWallSeconds": 7.558471050928347,
+     "wallArmWallSeconds": 10.016846648068167
+    },
+    "BA": {
+     "calibratedMm": 179.08210084997125,
+     "wallMm": 179.082104414656,
+     "wallMinusCalibratedMm": 3.5646847322823305e-06,
+     "calibratedWallSeconds": 7.582379833096638,
+     "wallArmWallSeconds": 10.010086230933666
+    }
+   },
+   {
+    "seed": 8,
+    "AB": {
+     "calibratedMm": 179.08210084997125,
+     "wallMm": 179.0821043766194,
+     "wallMinusCalibratedMm": 3.526648157503587e-06,
+     "calibratedWallSeconds": 7.8557426480110735,
+     "wallArmWallSeconds": 10.010733462055214
+    },
+    "BA": {
+     "calibratedMm": 179.08210084997125,
+     "wallMm": 179.08210548109628,
+     "wallMinusCalibratedMm": 4.6311250230246515e-06,
+     "calibratedWallSeconds": 7.878712521982379,
+     "wallArmWallSeconds": 10.013496026978828
+    }
+   }
+  ],
+  "wallMinusCalibratedMm": {
+   "readings": 18,
+   "median": 3.5456664448929587e-06,
+   "mean": -1.1842206765346157,
+   "min": -7.187376869429954,
+   "max": 0.11023157826346619,
+   "note": "positive means the old 10.000 s wall arm published DEEPER (worse) than the work plan; negative means the work plan bought less search and paid for it"
+  }
+ },
+ "SECTION0_VERDICT": {
+  "readOn": "control",
+  "clauses": {
+   "1_quorum": false,
+   "2_median": false,
+   "3_dualValid": true,
+   "4_bitIdentity": true,
+   "5_p95": true,
+   "6_attribution": true
+  },
+  "failedClauses": [
+   "1_quorum",
+   "2_median"
+  ],
+  "GATE_PASS": false
+ },
+ "GATE_PASS": false
+}

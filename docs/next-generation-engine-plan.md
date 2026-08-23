@@ -8811,3 +8811,155 @@ B·batches + E·exact_checkpoint_calls + P·published_bites + D·disruptions;
 same derivation, same reject rule; on failure the single-fixture work plan
 runs the gate anyway with clauses (1)-(6) intact. docs/currency-amendment.md
 carries the votes verbatim. The wave-4 re-run is licensed.
+
+## The amended wave 4: the second currency is rejected too, and the fallback finally answers §0 — 0 of 9
+
+**§0 has numbers now.** The amendment's re-run produced the thing three rounds
+had been trying to reach — a nine-seed, two-arm, six-clause verdict — and the
+verdict is **`GATE_PASS: false`**: at a ten-second work budget on bare mixed-61,
+**zero of nine seeds** publish under 168.484 mm on either arm and the median is
+**179.076 mm**. Clauses (3), (4) and (5) pass. Attribution is a **draw**, so the
+frozen `200/3/100/5/0.98` remains the member. The gate text was copied into
+`gate2/README.md` and byte-checked before the first cell ran, and it landed in
+its own commit for exactly that reason.
+
+**Rider (i) came first and cost nothing, because the counter already existed.**
+`published_bites` did not need instrumenting: `BiteRecord::published` is the
+trajectory's own publication record, emitted per bite as a bool by every build
+the campaign has run, no clock, no branch, already inside the whole-document
+two-process comparison. Writing a second counter for one fact would have made
+"do the two agree" the first thing anyone had to check, so nothing was written
+and the one that exists was **proved** — per-bite vectors, not just their sums,
+bit-identical across two processes of the profiling build and one of the plain
+build on all three cells, reconciling with `publicationCount` by an independent
+route. `COUNTER_BIT_IDENTICAL: true` before a single coefficient was fitted.
+Design vector **24 / 0 / 34**.
+
+**Rider (ii) did not fire, which is itself the answer to Grok's worry.** He
+flagged that "triangle-20 reads 34/34" might make `E` and `P` the same term with
+two names. The whole matrix says otherwise: `E` is 50 / 0 / 34 against `P`'s
+24 / 0 / 34 — ratio spread **2.083** against a 1.05 bar and cosine **0.936**
+against a 0.9995 bar, both constants in the crate before the vectors existed.
+mixed-61 asks the exact authorities twice per published bite and triangle-20
+once. Two prices, fitted separately.
+
+**And `U'` was rejected by the same rule that rejected `U`: 291.50 % / 301.47 %
+/ 383.68 % worst error over three runs, six of six ordered pairs over the bar
+every time, no fixture dropped.** Every reading is recorded. The reason is
+arithmetic and worth stating because it closes the currency question rather than
+merely losing it: `U0` — every coefficient zero — is the **floor**, and on these
+cells it already predicts triangle-20 from mixed-61 at **186.82 / 188.61 /
+247.06 %**, because 45,364 sample evaluations in 5.20 ms is a far cheaper
+evaluation than 6,977,140 in 2.573 s. `U1` takes that pair to 253.73 / 260.41 /
+333.82 % and `U'` to 291.50 / 301.47 / 383.68 %: **every currency that adds a
+term makes it monotonically worse, in every run.** Each term is non-negative and
+`P`'s design vector is proportionally *larger* on triangle-20 than on mixed-61,
+so adding it moves the ratio the wrong way. **No non-negative per-bite term can
+make that pair transfer.** Nor does dropping triangle-20 help, which is why the
+amended rule forbids it: the heavy mixed-61 ↔ shapes-17 pair reads 12.01–15.34 %
+under `U'`, six readings over the bar exactly as wave 4's twelve were. The
+defect the meter named after `U` failed was real and the repair was correctly
+aimed; it was simply not large enough to matter, and the honest form of that
+sentence is a number rather than a shrug.
+
+`P` is nevertheless **not** `R`. It moves **1.118×** across three repetitions
+with support on two fixtures, where `R` moved 6.89× on twenty rows from one; it
+would pass the identifiability rule the amendment pre-wrote for restoring `R` in
+a future funding. Dropping `R` also did something the amendment did not spell
+out and the derivation now says out loud: the 16 µm repair's wall is inside
+`exactNs`, so it is charged to `E`, which reads 436–474 where `U`'s read 340.
+
+**The fallback ran the gate, and it is the first work-denominated quality
+verdict the campaign has.** The budget is a mixed-61-only shelf-probed plan
+labelled *"single-fixture work plan, no transfer claim"* in the file's own
+provenance string: explore at **2,740,976 units/s** from 400 master iterations
+AT the 179 shelf, compress at **1,464,184 units/s** from 55 compress bites,
+0.80 safety on both, set before any gate cell and never retuned. One frame
+decision decides clause (5) and is stated where the number is: every §0 clause
+is request-relative, a calibrated trajectory has no clock and cannot subtract
+its own constructor, so the search's share of a 10.000 s request is
+`10.000 − 2.310938` and that subtraction happens once, offline, from a pinned
+probe. Handing the pacer the whole ten seconds would have failed clause (5) by
+construction rather than by measurement.
+
+**What the work budget bought is clause (4), and it is not a small thing.**
+Every one of the **five repetitions** of every (seed, arm) cell published the
+same depth to the last bit, and the first two processes of each are
+byte-identical whole documents. Ninety cells, `ALL_BIT_IDENTICAL: true`. That is
+the property a work budget exists for and the one clause a wall budget cannot
+state at all. The wall, meanwhile, is exactly what the spec called it — a
+distribution: 0.03–0.42 s across repetitions of one cell, 7.44–9.55 s across the
+nine seeds, and **p95 = 9.527 s against the 10.000 s ceiling**. Grok refused to
+sign a text where that clause was "measured as-is and reported"; it bound, it
+was measured, and it passed with 0.45 s of headroom.
+
+**What it did not buy is depth.** Zero of nine at 10 s, against a wall arm that
+managed two. The mechanism is the 0.80 safety factor: the plan buys **72.7 %**
+of the search a 10.000 s wall run does — median 5.595 s against 7.694 s,
+measured pairwise in the AB/BA control — and the two seeds nearest the bar, 3 at
+169.119 and 6 at 169.693, miss by 0.63 mm and 1.21 mm. The AB/BA control prices
+that cost directly and it is smaller than the ratio suggests: **six of nine
+seeds publish the identical depth under both budgets**, the wall arm gains
+6.9–7.2 mm on seed 0 and 2.9–3.9 mm on seed 2, loses 0.1 mm on seed 3, and buys
+it with 2.1 s more wall per cell. Both orders agree on every seed, so none of it
+is the box drifting — and the wall arm still puts only **1 of 18** cells under
+the bar, nowhere near five of nine. At 30 s the two budgets
+converge: the control's median is **164.00689** against the wall arm's committed
+**164.005**, agreement to two micrometres on the statistic §0 gates, and the
+clauses part on one seed — 7 of 9 under the bar for the wall arm, **6 of 9**
+here, with seed 1 the whole difference.
+
+**Attribution is a draw at 10 s and an indictment at 30 s.** Six of nine seeds
+are bit-identical between the arms at 10 s because the work quantum is never
+reached; of the three that differ, the treatment wins seed 0 by 2.78 mm and
+loses seed 2 by **7.51 mm**. Paired median gain **0.0000 mm**, seed gain **0**:
+not promoted. At 30 s the picture is worse and it lands exactly where the spec
+predicted it would. The three-regime map named seed 5 in advance — *"seed 5
+needs ~288 continued-search iterations, not a strike — the watch-seed for
+treatment regressions"* — and at 30 s the treatment loses **16.22 mm** on it,
+from 162.848 back to the 179 shelf. The impatient policy struck a bite that
+needed to keep searching. **The control's frozen literals remain the member**,
+and this time that conclusion rests on nine seeds of paired evidence rather than
+on an undecided attribution.
+
+One 30 s cell overran its budget by a third — seed 7, treatment, **39.83 s**
+against 30.000 s — and it is reported rather than trimmed. The plan bounds work,
+not seconds; clause (5) is a claim about the 10 s battery's 5 × 9 and passes
+there, there is no clause on the 30 s wall, and no clause was invented to cover
+it. It is the sharpest illustration the round has of what "wall a distribution"
+means at three times the budget.
+
+**One engine defect was found and deliberately not fixed.**
+`shelf_work_plan`'s non-`ics-profile` branch divides the engine's **cumulative**
+work vector by the **probe's own** wall: 7,694,847 units over 2.404511 s reads
+3,200,171 u/s against a true shelf rate of 2,747,252 — **16 % fast** — under a
+`derivation` string claiming the rate is deliberately *slow*. A plan that
+over-promises a rate overruns, which is the one direction the conservative
+rounding rule exists to prevent. The census is unaffected: it measured the
+profiling build and took the other branch. This wave's licence covers no engine
+edit, so it made none, recorded the witness document, and did the arithmetic in
+the driver where it can be checked by hand.
+
+**The boundary floor is `FAILURES=0` over eighteen steps** — FAST union green
+including the clock-hygiene stage `U'` had to stay inside; the four pinned gates
+on both builds identical as **whole documents**; the five release suites at
+**5,356 passed, 0 failed** over 216 targets with no flaky rerun; and determinism
+in both forms, the tautological same-feature-set cell saying `binariesDiffer:
+false` out loud beside the real one — `c9a84cd5…` against `7d99ffd3…`, genuinely
+different executables, all five cells bit-identical. That the trajectory did not
+move is a `git diff` rather than an argument: `search/overlap_ics/` is
+**byte-for-byte identical to `e4da8c5`**, zero files, and the whole engine-side
+diff of the wave is the meter and its example.
+
+The floor also caught this wave's own mistake, which is worth recording because
+it is a shape that recurs. `heavy.sh` now measures the §4 trap instead of
+describing it — `SUITE_CLOBBERED_THE_BINARY: true`, the canonical example's sha
+recorded on both sides of the suite step — and recording shas on both sides
+showed that **two meter-only edits made after the gate battery had re-keyed the
+plan**: the batteries and `gate2.icscal.json` are `93cc1a7c…`, the post-edit
+binary was `c9a84cd5…`, and a `binaryKey` mismatch is a hard refusal by design,
+so the committed plan would not have run from `HEAD`. The numbers would have
+stayed true and stopped being reproducible. Both edits were reverted and `HEAD`
+builds `93cc1a7c…` again; the determinism documents keep the sha they were
+measured under, because editing a produced artefact to agree with a later state
+is the failure the paragraph exists to prevent.
