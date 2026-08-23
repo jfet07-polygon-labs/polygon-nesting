@@ -1,0 +1,4 @@
+# The detached package's own build directory. `Cargo.lock` IS committed: the
+# audit's whole claim is that it linked the library at a known revision, and a
+# lock file is the cheapest statement of which dependency versions it resolved.
+/target

@@ -1,0 +1,10 @@
+seed0 bites= 23 committed=179.16566573285345 local=179.16566573285345 bitIdentical=True pubs=21/21 ordinals=True twoProcess=True dualValid=True
+seed1 bites= 23 committed=179.17057349197626 local=179.17057349197626 bitIdentical=True pubs=21/21 ordinals=True twoProcess=True dualValid=True
+seed2 bites=174 committed=180.4309203955292 local=180.4309203955292 bitIdentical=True pubs=14/14 ordinals=True twoProcess=True dualValid=True
+seed3 bites=181 committed=176.2908856176903 local=176.2908856176903 bitIdentical=True pubs=37/37 ordinals=True twoProcess=True dualValid=True
+seed4 bites= 23 committed=179.17081210545416 local=179.17081210545416 bitIdentical=True pubs=21/21 ordinals=True twoProcess=True dualValid=True
+seed5 bites= 23 committed=181.51730509414207 local=181.51730509414207 bitIdentical=True pubs=8/8 ordinals=True twoProcess=True dualValid=True
+seed6 bites=106 committed=172.22368027771859 local=172.22368027771859 bitIdentical=True pubs=60/60 ordinals=True twoProcess=True dualValid=True
+seed7 bites= 23 committed=179.1716866933179 local=179.1716866933179 bitIdentical=True pubs=21/21 ordinals=True twoProcess=True dualValid=True
+seed8 bites= 23 committed=179.1716866933179 local=179.1716866933179 bitIdentical=True pubs=21/21 ordinals=True twoProcess=True dualValid=True
+failures: 0 []

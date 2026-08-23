@@ -1,0 +1,12 @@
+[rv] reduction: committed wall.json vs the raw cell documents EXIT=0
+[rv] frame: the §0.1 clause decided on the committed round EXIT=1 (1 is the pass here)
+[rv] late: the post-deadline publications, named EXIT=0
+[rv] deadline: overrun in the engine's own frame EXIT=0
+[rv] publications: 18,665 identities over 1,701 publications EXIT=0
+[rv] authorities: which authority refused, per checkpoint EXIT=0
+[rv] bites: the README's per-bite claims, independently reduced EXIT=0
+[rv] crossround: round 1 against the rerun, and the shared prefix EXIT=0
+[rv] control: the AB/BA arms EXIT=0
+[rv] poses: S0's pins and 18 recorded arm-B layouts EXIT=0
+[rv] replay: the nine fixed-work replays, bit for bit EXIT=0
+[rv] FAILURES=0

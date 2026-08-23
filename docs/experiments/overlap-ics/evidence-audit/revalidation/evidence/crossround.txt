@@ -1,0 +1,32 @@
+qualifying: {'round1-3': [], 'rerun-3': [], 'round1-10': [], 'rerun-10': [2, 3], 'round1-30': [0, 3, 4, 5, 6], 'rerun-30': [0, 1, 2, 3, 4, 5, 6]}
+bests: {'round1_10s': 169.00245541207775, 'rerun_10s': 167.31508386152518, 'round1_30s': 163.69241745649347, 'rerun_30s': 161.05499022653123}
+prefix summary: {'cellsWithIdenticalPrefixAtLeast21': 25, 'cellsWholeTrajectoryIdentical': 0, 'minPrefix': 19, 'prefixHistogram': [19, 20, 21, 72, 75, 105, 109]}
+      3s-seed0  r1= 25 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,minRawPhi
+      3s-seed1  r1= 21 re= 26 prefix= 19 first diff at ordinal 20 (explore): masterIterations
+      3s-seed2  r1= 27 re= 24 prefix= 20 first diff at ordinal 21 (explore): attempts,masterIterations,minRawPhi,proxyBandReached,exactAttempts,published
+      3s-seed3  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations
+      3s-seed4  r1= 28 re= 27 prefix= 21 first diff at ordinal 22 (explore): masterIterations
+      3s-seed5  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,minRawPhi
+      3s-seed6  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations
+      3s-seed7  r1= 25 re= 25 prefix= 21 first diff at ordinal 22 (explore): masterIterations
+      3s-seed8  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations
+     10s-seed0  r1= 25 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,strikes,minRawPhi
+     10s-seed1  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,minRawPhi
+     10s-seed2  r1= 24 re=175 prefix= 21 first diff at ordinal 22 (explore): disruptions,masterIterations,strikes,minRawPhi,exactAttempts,published
+     10s-seed3  r1= 87 re=181 prefix= 72 first diff at ordinal 73 (explore): masterIterations,minRawPhi
+     10s-seed4  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,strikes,minRawPhi
+     10s-seed5  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations
+     10s-seed6  r1= 94 re=107 prefix= 75 first diff at ordinal 76 (compress): widthAfterMm,deltaMm,step
+     10s-seed7  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,strikes,minRawPhi
+     10s-seed8  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): masterIterations,strikes
+     30s-seed0  r1=125 re=155 prefix= 21 first diff at ordinal 22 (explore): masterIterations,minRawPhi
+     30s-seed1  r1= 24 re=152 prefix= 21 first diff at ordinal 22 (explore): attempts,disruptions,masterIterations,strikes,minRawPhi,exactAttempts,published
+     30s-seed2  r1=128 re=134 prefix= 21 first diff at ordinal 22 (explore): masterIterations,exactAttempts
+     30s-seed3  r1=116 re=116 prefix=109 first diff at ordinal 110 (explore): masterIterations
+     30s-seed4  r1=118 re=123 prefix= 21 first diff at ordinal 22 (explore): masterIterations,exactAttempts
+     30s-seed5  r1=134 re=137 prefix= 21 first diff at ordinal 22 (explore): masterIterations,strikes,minRawPhi
+     30s-seed6  r1=126 re=121 prefix=105 first diff at ordinal 106 (explore): masterIterations
+     30s-seed7  r1= 24 re= 24 prefix= 21 first diff at ordinal 22 (explore): attempts,disruptions,masterIterations,strikes,minRawPhi,exactAttempts
+     30s-seed8  r1= 24 re= 34 prefix= 21 first diff at ordinal 22 (explore): attempts,disruptions,masterIterations,strikes,minRawPhi,exactAttempts
+claims checked: 30  prefix cells: 27
+failures: 0

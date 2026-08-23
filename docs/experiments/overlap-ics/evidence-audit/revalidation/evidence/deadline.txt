@@ -1,0 +1,29 @@
+    3s-seed0 bound=0.676490 maxPub=0.575683 late=0 pubOverrun=-100.807 ms loopOverrun=+1.236 ms
+    3s-seed1 bound=0.687284 maxPub=0.688831 late=1 pubOverrun=+1.547 ms loopOverrun=+1.648 ms  <<< reported best is late
+    3s-seed2 bound=0.688628 maxPub=0.578796 late=0 pubOverrun=-109.832 ms loopOverrun=+1.318 ms
+    3s-seed3 bound=0.668288 maxPub=0.552443 late=0 pubOverrun=-115.845 ms loopOverrun=+6.788 ms
+    3s-seed4 bound=0.693916 maxPub=0.690561 late=0 pubOverrun=-3.354 ms loopOverrun=+0.914 ms
+    3s-seed5 bound=0.665552 maxPub=0.553673 late=0 pubOverrun=-111.879 ms loopOverrun=+4.804 ms
+    3s-seed6 bound=0.668606 maxPub=0.561486 late=0 pubOverrun=-107.120 ms loopOverrun=+4.895 ms
+    3s-seed7 bound=0.684370 maxPub=0.658297 late=0 pubOverrun=-26.073 ms loopOverrun=+2.808 ms
+    3s-seed8 bound=0.682080 maxPub=0.558914 late=0 pubOverrun=-123.165 ms loopOverrun=+6.789 ms
+   10s-seed0 bound=7.677988 maxPub=6.170886 late=0 pubOverrun=-1507.102 ms loopOverrun=+1.243 ms
+   10s-seed1 bound=7.692350 maxPub=6.171262 late=0 pubOverrun=-1521.089 ms loopOverrun=+6.168 ms
+   10s-seed2 bound=7.663917 maxPub=7.659306 late=0 pubOverrun=-4.611 ms loopOverrun=+1.801 ms
+   10s-seed3 bound=7.693575 maxPub=7.693848 late=1 pubOverrun=+0.274 ms loopOverrun=+0.468 ms  <<< reported best is late
+   10s-seed4 bound=7.690823 maxPub=6.197488 late=0 pubOverrun=-1493.335 ms loopOverrun=+7.806 ms
+   10s-seed5 bound=7.649123 maxPub=6.147650 late=0 pubOverrun=-1501.473 ms loopOverrun=+6.866 ms
+   10s-seed6 bound=7.689889 maxPub=7.581755 late=0 pubOverrun=-108.134 ms loopOverrun=+0.476 ms
+   10s-seed7 bound=7.661669 maxPub=6.155920 late=0 pubOverrun=-1505.749 ms loopOverrun=+3.956 ms
+   10s-seed8 bound=7.669921 maxPub=6.145628 late=0 pubOverrun=-1524.293 ms loopOverrun=+3.020 ms
+   30s-seed0 bound=27.688981 maxPub=27.205767 late=0 pubOverrun=-483.214 ms loopOverrun=+4.151 ms
+   30s-seed1 bound=27.679439 maxPub=25.863707 late=0 pubOverrun=-1815.731 ms loopOverrun=+1.473 ms
+   30s-seed2 bound=27.685677 maxPub=27.047337 late=0 pubOverrun=-638.340 ms loopOverrun=+1.035 ms
+   30s-seed3 bound=27.683841 maxPub=25.919826 late=0 pubOverrun=-1764.015 ms loopOverrun=+1.460 ms
+   30s-seed4 bound=27.687395 maxPub=27.554605 late=0 pubOverrun=-132.790 ms loopOverrun=+0.378 ms
+   30s-seed5 bound=27.676049 maxPub=27.306720 late=0 pubOverrun=-369.330 ms loopOverrun=+4.317 ms
+   30s-seed6 bound=27.689755 maxPub=26.890844 late=0 pubOverrun=-798.911 ms loopOverrun=+0.426 ms
+   30s-seed7 bound=27.678148 maxPub=22.175977 late=0 pubOverrun=-5502.171 ms loopOverrun=+6.319 ms
+   30s-seed8 bound=27.694065 maxPub=27.694286 late=1 pubOverrun=+0.221 ms loopOverrun=+0.359 ms  <<< reported best is late
+max loop overrun: 7.805970999999801 ms on 10s-seed4
+cells with any late publication: ['3s-seed1', '10s-seed3', '30s-seed8']

@@ -338,15 +338,24 @@ def main():
             raise SystemExit(f'unknown stage {name}')
         results.append(STAGES[name](out))
     failures = [row['stage'] for row in results if not row['pass']]
+    canary_rows = [row for row in results if row['stage'] == 'canary']
     document = {
         'experiment': 'overlap-ics',
         'battery': 'cutclose-fast-additions',
         'binary': lib.BIN,
+        'stagesRun': [row['stage'] for row in results],
         'stages': results,
         'failures': failures,
         # Named so `wall.py` can read one field and refuse to start.
-        'CANARY_PASS': all(row['pass'] for row in results
-                           if row['stage'] == 'canary'),
+        #
+        # **`canary_rows` must be non-empty.** `all()` over an empty selection
+        # is `True`, so `python3 cutclose.py bites` - or any invocation that
+        # does not name the canary stage - used to write `CANARY_PASS: true`
+        # into `cutclose-fast.json` without the canary having run, and `wall.py`
+        # reads exactly that field to decide whether it is licensed to spend
+        # ninety wall seconds. Grok review 12 Round 2 §6.3.4 makes the canary a
+        # stop; a stop that is vacuously satisfied is not one.
+        'CANARY_PASS': bool(canary_rows) and all(row['pass'] for row in canary_rows),
         'CUTCLOSE_FAST_PASS': not failures,
     }
     print(json.dumps(document, indent=1))

@@ -1,0 +1,259 @@
+[
+ {
+  "bestAfterExcludingLateLower": 179.4276665991088,
+  "bestAfterExcludingLateUpper": 179.4276665991088,
+  "budget": "3",
+  "committedBestIsLateUnderLowerBound": true,
+  "committedBestIsLateUnderUpperBound": true,
+  "committedBestPublication": {
+   "improvedIncumbent": true,
+   "ordinal": {
+    "attempt": 0,
+    "bite": 26,
+    "iteration": 1,
+    "proposals": 9699
+   },
+   "phase": "compress",
+   "publishedRawDepthMm": 179.4218627654813,
+   "repairRows": 0,
+   "requestLower": 3.001546748,
+   "requestUpper": 3.001802466,
+   "strict": true,
+   "targetDepthMm": 179.42543571522592,
+   "wallSeconds": 0.68883113
+  },
+  "committedBestStrictChildMm": 179.4218627654813,
+  "constructorSeconds": 2.312715618,
+  "deltaMmLower": 0.005803833627481936,
+  "deltaMmUpper": 0.005803833627481936,
+  "incumbentRawSourceDepthMm": 179.4218627654813,
+  "lastPublicationOrdinal": {
+   "attempt": 0,
+   "bite": 26,
+   "iteration": 1,
+   "proposals": 9699
+  },
+  "latePublicationsLowerBound": [
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 26,
+     "iteration": 1,
+     "proposals": 9699
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 179.4218627654813,
+    "repairRows": 0,
+    "requestLower": 3.001546748,
+    "requestUpper": 3.001802466,
+    "strict": true,
+    "targetDepthMm": 179.42543571522592,
+    "wallSeconds": 0.68883113
+   }
+  ],
+  "latePublicationsUpperBound": [
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 26,
+     "iteration": 1,
+     "proposals": 9699
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 179.4218627654813,
+    "repairRows": 0,
+    "requestLower": 3.001546748,
+    "requestUpper": 3.001802466,
+    "strict": true,
+    "targetDepthMm": 179.42543571522592,
+    "wallSeconds": 0.68883113
+   }
+  ],
+  "limitSeconds": 3.0,
+  "outsideLoopSeconds": 2.312971336,
+  "overrunSecondsLower": 0.0015467479999999867,
+  "overrunSecondsUpper": 0.0018024660000000026,
+  "searchSeconds": 0.688933311,
+  "seed": 1,
+  "totalSeconds": 3.001904647
+ },
+ {
+  "bestAfterExcludingLateLower": 167.31677530997393,
+  "bestAfterExcludingLateUpper": 167.31851346763884,
+  "budget": "10",
+  "committedBestIsLateUnderLowerBound": true,
+  "committedBestIsLateUnderUpperBound": true,
+  "committedBestPublication": {
+   "improvedIncumbent": true,
+   "ordinal": {
+    "attempt": 0,
+    "bite": 181,
+    "iteration": 0,
+    "proposals": 73322
+   },
+   "phase": "compress",
+   "publishedRawDepthMm": 167.31508386152518,
+   "repairRows": 0,
+   "requestLower": 10.000273778,
+   "requestUpper": 10.001578073000001,
+   "strict": true,
+   "targetDepthMm": 167.31508386152518,
+   "wallSeconds": 7.693848423
+  },
+  "committedBestStrictChildMm": 167.31508386152518,
+  "constructorSeconds": 2.306425355,
+  "deltaMmLower": 0.001691448448752908,
+  "deltaMmUpper": 0.0034296061136558365,
+  "incumbentRawSourceDepthMm": 167.31508386152518,
+  "lastPublicationOrdinal": {
+   "attempt": 0,
+   "bite": 181,
+   "iteration": 0,
+   "proposals": 73322
+  },
+  "latePublicationsLowerBound": [
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 181,
+     "iteration": 0,
+     "proposals": 73322
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 167.31508386152518,
+    "repairRows": 0,
+    "requestLower": 10.000273778,
+    "requestUpper": 10.001578073000001,
+    "strict": true,
+    "targetDepthMm": 167.31508386152518,
+    "wallSeconds": 7.693848423
+   }
+  ],
+  "latePublicationsUpperBound": [
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 180,
+     "iteration": 0,
+     "proposals": 73322
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 167.31677530997393,
+    "repairRows": 2,
+    "requestLower": 9.999450128,
+    "requestUpper": 10.000754423,
+    "strict": true,
+    "targetDepthMm": 167.31677530997393,
+    "wallSeconds": 7.693024773
+   },
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 181,
+     "iteration": 0,
+     "proposals": 73322
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 167.31508386152518,
+    "repairRows": 0,
+    "requestLower": 10.000273778,
+    "requestUpper": 10.001578073000001,
+    "strict": true,
+    "targetDepthMm": 167.31508386152518,
+    "wallSeconds": 7.693848423
+   }
+  ],
+  "limitSeconds": 10.0,
+  "outsideLoopSeconds": 2.3077296499999997,
+  "overrunSecondsLower": 0.0002737780000003909,
+  "overrunSecondsUpper": 0.0015780730000010124,
+  "searchSeconds": 7.694043716,
+  "seed": 3,
+  "totalSeconds": 10.001773366
+ },
+ {
+  "bestAfterExcludingLateLower": 179.06179163953075,
+  "bestAfterExcludingLateUpper": 179.06179163953075,
+  "budget": "30",
+  "committedBestIsLateUnderLowerBound": true,
+  "committedBestIsLateUnderUpperBound": true,
+  "committedBestPublication": {
+   "improvedIncumbent": true,
+   "ordinal": {
+    "attempt": 0,
+    "bite": 34,
+    "iteration": 0,
+    "proposals": 461892
+   },
+   "phase": "compress",
+   "publishedRawDepthMm": 179.0599971429851,
+   "repairRows": 1,
+   "requestLower": 30.000221261,
+   "requestUpper": 30.000527913000003,
+   "strict": true,
+   "targetDepthMm": 179.0599971429851,
+   "wallSeconds": 27.694285991
+  },
+  "committedBestStrictChildMm": 179.0599971429851,
+  "constructorSeconds": 2.30593527,
+  "deltaMmLower": 0.0017944965456422324,
+  "deltaMmUpper": 0.0017944965456422324,
+  "incumbentRawSourceDepthMm": 179.0599971429851,
+  "lastPublicationOrdinal": {
+   "attempt": 0,
+   "bite": 34,
+   "iteration": 0,
+   "proposals": 461892
+  },
+  "latePublicationsLowerBound": [
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 34,
+     "iteration": 0,
+     "proposals": 461892
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 179.0599971429851,
+    "repairRows": 1,
+    "requestLower": 30.000221261,
+    "requestUpper": 30.000527913000003,
+    "strict": true,
+    "targetDepthMm": 179.0599971429851,
+    "wallSeconds": 27.694285991
+   }
+  ],
+  "latePublicationsUpperBound": [
+   {
+    "improvedIncumbent": true,
+    "ordinal": {
+     "attempt": 0,
+     "bite": 34,
+     "iteration": 0,
+     "proposals": 461892
+    },
+    "phase": "compress",
+    "publishedRawDepthMm": 179.0599971429851,
+    "repairRows": 1,
+    "requestLower": 30.000221261,
+    "requestUpper": 30.000527913000003,
+    "strict": true,
+    "targetDepthMm": 179.0599971429851,
+    "wallSeconds": 27.694285991
+   }
+  ],
+  "limitSeconds": 30.0,
+  "outsideLoopSeconds": 2.3062419220000017,
+  "overrunSecondsLower": 0.00022126100000008364,
+  "overrunSecondsUpper": 0.0005279130000026555,
+  "searchSeconds": 27.694424062,
+  "seed": 8,
+  "totalSeconds": 30.000665984
+ }
+]

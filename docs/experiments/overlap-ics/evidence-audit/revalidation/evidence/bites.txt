@@ -1,0 +1,8 @@
+rerun totals : {'bites': 1825, 'strikes': 145, 'disruptions': 164}
+round1 totals: {'bites': 1391, 'strikes': 88, 'disruptions': 122}
+gate funnel  : {'bitesStarted': 607, 'proxyBandReached': 601, 'exactAttempted': 601, 'dualValidPublished': 584}  round1 bitesStarted: 350
+green vector : seed1 30s bite22 rerun = {'masterIterations': 3059, 'strikes': 6, 'disruptions': 2, 'attempts': 2, 'published': True, 'minRawPhi': 0.0, 'phase': 'explore'}
+               seed1 30s bite22 round1 = {'masterIterations': 5319, 'strikes': 0, 'disruptions': 0, 'attempts': 1, 'published': False, 'minRawPhi': 3.695709020949532e-05, 'phase': 'explore'}
+seed2 overclaim: perBite sum 1313 vs funnel 174
+claims checked: 103
+failures: 0

@@ -1,0 +1,836 @@
+{
+ "ALL_CROSS_ROUND_CLAIMS_REPRODUCE": true,
+ "C1_qualifyingSeedsByRoundAndBudget": {
+  "rerun-10": [
+   2,
+   3
+  ],
+  "rerun-3": [],
+  "rerun-30": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "round1-10": [],
+  "round1-3": [],
+  "round1-30": [
+   0,
+   3,
+   4,
+   5,
+   6
+  ]
+ },
+ "C2_deltaTable": {
+  "10": {
+   "0": [
+    179.07686,
+    179.07609,
+    -0.001
+   ],
+   "1": [
+    179.08099,
+    179.08099,
+    -0.0
+   ],
+   "2": [
+    179.07957,
+    167.95169,
+    -11.128
+   ],
+   "3": [
+    169.2186,
+    167.31508,
+    -1.904
+   ],
+   "4": [
+    179.08123,
+    179.08123,
+    0.0
+   ],
+   "5": [
+    179.0717,
+    179.0717,
+    -0.0
+   ],
+   "6": [
+    169.00246,
+    169.17186,
+    0.169
+   ],
+   "7": [
+    179.08211,
+    179.0821,
+    -0.0
+   ],
+   "8": [
+    179.08211,
+    179.0821,
+    -0.0
+   ]
+  },
+  "30": {
+   "0": [
+    164.00236,
+    161.05499,
+    -2.947
+   ],
+   "1": [
+    179.08099,
+    165.00578,
+    -14.075
+   ],
+   "2": [
+    168.66303,
+    163.56062,
+    -5.102
+   ],
+   "3": [
+    164.00577,
+    164.00461,
+    -0.001
+   ],
+   "4": [
+    165.05518,
+    164.00094,
+    -1.054
+   ],
+   "5": [
+    163.69242,
+    162.40477,
+    -1.288
+   ],
+   "6": [
+    164.00972,
+    164.0093,
+    -0.0
+   ],
+   "7": [
+    179.0821,
+    179.0821,
+    0.0
+   ],
+   "8": [
+    179.0821,
+    179.06,
+    -0.022
+   ]
+  }
+ },
+ "C4_bests": {
+  "rerun_10s": 167.31508386152518,
+  "rerun_30s": 161.05499022653123,
+  "round1_10s": 169.00245541207775,
+  "round1_30s": 163.69241745649347
+ },
+ "C5_sharedPrefix": [
+  {
+   "cell": "3s-seed0",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 19,
+     "minRawPhi": 0.0003707525836301294
+    },
+    "round1": {
+     "masterIterations": 18,
+     "minRawPhi": 0.0004039250067532848
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 25
+  },
+  {
+   "cell": "3s-seed1",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 19,
+    "ordinal": 20,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 18
+    },
+    "round1": {
+     "masterIterations": 16
+    }
+   },
+   "identicalPrefix": 19,
+   "rerunBites": 26,
+   "round1Bites": 21
+  },
+  {
+   "cell": "3s-seed2",
+   "firstDivergence": {
+    "fields": [
+     "attempts",
+     "masterIterations",
+     "minRawPhi",
+     "proxyBandReached",
+     "exactAttempts",
+     "published"
+    ],
+    "index": 20,
+    "ordinal": 21,
+    "phase": "explore",
+    "rerun": {
+     "attempts": 0,
+     "exactAttempts": 2,
+     "masterIterations": 7,
+     "minRawPhi": 0.0,
+     "proxyBandReached": true,
+     "published": true
+    },
+    "round1": {
+     "attempts": 1,
+     "exactAttempts": 0,
+     "masterIterations": 5,
+     "minRawPhi": 0.0006283699334043724,
+     "proxyBandReached": false,
+     "published": false
+    }
+   },
+   "identicalPrefix": 20,
+   "rerunBites": 24,
+   "round1Bites": 27
+  },
+  {
+   "cell": "3s-seed3",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 5
+    },
+    "round1": {
+     "masterIterations": 4
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "3s-seed4",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 33
+    },
+    "round1": {
+     "masterIterations": 31
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 27,
+   "round1Bites": 28
+  },
+  {
+   "cell": "3s-seed5",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 3,
+     "minRawPhi": 0.002565043374846466
+    },
+    "round1": {
+     "masterIterations": 4,
+     "minRawPhi": 0.0016705911965378681
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "3s-seed6",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 15
+    },
+    "round1": {
+     "masterIterations": 14
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "3s-seed7",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 42
+    },
+    "round1": {
+     "masterIterations": 40
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 25,
+   "round1Bites": 25
+  },
+  {
+   "cell": "3s-seed8",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 43
+    },
+    "round1": {
+     "masterIterations": 44
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "10s-seed0",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "strikes",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 1408,
+     "minRawPhi": 6.0822604221878824e-05,
+     "strikes": 2
+    },
+    "round1": {
+     "masterIterations": 1290,
+     "minRawPhi": 0.00012151479546341587,
+     "strikes": 1
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 25
+  },
+  {
+   "cell": "10s-seed1",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 809,
+     "minRawPhi": 8.14478758534553e-05
+    },
+    "round1": {
+     "masterIterations": 797,
+     "minRawPhi": 0.00010639252287825683
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "10s-seed2",
+   "firstDivergence": {
+    "fields": [
+     "disruptions",
+     "masterIterations",
+     "strikes",
+     "minRawPhi",
+     "exactAttempts",
+     "published"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "disruptions": 1,
+     "exactAttempts": 883,
+     "masterIterations": 1283,
+     "minRawPhi": 0.0,
+     "published": true,
+     "strikes": 3
+    },
+    "round1": {
+     "disruptions": 0,
+     "exactAttempts": 1411,
+     "masterIterations": 1754,
+     "minRawPhi": 3.343452629896077e-05,
+     "published": false,
+     "strikes": 0
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 175,
+   "round1Bites": 24
+  },
+  {
+   "cell": "10s-seed3",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "minRawPhi"
+    ],
+    "index": 72,
+    "ordinal": 73,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 2,
+     "minRawPhi": 8.748258238373663e-05
+    },
+    "round1": {
+     "masterIterations": 1,
+     "minRawPhi": 0.0034055960988897214
+    }
+   },
+   "identicalPrefix": 72,
+   "rerunBites": 181,
+   "round1Bites": 87
+  },
+  {
+   "cell": "10s-seed4",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "strikes",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 1125,
+     "minRawPhi": 6.988383636392119e-05,
+     "strikes": 2
+    },
+    "round1": {
+     "masterIterations": 1072,
+     "minRawPhi": 6.988570805679046e-05,
+     "strikes": 1
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "10s-seed5",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 854
+    },
+    "round1": {
+     "masterIterations": 855
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "10s-seed6",
+   "firstDivergence": {
+    "fields": [
+     "widthAfterMm",
+     "deltaMm",
+     "step"
+    ],
+    "index": 75,
+    "ordinal": 76,
+    "phase": "compress",
+    "rerun": {
+     "deltaMm": -0.0849069432666738,
+     "step": 0.0004999697830326995,
+     "widthAfterMm": 169.739242731619
+    },
+    "round1": {
+     "deltaMm": -0.08490643406813092,
+     "step": 0.0004999667846455664,
+     "widthAfterMm": 169.73924324081753
+    }
+   },
+   "identicalPrefix": 75,
+   "rerunBites": 107,
+   "round1Bites": 94
+  },
+  {
+   "cell": "10s-seed7",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "strikes",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 893,
+     "minRawPhi": 8.100828837587119e-05,
+     "strikes": 2
+    },
+    "round1": {
+     "masterIterations": 892,
+     "minRawPhi": 8.093670338857854e-05,
+     "strikes": 0
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "10s-seed8",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "strikes"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 925,
+     "strikes": 2
+    },
+    "round1": {
+     "masterIterations": 922,
+     "strikes": 1
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "30s-seed0",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 1424,
+     "minRawPhi": 1.1992955066947794e-05
+    },
+    "round1": {
+     "masterIterations": 2061,
+     "minRawPhi": 0.0
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 155,
+   "round1Bites": 125
+  },
+  {
+   "cell": "30s-seed1",
+   "firstDivergence": {
+    "fields": [
+     "attempts",
+     "disruptions",
+     "masterIterations",
+     "strikes",
+     "minRawPhi",
+     "exactAttempts",
+     "published"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "attempts": 2,
+     "disruptions": 2,
+     "exactAttempts": 2,
+     "masterIterations": 3059,
+     "minRawPhi": 0.0,
+     "published": true,
+     "strikes": 6
+    },
+    "round1": {
+     "attempts": 1,
+     "disruptions": 0,
+     "exactAttempts": 44,
+     "masterIterations": 5319,
+     "minRawPhi": 3.695709020949532e-05,
+     "published": false,
+     "strikes": 0
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 152,
+   "round1Bites": 24
+  },
+  {
+   "cell": "30s-seed2",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "exactAttempts"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "exactAttempts": 883,
+     "masterIterations": 1283
+    },
+    "round1": {
+     "exactAttempts": 7074,
+     "masterIterations": 7450
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 134,
+   "round1Bites": 128
+  },
+  {
+   "cell": "30s-seed3",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 109,
+    "ordinal": 110,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 28
+    },
+    "round1": {
+     "masterIterations": 29
+    }
+   },
+   "identicalPrefix": 109,
+   "rerunBites": 116,
+   "round1Bites": 116
+  },
+  {
+   "cell": "30s-seed4",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "exactAttempts"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "exactAttempts": 4,
+     "masterIterations": 2032
+    },
+    "round1": {
+     "exactAttempts": 2103,
+     "masterIterations": 3622
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 123,
+   "round1Bites": 118
+  },
+  {
+   "cell": "30s-seed5",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations",
+     "strikes",
+     "minRawPhi"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 1142,
+     "minRawPhi": 0.0,
+     "strikes": 0
+    },
+    "round1": {
+     "masterIterations": 1700,
+     "minRawPhi": 1.5805794137300585e-05,
+     "strikes": 2
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 137,
+   "round1Bites": 134
+  },
+  {
+   "cell": "30s-seed6",
+   "firstDivergence": {
+    "fields": [
+     "masterIterations"
+    ],
+    "index": 105,
+    "ordinal": 106,
+    "phase": "explore",
+    "rerun": {
+     "masterIterations": 74
+    },
+    "round1": {
+     "masterIterations": 76
+    }
+   },
+   "identicalPrefix": 105,
+   "rerunBites": 121,
+   "round1Bites": 126
+  },
+  {
+   "cell": "30s-seed7",
+   "firstDivergence": {
+    "fields": [
+     "attempts",
+     "disruptions",
+     "masterIterations",
+     "strikes",
+     "minRawPhi",
+     "exactAttempts"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "attempts": 6,
+     "disruptions": 5,
+     "exactAttempts": 4266,
+     "masterIterations": 5638,
+     "minRawPhi": 1.8675042075611397e-05,
+     "strikes": 17
+    },
+    "round1": {
+     "attempts": 1,
+     "disruptions": 0,
+     "exactAttempts": 1,
+     "masterIterations": 3906,
+     "minRawPhi": 6.163514289718313e-05,
+     "strikes": 0
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 24,
+   "round1Bites": 24
+  },
+  {
+   "cell": "30s-seed8",
+   "firstDivergence": {
+    "fields": [
+     "attempts",
+     "disruptions",
+     "masterIterations",
+     "strikes",
+     "minRawPhi",
+     "exactAttempts"
+    ],
+    "index": 21,
+    "ordinal": 22,
+    "phase": "explore",
+    "rerun": {
+     "attempts": 6,
+     "disruptions": 5,
+     "exactAttempts": 2112,
+     "masterIterations": 6483,
+     "minRawPhi": 1.8676093462303335e-05,
+     "strikes": 15
+    },
+    "round1": {
+     "attempts": 2,
+     "disruptions": 1,
+     "exactAttempts": 233,
+     "masterIterations": 3825,
+     "minRawPhi": 6.163727568026612e-05,
+     "strikes": 4
+    }
+   },
+   "identicalPrefix": 21,
+   "rerunBites": 34,
+   "round1Bites": 24
+  }
+ ],
+ "C5_summary": {
+  "cellsWholeTrajectoryIdentical": 0,
+  "cellsWithIdenticalPrefixAtLeast21": 25,
+  "minPrefix": 19,
+  "prefixHistogram": [
+   19,
+   20,
+   21,
+   72,
+   75,
+   105,
+   109
+  ]
+ },
+ "C6_totals": {
+  "rerun": {
+   "everyPublicationDualValid": true,
+   "invalid": 0,
+   "publications": 1701,
+   "quorumReached": 2
+  },
+  "round1": {
+   "everyPublicationDualValid": true,
+   "invalid": 0,
+   "publications": 1269,
+   "quorumReached": 0
+  }
+ },
+ "claimsChecked": 30,
+ "failures": [],
+ "prefixCellsMeasured": 27,
+ "what": "round 1 against the rerun, from both committed reductions"
+}

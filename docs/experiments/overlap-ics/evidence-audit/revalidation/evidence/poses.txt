@@ -1,0 +1,39 @@
+S0 pins reproduce: True
+  committed: {"placementCount": 61, "rawSourceDepthMm": 150.16451, "phiBits": 0, "twoRMicron": 5000.0, "pairClearanceMm": 5.0, "kernelExclusiveValid": true, "contractValid": true, "repairRows": 0, "repairDepthGivebackMm": 0.0}
+  measured : {"placementCount": 61, "rawSourceDepthMm": 150.16451, "phiBits": 0, "twoRMicron": 5000.0, "pairClearanceMm": 5.0, "kernelExclusiveValid": true, "contractValid": true, "repairRows": 0, "repairDepthGivebackMm": 0.0}
+
+arm B layouts, judged by the overlap-ics dual gate:
+    rerun seed0  imported=170.45272923584588  armB.incumbent=170.45272923584588  armB.independent=170.453  kernel=True  contract=True  
+    rerun seed1  imported=165.65577826491065  armB.incumbent=165.65577826491065  armB.independent=165.656  kernel=True  contract=True  
+    rerun seed2  imported=174.28  armB.incumbent=174.28  armB.independent=174.28  kernel=True  contract=True  
+    rerun seed3  imported=172.28408738465524  armB.incumbent=172.28408738465524  armB.independent=172.284  kernel=True  contract=True  
+    rerun seed4  imported=172.12900000000002  armB.incumbent=172.12900000000002  armB.independent=172.129  kernel=True  contract=True  
+    rerun seed5  imported=179.63299999999998  armB.incumbent=179.63299999999998  armB.independent=179.633  kernel=True  contract=True  
+    rerun seed6  imported=168.468  armB.incumbent=168.468  armB.independent=168.468  kernel=True  contract=True  
+    rerun seed7  imported=169.35991887765238  armB.incumbent=169.35991887765238  armB.independent=169.36  kernel=True  contract=True  
+    rerun seed8  imported=169.03158571496175  armB.incumbent=169.03158571496175  armB.independent=169.032  kernel=True  contract=True  
+   round1 seed0  imported=168.4836008374388  armB.incumbent=168.4836008374388  armB.independent=168.484  kernel=True  contract=True  
+   round1 seed1  imported=165.65577826491065  armB.incumbent=165.65577826491065  armB.independent=165.656  kernel=True  contract=True  
+   round1 seed2  imported=174.28  armB.incumbent=174.28  armB.independent=174.28  kernel=True  contract=True  
+   round1 seed3  imported=169.58499999999998  armB.incumbent=169.58499999999998  armB.independent=169.585  kernel=True  contract=True  
+   round1 seed4  imported=172.12900000000002  armB.incumbent=172.12900000000002  armB.independent=172.129  kernel=True  contract=True  
+   round1 seed5  imported=179.63299999999998  armB.incumbent=179.63299999999998  armB.independent=179.633  kernel=True  contract=True  
+   round1 seed6  imported=168.468  armB.incumbent=168.468  armB.independent=168.468  kernel=True  contract=True  
+   round1 seed7  imported=169.229  armB.incumbent=169.229  armB.independent=169.229  kernel=True  contract=True  
+   round1 seed8  imported=169.03158571496175  armB.incumbent=169.03158571496175  armB.independent=169.032  kernel=True  contract=True  
+
+sensitivity ladder (S0 with piece 0 shifted along the short axis):
+  delta=   0.0 mm  kernel=True  contract=True  depth=150.16451  
+  delta= 0.001 mm  kernel=True  contract=True  depth=150.16451  
+  delta= 0.002 mm  kernel=True  contract=True  depth=150.16451  
+  delta= 0.004 mm  kernel=True  contract=True  depth=150.16451  
+  delta= 0.008 mm  kernel=True  contract=True  depth=150.16451  
+  delta= 0.016 mm  kernel=None  contract=None  depth=150.16451  
+  delta=  0.05 mm  kernel=None  contract=None  depth=150.16451  
+  delta=   0.1 mm  kernel=None  contract=None  depth=150.16451  
+  delta=  0.25 mm  kernel=None  contract=None  depth=150.16451  
+  delta=   0.5 mm  kernel=None  contract=None  depth=150.16451  
+  delta=   1.0 mm  kernel=None  contract=None  depth=150.16451  
+  delta=   2.0 mm  kernel=None  contract=None  depth=150.16451  
+  delta=   5.0 mm  kernel=None  contract=None  depth=150.16451  
+first kernel refusal at delta = None  first contract refusal at delta = None
