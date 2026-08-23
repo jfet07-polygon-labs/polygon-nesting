@@ -443,6 +443,22 @@ impl<'a> Engine<'a> {
     pub fn work(&self) -> WorkVector {
         self.trace.work
     }
+
+    /// The sweep engine.
+    ///
+    /// The schedule agent needs this at two boundaries this wave does not own:
+    /// [`Descent::set_stream`] at a bite, so successive bites do not re-draw one
+    /// bite's sample stream, and again when a master state is cloned into
+    /// worker `ordinal`, so the eight Algorithm-10 workers sweep the same state
+    /// in eight different orders. Everything else the loop needs is already a
+    /// public field.
+    pub fn descent_mut(&mut self) -> &mut Descent {
+        &mut self.descent
+    }
+
+    pub fn descent(&self) -> &Descent {
+        &self.descent
+    }
 }
 
 /// A digest over every pose bit: `x`, `y`, `theta` and the mirror flag, in
