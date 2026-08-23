@@ -217,9 +217,29 @@ pub fn closest_feasible_angle(allow_rotation: bool, sampled_deg: f64, own_deg: f
 ///    from any piece that is not the first.
 /// 3. Swap their poses, mapping each angle through the receiving piece's own
 ///    allowed set.
-/// 4. Move every piece whose transformed interior witness lay inside a swapped
-///    piece's *old* ring by that piece's own rigid map, capped at `n`
-///    followers.
+/// 4. Move every piece whose transformed interior witness lies inside a
+///    swapped piece's ring **at its new pose** into the space that piece
+///    vacated, by the rigid map that takes its new frame back to its old one -
+///    capped at `n` moved pieces.
+///
+/// **Step 4's direction is the source's, and it is not the obvious one.**
+/// `optimizer/explore.rs::disrupt_solution` calls `practically_contained_items`
+/// *after* both `move_item` calls, so the containment question is asked of the
+/// layout the swap produced; and its map is
+/// `dt_new.compose().inverse().transform(&dt_old.compose())`, which in
+/// `jagua_rs`'s convention (`a.transform(&b)` is `b . a`) is `T_old . T_new^-1`
+/// - new frame to old frame. Their comment says why: "the huge item will create
+/// a large empty space and many of the items which previously surrounded the
+/// smaller one will be contained by the huge one", and those items are sent to
+/// the empty space. Carrying the *old* footprint's occupants forward instead
+/// would move the few pieces that were inside a large piece's own material into
+/// the small hole it swapped into, which is the opposite operator.
+///
+/// The two follower blocks run in sequence, as theirs do: the second reads the
+/// layout the first left behind, so a piece the first block moved into the
+/// second's new footprint is carried again. That is a consequence of their
+/// ordering rather than a rule of ours, and reproducing it is cheaper than
+/// inventing a conflict rule.
 ///
 /// Every cache is rebuilt before returning, so the caller receives a state it
 /// can separate immediately. Weights are **not** touched: they are the
@@ -288,51 +308,48 @@ pub fn disrupt(
         mirrored: second_old.mirrored,
     };
 
-    // The follower sets are read from the pre-swap layout - the ring a witness
-    // has to be inside is the one the swapped piece is *vacating*, which is the
-    // "empty space created by the moved item" their comment names. Both sets
-    // are collected before either swap is applied so that the second swap
-    // cannot change the first's answer.
-    let followers_of_first = witnesses_inside(state, sources, first, &[second]);
-    let followers_of_second = witnesses_inside(state, sources, second, &[first]);
+    // The swap first, because the containment question is asked of the layout
+    // the swap produced.
+    let mut moved: Vec<usize> = vec![first, second];
+    state.poses[first] = first_new;
+    state.poses[second] = second_new;
+    transform_piece(sources, &mut state.geometry, &state.poses, first);
+    transform_piece(sources, &mut state.geometry, &state.poses, second);
+    work.pose_transforms += 2;
 
-    let mut moved: Vec<usize> = Vec::new();
+    let mut followers: Vec<usize> = Vec::new();
     let mut capped = 0usize;
-    let mut plan: Vec<(usize, Pose)> = Vec::with_capacity(count);
-    plan.push((first, first_new));
-    plan.push((second, second_new));
-    for (followers, from, to) in [
-        (&followers_of_first, first_old, first_new),
-        (&followers_of_second, second_old, second_new),
+    for (host, from, to) in [
+        (first, first_new, first_old),
+        (second, second_new, second_old),
     ] {
-        for follower in followers {
-            if plan.iter().any(|(piece, _)| piece == follower) {
-                continue;
-            }
+        // Collected here, inside the loop, so the second host sees what the
+        // first host's block left behind.
+        for follower in witnesses_inside(state, sources, host, &[first, second]) {
             // The cap: a defect in the containment test can move at most the
-            // layout, never more than it.
-            if plan.len() >= count {
-                capped += 1;
-                continue;
+            // layout, never more than it. A piece both hosts claim counts once.
+            if !moved.contains(&follower) {
+                if moved.len() >= count {
+                    capped += 1;
+                    continue;
+                }
+                moved.push(follower);
+                followers.push(follower);
             }
-            plan.push((*follower, carry(state.poses[*follower], from, to)));
-            moved.push(*follower);
+            state.poses[follower] = carry(state.poses[follower], from, to);
+            transform_piece(sources, &mut state.geometry, &state.poses, follower);
+            work.pose_transforms += 1;
         }
     }
 
-    for (piece, pose) in &plan {
-        state.poses[*piece] = *pose;
-        transform_piece(sources, &mut state.geometry, &state.poses, *piece);
-        work.pose_transforms += 1;
-    }
     rebuild_all(state, contract, work);
     work.disruptions += 1;
-    work.disruption_moves += plan.len() as u64;
+    work.disruption_moves += moved.len() as u64;
     DisruptOutcome {
         fired: true,
         swapped: Some((first, second)),
         distinct,
-        followers: moved,
+        followers,
         followers_capped: capped,
     }
 }

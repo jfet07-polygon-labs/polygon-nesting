@@ -1648,16 +1648,22 @@ fn every_fixture_piece_has_an_interior_witness_inside_its_own_material() {
 
 /// **The swap and the rigid follow.**
 ///
-/// Three pieces: two large ones far apart, and a small one sitting inside the
-/// first. After a disruption the two large pieces have exchanged poses, and the
-/// small one has been carried by exactly the rigid map that took its host from
-/// its old pose to its new one - so its position *relative to its host* is
-/// unchanged to round-off, which is the whole content of "move it to the empty
-/// space the swap created".
+/// Three pieces: two large ones far apart, and a small one sitting where the
+/// big square is about to *land*. After the disruption the two large pieces have
+/// exchanged poses, and the small one - which the arriving square would have
+/// engulfed - has been sent into the space that square vacated, by exactly the
+/// rigid map that takes the square's new frame back to its old one.
+///
+/// The direction is the source's and it is checked here because it is easy to
+/// get backwards: `optimizer/explore.rs::disrupt_solution` asks the containment
+/// question *after* both swaps and maps `T_old . T_new^-1`, so the followers are
+/// the occupants of the arriving piece's destination, not of its origin. Its
+/// comment says why - the huge item creates a large empty space and the items
+/// that surrounded the smaller one are the ones sent into it.
 #[test]
 fn a_disruption_swaps_two_large_pieces_and_carries_their_interior_followers() {
-    // A big square, a big rectangle of clearly different area and diameter, and
-    // a small square that lives inside the big one.
+    // A big square, a tall bar of clearly different area and diameter, and a
+    // small square parked where the big square is going.
     let fixture = Fixture {
         polygons: vec![
             polygon(&square(0.0, 0.0, 80.0)),
@@ -1672,9 +1678,10 @@ fn a_disruption_swaps_two_large_pieces_and_carries_their_interior_followers() {
     };
     let poses = vec![
         pose_at(20.0, 20.0),
-        pose_at(140.0, 200.0),
-        // Inside the big square's footprint, which spans (20,20)-(100,100).
-        pose_at(50.0, 50.0),
+        pose_at(100.0, 200.0),
+        // Inside the big square's *destination* footprint, (100,200)-(180,280),
+        // and outside the bar's, (20,20)-(60,120).
+        pose_at(110.0, 210.0),
     ];
     let (sources, contract, mut state) = state_of_poses(&fixture, poses.clone(), 380.0);
 
@@ -1687,18 +1694,11 @@ fn a_disruption_swaps_two_large_pieces_and_carries_their_interior_followers() {
     );
     assert!(
         is_distinct_enough(&sources[0], &sources[1]),
-        "6400 mm² / 113 mm diameter against 4000 mm² / 107.7 mm"
+        "6400 mm² / 113.1 mm diameter against 4000 mm² / 107.7 mm"
     );
     assert!(
         !is_distinct_enough(&sources[0], &sources[0]),
         "a piece is never distinct from itself"
-    );
-
-    // The passenger's witness really is inside the big square's ring.
-    let witness = transformed_witness(&sources[2], state.poses[2]);
-    assert!(
-        point_in_ring(witness, state.geometry.ring_slice(0)),
-        "witness {witness:?} is not inside the host ring"
     );
 
     let mut work = WorkVector::default();
@@ -1728,9 +1728,10 @@ fn a_disruption_swaps_two_large_pieces_and_carries_their_interior_followers() {
     assert_eq!(state.poses[second].tx_mm, poses[first].tx_mm);
     assert_eq!(state.poses[second].ty_mm, poses[first].ty_mm);
 
-    // The follow: the passenger moved, and by the host's own rigid map.
+    // The follow: the passenger moved, and by the square's own map, new frame
+    // back to old.
     assert_eq!(outcome.followers, vec![2], "followers {:?}", outcome.followers);
-    let expected = carry(poses[2], poses[0], state.poses[0]);
+    let expected = carry(poses[2], state.poses[0], poses[0]);
     assert!(
         (state.poses[2].tx_mm - expected.tx_mm).abs() < 1e-9
             && (state.poses[2].ty_mm - expected.ty_mm).abs() < 1e-9
@@ -1738,14 +1739,31 @@ fn a_disruption_swaps_two_large_pieces_and_carries_their_interior_followers() {
         "the passenger went to {:?}, not to {expected:?}",
         state.poses[2]
     );
-    let before = libm::hypot(poses[2].tx_mm - poses[0].tx_mm, poses[2].ty_mm - poses[0].ty_mm);
+    // It landed in the vacancy the square left, not beside the square.
+    assert!(
+        (state.poses[2].tx_mm - 30.0).abs() < 1e-9
+            && (state.poses[2].ty_mm - 30.0).abs() < 1e-9,
+        "the passenger should have taken the square's old corner: {:?}",
+        state.poses[2]
+    );
+    // The map is rigid: the offset the passenger had from the *arriving* square
+    // is the offset it keeps from that square's origin. The host is piece 0
+    // whichever of the two the draw called `first`, because the passenger sits
+    // in piece 0's destination.
+    let host_new = poses[1];
+    let host_old = poses[0];
+    let before = libm::hypot(
+        poses[2].tx_mm - host_new.tx_mm,
+        poses[2].ty_mm - host_new.ty_mm,
+    );
     let after = libm::hypot(
-        state.poses[2].tx_mm - state.poses[0].tx_mm,
-        state.poses[2].ty_mm - state.poses[0].ty_mm,
+        state.poses[2].tx_mm - host_old.tx_mm,
+        state.poses[2].ty_mm - host_old.ty_mm,
     );
     assert!(
         (after - before).abs() < 1e-9,
-        "the map is rigid: {before} mm from its host before, {after} mm after"
+        "the map is rigid: {before} mm from the destination before, {after} mm \
+         from the origin after"
     );
 
     // Every cache is consistent on return, so the caller can separate at once.
