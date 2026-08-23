@@ -1,0 +1,17 @@
+--- a/crates/polygon-nesting-core/src/search/overlap_ics/mod.rs
++++ b/crates/polygon-nesting-core/src/search/overlap_ics/mod.rs
+@@ -1330,13 +1330,13 @@
+ /// to cross exactly that shelf - never ran.
+ pub fn observe_raw(raw: f64, min_raw: &mut f64, since_improvement: &mut u64) -> RawObservation {
+     if raw < *min_raw {
+         // The 2 % is measured against the strike-best **before** it moves,
+         // which is Sparrow's order: `loss < min_loss * 0.98` is evaluated while
+         // `min_loss` still holds the incumbent.
+-        let substantial = raw < STRIKE_IMPROVEMENT_RATIO * *min_raw;
++        let substantial = raw < 1.0 * *min_raw;
+         *min_raw = raw;
+         if substantial {
+             *since_improvement = 0;
+             RawObservation::Substantial
+         } else {
+             RawObservation::Marginal
