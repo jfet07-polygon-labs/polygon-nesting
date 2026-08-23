@@ -8516,3 +8516,32 @@ parents, deterministic across two processes with eight OS threads each) and the
 concept → paper algorithm → source-confirmed default at `14f4868f` → our
 difference, including the one nobody had written down, that Sparrow's compiled
 `n_workers` default is 3 while ours (and the 150.165 log's flag) is 8.
+
+## The implementation review: one comparison starved the operator built to cross the shelf
+
+Both reviewers, independently, from the code and the raw cell documents:
+(A) — a line-level defect, the same line. Engine::separate resets its
+no-improvement counter on ANY new raw-Phi minimum (mod.rs:~768); the frozen
+spec and Sparrow's own separator.rs:102-114 require a 2% improvement to
+reset (sub-2% minima update the snapshot but neither reset nor increment).
+At the Phi~1e-4 floor of bite 22 a trickle of 1e-15 minima keeps one
+separation alive until the deadline, so the pool/disrupt path — Algorithm 12,
+the exact operator that exists to cross a packing shelf — never runs:
+5,319 iterations, 0 strikes, 0 disruptions on the red-vector cell, and
+disruptions: 0 on every stuck bite 22 while firing normally on easier
+widths in the same cells. The clearance-split suspicion on caveat 4 is
+refuted by both (the strip-top row and proxy depth share one sag-less
+convention; band-and-over-target coexist exactly in the (0, 4 um] overshoot
+window). Everything else is ruled faithful to the signed freeze; the two
+declared deviations are accepted; two non-gating risks recorded (the
+per-iteration thread spawn vs a persistent pool; the raw bite rows dropped
+by wall.py's reduction — to be committed in the rerun). The failure license
+grants exactly one semantic change — the 2% transition, via a shared helper
+with a red/green state-machine vector and the false-green test corrected —
+then the identical 9-seed 10 s gate. Grok's honest expectation: the rerun
+still fails 3/9 (seeds 3 and 6 cleared bite 22 and finished at 169; the
+30 s basin needs ~27 s of search). Sol's: the verdict that emerges from a
+now-faithful member stands either way. The 30 s column (5/9 at
+163.69-165.06, first run) is owner-facing evidence, not a rescue.
+Reviews verbatim: docs/sol-review-18-the-strike-predicate.md,
+docs/grok-review-13-the-strike-predicate.md.
