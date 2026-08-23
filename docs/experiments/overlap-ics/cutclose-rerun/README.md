@@ -286,9 +286,10 @@ compile into it.
 `CutCloseRelocate` beats the old wall arm on **3 of 9** seeds here against round
 1's 2. Every arm-B run was dual-gate valid; arm A published nothing invalid.
 
-Two facts a reader is owed, neither of which moves the bar. Arm B reproduces
-**168.46800** on seed 6, to five decimals the published 168.484's neighbourhood,
-so the box is healthy. And arm B is again a lottery: **13.977 mm** of spread
+Two facts a reader is owed, neither of which moves the bar. Arm B returns
+**168.46800** on seed 6 — 16 µm under the published 168.484, and the same value
+that cell returned in round 1 — so the box is healthy and the bar is not stale.
+And arm B is again a lottery: **13.977 mm** of spread
 across its nine seeds and a median **1.969 mm** from its own published number.
 Six of its nine cells returned exactly round 1's value; three (seeds 0, 3, 7)
 did not, so arm B is not reproducible run to run either. 168.484 remains the
