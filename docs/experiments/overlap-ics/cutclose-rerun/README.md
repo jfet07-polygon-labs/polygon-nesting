@@ -714,3 +714,31 @@ fixed-work replay), `control-ab-ba.json`, `strike-red.log`, `strike-red.patch`,
 Every per-bite claim in this document is reconstructible from `wall.json` and
 `round1-bites-red.json` alone. That was Sol review 18's second non-gating risk
 and it is discharged.
+
+## Errata — from the evidence-integrity audit (2026-08-23, evidence-audit/)
+
+The owner's rule ("verify the code before results become evidence") ran two
+audit agents over this round's machinery and numbers before the three-model
+quorum signed. 19,672 mechanically counted identities held; the gate verdict
+(FAIL, 2/9, seeds [2,3]) is stable under every reading. Three printed depths
+in this README are post-deadline publications (the engine published past its
+own deadline by 0.2–1.5 ms at the top of the loop before the deadline check;
+the reduction's 10.000 s filter was in the pacer's clock frame, which starts
+after the constructor, so it could never fire — both driver defects now
+fixed). Corrected values:
+
+| where | printed | correct |
+|---|---|---|
+| §1 headline / §2 seed 3 @10 s | 167.31508 | **167.31678** (1.167 mm below the bar, not 1.169) |
+| §2 seed 1 @3 s | 179.42186 | **179.42767** |
+| §2 seed 8 @30 s | 179.06000 | **179.06179** (round-1 delta −0.020, not −0.022) |
+
+No conclusion changes. Also recorded there: exactAttempts counts band
+entries (2,780) not exact-geometry calls (756) — the true count is
+work.exactCheckpoints; stayPutWinners names the winning seed, not an
+unmoved piece (12 of 14 StayPut-origin winners moved); publications carry
+no poses, so the headline depths are re-validatable only by the producing
+process (all 18 recorded arm-B/incumbent pose sets re-validated 18/18
+dual-valid, bit-identical); the second authority is not decorative (of
+3,298 exact checkpoints: 1,701 published, 1,227 kernel-refused, 361
+contract-refused after the kernel passed, 9 target-refused).

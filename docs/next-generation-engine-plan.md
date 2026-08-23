@@ -8665,3 +8665,27 @@ evidence-integrity audit now running two agents deep over the code and the
 committed rerun numbers; if the audit moves anything the spec leans on, the
 signatures are re-confirmed against corrected evidence before a line of
 implementation.
+
+## The audit the owner ordered before the signatures dried
+
+"Verificare bene il codice che mandi in valutazione" — so before the
+three-model quorum's spec became an implementation, two agents spent an
+afternoon trying to break the evidence it was signed against. The gate
+survived: 19,672 mechanically counted identities green, all nine fixed-work
+replays bit-identical on a third binary, the 145/164 strike totals and the
+3,059/6/2 green vector reconstructed from raw rows by an independent
+reduction with zero mismatches. And the audit still earned its keep four
+ways: the 10.000-second anytime filter was in the wrong clock frame and
+could never fire (one-sided — it can only add qualifiers, so FAIL stands);
+three printed depths were post-deadline publications, corrected in place at
+micrometre scale because a pre-committed clause makes them wrong, not
+because micrometres matter; exactAttempts was counting band entries, not
+questions actually asked of the exact authorities (2,780 vs 756); and the
+clearance-split bug family — this campaign's worst — is untestable on the
+gate fixture because sag and safety are both zero there, with a real
+0.300 mm latent shortfall demonstrated at sag=0.10/safety=0.40 contracts.
+Driver defects fixed in place; engine findings recorded for the economics
+round's instrumentation budget (split the counter, emit poses with
+publications, pin per-cell source hashes); the latent clearance shape goes
+to a future licensed round. The three signatures stand on corrected
+numbers. Evidence: docs/experiments/overlap-ics/evidence-audit/.
