@@ -2,12 +2,13 @@
 
 ## Status
 
-**Mechanism and experimental law selected by a 3/3 quorum. Implementation is
-not yet licensed.** This document freezes what the round may change and how it
-will be judged. It is deliberately a decision record rather than an
-implementation specification: the independently authored disc construction,
-mass equation, zero-mass fallback, and placebo permutation still require an
-exact 3/3 pre-commit before code is written.
+**Mechanism, experimental law, and exact implementation specification selected
+by a 3/3 quorum. Implementation is licensed.** This document freezes what the
+round may change and how it will be judged. The independently authored disc
+construction, mass equation, zero-mass fallback, placebo permutation, and Gate
+0 are frozen in
+[`conflict-cluster-budget-spec.md`](conflict-cluster-budget-spec.md), SHA-256
+`0cfdf0e2557967e5aab3a48534e4ff6508c38b3d1054344360aedd61ce284ce9`.
 
 No treatment scout or implementation exists at this point.
 
@@ -58,9 +59,11 @@ solver remains untouched.
 At the start of every worker outer iteration:
 
 1. Freeze the authoritative positive-pair conflict graph and the entry
-   colliding-piece set. Vertices are input pieces; a positive signed-gap pair
-   row creates an edge. A piece with boundary violations but no positive pair
-   row is a singleton component.
+   colliding-piece set. Vertices are input pieces; a pair row whose
+   authoritative `PairRow.violation_mm` is strictly positive creates an edge.
+   A piece with boundary violations but no positive-violation pair row is a
+   singleton component. Literal positivity of `Contact.signed_gap_mm` is not
+   the predicate: it denotes separated material and is `AUTOFAIL` here.
 2. Let `Q` be the cardinality of the entry colliding-piece set.
 3. Compute one independently authored multi-disc mass for each frozen
    component.
@@ -143,9 +146,9 @@ another arm, or a rescue run. If B passes against A but misses either placebo
 attribution clause, the mass field is real but not causally material and is
 closed; a simpler partition arm may only be considered under a new spec.
 
-## Before implementation can begin
+## Preimplementation quorum — complete
 
-The next exact specification must freeze, and the same quorum must sign:
+The exact specification freezes:
 
 - the source-ring disc construction and fixed-order representation;
 - the mass equation and its units, including boundary-only components;
@@ -155,6 +158,11 @@ The next exact specification must freeze, and the same quorum must sign:
 - the fixed-slot Gate-0 corpus, ceilings, emitted census, and battery driver;
 - a source-provenance audit proving that no Sparrow/Jagua code, dependency,
   data layout, constants, or formula was copied or linked.
+
+Sol, Grok, and ox-alpha read and confirmed all 402 lines at the same SHA-256,
+without reservation or hidden amendment. Their literal votes are preserved in
+[`conflict-cluster-budget-spec-ballot.md`](conflict-cluster-budget-spec-ballot.md).
+No implementation or treatment scout preceded that ballot.
 
 Because all reviewers read Sparrow source, this is called an **independently
 authored implementation boundary**, not a literal legal clean room.
@@ -174,3 +182,7 @@ Individual records:
 - [`sol-review-20-sparrow-informed-next-round.md`](sol-review-20-sparrow-informed-next-round.md)
 - [`grok-review-15-sparrow-informed-next-round.md`](grok-review-15-sparrow-informed-next-round.md)
 - [`ox-alpha-review-2-sparrow-informed-next-round.md`](ox-alpha-review-2-sparrow-informed-next-round.md)
+
+Exact-spec ballot:
+
+- [`conflict-cluster-budget-spec-ballot.md`](conflict-cluster-budget-spec-ballot.md)
