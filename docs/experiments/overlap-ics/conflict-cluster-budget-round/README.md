@@ -24,3 +24,7 @@ The runner executes, in order:
 
 It exits zero only if every Gate-0 clause passes. A miss stops the round; the
 quality battery is deliberately a separate, unavailable step until that exit.
+
+The first and only frozen execution is recorded in
+[`evidence/verdict.md`](evidence/verdict.md). It failed G0.4, so the mechanism
+is closed and no 30-, 10-, or 60-second quality arm was run.
