@@ -224,7 +224,77 @@ pub struct WorkPlanPacer<C: PlanClock = NoClock> {
     explore_ratio: f64,
 }
 
+/// Every mutable and immutable value owned by a calibrated pacer at a
+/// continuation seam. Reopening a fresh pacer would silently forget consumed
+/// units and double-charge the prefix, so the pool-retry fork serializes this
+/// complete state instead.
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[derive(Clone, Debug)]
+pub(crate) struct WorkPlanPacerSnapshotV1 {
+    pub key: PlanKey,
+    pub currency: Currency,
+    pub explore_allocation: u64,
+    pub compress_allocation: u64,
+    pub explore_consumed: u64,
+    pub compress_consumed: u64,
+    pub explore_batches: u64,
+    pub compress_batches: u64,
+    pub budget_seconds: f64,
+    pub explore_ratio: f64,
+}
+
 impl<C: PlanClock> WorkPlanPacer<C> {
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub(crate) fn checkpoint_snapshot(&self) -> WorkPlanPacerSnapshotV1 {
+        WorkPlanPacerSnapshotV1 {
+            key: self.key.clone(),
+            currency: self.currency,
+            explore_allocation: self.explore_allocation,
+            compress_allocation: self.compress_allocation,
+            explore_consumed: self.explore_consumed,
+            compress_consumed: self.compress_consumed,
+            explore_batches: self.explore_batches,
+            compress_batches: self.compress_batches,
+            budget_seconds: self.budget_seconds,
+            explore_ratio: self.explore_ratio,
+        }
+    }
+
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub(crate) fn from_checkpoint(
+        snapshot: WorkPlanPacerSnapshotV1,
+        clock: C,
+    ) -> Result<Self, String> {
+        if snapshot.explore_consumed > snapshot.explore_allocation && snapshot.explore_batches == 0
+        {
+            return Err("checkpoint has explore consumption without a charged batch".to_owned());
+        }
+        if snapshot.compress_consumed > snapshot.compress_allocation
+            && snapshot.compress_batches == 0
+        {
+            return Err("checkpoint has compress consumption without a charged batch".to_owned());
+        }
+        if !snapshot.budget_seconds.is_finite()
+            || snapshot.budget_seconds <= 0.0
+            || !snapshot.explore_ratio.is_finite()
+        {
+            return Err("checkpoint has invalid calibrated-plan scalars".to_owned());
+        }
+        Ok(Self {
+            clock,
+            key: snapshot.key,
+            currency: snapshot.currency,
+            explore_allocation: snapshot.explore_allocation,
+            compress_allocation: snapshot.compress_allocation,
+            explore_consumed: snapshot.explore_consumed,
+            compress_consumed: snapshot.compress_consumed,
+            explore_batches: snapshot.explore_batches,
+            compress_batches: snapshot.compress_batches,
+            budget_seconds: snapshot.budget_seconds,
+            explore_ratio: snapshot.explore_ratio,
+        })
+    }
+
     /// A pacer for `budget_seconds` of calibrated work, split `explore_ratio`
     /// / `1 - explore_ratio` and converted at each phase's own safe rate.
     ///

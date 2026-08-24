@@ -1590,11 +1590,67 @@ fn pool_retry_digests_separate_raw_rows_from_weights_and_rollback_keeps_weights(
 fn a_nonfinite_saved_weight_is_visible_even_if_treatment_would_reset_it() {
     use super::pool_rebase::WeightSnapshot;
 
-    let pair = [f64::NAN, 2.0];
-    let edge = [[1.0, 1.0, 1.0, 1.0]];
+    let pair = [f64::NAN];
+    let edge = [[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 2.0]];
     let saved = WeightSnapshot::of_saved(&pair, &edge);
     assert!(!saved.all_finite);
     assert!(!saved.all_exactly_one);
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn pool_retry_shared_lifecycle_and_existing_new_width_reset_are_exact() {
+    use super::pool_rebase::PoolRebaseArm;
+
+    let fixture = two_squares();
+    let pieces = fixture.pieces();
+    let run = |arm, nonfinite| {
+        let mut engine = banded_deficit_engine(&pieces, 200.0);
+        engine.state.pair_rows[0].weight = if nonfinite { f64::NAN } else { 17.0 };
+        engine.state.edge_rows[0][3].weight = 1_024.0;
+        engine.pool_rebase_lifecycle_vector(arm, 7)
+    };
+    let saved = run(PoolRebaseArm::Saved, false);
+    let rebase = run(PoolRebaseArm::Rebase, false);
+    let compute = run(PoolRebaseArm::ComputeIgnore, false);
+    for row in [&saved, &rebase, &compute] {
+        assert!(row.valid, "the shared lifecycle vector failed: {row:?}");
+        assert_eq!(
+            row.post_disruption_raw_row_digest_sha256,
+            row.cold_post_disruption_raw_row_digest_sha256
+        );
+    }
+    assert_eq!(saved.disruption, rebase.disruption);
+    assert_eq!(saved.disruption, compute.disruption);
+    assert_eq!(
+        saved.disruption_pose_transform_digest_sha256,
+        rebase.disruption_pose_transform_digest_sha256
+    );
+    assert_eq!(
+        saved.post_disruption_pose_digest_sha256,
+        rebase.post_disruption_pose_digest_sha256
+    );
+    assert!(rebase.post_policy_weights.all_exactly_one);
+    assert_eq!(
+        saved.post_policy_weights.bits,
+        compute.post_policy_weights.bits
+    );
+
+    let nonfinite = run(PoolRebaseArm::Rebase, true);
+    assert!(!nonfinite.saved_weights.all_finite);
+    assert!(
+        !nonfinite.valid,
+        "the reset must not mask corrupt saved input"
+    );
+
+    let mut width_engine = banded_deficit_engine(&pieces, 200.0);
+    width_engine.state.pair_rows[0].weight = 17.0;
+    let width = width_engine.pool_rebase_new_width_reset_vector(199.0);
+    assert!(
+        width.valid,
+        "new-width reset/cold rebuild failed: {width:?}"
+    );
+    assert!(width.weights.all_exactly_one);
 }
 
 /// A sweep runs the Algorithm-8 pass exactly once, over every row, whether or

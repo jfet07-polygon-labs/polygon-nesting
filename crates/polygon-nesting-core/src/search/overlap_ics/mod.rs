@@ -83,6 +83,8 @@ pub mod icscal;
 pub mod icscal_read;
 #[cfg(feature = "pool-retry-tracker-rebase")]
 pub mod pool_rebase;
+#[cfg(feature = "pool-retry-tracker-rebase")]
+pub mod pool_rebase_checkpoint;
 /// The master-iteration phase census behind the `ics-profile` feature.
 /// Measurement only; every field is zero in a default build.
 pub mod profile;
@@ -122,7 +124,7 @@ use diagnostics::{ProxySample, QualityPoint, Trace, WorkVector};
 use icscal::PlanPhase;
 #[cfg(feature = "pool-retry-tracker-rebase")]
 use pool_rebase::{
-    PoolRebaseArm, PoolRebaseTrace, PoolRetryRecord, WeightSnapshot,
+    NewWidthResetVector, PoolRebaseArm, PoolRebaseTrace, PoolRetryRecord, WeightSnapshot,
     FIRST_RETRY_ITERATION_CAP,
 };
 use profile::{ics_time, PhaseProfile};
@@ -1091,6 +1093,7 @@ impl<'a> Engine<'a> {
         bite: u64,
         attempt: u64,
         record_fingerprints: bool,
+        #[cfg(feature = "pool-retry-tracker-rebase")] record_pool_rebase: bool,
         fingerprints: &mut Vec<IterationFingerprint>,
         #[cfg(feature = "pool-retry-tracker-rebase")] iteration_cap_override: Option<u64>,
         #[cfg(feature = "minimum-conflict-binary-close")] mut consumed_orders: Option<
@@ -1285,6 +1288,9 @@ impl<'a> Engine<'a> {
                     winner_guided: merge.guided,
                     contested: merge.contested,
                     state: state_fingerprint(&self.state),
+                    #[cfg(feature = "pool-retry-tracker-rebase")]
+                    committed_pose_digest_sha256: record_pool_rebase
+                        .then(|| pool_rebase::pose_digest(&self.state.poses)),
                 });
             }
             // Only a turn that reached the tournament is a *master iteration*;
@@ -1341,6 +1347,217 @@ impl<'a> Engine<'a> {
         }
     }
 
+    /// The single shared continuation after a pool rank has been selected.
+    /// Both the live loop and the fresh-process checkpoint resume enter here;
+    /// keeping one implementation prevents the diagnostic fork from becoming
+    /// a second algorithm.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    #[allow(clippy::too_many_arguments)]
+    fn install_policy_disrupt_pool_entry(
+        &mut self,
+        entry: &PoolEntry,
+        arm: PoolRebaseArm,
+        seed: u64,
+        bite_ordinal: u64,
+        attempt: u64,
+        width_mm: f64,
+        pool_length: usize,
+        selected_rank: usize,
+        record_diagnostic: bool,
+        record_timing: bool,
+        fingerprint_start: usize,
+    ) -> (
+        disrupt::DisruptOutcome,
+        Option<PoolRetryRecord>,
+        Option<std::time::Instant>,
+    ) {
+        let saved_weights = record_diagnostic
+            .then(|| WeightSnapshot::of_saved(&entry.pair_weights, &entry.edge_weights));
+        let selected_pose_digest_sha256 =
+            record_diagnostic.then(|| pool_rebase::pose_digest(&entry.poses));
+
+        // Exact G0.3 start: all pre-path diagnostics above are complete and
+        // pose installation is the next operation.
+        let path_started = record_timing.then(std::time::Instant::now);
+        self.install_poses(&entry.poses, width_mm);
+
+        let post_install_pose_digest_sha256 =
+            record_diagnostic.then(|| pool_rebase::pose_digest(&self.state.poses));
+        let post_install_raw_row_digest_sha256 =
+            record_diagnostic.then(|| pool_rebase::raw_row_digest(&self.state));
+        let reset_weights = entry.apply_rebase_policy(&mut self.state, arm);
+        let post_policy_weights = record_diagnostic.then(|| WeightSnapshot::of(&self.state));
+        self.last_attempt_pose_digest = None;
+        let Engine {
+            ref mut state,
+            ref sources,
+            ref contract,
+            ref mut trace,
+            ref descent,
+            ..
+        } = *self;
+        let disruption_work_before = trace.work;
+        let pre_disruption_poses = record_diagnostic.then(|| state.poses.clone());
+        let disruption = disrupt::disrupt(
+            state,
+            sources,
+            contract,
+            descent.allow_rotation(),
+            seed,
+            bite_ordinal,
+            attempt,
+            &mut trace.work,
+        );
+        if !record_diagnostic {
+            return (disruption, None, path_started);
+        }
+
+        let saved_weights = saved_weights.expect("recorded retry captured saved weights");
+        let selected_pose_digest_sha256 =
+            selected_pose_digest_sha256.expect("recorded retry captured selected poses");
+        let post_install_pose_digest_sha256 =
+            post_install_pose_digest_sha256.expect("recorded retry captured installed poses");
+        let post_install_raw_row_digest_sha256 =
+            post_install_raw_row_digest_sha256.expect("recorded retry captured installed raw rows");
+        let post_policy_weights =
+            post_policy_weights.expect("recorded retry captured policy weights");
+        let post_disruption_weights = WeightSnapshot::of(state);
+        let post_disruption_pose_digest_sha256 = pool_rebase::pose_digest(&state.poses);
+        let post_disruption_raw_row_digest_sha256 = pool_rebase::raw_row_digest(state);
+        let mut cold_state = state.clone();
+        let mut cold_work = WorkVector::default();
+        energy::rebuild_all(&mut cold_state, contract, &mut cold_work);
+        let cold_post_disruption_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&cold_state);
+        let cold_post_disruption_weights = WeightSnapshot::of(&cold_state);
+        let reset_valid = match arm {
+            PoolRebaseArm::Saved => reset_weights.is_none(),
+            PoolRebaseArm::Rebase | PoolRebaseArm::ComputeIgnore => reset_weights
+                .as_ref()
+                .is_some_and(|snapshot| snapshot.all_finite && snapshot.all_exactly_one),
+        };
+        let policy_valid = match arm {
+            PoolRebaseArm::Rebase => {
+                post_policy_weights.all_finite && post_policy_weights.all_exactly_one
+            }
+            PoolRebaseArm::Saved | PoolRebaseArm::ComputeIgnore => {
+                post_policy_weights.bits == saved_weights.bits
+            }
+        };
+        let valid = saved_weights.all_finite
+            && selected_pose_digest_sha256 == post_install_pose_digest_sha256
+            && reset_valid
+            && policy_valid
+            && post_disruption_weights.bits == post_policy_weights.bits
+            && cold_post_disruption_weights.bits == post_disruption_weights.bits
+            && post_disruption_raw_row_digest_sha256 == cold_post_disruption_raw_row_digest_sha256;
+        let record = PoolRetryRecord {
+            request_seed: seed,
+            explore_bite_ordinal: bite_ordinal,
+            attempt_ordinal: attempt,
+            width_mm,
+            pool_length,
+            selected_rank,
+            pool_entry_raw_phi: entry.raw_phi,
+            selected_pose_digest_sha256,
+            saved_weights,
+            post_install_pose_digest_sha256,
+            post_install_raw_row_digest_sha256,
+            reset_weights,
+            post_policy_weights,
+            disruption: disruption.clone(),
+            disruption_work_delta: trace.work.saturating_sub(disruption_work_before),
+            disruption_pose_transform_digest_sha256: pool_rebase::pose_transform_digest(
+                pre_disruption_poses
+                    .as_ref()
+                    .expect("recorded retry captured pre-disruption poses"),
+                &state.poses,
+            ),
+            post_disruption_pose_digest_sha256,
+            post_disruption_raw_row_digest_sha256,
+            cold_post_disruption_raw_row_digest_sha256,
+            post_disruption_weights,
+            fingerprint_start,
+            fingerprint_end: fingerprint_start,
+            retry_iterations: 0,
+            retry_stop: None,
+            retry_published: false,
+            retry_work_before: WorkVector::default(),
+            retry_work_after: WorkVector::default(),
+            path_work_delta: WorkVector::default(),
+            retry_strikes: 0,
+            retry_min_raw_phi: f64::INFINITY,
+            retry_band_reached: false,
+            retry_exact_band_entries: 0,
+            retry_exact_checkpoint_calls: 0,
+            retry_strike_shadow: ShadowCounters::default(),
+            retry_strike_accumulated: 0,
+            retry_strike_overshoot: 0,
+            retry_exact_checkpoints: Vec::new(),
+            retry_publication: None,
+            authority_parent_fingerprint: String::new(),
+            pacer_before: None,
+            pacer_after: None,
+            path_seconds: None,
+            failure_reasons: Vec::new(),
+            valid,
+        };
+        (disruption, Some(record), path_started)
+    }
+
+    /// G0.1 vector entry through the exact live cold-install/policy/disruption
+    /// helper. It is diagnostic-only and is never called by a trajectory.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub fn pool_rebase_lifecycle_vector(
+        &mut self,
+        arm: PoolRebaseArm,
+        seed: u64,
+    ) -> PoolRetryRecord {
+        let entry = PoolEntry::of(&self.state, energy::fold(&self.state).raw);
+        self.install_policy_disrupt_pool_entry(
+            &entry,
+            arm,
+            seed,
+            1,
+            1,
+            self.state.target_depth_mm,
+            1,
+            0,
+            true,
+            false,
+            0,
+        )
+        .1
+        .expect("the lifecycle vector always records its branch")
+    }
+
+    /// G0.1's existing new-width seam: refresh authoritative rows at the new
+    /// target, then execute the unchanged floor reset and compare it with a
+    /// cold rebuild. No pool policy is involved in this vector.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub fn pool_rebase_new_width_reset_vector(&mut self, width_mm: f64) -> NewWidthResetVector {
+        self.state.target_depth_mm = width_mm;
+        self.refresh_all();
+        energy::reset_weights(&mut self.state);
+        let weights = WeightSnapshot::of(&self.state);
+        let live_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&self.state);
+        let mut cold = self.state.clone();
+        let mut cold_work = WorkVector::default();
+        energy::rebuild_all(&mut cold, &self.contract, &mut cold_work);
+        let cold_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&cold);
+        let cold_weights = WeightSnapshot::of(&cold);
+        NewWidthResetVector {
+            width_mm,
+            valid: weights.all_finite
+                && weights.all_exactly_one
+                && cold_weights.bits == weights.bits
+                && cold_raw_row_digest_sha256 == live_raw_row_digest_sha256,
+            weights,
+            live_raw_row_digest_sha256,
+            cold_raw_row_digest_sha256,
+            cold_weights,
+        }
+    }
+
     // ------------------------------------ Algorithms 11-13: the two phases --
 
     /// **`CutCloseRelocate`: explore, then compress.**
@@ -1388,6 +1605,8 @@ impl<'a> Engine<'a> {
         let mut pool_rebase_trace = PoolRebaseTrace::new(schedule.pool_rebase_arm);
         #[cfg(feature = "pool-retry-tracker-rebase")]
         let mut first_pool_retry_completed = false;
+        #[cfg(feature = "pool-retry-tracker-rebase")]
+        let mut pool_retry_checkpoint_captured = false;
 
         // The entry width is the exact incumbent's own depth: `D*`. A
         // trajectory entered from a pose fixture that carries no incumbent
@@ -1511,6 +1730,10 @@ impl<'a> Engine<'a> {
             let mut pending_pool_retry_started: Option<std::time::Instant> = None;
             #[cfg(feature = "pool-retry-tracker-rebase")]
             let mut pending_pool_retry_work = WorkVector::default();
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            let mut pending_pool_retry_exact_checkpoint_start = 0usize;
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            let mut pending_pool_retry_pacer_before: Option<CalibratedSummary> = None;
 
             loop {
                 let separation = self.separate(
@@ -1521,6 +1744,8 @@ impl<'a> Engine<'a> {
                     bite_ordinal,
                     attempt,
                     schedule.record_fingerprints,
+                    #[cfg(feature = "pool-retry-tracker-rebase")]
+                    schedule.record_pool_rebase,
                     &mut fingerprints,
                     #[cfg(feature = "pool-retry-tracker-rebase")]
                     (schedule.stop_after_first_pool_retry && attempt > 0)
@@ -1528,6 +1753,9 @@ impl<'a> Engine<'a> {
                     #[cfg(feature = "minimum-conflict-binary-close")]
                     consumed_orders.as_mut(),
                 );
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                let pool_retry_completed_at = (attempt > 0 && schedule.record_pool_rebase_timing)
+                    .then(std::time::Instant::now);
                 #[cfg(feature = "pool-retry-tracker-rebase")]
                 if attempt > 0 {
                     first_pool_retry_completed = true;
@@ -1544,15 +1772,35 @@ impl<'a> Engine<'a> {
                         decision.retry_iterations = separation.iterations;
                         decision.retry_stop = Some(separation.stop.as_str());
                         decision.retry_published = separation.published.is_some();
-                        decision.path_work_delta = self
-                            .trace
-                            .work
+                        decision.retry_work_before = pending_pool_retry_work;
+                        decision.retry_work_after = self.trace.work;
+                        decision.path_work_delta = decision
+                            .retry_work_after
                             .saturating_sub(pending_pool_retry_work);
-                        decision.path_seconds = pending_pool_retry_started
-                            .take()
-                            .expect("a recorded retry has a start instant")
-                            .elapsed()
-                            .as_secs_f64();
+                        decision.retry_strikes = separation.strikes;
+                        decision.retry_min_raw_phi = separation.min_raw;
+                        decision.retry_band_reached = separation.band_reached;
+                        decision.retry_exact_band_entries = separation.exact_band_entries;
+                        decision.retry_exact_checkpoint_calls = separation.exact_checkpoint_calls;
+                        decision.retry_strike_shadow = separation.strike_shadow;
+                        decision.retry_strike_accumulated = separation.strike_accumulated;
+                        decision.retry_strike_overshoot = separation.strike_overshoot;
+                        decision.retry_exact_checkpoints = self.trace.checkpoints
+                            [pending_pool_retry_exact_checkpoint_start..]
+                            .to_vec();
+                        decision.authority_parent_fingerprint = parent_fingerprint.clone();
+                        decision.pacer_before = pending_pool_retry_pacer_before.clone();
+                        decision.pacer_after = pacer.close(self.work_terms());
+                        decision.path_seconds = pending_pool_retry_started.take().map(|started| {
+                            pool_retry_completed_at
+                                .expect("timed retry captured its return boundary")
+                                .duration_since(started)
+                                .as_secs_f64()
+                        });
+                        if !decision.retry_published {
+                            decision.finalize_validity();
+                            pool_rebase_trace.invalid_retries += u64::from(!decision.valid);
+                        }
                     }
                 }
                 record.master_iterations += separation.iterations;
@@ -1589,119 +1837,88 @@ impl<'a> Engine<'a> {
                 let rank = homotopy::normal_biased_rank(pool.len(), seed, bite_ordinal, attempt);
                 let entry = &pool[rank];
                 #[cfg(feature = "pool-retry-tracker-rebase")]
-                if schedule.record_pool_rebase {
-                    pending_pool_retry_started = Some(std::time::Instant::now());
-                    pending_pool_retry_work = self.trace.work;
-                }
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let saved_weights =
-                    WeightSnapshot::of_saved(&entry.pair_weights, &entry.edge_weights);
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let selected_pose_digest_sha256 = pool_rebase::pose_digest(&entry.poses);
-                self.install_poses(&entry.poses, width_mm);
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let post_install_pose_digest_sha256 = pool_rebase::pose_digest(&self.state.poses);
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let post_install_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&self.state);
-                #[cfg(not(feature = "pool-retry-tracker-rebase"))]
-                entry.restore_weights(&mut self.state);
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let reset_weights =
-                    entry.apply_rebase_policy(&mut self.state, schedule.pool_rebase_arm);
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let post_policy_weights = WeightSnapshot::of(&self.state);
-                self.last_attempt_pose_digest = None;
-                let Engine {
-                    ref mut state,
-                    ref sources,
-                    ref contract,
-                    ref mut trace,
-                    ref descent,
-                    ..
-                } = *self;
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let disruption_work_before = trace.work;
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                let pre_disruption_poses = state.poses.clone();
-                let moves_before = trace.work.disruption_moves;
-                let disruption = disrupt::disrupt(
-                    state,
-                    sources,
-                    contract,
-                    descent.allow_rotation(),
-                    seed,
-                    bite_ordinal,
-                    attempt,
-                    &mut trace.work,
-                );
-                #[cfg(feature = "pool-retry-tracker-rebase")]
-                if schedule.record_pool_rebase {
-                    let post_disruption_weights = WeightSnapshot::of(state);
-                    let post_disruption_pose_digest_sha256 = pool_rebase::pose_digest(&state.poses);
-                    let post_disruption_raw_row_digest_sha256 = pool_rebase::raw_row_digest(state);
-                    let mut cold_state = state.clone();
-                    let mut cold_work = WorkVector::default();
-                    energy::rebuild_all(&mut cold_state, contract, &mut cold_work);
-                    let cold_post_disruption_raw_row_digest_sha256 =
-                        pool_rebase::raw_row_digest(&cold_state);
-                    let reset_valid = match schedule.pool_rebase_arm {
-                        PoolRebaseArm::Saved => reset_weights.is_none(),
-                        PoolRebaseArm::Rebase | PoolRebaseArm::ComputeIgnore => {
-                            reset_weights.as_ref().is_some_and(|snapshot| {
-                                snapshot.all_finite && snapshot.all_exactly_one
-                            })
-                        }
-                    };
-                    let policy_valid = match schedule.pool_rebase_arm {
-                        PoolRebaseArm::Rebase => {
-                            post_policy_weights.all_finite && post_policy_weights.all_exactly_one
-                        }
-                        PoolRebaseArm::Saved | PoolRebaseArm::ComputeIgnore => {
-                            post_policy_weights.bits == saved_weights.bits
-                        }
-                    };
-                    let valid = saved_weights.all_finite
-                        && selected_pose_digest_sha256 == post_install_pose_digest_sha256
-                        && reset_valid
-                        && policy_valid
-                        && post_disruption_weights.bits == post_policy_weights.bits
-                        && post_disruption_raw_row_digest_sha256
-                            == cold_post_disruption_raw_row_digest_sha256;
-                    pool_rebase_trace.invalid_retries += u64::from(!valid);
-                    pool_rebase_trace.decisions.push(PoolRetryRecord {
-                        request_seed: seed,
-                        explore_bite_ordinal: bite_ordinal,
-                        attempt_ordinal: attempt,
+                if schedule.capture_first_pool_retry_checkpoint {
+                    match pool_rebase_checkpoint::capture(
+                        self,
+                        &pacer,
+                        schedule,
+                        start_depth_mm,
+                        depth_mm,
                         width_mm,
-                        pool_length: pool.len(),
-                        selected_rank: rank,
-                        pool_entry_raw_phi: entry.raw_phi,
-                        selected_pose_digest_sha256,
-                        saved_weights,
-                        post_install_pose_digest_sha256,
-                        post_install_raw_row_digest_sha256,
-                        reset_weights,
-                        post_policy_weights,
-                        disruption: disruption.clone(),
-                        disruption_work_delta: trace.work.saturating_sub(disruption_work_before),
-                        disruption_pose_transform_digest_sha256:
-                            pool_rebase::pose_transform_digest(&pre_disruption_poses, &state.poses),
-                        post_disruption_pose_digest_sha256,
-                        post_disruption_raw_row_digest_sha256,
-                        cold_post_disruption_raw_row_digest_sha256,
-                        post_disruption_weights,
-                        fingerprint_start: fingerprints.len(),
-                        fingerprint_end: fingerprints.len(),
-                        retry_iterations: 0,
-                        retry_stop: None,
-                        retry_published: false,
-                        path_work_delta: WorkVector::default(),
-                        path_seconds: 0.0,
-                        valid,
-                    });
+                        &parent_poses,
+                        &parent_fingerprint,
+                        bite_ordinal,
+                        explore_bites,
+                        &bites,
+                        &publications,
+                        &fingerprints,
+                        &record,
+                        attempt,
+                        &pool,
+                        rank,
+                    ) {
+                        Ok(bytes) => pool_rebase_trace.checkpoint_bytes = Some(bytes),
+                        Err(error) => pool_rebase_trace.checkpoint_error = Some(error),
+                    }
+                    pool_retry_checkpoint_captured = true;
+                    break;
                 }
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                if schedule.record_pool_rebase {
+                    pending_pool_retry_work = self.trace.work;
+                    pending_pool_retry_exact_checkpoint_start = self.trace.checkpoints.len();
+                    pending_pool_retry_pacer_before = pacer.close(self.work_terms());
+                }
+                let moves_before = self.trace.work.disruption_moves;
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                let (disruption, retry_record, path_started) = self
+                    .install_policy_disrupt_pool_entry(
+                        entry,
+                        schedule.pool_rebase_arm,
+                        seed,
+                        bite_ordinal,
+                        attempt,
+                        width_mm,
+                        pool.len(),
+                        rank,
+                        schedule.record_pool_rebase,
+                        schedule.record_pool_rebase_timing,
+                        fingerprints.len(),
+                    );
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                {
+                    pending_pool_retry_started = path_started;
+                }
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                if let Some(retry_record) = retry_record {
+                    pool_rebase_trace.decisions.push(retry_record);
+                }
+                #[cfg(not(feature = "pool-retry-tracker-rebase"))]
+                let disruption = {
+                    self.install_poses(&entry.poses, width_mm);
+                    entry.restore_weights(&mut self.state);
+                    self.last_attempt_pose_digest = None;
+                    let Engine {
+                        ref mut state,
+                        ref sources,
+                        ref contract,
+                        ref mut trace,
+                        ref descent,
+                        ..
+                    } = *self;
+                    disrupt::disrupt(
+                        state,
+                        sources,
+                        contract,
+                        descent.allow_rotation(),
+                        seed,
+                        bite_ordinal,
+                        attempt,
+                        &mut trace.work,
+                    )
+                };
                 // The currency's `D` term, charged to the bite that paid it.
-                record.profile.disruption_moves += trace.work.disruption_moves - moves_before;
+                record.profile.disruption_moves += self.trace.work.disruption_moves - moves_before;
                 if disruption.fired {
                     record.disruptions += 1;
                 }
@@ -1724,6 +1941,17 @@ impl<'a> Engine<'a> {
                     self.install_publication(&publication);
                     energy::reset_weights(&mut self.state);
                     publications.push(row.clone());
+                    #[cfg(feature = "pool-retry-tracker-rebase")]
+                    if schedule.record_pool_rebase && attempt > 0 {
+                        let decision = pool_rebase_trace
+                            .decisions
+                            .last_mut()
+                            .expect("a published retry has a pool-rebase record");
+                        decision.retry_publication = Some(row.clone());
+                        decision.pacer_after = pacer.close(self.work_terms());
+                        decision.finalize_validity();
+                        pool_rebase_trace.invalid_retries += u64::from(!decision.valid);
+                    }
                     record.published = Some(row);
                     bites.push(record);
                     explore_bites += 1;
@@ -1734,7 +1962,9 @@ impl<'a> Engine<'a> {
                 }
             }
             #[cfg(feature = "pool-retry-tracker-rebase")]
-            if schedule.stop_after_first_pool_retry && first_pool_retry_completed {
+            if (schedule.stop_after_first_pool_retry && first_pool_retry_completed)
+                || pool_retry_checkpoint_captured
+            {
                 break;
             }
         }
@@ -1747,7 +1977,9 @@ impl<'a> Engine<'a> {
         let mut compress_bites = 0u64;
         while !pacer.phase_done(Phase::Compress, compress_bites) {
             #[cfg(feature = "pool-retry-tracker-rebase")]
-            if schedule.stop_after_first_pool_retry && first_pool_retry_completed {
+            if (schedule.stop_after_first_pool_retry && first_pool_retry_completed)
+                || pool_retry_checkpoint_captured
+            {
                 break;
             }
             #[cfg(feature = "minimum-conflict-binary-close")]
@@ -1782,6 +2014,8 @@ impl<'a> Engine<'a> {
                 bite_ordinal,
                 0,
                 schedule.record_fingerprints,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                schedule.record_pool_rebase,
                 &mut fingerprints,
                 #[cfg(feature = "pool-retry-tracker-rebase")]
                 None,
@@ -1886,6 +2120,184 @@ impl<'a> Engine<'a> {
             #[cfg(feature = "pool-retry-tracker-rebase")]
             pool_rebase: pool_rebase_trace,
         }
+    }
+
+    /// Resume exactly one exploration-pool retry from the canonical
+    /// post-rank/pre-install checkpoint. This diagnostic entry never runs a
+    /// constructor or prefix and has no loop capable of selecting a second
+    /// pool entry.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    #[allow(clippy::too_many_arguments)]
+    pub fn resume_first_pool_retry_from_checkpoint(
+        pieces: &'a [GeneralFastPiece<'a>],
+        sources: Vec<PieceSource>,
+        settings: GeneralFastSettings,
+        contract: Contract,
+        checkpoint_body: &[u8],
+        arm: PoolRebaseArm,
+        record_timing: bool,
+    ) -> Result<ScheduleOutcome, String> {
+        let mut restored =
+            pool_rebase_checkpoint::restore(checkpoint_body, pieces, sources, settings, contract)?;
+        let entry = restored
+            .pool
+            .get(restored.selected_rank)
+            .ok_or_else(|| "restored pool rank is out of bounds".to_owned())?
+            .clone();
+        let mut pool_rebase_trace = PoolRebaseTrace::new(arm);
+        let path_work_before = restored.engine.trace.work;
+        let exact_checkpoint_start = restored.engine.trace.checkpoints.len();
+        let pacer_before = restored.pacer.close(restored.engine.work_terms());
+        let moves_before = restored.engine.trace.work.disruption_moves;
+
+        // Exact G0.3 start: decode, canonical verification and all immutable
+        // binding checks happened before this read; install is the next call.
+        let (disruption, decision, path_started) =
+            restored.engine.install_policy_disrupt_pool_entry(
+                &entry,
+                arm,
+                restored.seed,
+                restored.bite_ordinal,
+                restored.attempt,
+                restored.width_mm,
+                restored.pool.len(),
+                restored.selected_rank,
+                true,
+                record_timing,
+                restored.fingerprints.len(),
+            );
+        let mut decision = decision.expect("checkpoint probe always records its retry");
+        decision.retry_work_before = path_work_before;
+        decision.pacer_before = pacer_before;
+        decision.authority_parent_fingerprint = restored.parent_fingerprint.clone();
+        restored.record.profile.disruption_moves +=
+            restored.engine.trace.work.disruption_moves - moves_before;
+        if disruption.fired {
+            restored.record.disruptions += 1;
+        }
+
+        let separation = restored.engine.separate(
+            Phase::Explore,
+            restored.strikes,
+            &mut restored.pacer,
+            restored.workers,
+            restored.bite_ordinal,
+            restored.attempt,
+            true,
+            true,
+            &mut restored.fingerprints,
+            Some(FIRST_RETRY_ITERATION_CAP),
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            None,
+        );
+        // Exact G0.3 end: this is the first operation after the retry returns.
+        let path_completed = record_timing.then(std::time::Instant::now);
+
+        decision.fingerprint_end = restored.fingerprints.len();
+        decision.retry_iterations = separation.iterations;
+        decision.retry_stop = Some(separation.stop.as_str());
+        decision.retry_published = separation.published.is_some();
+        decision.retry_work_after = restored.engine.trace.work;
+        decision.path_work_delta = decision.retry_work_after.saturating_sub(path_work_before);
+        decision.retry_strikes = separation.strikes;
+        decision.retry_min_raw_phi = separation.min_raw;
+        decision.retry_band_reached = separation.band_reached;
+        decision.retry_exact_band_entries = separation.exact_band_entries;
+        decision.retry_exact_checkpoint_calls = separation.exact_checkpoint_calls;
+        decision.retry_strike_shadow = separation.strike_shadow;
+        decision.retry_strike_accumulated = separation.strike_accumulated;
+        decision.retry_strike_overshoot = separation.strike_overshoot;
+        decision.retry_exact_checkpoints =
+            restored.engine.trace.checkpoints[exact_checkpoint_start..].to_vec();
+        decision.path_seconds = path_started.map(|started| {
+            path_completed
+                .expect("timed checkpoint retry captured its return boundary")
+                .duration_since(started)
+                .as_secs_f64()
+        });
+
+        restored.record.master_iterations += separation.iterations;
+        restored.record.strikes += separation.strikes;
+        restored.record.exact_band_entries += separation.exact_band_entries;
+        restored.record.exact_checkpoint_calls += separation.exact_checkpoint_calls;
+        restored.record.profile.add(&separation.profile);
+        restored.record.add_strike_accounting(&separation);
+        restored.record.proxy_band_reached |= separation.band_reached;
+        restored.record.min_raw_phi = restored.record.min_raw_phi.min(separation.min_raw);
+
+        let mut depth_mm = restored.depth_mm;
+        if let Some(publication) = separation.published {
+            let row = restored.engine.commit_publication(
+                &publication,
+                Phase::Explore,
+                &restored.record,
+                restored.attempt,
+                &restored.parent_fingerprint,
+                None,
+            );
+            depth_mm = publication.raw_source_depth_mm;
+            restored.parent_poses = publication.poses.clone();
+            restored.engine.install_publication(&publication);
+            energy::reset_weights(&mut restored.engine.state);
+            restored.publications.push(row.clone());
+            decision.retry_publication = Some(row.clone());
+            restored.record.published = Some(row);
+            restored.explore_bites += 1;
+        } else {
+            push_pool(
+                &mut restored.pool,
+                PoolEntry::of(&restored.engine.state, separation.min_raw),
+            );
+            restored.record.attempts += 1;
+        }
+        restored.bites.push(restored.record);
+        // Match the normal schedule's terminal semantics: a stopped failed
+        // child is discarded and the last exact parent is the returned state.
+        // This lies after the G0.3 timed endpoint and after the retry ledger.
+        restored
+            .engine
+            .install_poses(&restored.parent_poses, depth_mm);
+        restored.engine.sample_proxy();
+        let calibrated = restored.pacer.close(restored.engine.work_terms());
+        decision.pacer_after = calibrated.clone();
+        decision.finalize_validity();
+        pool_rebase_trace.invalid_retries += u64::from(!decision.valid);
+        pool_rebase_trace.decisions.push(decision);
+        let totals = energy::fold(&restored.engine.state);
+        Ok(ScheduleOutcome {
+            incumbent: restored.engine.incumbent.clone(),
+            trace: restored.engine.trace.clone(),
+            bites: restored.bites,
+            publications: restored.publications,
+            fingerprints: restored.fingerprints,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order_digest_sha256: None,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order_sweeps: 0,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order_slots: 0,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            complete_state_digest_sha256: None,
+            start_depth_mm: restored.start_depth_mm,
+            depth_mm,
+            final_width_mm: restored.width_mm,
+            explore_bites: restored.explore_bites,
+            compress_bites: 0,
+            final_poses: restored.engine.state.poses.clone(),
+            final_raw_phi: totals.raw,
+            final_guided_phi: totals.guided,
+            final_max_violation_mm: totals.max_violation_mm,
+            final_raw_depth_mm: restored.engine.raw_depth_mm(),
+            final_census: energy::census(&restored.engine.state),
+            rejection_census: restored.engine.descent.rejection_census().clone(),
+            search_seconds: None,
+            explore_seconds: None,
+            strike_arm: restored.strikes,
+            calibrated,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            binary_close: BinaryCloseTrace::new(BinaryCloseArm::Centre),
+            pool_rebase: pool_rebase_trace,
+        })
     }
 
     fn commit_publication(
@@ -2213,6 +2625,14 @@ pub struct ScheduleConfig {
     /// Gate-0 isolation: finish the first actual pool retry, then stop.
     #[cfg(feature = "pool-retry-tracker-rebase")]
     pub stop_after_first_pool_retry: bool,
+    /// Gate-0 producer: yield the arm-neutral frame after rank selection and
+    /// before installation. No policy branch is executed in this process.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub capture_first_pool_retry_checkpoint: bool,
+    /// Emit the variable install-to-retry wall interval. Armed only for G0.3;
+    /// deterministic replay cells leave it absent.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub record_pool_rebase_timing: bool,
 }
 
 impl Default for ScheduleConfig {
@@ -2232,6 +2652,10 @@ impl Default for ScheduleConfig {
             record_pool_rebase: false,
             #[cfg(feature = "pool-retry-tracker-rebase")]
             stop_after_first_pool_retry: false,
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            capture_first_pool_retry_checkpoint: false,
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            record_pool_rebase_timing: false,
         }
     }
 }
@@ -2441,6 +2865,11 @@ pub struct IterationFingerprint {
     /// Poses, row violations and row weights of the installed master state,
     /// after its Algorithm-8 pass.
     pub state: String,
+    /// Pose-only digest of the master state installed by this iteration.
+    /// `None` outside the explicitly armed pool-retry trace, so runtime Saved
+    /// neither computes nor emits a new diagnostic.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub committed_pose_digest_sha256: Option<[u8; 32]>,
 }
 
 /// Treatment-neutral audit of the exact colliding-piece permutation consumed
@@ -2767,6 +3196,7 @@ struct SeparateOutcome {
 /// poses and the width, so restoring is a cold rebuild and 61 poses plus 1,830
 /// weights is two orders of magnitude less memory than a hundred cloned
 /// geometries.
+#[derive(Clone, Debug)]
 struct PoolEntry {
     raw_phi: f64,
     poses: Vec<Pose>,

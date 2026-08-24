@@ -130,6 +130,26 @@ pub struct Descent {
     census: RejectionCensus,
 }
 
+/// Complete owned continuation state for the signed pool-retry checkpoint.
+///
+/// This is deliberately not a re-derived seed/config tuple. The proposal and
+/// iteration ordinals are part of every downstream counter key, while the
+/// scratch order and census are part of the exact continuation document. A
+/// resumed process restores all of them byte-for-byte before it may install
+/// the selected pool entry.
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[derive(Clone, Debug)]
+pub(crate) struct DescentSnapshotV1 {
+    pub config: DescentConfig,
+    pub order: Vec<usize>,
+    pub allow_rotation: Vec<bool>,
+    pub proposals: u64,
+    pub bite: u64,
+    pub worker: u64,
+    pub iteration: u64,
+    pub census: RejectionCensus,
+}
+
 /// What one sweep did.
 #[derive(Clone, Copy, Debug)]
 pub struct SweepOutcome {
@@ -246,6 +266,37 @@ pub struct RejectionRecord {
 }
 
 impl Descent {
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub(crate) fn checkpoint_snapshot(&self) -> DescentSnapshotV1 {
+        DescentSnapshotV1 {
+            config: self.config,
+            order: self.order.clone(),
+            allow_rotation: self.allow_rotation.clone(),
+            proposals: self.proposals,
+            bite: self.bite,
+            worker: self.worker,
+            iteration: self.iteration,
+            census: self.census.clone(),
+        }
+    }
+
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub(crate) fn from_checkpoint(snapshot: DescentSnapshotV1) -> Result<Self, String> {
+        if !snapshot.census.records.is_empty() {
+            return Err("pool-retry checkpoint carries retired rejection-rung records".to_owned());
+        }
+        Ok(Self {
+            config: snapshot.config,
+            order: snapshot.order,
+            allow_rotation: snapshot.allow_rotation,
+            proposals: snapshot.proposals,
+            bite: snapshot.bite,
+            worker: snapshot.worker,
+            iteration: snapshot.iteration,
+            census: snapshot.census,
+        })
+    }
+
     pub fn new(config: DescentConfig, allow_rotation: Vec<bool>) -> Self {
         Self {
             config,

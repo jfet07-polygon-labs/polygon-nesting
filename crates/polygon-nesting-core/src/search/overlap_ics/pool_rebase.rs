@@ -8,14 +8,16 @@
 
 use sha2::{Digest, Sha256};
 
-use super::diagnostics::WorkVector;
+use super::diagnostics::{ExactCheckpoint, WorkVector};
 use super::disrupt::DisruptOutcome;
 use super::state::{IcsState, Pose, GLS_WEIGHT_FLOOR};
+use super::{CalibratedSummary, PublishedBite};
+use crate::search::overlap_ics_meter::strike_meter::ShadowCounters;
 
-const WEIGHT_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/weights/v1";
-const POSE_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/poses/v1";
-const POSE_TRANSFORM_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/pose-transforms/v1";
-const RAW_ROW_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/raw-rows/v1";
+const WEIGHT_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/weights/v2";
+const POSE_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/poses/v2";
+const POSE_TRANSFORM_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/pose-transforms/v2";
+const RAW_ROW_DOMAIN: &[u8] = b"pool-retry-tracker-rebase/raw-rows/v2";
 
 /// The one-retry Gate-0 cap frozen by section 5.2 of the specification.
 pub const FIRST_RETRY_ITERATION_CAP: u64 = 400;
@@ -64,7 +66,7 @@ impl WeightSnapshot {
                 bits.push(row.weight.to_bits());
             }
         }
-        Self::from_bits(bits)
+        Self::from_bits(bits, state.pair_rows.len(), state.edge_rows.len())
     }
 
     pub fn of_saved(pair_weights: &[f64], edge_weights: &[[f64; 4]]) -> Self {
@@ -73,16 +75,35 @@ impl WeightSnapshot {
         for weights in edge_weights {
             bits.extend(weights.iter().map(|value| value.to_bits()));
         }
-        Self::from_bits(bits)
+        Self::from_bits(bits, pair_weights.len(), edge_weights.len())
     }
 
-    fn from_bits(bits: Vec<u64>) -> Self {
+    fn from_bits(bits: Vec<u64>, pair_len: usize, piece_len: usize) -> Self {
+        assert_eq!(bits.len(), pair_len + piece_len * 4);
+        assert_eq!(pair_len, piece_len * piece_len.saturating_sub(1) / 2);
         let mut digest = Sha256::new();
         digest.update((WEIGHT_DOMAIN.len() as u64).to_le_bytes());
         digest.update(WEIGHT_DOMAIN);
-        digest.update((bits.len() as u64).to_le_bytes());
-        for value in &bits {
-            digest.update(value.to_le_bytes());
+        digest.update((piece_len as u64).to_le_bytes());
+        digest.update((pair_len as u64).to_le_bytes());
+        let mut pair_id = 0usize;
+        for first in 0..piece_len {
+            for second in first + 1..piece_len {
+                digest.update((pair_id as u64).to_le_bytes());
+                digest.update((first as u64).to_le_bytes());
+                digest.update((second as u64).to_le_bytes());
+                digest.update(bits[pair_id].to_le_bytes());
+                pair_id += 1;
+            }
+        }
+        assert_eq!(pair_id, pair_len);
+        digest.update((piece_len as u64).to_le_bytes());
+        for piece in 0..piece_len {
+            for side in 0..4usize {
+                digest.update((piece as u64).to_le_bytes());
+                digest.update((side as u64).to_le_bytes());
+                digest.update(bits[pair_len + piece * 4 + side].to_le_bytes());
+            }
         }
         let mut minimum = f64::INFINITY;
         let mut maximum = f64::NEG_INFINITY;
@@ -159,7 +180,8 @@ pub fn pose_digest(poses: &[Pose]) -> [u8; 32] {
     digest.update((POSE_DOMAIN.len() as u64).to_le_bytes());
     digest.update(POSE_DOMAIN);
     digest.update((poses.len() as u64).to_le_bytes());
-    for pose in poses {
+    for (piece, pose) in poses.iter().enumerate() {
+        digest.update((piece as u64).to_le_bytes());
         digest.update(pose.tx_mm.to_bits().to_le_bytes());
         digest.update(pose.ty_mm.to_bits().to_le_bytes());
         digest.update(pose.theta_deg.to_bits().to_le_bytes());
@@ -175,7 +197,8 @@ pub fn pose_transform_digest(before: &[Pose], after: &[Pose]) -> [u8; 32] {
     digest.update((POSE_TRANSFORM_DOMAIN.len() as u64).to_le_bytes());
     digest.update(POSE_TRANSFORM_DOMAIN);
     digest.update((before.len() as u64).to_le_bytes());
-    for (old, new) in before.iter().zip(after) {
+    for (piece, (old, new)) in before.iter().zip(after).enumerate() {
+        digest.update((piece as u64).to_le_bytes());
         digest.update(old.tx_mm.to_bits().to_le_bytes());
         digest.update(old.ty_mm.to_bits().to_le_bytes());
         digest.update(old.theta_deg.to_bits().to_le_bytes());
@@ -194,23 +217,36 @@ pub fn raw_row_digest(state: &IcsState) -> [u8; 32] {
     let mut digest = Sha256::new();
     digest.update((RAW_ROW_DOMAIN.len() as u64).to_le_bytes());
     digest.update(RAW_ROW_DOMAIN);
+    let piece_len = state.edge_rows.len();
+    digest.update((piece_len as u64).to_le_bytes());
     digest.update((state.pair_rows.len() as u64).to_le_bytes());
-    for row in &state.pair_rows {
-        digest.update(row.violation_mm.to_bits().to_le_bytes());
-        digest.update(row.contact.signed_gap_mm.to_bits().to_le_bytes());
-        for value in row.contact.normal {
-            digest.update(value.to_bits().to_le_bytes());
-        }
-        for value in row.contact.witness_a {
-            digest.update(value.to_bits().to_le_bytes());
-        }
-        for value in row.contact.witness_b {
-            digest.update(value.to_bits().to_le_bytes());
+    let mut pair_id = 0usize;
+    for first in 0..piece_len {
+        for second in first + 1..piece_len {
+            let row = &state.pair_rows[pair_id];
+            digest.update((pair_id as u64).to_le_bytes());
+            digest.update((first as u64).to_le_bytes());
+            digest.update((second as u64).to_le_bytes());
+            digest.update(row.violation_mm.to_bits().to_le_bytes());
+            digest.update(row.contact.signed_gap_mm.to_bits().to_le_bytes());
+            for value in row.contact.normal {
+                digest.update(value.to_bits().to_le_bytes());
+            }
+            for value in row.contact.witness_a {
+                digest.update(value.to_bits().to_le_bytes());
+            }
+            for value in row.contact.witness_b {
+                digest.update(value.to_bits().to_le_bytes());
+            }
+            pair_id += 1;
         }
     }
+    assert_eq!(pair_id, state.pair_rows.len());
     digest.update((state.edge_rows.len() as u64).to_le_bytes());
-    for rows in &state.edge_rows {
-        for row in rows {
+    for (piece, rows) in state.edge_rows.iter().enumerate() {
+        for (side, row) in rows.iter().enumerate() {
+            digest.update((piece as u64).to_le_bytes());
+            digest.update((side as u64).to_le_bytes());
             digest.update(row.violation_mm.to_bits().to_le_bytes());
             for value in row.witness {
                 digest.update(value.to_bits().to_le_bytes());
@@ -250,9 +286,87 @@ pub struct PoolRetryRecord {
     pub retry_iterations: u64,
     pub retry_stop: Option<&'static str>,
     pub retry_published: bool,
+    pub retry_work_before: WorkVector,
+    pub retry_work_after: WorkVector,
     pub path_work_delta: WorkVector,
-    pub path_seconds: f64,
+    pub retry_strikes: u32,
+    pub retry_min_raw_phi: f64,
+    pub retry_band_reached: bool,
+    pub retry_exact_band_entries: u64,
+    pub retry_exact_checkpoint_calls: u64,
+    pub retry_strike_shadow: ShadowCounters,
+    pub retry_strike_accumulated: u64,
+    pub retry_strike_overshoot: u64,
+    pub retry_exact_checkpoints: Vec<ExactCheckpoint>,
+    pub retry_publication: Option<PublishedBite>,
+    pub authority_parent_fingerprint: String,
+    pub pacer_before: Option<CalibratedSummary>,
+    pub pacer_after: Option<CalibratedSummary>,
+    pub path_seconds: Option<f64>,
+    pub failure_reasons: Vec<String>,
     pub valid: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct NewWidthResetVector {
+    pub width_mm: f64,
+    pub weights: WeightSnapshot,
+    pub live_raw_row_digest_sha256: [u8; 32],
+    pub cold_raw_row_digest_sha256: [u8; 32],
+    pub cold_weights: WeightSnapshot,
+    pub valid: bool,
+}
+
+impl PoolRetryRecord {
+    pub(crate) fn finalize_validity(&mut self) {
+        let mut failures = Vec::new();
+        if self.fingerprint_end.saturating_sub(self.fingerprint_start)
+            != self.retry_iterations as usize
+        {
+            failures.push(
+                "downstream fingerprint count does not match completed iterations".to_owned(),
+            );
+        }
+        if self.retry_exact_checkpoints.len() != self.retry_exact_checkpoint_calls as usize {
+            failures.push("exact-checkpoint slice does not match retry counter".to_owned());
+        }
+        if self.path_work_delta != self.retry_work_after.saturating_sub(self.retry_work_before) {
+            failures.push("retry work endpoints do not reconcile".to_owned());
+        }
+        if self.retry_published != self.retry_publication.is_some() {
+            failures.push("retry publication flag and authority record disagree".to_owned());
+        }
+        if let Some(publication) = &self.retry_publication {
+            if publication.parent_fingerprint != self.authority_parent_fingerprint {
+                failures
+                    .push("publication parent authority differs from checkpoint parent".to_owned());
+            }
+        }
+        match (&self.pacer_before, &self.pacer_after) {
+            (Some(before), Some(after)) => {
+                if !(before.charge_identity_holds
+                    && before.consumed_units_match_charged
+                    && after.charge_identity_holds
+                    && after.consumed_units_match_charged)
+                {
+                    failures.push("calibrated pacer ledgers do not reconcile".to_owned());
+                }
+            }
+            (None, None) => {}
+            _ => failures.push("retry has only one calibrated pacer endpoint".to_owned()),
+        }
+        if self.retry_published
+            && !self.retry_exact_checkpoints.iter().any(|row| {
+                row.published_raw_depth_mm.is_some()
+                    && row.kernel_exclusive_valid
+                    && row.contract_valid
+            })
+        {
+            failures.push("published retry has no dual-valid exact checkpoint".to_owned());
+        }
+        self.failure_reasons.extend(failures);
+        self.valid &= self.failure_reasons.is_empty();
+    }
 }
 
 /// All retries observed by one trajectory. Empty when diagnostics are not
@@ -262,6 +376,10 @@ pub struct PoolRebaseTrace {
     pub arm: PoolRebaseArm,
     pub invalid_retries: u64,
     pub decisions: Vec<PoolRetryRecord>,
+    /// Canonical arm-neutral checkpoint body yielded before pose install.
+    /// The driver wraps it in request/plan/binary bindings and writes it once.
+    pub checkpoint_bytes: Option<Vec<u8>>,
+    pub checkpoint_error: Option<String>,
 }
 
 impl PoolRebaseTrace {
@@ -270,6 +388,8 @@ impl PoolRebaseTrace {
             arm,
             invalid_retries: 0,
             decisions: Vec::new(),
+            checkpoint_bytes: None,
+            checkpoint_error: None,
         }
     }
 }

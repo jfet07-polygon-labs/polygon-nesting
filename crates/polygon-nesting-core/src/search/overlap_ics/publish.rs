@@ -214,6 +214,102 @@ pub fn raw_depth_of(
     deepest + contract.sheet_edge_clearance_mm
 }
 
+/// A fresh replay of both publication authorities for an already-emitted
+/// placement set. This does not trust the checkpoint bits produced by
+/// [`attempt`]: it rebuilds the request-scoped Exclusive grid sets from the
+/// source polygons and separately calls the untouched raw-source contract
+/// validator with the search allowance forced to zero.
+#[derive(Clone, Debug)]
+pub struct IndependentRevalidation {
+    pub kernel_mode: &'static str,
+    pub radius_mm: f64,
+    pub two_r_micron: i64,
+    pub search_offset_allowance_mm: f64,
+    pub kernel_exclusive_valid: bool,
+    pub contract_valid: bool,
+    pub kernel_error: Option<String>,
+    pub contract_error: Option<String>,
+}
+
+pub fn independently_revalidate(
+    pieces: &[GeneralFastPiece<'_>],
+    placements: &[GeneralFastPlacement],
+    settings: GeneralFastSettings,
+    contract: &Contract,
+) -> IndependentRevalidation {
+    let settings = publication_settings(settings);
+    let radius_mm = contract.expansion_mm();
+    let mut result = IndependentRevalidation {
+        kernel_mode: "exclusive",
+        radius_mm,
+        two_r_micron: -1,
+        search_offset_allowance_mm: settings.search_offset_allowance_mm,
+        kernel_exclusive_valid: false,
+        contract_valid: false,
+        kernel_error: None,
+        contract_error: None,
+    };
+
+    let by_id = pieces
+        .iter()
+        .map(|piece| (piece.id, piece))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let kernel = (|| -> Result<bool, String> {
+        if placements.len() != pieces.len() {
+            return Err(format!(
+                "placement count {} does not match piece count {}",
+                placements.len(),
+                pieces.len()
+            ));
+        }
+        let radius = to_grid_mm(radius_mm)
+            .map(|value| value as i64)
+            .ok_or_else(|| "the contract radius is outside the canonical grid".to_owned())?;
+        let two_r = 2 * radius;
+        result.two_r_micron = two_r;
+        if !certifies(two_r) {
+            return Err(format!("the round kernel does not certify at 2r = {two_r}"));
+        }
+        let inset = inset_box(contract)
+            .ok_or_else(|| "the inset rectangle is outside the canonical grid".to_owned())?;
+        let mut sets = Vec::with_capacity(placements.len());
+        let mut seen = std::collections::BTreeSet::new();
+        for placement in placements {
+            if !seen.insert(placement.piece_id.as_str()) {
+                return Err(format!(
+                    "duplicate placement for piece {}",
+                    placement.piece_id
+                ));
+            }
+            let piece = by_id
+                .get(placement.piece_id.as_str())
+                .copied()
+                .ok_or_else(|| {
+                    format!(
+                        "a result placement references unknown piece {}",
+                        placement.piece_id
+                    )
+                })?;
+            let polygon = transformed(piece, placement)?;
+            sets.push(
+                GridSet::of(&polygon)
+                    .ok_or_else(|| "a transformed ring left the canonical grid".to_owned())?,
+            );
+        }
+        Ok(scan(&sets, two_r, radius, inset).admissible)
+    })();
+    match kernel {
+        Ok(valid) => result.kernel_exclusive_valid = valid,
+        Err(error) => result.kernel_error = Some(error),
+    }
+
+    match validate_placements_against_contract(pieces, placements, settings) {
+        Ok(()) => result.contract_valid = true,
+        Err(error) => result.contract_error = Some(error.to_string()),
+    }
+    result
+}
+
 struct KernelScan {
     admissible: bool,
     failing_pairs: Vec<(usize, usize)>,
