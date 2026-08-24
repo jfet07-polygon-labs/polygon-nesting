@@ -14,6 +14,7 @@ python3 gate0.py <frozen-918d6ff-binary> <reviewed-source-commit> <output-dir>
 ```
 
 The runner checks the signed spec digest, clean reviewed commit, quiet-box
-entry, unchanged candidate binary SHA, G0.1–G0.5 in order, all nine G0.3 seeds,
+entry, exact G0.1 feature sets and executable SHAs, unchanged control/candidate
+binary SHAs, G0.1–G0.5 in order, all nine G0.3 seeds,
 the forward `ComputeIgnore / Centre` median, and two-process MinCut identity.
 It stops at the first failed Gate-0 section. It contains no quality command.

@@ -288,10 +288,16 @@ def prefix_probe_args(seed, prefix_arm, probe_arm):
 
 
 def write_result(document, clauses, candidate, out):
+    document['frozenBinarySha256After'] = sha256(document['frozenBinary'])
     document['candidateBinarySha256After'] = sha256(candidate)
+    document['frozenBinaryUnchangedDuringGate0'] = (
+        document['frozenBinarySha256']
+        == document['frozenBinarySha256After'])
     document['binaryUnchangedDuringGate0'] = (
         document['candidateBinarySha256']
         == document['candidateBinarySha256After'])
+    clauses['frozenBinaryUnchangedDuringGate0'] = (
+        document['frozenBinaryUnchangedDuringGate0'])
     clauses['binaryUnchangedDuringGate0'] = document['binaryUnchangedDuringGate0']
     document['machine']['loadAfter'] = loadavg()
     document['clauses'] = clauses
@@ -374,6 +380,15 @@ def main():
                   os.path.join(out, 'cells', f'g01-{name}-centre.json'))
         base_doc = stripped_identity(base['document'])
         new_doc = stripped_identity(new['document'])
+        base_provenance = bool(
+            (base['document'] or {}).get('buildFeatures') == ['overlap-ics']
+            and (base['document'] or {}).get('executableSha256')
+            == document['frozenBinarySha256'])
+        candidate_provenance = bool(
+            (new['document'] or {}).get('buildFeatures')
+            == ['overlap-ics', 'minimum-conflict-binary-close']
+            and (new['document'] or {}).get('executableSha256')
+            == document['candidateBinarySha256'])
         identity.append({
             'cell': name,
             'baseExit': base['exit'],
@@ -384,7 +399,10 @@ def main():
             'candidateSourceSha256': new['sourceSha256'],
             'baseDigestStripped': canonical_digest(base_doc) if base_doc else None,
             'candidateDigestStripped': canonical_digest(new_doc) if new_doc else None,
+            'frozenBuildAndExecutableProvenance': base_provenance,
+            'candidateBuildAndExecutableProvenance': candidate_provenance,
             'bitIdentical': base['exit'] == 0 and new['exit'] == 0
+            and base_provenance and candidate_provenance
             and base_doc == new_doc,
             'stderrTail': base['stderrTail'] or new['stderrTail'],
         })
