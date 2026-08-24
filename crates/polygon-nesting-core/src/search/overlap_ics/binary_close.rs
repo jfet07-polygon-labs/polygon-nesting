@@ -39,9 +39,34 @@ pub enum BinaryCloseArm {
 }
 
 impl BinaryCloseArm {
-    pub fn constructs(self) -> bool {
-        matches!(self, Self::MinCut | Self::ComputeIgnore)
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Centre => "centre",
+            Self::MinCut => "mincut",
+            Self::ComputeIgnore => "compute-ignore",
+        }
     }
+}
+
+/// Bit-exact cached pair row. Keeping the complete cold row beside the scalar
+/// term makes installation verification cover the contact field and reset GLS
+/// weight as well as the violation used by the binary energy.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PairRowBits {
+    pub violation_mm: u64,
+    pub weight: u64,
+    pub signed_gap_mm: u64,
+    pub normal: [u64; 2],
+    pub witness_a: [u64; 2],
+    pub witness_b: [u64; 2],
+}
+
+/// Bit-exact cached boundary row, including its reset GLS weight and witness.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct EdgeRowBits {
+    pub violation_mm: u64,
+    pub weight: u64,
+    pub witness: [u64; 2],
 }
 
 /// Four cold pair rows and their squared raw costs. The first array coordinate
@@ -53,6 +78,7 @@ pub struct PairTerm {
     pub second: usize,
     pub violations_mm: [[f64; 2]; 2],
     pub costs: [[f64; 2]; 2],
+    pub row_bits: [[PairRowBits; 2]; 2],
     pub finite_nonnegative: bool,
     pub zero_diagonal: bool,
     pub submodular: bool,
@@ -64,6 +90,7 @@ pub struct UnaryTerm {
     pub piece: usize,
     pub violations_mm: [[f64; 4]; 2],
     pub row_costs: [[f64; 4]; 2],
+    pub row_bits: [[EdgeRowBits; 4]; 2],
     pub sums: [f64; 2],
     pub finite_nonnegative: bool,
 }
@@ -112,6 +139,7 @@ pub struct BinaryCloseDecision {
     pub cut_table_bits_equal: bool,
     pub table_cold_bits_equal: bool,
     pub installed_rows_match_table: bool,
+    pub selected_totals_finite_nonnegative: bool,
     pub field_work: WorkVector,
     pub valid: bool,
     pub invalid_reason: Option<String>,
@@ -156,6 +184,7 @@ impl BinaryCloseDecision {
         for first in 0..count {
             for second in (first + 1)..count {
                 let mut violations_mm = [[0.0; 2]; 2];
+                let mut row_bits = [[PairRowBits::default(); 2]; 2];
                 for first_state in 0..2 {
                     for second_state in 0..2 {
                         let first_geometry = if first_state == 0 {
@@ -168,25 +197,32 @@ impl BinaryCloseDecision {
                         } else {
                             &geometry_one
                         };
-                        violations_mm[first_state][second_state] = energy::measure_pair_cross(
+                        let (violation_mm, contact) = energy::measure_pair_cross(
                             first_geometry,
                             first,
                             second_geometry,
                             second,
                             clearance,
                             &mut field_work,
-                        )
-                        .0;
+                        );
+                        violations_mm[first_state][second_state] = violation_mm;
+                        row_bits[first_state][second_state] = pair_row_bits(&PairRow {
+                            violation_mm,
+                            contact,
+                            ..PairRow::default()
+                        });
                     }
                 }
                 let costs = square_pair_rows(violations_mm);
-                let (finite_nonnegative, zero_diagonal, submodular) = validate_pair_costs(costs);
+                let (finite_nonnegative, zero_diagonal, submodular) =
+                    validate_pair_costs(violations_mm, costs);
                 pair_terms.push(PairTerm {
                     pair_id: pair_index(count, first, second),
                     first,
                     second,
                     violations_mm,
                     costs,
+                    row_bits,
                     finite_nonnegative,
                     zero_diagonal,
                     submodular,
@@ -214,6 +250,10 @@ impl BinaryCloseDecision {
                 rows_zero.map(|row| row.violation_mm),
                 rows_one.map(|row| row.violation_mm),
             ];
+            let row_bits = [
+                rows_zero.map(|row| edge_row_bits(&row)),
+                rows_one.map(|row| edge_row_bits(&row)),
+            ];
             let mut row_costs = [[0.0; 4]; 2];
             let mut sums = [0.0; 2];
             let mut finite_nonnegative = true;
@@ -232,17 +272,19 @@ impl BinaryCloseDecision {
                 piece,
                 violations_mm,
                 row_costs,
+                row_bits,
                 sums,
                 finite_nonnegative,
             });
         }
 
         let all_finite_nonnegative = pose_state_bits_valid
-            && finite_nonnegative_value(depth_before_mm)
-            && finite_nonnegative_value(target_depth_mm)
-            && delta_mm.is_finite()
+            && parent.poses.iter().all(pose_is_finite)
+            && state_one_poses.iter().all(pose_is_finite)
+            && valid_depth_transition(depth_before_mm, target_depth_mm, delta_mm)
             && pair_terms.iter().all(|term| term.finite_nonnegative)
-            && unary_terms.iter().all(|term| term.finite_nonnegative);
+            && unary_terms.iter().all(|term| term.finite_nonnegative)
+            && graph_capacity_sum_is_finite(&pair_terms, &unary_terms);
         let all_zero_diagonal = pair_terms.iter().all(|term| term.zero_diagonal);
         let all_submodular = pair_terms.iter().all(|term| term.submodular);
         let parent_proxy_pair_legal = parent.pair_rows.iter().all(|row| row.violation_mm == 0.0);
@@ -256,39 +298,42 @@ impl BinaryCloseDecision {
             .collect::<Vec<_>>();
         let centre_moved_pieces = centre_labels.iter().filter(|label| **label).count();
 
-        let mut graph_edges = Vec::new();
         let source_node = count;
         let sink_node = count + 1;
-        for unary in &unary_terms {
-            graph_edges.push(GraphEdge {
-                from: source_node,
-                to: unary.piece,
-                capacity: unary.sums[1],
-            });
-            graph_edges.push(GraphEdge {
-                from: unary.piece,
-                to: sink_node,
-                capacity: unary.sums[0],
-            });
-        }
-        for pair in &pair_terms {
-            graph_edges.push(GraphEdge {
-                from: pair.first,
-                to: pair.second,
-                capacity: pair.costs[0][1],
-            });
-            graph_edges.push(GraphEdge {
-                from: pair.second,
-                to: pair.first,
-                capacity: pair.costs[1][0],
-            });
-        }
-        let graph_digest_sha256 = graph_digest(count + 2, &graph_edges);
-
         let pregraph_valid = all_finite_nonnegative
             && all_zero_diagonal
             && all_submodular
             && parent_proxy_pair_legal;
+        // §2 is literal: no graph exists until every operand and pair sum has
+        // passed the frozen domain checks.
+        let mut graph_edges = Vec::new();
+        if pregraph_valid {
+            for unary in &unary_terms {
+                graph_edges.push(GraphEdge {
+                    from: source_node,
+                    to: unary.piece,
+                    capacity: unary.sums[1],
+                });
+                graph_edges.push(GraphEdge {
+                    from: unary.piece,
+                    to: sink_node,
+                    capacity: unary.sums[0],
+                });
+            }
+            for pair in &pair_terms {
+                graph_edges.push(GraphEdge {
+                    from: pair.first,
+                    to: pair.second,
+                    capacity: pair.costs[0][1],
+                });
+                graph_edges.push(GraphEdge {
+                    from: pair.second,
+                    to: pair.first,
+                    capacity: pair.costs[1][0],
+                });
+            }
+        }
+        let graph_digest_sha256 = graph_digest(count + 2, &graph_edges);
         let residual_source_reachable = if pregraph_valid {
             solve_cut(count + 2, source_node, sink_node, &graph_edges)
                 .map(|reachable| reachable[..count].to_vec())
@@ -321,9 +366,17 @@ impl BinaryCloseDecision {
         let mut cut_table_bits_equal = false;
         let mut table_cold_bits_equal = false;
         let mut installed_rows_match_table = false;
+        let mut selected_totals_finite_nonnegative = false;
         if labels.len() == count {
-            selected_cut_capacity = cut_energy_for_labels(&pair_terms, &unary_terms, &labels);
-            selected_table_energy = table_energy_for_labels(&pair_terms, &unary_terms, &labels);
+            let selected_cut = checked_cut_energy_for_labels(&pair_terms, &unary_terms, &labels);
+            let selected_table =
+                checked_table_energy_for_labels(&pair_terms, &unary_terms, &labels);
+            if let Some(value) = selected_cut {
+                selected_cut_capacity = value;
+            }
+            if let Some(value) = selected_table {
+                selected_table_energy = value;
+            }
             let selected_poses = apply_labels(&parent.poses, &labels, delta_mm);
             installed_pose_digest_sha256 = pose_digest(&selected_poses);
             let mut selected_state = IcsState {
@@ -339,13 +392,18 @@ impl BinaryCloseDecision {
             installed_row_digest_sha256 = row_digest(&selected_state);
             installed_rows_match_table =
                 selected_rows_match(&selected_state, &pair_terms, &unary_terms, &labels);
-            cut_table_bits_equal =
-                selected_cut_capacity.to_bits() == selected_table_energy.to_bits();
-            table_cold_bits_equal = selected_table_energy.to_bits() == cold_raw_phi.to_bits();
+            selected_totals_finite_nonnegative = selected_cut.is_some()
+                && selected_table.is_some()
+                && finite_nonnegative_value(cold_raw_phi);
+            cut_table_bits_equal = selected_totals_finite_nonnegative
+                && selected_cut_capacity.to_bits() == selected_table_energy.to_bits();
+            table_cold_bits_equal = selected_totals_finite_nonnegative
+                && selected_table_energy.to_bits() == cold_raw_phi.to_bits();
         }
 
         let valid = pregraph_valid
             && labels.len() == count
+            && selected_totals_finite_nonnegative
             && cut_table_bits_equal
             && table_cold_bits_equal
             && installed_rows_match_table;
@@ -362,6 +420,8 @@ impl BinaryCloseDecision {
                 "a pair is nonsubmodular".to_owned()
             } else if labels.len() != count {
                 "the deterministic max-flow did not return a complete labeling".to_owned()
+            } else if !selected_totals_finite_nonnegative {
+                "a selected canonical energy or cold raw Phi is non-finite or negative".to_owned()
             } else if !cut_table_bits_equal {
                 "selected cut and table energy bits differ".to_owned()
             } else if !table_cold_bits_equal {
@@ -404,6 +464,7 @@ impl BinaryCloseDecision {
             cut_table_bits_equal,
             table_cold_bits_equal,
             installed_rows_match_table,
+            selected_totals_finite_nonnegative,
             field_work,
             valid,
             invalid_reason,
@@ -445,16 +506,31 @@ impl BinaryCloseDecision {
 
 /// The per-call trace. A second `run_cutclose` on the same engine gets a fresh
 /// trace while the engine's global explore ordinal continues.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BinaryCloseTrace {
+    pub arm: BinaryCloseArm,
     pub decisions: Vec<BinaryCloseDecision>,
     pub invalid_decisions: u64,
 }
 
 impl BinaryCloseTrace {
+    pub fn new(arm: BinaryCloseArm) -> Self {
+        Self {
+            arm,
+            decisions: Vec::new(),
+            invalid_decisions: 0,
+        }
+    }
+
     pub fn push(&mut self, decision: BinaryCloseDecision) {
         self.invalid_decisions += u64::from(!decision.valid);
         self.decisions.push(decision);
+    }
+}
+
+impl Default for BinaryCloseTrace {
+    fn default() -> Self {
+        Self::new(BinaryCloseArm::Centre)
     }
 }
 
@@ -473,6 +549,8 @@ pub struct Gate0VectorReport {
     pub rejects_negative: bool,
     pub rejects_nonzero_diagonal: bool,
     pub rejects_nonsubmodular: bool,
+    pub rejects_aggregate_overflow: bool,
+    pub rejects_nonnegative_delta: bool,
     pub all_zero_labels: Vec<bool>,
     pub all_one_labels: Vec<bool>,
     pub tie_labels_first: Vec<bool>,
@@ -558,7 +636,7 @@ pub fn gate0_vector_report() -> Gate0VectorReport {
     let all_one_labels = labels_of(solve_cut(4, 2, 3, &all_one_edges).unwrap());
     let tie_labels_first = labels_of(solve_cut(4, 2, 3, &tie_edges).unwrap());
     let tie_labels_second = labels_of(solve_cut(4, 2, 3, &tie_edges).unwrap());
-    let accepted = validate_pair_costs([[0.0, 2.0], [3.0, 0.0]]);
+    let accepted = validate_cost_vector([[0.0, 2.0], [3.0, 0.0]]);
 
     Gate0VectorReport {
         expected_labels,
@@ -567,10 +645,13 @@ pub fn gate0_vector_report() -> Gate0VectorReport {
         unique_nontrivial_minimum,
         every_label_cut_energy_identity,
         accepts_zero_diagonal_submodular: accepted == (true, true, true),
-        rejects_nonfinite: !validate_pair_costs([[0.0, f64::NAN], [1.0, 0.0]]).0,
-        rejects_negative: !validate_pair_costs([[0.0, -1.0], [1.0, 0.0]]).0,
-        rejects_nonzero_diagonal: !validate_pair_costs([[0.25, 2.0], [3.0, 0.0]]).1,
-        rejects_nonsubmodular: !validate_pair_costs([[2.0, 1.0], [1.0, 2.0]]).2,
+        rejects_nonfinite: !validate_cost_vector([[0.0, f64::NAN], [1.0, 0.0]]).0,
+        rejects_negative: !validate_cost_vector([[0.0, -1.0], [1.0, 0.0]]).0,
+        rejects_nonzero_diagonal: !validate_cost_vector([[0.25, 2.0], [3.0, 0.0]]).1,
+        rejects_nonsubmodular: !validate_cost_vector([[2.0, 1.0], [1.0, 2.0]]).2,
+        rejects_aggregate_overflow: !validate_cost_vector([[0.0, f64::MAX], [f64::MAX, 0.0]]).0,
+        rejects_nonnegative_delta: !valid_depth_transition(1.0, 1.0, 0.0)
+            && !valid_depth_transition(1.0, 1.5, 0.5),
         all_zero_labels,
         all_one_labels,
         tie_labels_first,
@@ -587,31 +668,43 @@ pub fn geometry_gate0_vector_report() -> GeometryGate0VectorReport {
         IrregularPoint::new(0.0, 10.0),
     ])
     .expect("the frozen square is valid");
-    let sources = (0..3)
+    let sources = (0..5)
         .map(|piece| PieceSource::of(&format!("p{piece}"), &square).expect("source"))
         .collect::<Vec<_>>();
     let poses = vec![
         Pose {
             tx_mm: 20.0,
-            ty_mm: 15.0,
+            ty_mm: 1.0,
             theta_deg: 0.0,
             mirrored: false,
         },
         Pose {
-            tx_mm: 70.0,
-            ty_mm: 45.0,
-            theta_deg: 13.0,
+            tx_mm: 20.0,
+            ty_mm: 13.011,
+            theta_deg: 0.0,
             mirrored: false,
         },
         Pose {
-            tx_mm: 130.0,
-            ty_mm: 75.0,
-            theta_deg: -9.0,
-            mirrored: true,
+            tx_mm: 60.0,
+            ty_mm: 1.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        },
+        Pose {
+            tx_mm: 72.0,
+            ty_mm: 1.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        },
+        Pose {
+            tx_mm: 66.0,
+            ty_mm: 13.0,
+            theta_deg: 0.0,
+            mirrored: false,
         },
     ];
     let contract = Contract {
-        sheet_short_axis_mm: 200.0,
+        sheet_short_axis_mm: 100.0,
         sheet_long_axis_mm: 200.0,
         total_padding_mm: 2.0,
         sheet_edge_clearance_mm: 1.0,
@@ -624,11 +717,11 @@ pub fn geometry_gate0_vector_report() -> GeometryGate0VectorReport {
         poses,
         pair_rows: vec![PairRow::default(); pair_count(count)],
         edge_rows: vec![[EdgeRow::default(); 4]; count],
-        target_depth_mm: 100.0,
+        target_depth_mm: 24.011,
     };
     let mut work = WorkVector::default();
     energy::rebuild_all(&mut parent, &contract, &mut work);
-    let decision = BinaryCloseDecision::build(&sources, &contract, &parent, 17, 22, 100.0);
+    let decision = BinaryCloseDecision::build(&sources, &contract, &parent, 17, 22, 24.011);
     let pose_states = parent
         .poses
         .iter()
@@ -698,18 +791,79 @@ fn square_pair_rows(violations: [[f64; 2]; 2]) -> [[f64; 2]; 2] {
     costs
 }
 
-fn validate_pair_costs(costs: [[f64; 2]; 2]) -> (bool, bool, bool) {
-    let finite_nonnegative = costs
+fn validate_pair_costs(violations_mm: [[f64; 2]; 2], costs: [[f64; 2]; 2]) -> (bool, bool, bool) {
+    let diagonal_sum = costs[0][0] + costs[1][1];
+    let crossing_sum = costs[0][1] + costs[1][0];
+    let finite_nonnegative = violations_mm
         .iter()
         .flatten()
-        .all(|value| finite_nonnegative_value(*value));
+        .chain(costs.iter().flatten())
+        .copied()
+        .all(finite_nonnegative_value)
+        && finite_nonnegative_value(diagonal_sum)
+        && finite_nonnegative_value(crossing_sum);
     let zero_diagonal = costs[0][0] == 0.0 && costs[1][1] == 0.0;
-    let submodular = finite_nonnegative && costs[0][0] + costs[1][1] <= costs[0][1] + costs[1][0];
+    let submodular = finite_nonnegative && diagonal_sum <= crossing_sum;
     (finite_nonnegative, zero_diagonal, submodular)
+}
+
+fn validate_cost_vector(costs: [[f64; 2]; 2]) -> (bool, bool, bool) {
+    validate_pair_costs(costs.map(|row| row.map(|cost| cost.sqrt())), costs)
+}
+
+fn pose_is_finite(pose: &Pose) -> bool {
+    pose.tx_mm.is_finite() && pose.ty_mm.is_finite() && pose.theta_deg.is_finite()
+}
+
+fn pair_row_bits(row: &PairRow) -> PairRowBits {
+    PairRowBits {
+        violation_mm: row.violation_mm.to_bits(),
+        weight: row.weight.to_bits(),
+        signed_gap_mm: row.contact.signed_gap_mm.to_bits(),
+        normal: row.contact.normal.map(f64::to_bits),
+        witness_a: row.contact.witness_a.map(f64::to_bits),
+        witness_b: row.contact.witness_b.map(f64::to_bits),
+    }
+}
+
+fn edge_row_bits(row: &EdgeRow) -> EdgeRowBits {
+    EdgeRowBits {
+        violation_mm: row.violation_mm.to_bits(),
+        weight: row.weight.to_bits(),
+        witness: row.witness.map(f64::to_bits),
+    }
+}
+
+fn checked_add(total: &mut f64, value: f64) -> bool {
+    if !finite_nonnegative_value(value) {
+        return false;
+    }
+    *total += value;
+    finite_nonnegative_value(*total)
+}
+
+fn graph_capacity_sum_is_finite(pairs: &[PairTerm], unaries: &[UnaryTerm]) -> bool {
+    let mut total = 0.0;
+    unaries.iter().all(|unary| {
+        checked_add(&mut total, unary.sums[1])
+            && checked_add(&mut total, unary.sums[0])
+    }) && pairs.iter().all(|pair| {
+        checked_add(&mut total, pair.costs[0][1])
+            && checked_add(&mut total, pair.costs[1][0])
+    })
 }
 
 fn finite_nonnegative_value(value: f64) -> bool {
     value.is_finite() && value >= 0.0
+}
+
+fn valid_depth_transition(depth_before_mm: f64, target_depth_mm: f64, delta_mm: f64) -> bool {
+    finite_nonnegative_value(depth_before_mm)
+        && finite_nonnegative_value(target_depth_mm)
+        && delta_mm.is_finite()
+        && delta_mm < 0.0
+        && target_depth_mm < depth_before_mm
+        && (target_depth_mm - depth_before_mm).to_bits() == delta_mm.to_bits()
 }
 
 fn apply_labels(parent: &[Pose], labels: &[bool], delta_mm: f64) -> Vec<Pose> {
@@ -729,40 +883,60 @@ fn apply_labels(parent: &[Pose], labels: &[bool], delta_mm: f64) -> Vec<Pose> {
 /// Folds in the authority's canonical order: all pair rows by pair ID, then
 /// every piece's four boundary rows. It is deliberately expanded past the
 /// unary sums so its additions are bit-identical to `energy::fold`.
-fn table_energy_for_labels(pairs: &[PairTerm], unaries: &[UnaryTerm], labels: &[bool]) -> f64 {
+fn checked_table_energy_for_labels(
+    pairs: &[PairTerm],
+    unaries: &[UnaryTerm],
+    labels: &[bool],
+) -> Option<f64> {
     let mut total = 0.0;
     for pair in pairs {
-        total += pair.costs[usize::from(labels[pair.first])][usize::from(labels[pair.second])];
+        if !checked_add(
+            &mut total,
+            pair.costs[usize::from(labels[pair.first])][usize::from(labels[pair.second])],
+        ) {
+            return None;
+        }
     }
     for unary in unaries {
         let state = usize::from(labels[unary.piece]);
         for edge in 0..4 {
-            total += unary.row_costs[state][edge];
+            if !checked_add(&mut total, unary.row_costs[state][edge]) {
+                return None;
+            }
         }
     }
-    total
+    Some(total)
 }
 
 /// Recomputes the selected graph cut independently of table indexing. Pair
 /// capacities are chosen by the directed crossing, then terminal capacities
 /// are expanded back into their four authoritative boundary rows so the fold
 /// order stays bit-identical to raw Phi.
-fn cut_energy_for_labels(pairs: &[PairTerm], unaries: &[UnaryTerm], labels: &[bool]) -> f64 {
+fn checked_cut_energy_for_labels(
+    pairs: &[PairTerm],
+    unaries: &[UnaryTerm],
+    labels: &[bool],
+) -> Option<f64> {
     let mut total = 0.0;
     for pair in pairs {
-        total += match (labels[pair.first], labels[pair.second]) {
+        let capacity = match (labels[pair.first], labels[pair.second]) {
             (false, true) => pair.costs[0][1],
             (true, false) => pair.costs[1][0],
             _ => 0.0,
         };
+        if !checked_add(&mut total, capacity) {
+            return None;
+        }
     }
     for unary in unaries {
         let state = usize::from(labels[unary.piece]);
         for edge in 0..4 {
-            total += unary.row_costs[state][edge];
+            if !checked_add(&mut total, unary.row_costs[state][edge]) {
+                return None;
+            }
         }
     }
-    total
+    Some(total)
 }
 
 fn selected_rows_match(
@@ -772,14 +946,12 @@ fn selected_rows_match(
     labels: &[bool],
 ) -> bool {
     pairs.iter().all(|pair| {
-        state.pair_rows[pair.pair_id].violation_mm.to_bits()
-            == pair.violations_mm[usize::from(labels[pair.first])][usize::from(labels[pair.second])]
-                .to_bits()
+        pair_row_bits(&state.pair_rows[pair.pair_id])
+            == pair.row_bits[usize::from(labels[pair.first])][usize::from(labels[pair.second])]
     }) && unaries.iter().all(|unary| {
         let selected = usize::from(labels[unary.piece]);
         (0..4).all(|edge| {
-            state.edge_rows[unary.piece][edge].violation_mm.to_bits()
-                == unary.violations_mm[selected][edge].to_bits()
+            edge_row_bits(&state.edge_rows[unary.piece][edge]) == unary.row_bits[selected][edge]
         })
     })
 }
@@ -1010,6 +1182,7 @@ fn term_digest(pairs: &[PairTerm], unaries: &[UnaryTerm]) -> [u8; 32] {
             for second in 0..2 {
                 push_f64(&mut digest, pair.violations_mm[first][second]);
                 push_f64(&mut digest, pair.costs[first][second]);
+                push_pair_row_bits(&mut digest, &pair.row_bits[first][second]);
             }
         }
         digest.update([
@@ -1025,6 +1198,7 @@ fn term_digest(pairs: &[PairTerm], unaries: &[UnaryTerm]) -> [u8; 32] {
             for edge in 0..4 {
                 push_f64(&mut digest, unary.violations_mm[state][edge]);
                 push_f64(&mut digest, unary.row_costs[state][edge]);
+                push_edge_row_bits(&mut digest, &unary.row_bits[state][edge]);
             }
             push_f64(&mut digest, unary.sums[state]);
         }
@@ -1064,17 +1238,40 @@ fn row_digest(state: &IcsState) -> [u8; 32] {
     push_usize(&mut digest, state.pair_rows.len());
     for (pair, row) in state.pair_rows.iter().enumerate() {
         push_usize(&mut digest, pair);
-        push_f64(&mut digest, row.violation_mm);
+        push_pair_row_bits(&mut digest, &pair_row_bits(row));
     }
     push_usize(&mut digest, state.edge_rows.len());
     for (piece, rows) in state.edge_rows.iter().enumerate() {
         push_usize(&mut digest, piece);
         for (edge, row) in rows.iter().enumerate() {
             push_usize(&mut digest, edge);
-            push_f64(&mut digest, row.violation_mm);
+            push_edge_row_bits(&mut digest, &edge_row_bits(row));
         }
     }
     digest.finalize().into()
+}
+
+fn push_pair_row_bits(digest: &mut Sha256, row: &PairRowBits) {
+    digest.update(row.violation_mm.to_le_bytes());
+    digest.update(row.weight.to_le_bytes());
+    digest.update(row.signed_gap_mm.to_le_bytes());
+    for value in row.normal {
+        digest.update(value.to_le_bytes());
+    }
+    for value in row.witness_a {
+        digest.update(value.to_le_bytes());
+    }
+    for value in row.witness_b {
+        digest.update(value.to_le_bytes());
+    }
+}
+
+fn push_edge_row_bits(digest: &mut Sha256, row: &EdgeRowBits) {
+    digest.update(row.violation_mm.to_le_bytes());
+    digest.update(row.weight.to_le_bytes());
+    for value in row.witness {
+        digest.update(value.to_le_bytes());
+    }
 }
 
 #[cfg(test)]
@@ -1183,13 +1380,16 @@ mod tests {
     #[test]
     fn pair_literal_validation_accepts_only_the_frozen_domain() {
         assert_eq!(
-            validate_pair_costs([[0.0, 2.0], [3.0, 0.0]]),
+            validate_cost_vector([[0.0, 2.0], [3.0, 0.0]]),
             (true, true, true)
         );
-        assert!(!validate_pair_costs([[0.0, f64::NAN], [1.0, 0.0]]).0);
-        assert!(!validate_pair_costs([[0.0, -1.0], [1.0, 0.0]]).0);
-        assert!(!validate_pair_costs([[0.25, 2.0], [3.0, 0.0]]).1);
-        assert!(!validate_pair_costs([[2.0, 1.0], [1.0, 2.0]]).2);
+        assert!(!validate_cost_vector([[0.0, f64::NAN], [1.0, 0.0]]).0);
+        assert!(!validate_cost_vector([[0.0, -1.0], [1.0, 0.0]]).0);
+        assert!(!validate_cost_vector([[0.25, 2.0], [3.0, 0.0]]).1);
+        assert!(!validate_cost_vector([[2.0, 1.0], [1.0, 2.0]]).2);
+        assert!(!validate_cost_vector([[0.0, f64::MAX], [f64::MAX, 0.0]]).0);
+        assert!(!valid_depth_transition(1.0, 1.0, 0.0));
+        assert!(!valid_depth_transition(1.0, 1.5, 0.5));
     }
 
     #[test]
@@ -1256,6 +1456,19 @@ mod tests {
         let report = geometry_gate0_vector_report();
         let decision = &report.decision;
         assert!(decision.valid, "{:?}", decision.invalid_reason);
+        assert_eq!(decision.labels, [false, true, false, false, false]);
+        assert!(decision.labels.iter().any(|label| *label));
+        assert!(decision.labels.iter().any(|label| !*label));
+        assert!(decision.pair_terms.iter().any(|pair| {
+            pair.violations_mm[usize::from(decision.labels[pair.first])]
+                [usize::from(decision.labels[pair.second])]
+                > 0.0
+        }));
+        assert!(decision.unary_terms.iter().any(|unary| {
+            unary.violations_mm[usize::from(decision.labels[unary.piece])]
+                .iter()
+                .any(|violation| *violation > 0.0)
+        }));
         for pair in &decision.pair_terms {
             assert_eq!(pair.costs[0][0].to_bits(), 0.0f64.to_bits());
             assert_eq!(pair.costs[1][1].to_bits(), 0.0f64.to_bits());

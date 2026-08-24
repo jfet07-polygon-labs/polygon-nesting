@@ -440,6 +440,8 @@ impl<'a> Engine<'a> {
                     &mut state,
                     &self.sources,
                     &self.contract,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    None,
                     &mut work,
                 );
             }
@@ -855,9 +857,14 @@ impl<'a> Engine<'a> {
         &mut self,
         workers: usize,
         bite: u64,
+        #[cfg(feature = "minimum-conflict-binary-close")] consumed_orders: Option<
+            &mut ConsumedOrderTrace,
+        >,
         profile: &mut PhaseProfile,
     ) -> (SweepOutcome, Merge) {
         let workers = workers.max(1);
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        let record_consumed_orders = consumed_orders.is_some();
         // **Step 1-2, and the first half of the spawn tax.** A persistent
         // executor keeps these slots alive across iterations and refills them
         // with `clone_from`; this loop allocates and clones eight of them every
@@ -874,6 +881,8 @@ impl<'a> Engine<'a> {
                     work: WorkVector::default(),
                     #[cfg(feature = "conflict-cluster-budget")]
                     partition: PartitionTrace::default(),
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    consumed_order: Vec::new(),
                     sweep_ns: 0,
                 });
             }
@@ -890,21 +899,49 @@ impl<'a> Engine<'a> {
         if workers == 1 {
             let slot = &mut slots[0];
             #[cfg(not(feature = "conflict-cluster-budget"))]
-            outcomes.push(slot.sweep(sources, contract));
+            outcomes.push(slot.sweep(
+                sources,
+                contract,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                record_consumed_orders,
+            ));
             #[cfg(feature = "conflict-cluster-budget")]
-            outcomes.push(slot.sweep(sources, contract, partition_field));
+            outcomes.push(slot.sweep(
+                sources,
+                contract,
+                partition_field,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                record_consumed_orders,
+            ));
         } else {
             std::thread::scope(|scope| {
                 #[cfg(not(feature = "conflict-cluster-budget"))]
                 let handles: Vec<_> = slots
                     .iter_mut()
-                    .map(|slot| scope.spawn(move || slot.sweep(sources, contract)))
+                    .map(|slot| {
+                        scope.spawn(move || {
+                            slot.sweep(
+                                sources,
+                                contract,
+                                #[cfg(feature = "minimum-conflict-binary-close")]
+                                record_consumed_orders,
+                            )
+                        })
+                    })
                     .collect();
                 #[cfg(feature = "conflict-cluster-budget")]
                 let handles: Vec<_> = slots
                     .iter_mut()
                     .map(|slot| {
-                        scope.spawn(move || slot.sweep(sources, contract, partition_field))
+                        scope.spawn(move || {
+                            slot.sweep(
+                                sources,
+                                contract,
+                                partition_field,
+                                #[cfg(feature = "minimum-conflict-binary-close")]
+                                record_consumed_orders,
+                            )
+                        })
                     })
                     .collect();
                 // The barrier. Joined in ordinal order, so the vector is a
@@ -928,6 +965,13 @@ impl<'a> Engine<'a> {
             profile.sweep_critical_ns += critical;
             profile.sweep_total_ns += total;
             profile.dispatch_ns += scope_ns.saturating_sub(critical);
+        }
+
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        if let Some(trace) = consumed_orders {
+            for (worker, slot) in slots.iter().enumerate() {
+                trace.observe(bite, worker, &slot.consumed_order);
+            }
         }
 
         for slot in &slots {
@@ -1041,6 +1085,9 @@ impl<'a> Engine<'a> {
         attempt: u64,
         record_fingerprints: bool,
         fingerprints: &mut Vec<IterationFingerprint>,
+        #[cfg(feature = "minimum-conflict-binary-close")] mut consumed_orders: Option<
+            &mut ConsumedOrderTrace,
+        >,
     ) -> SeparateOutcome {
         let band = self.config.limits.band_mm;
         let entry_raw = energy::fold(&self.state).raw;
@@ -1197,7 +1244,13 @@ impl<'a> Engine<'a> {
             }
 
             let samples_before = self.trace.work.sample_evaluations;
-            let (_, merge) = self.tournament(workers, bite, &mut profile);
+            let (_, merge) = self.tournament(
+                workers,
+                bite,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                consumed_orders.as_deref_mut(),
+                &mut profile,
+            );
             iterations += 1;
             // The currency's two per-batch terms, counted rather than timed,
             // so a build without `ics-profile` still carries them.
@@ -1313,7 +1366,11 @@ impl<'a> Engine<'a> {
         let mut publications: Vec<PublishedBite> = Vec::new();
         let mut fingerprints: Vec<IterationFingerprint> = Vec::new();
         #[cfg(feature = "minimum-conflict-binary-close")]
-        let mut binary_close = BinaryCloseTrace::default();
+        let mut consumed_orders = schedule
+            .record_consumed_orders
+            .then(ConsumedOrderTrace::default);
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        let mut binary_close = BinaryCloseTrace::new(schedule.binary_close_arm);
         #[cfg(feature = "minimum-conflict-binary-close")]
         let mut binary_close_aborted = false;
 
@@ -1394,6 +1451,11 @@ impl<'a> Engine<'a> {
             width_mm = bite.width_after_mm;
             self.state.target_depth_mm = width_mm;
             self.refresh_all();
+            // A new width is a new landscape: `change_strip_width` rebuilds
+            // their tracker, so the weights start again at the floor. Reset
+            // before the optional audit so it compares the state separation
+            // will actually enter, including the frozen weight bits.
+            energy::reset_weights(&mut self.state);
             #[cfg(feature = "minimum-conflict-binary-close")]
             if schedule.binary_close_arm == BinaryCloseArm::MinCut {
                 let live_valid = binary_close
@@ -1407,9 +1469,6 @@ impl<'a> Engine<'a> {
                     break;
                 }
             }
-            // A new width is a new landscape: `change_strip_width` rebuilds
-            // their tracker, so the weights start again at the floor.
-            energy::reset_weights(&mut self.state);
             self.last_attempt_pose_digest = None;
 
             let mut record = BiteRecord {
@@ -1444,6 +1503,8 @@ impl<'a> Engine<'a> {
                     attempt,
                     schedule.record_fingerprints,
                     &mut fingerprints,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    consumed_orders.as_mut(),
                 );
                 record.master_iterations += separation.iterations;
                 record.strikes += separation.strikes;
@@ -1571,6 +1632,8 @@ impl<'a> Engine<'a> {
                 0,
                 schedule.record_fingerprints,
                 &mut fingerprints,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                consumed_orders.as_mut(),
             );
             let mut record = BiteRecord {
                 ordinal: bite_ordinal,
@@ -1637,6 +1700,18 @@ impl<'a> Engine<'a> {
             bites,
             publications,
             fingerprints,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order_digest_sha256: consumed_orders
+                .as_ref()
+                .map(ConsumedOrderTrace::digest_hex),
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order_sweeps: consumed_orders.as_ref().map_or(0, |trace| trace.sweeps),
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order_slots: consumed_orders.as_ref().map_or(0, |trace| trace.slots),
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            complete_state_digest_sha256: schedule
+                .record_consumed_orders
+                .then(|| complete_state_fingerprint(&self.state)),
             start_depth_mm,
             depth_mm,
             final_width_mm,
@@ -1742,6 +1817,56 @@ pub fn state_fingerprint(state: &IcsState) -> String {
         for row in rows {
             digest.update(row.violation_mm.to_bits().to_le_bytes());
             digest.update(row.weight.to_bits().to_le_bytes());
+        }
+    }
+    digest.update(state.target_depth_mm.to_bits().to_le_bytes());
+    format!("{:x}", digest.finalize())
+}
+
+/// Complete cold-cache fingerprint for the binary-close audit. Unlike the
+/// historical iteration fingerprint, this includes contacts and witnesses;
+/// it is emitted only when the opt-in consumed-order instrument is enabled.
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn complete_state_fingerprint(state: &IcsState) -> String {
+    use sha2::{Digest, Sha256};
+    let domain = b"minimum-conflict-binary-close/complete-state/v1";
+    let mut digest = Sha256::new();
+    digest.update((domain.len() as u64).to_le_bytes());
+    digest.update(domain);
+    digest.update((state.poses.len() as u64).to_le_bytes());
+    for (piece, pose) in state.poses.iter().enumerate() {
+        digest.update((piece as u64).to_le_bytes());
+        digest.update(pose.tx_mm.to_bits().to_le_bytes());
+        digest.update(pose.ty_mm.to_bits().to_le_bytes());
+        digest.update(pose.theta_deg.to_bits().to_le_bytes());
+        digest.update([u8::from(pose.mirrored)]);
+    }
+    digest.update((state.pair_rows.len() as u64).to_le_bytes());
+    for (pair, row) in state.pair_rows.iter().enumerate() {
+        digest.update((pair as u64).to_le_bytes());
+        digest.update(row.violation_mm.to_bits().to_le_bytes());
+        digest.update(row.weight.to_bits().to_le_bytes());
+        digest.update(row.contact.signed_gap_mm.to_bits().to_le_bytes());
+        for value in row.contact.normal {
+            digest.update(value.to_bits().to_le_bytes());
+        }
+        for value in row.contact.witness_a {
+            digest.update(value.to_bits().to_le_bytes());
+        }
+        for value in row.contact.witness_b {
+            digest.update(value.to_bits().to_le_bytes());
+        }
+    }
+    digest.update((state.edge_rows.len() as u64).to_le_bytes());
+    for (piece, rows) in state.edge_rows.iter().enumerate() {
+        digest.update((piece as u64).to_le_bytes());
+        for (edge, row) in rows.iter().enumerate() {
+            digest.update((edge as u64).to_le_bytes());
+            digest.update(row.violation_mm.to_bits().to_le_bytes());
+            digest.update(row.weight.to_bits().to_le_bytes());
+            for value in row.witness {
+                digest.update(value.to_bits().to_le_bytes());
+            }
         }
     }
     digest.update(state.target_depth_mm.to_bits().to_le_bytes());
@@ -1916,6 +2041,10 @@ pub struct ScheduleConfig {
     /// identity of "each master snapshot, winning worker ordinal, pose and
     /// weight fingerprint after every master iteration"; this is that record.
     pub record_fingerprints: bool,
+    /// Hash every worker's actually consumed colliding-piece order. Gate-0
+    /// only; false preserves the ordinary runtime/output surface.
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub record_consumed_orders: bool,
     /// Explore-bite injection arm of the minimum-conflict experiment. Compiled
     /// out with the feature; runtime default is the historical centre path.
     #[cfg(feature = "minimum-conflict-binary-close")]
@@ -1929,6 +2058,8 @@ impl Default for ScheduleConfig {
             strikes: StrikeConfig::CONTROL,
             explore_time_ratio: homotopy::EXPLORE_TIME_RATIO,
             record_fingerprints: false,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            record_consumed_orders: false,
             #[cfg(feature = "minimum-conflict-binary-close")]
             binary_close_arm: BinaryCloseArm::Centre,
         }
@@ -2142,6 +2273,54 @@ pub struct IterationFingerprint {
     pub state: String,
 }
 
+/// Treatment-neutral audit of the exact colliding-piece permutation consumed
+/// by every worker sweep. It is opt-in because hashing the full sequence is a
+/// Gate-0 instrument, not solver work.
+#[cfg(feature = "minimum-conflict-binary-close")]
+struct ConsumedOrderTrace {
+    digest: sha2::Sha256,
+    sweeps: u64,
+    slots: u64,
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+impl Default for ConsumedOrderTrace {
+    fn default() -> Self {
+        use sha2::Digest;
+        let domain = b"minimum-conflict-binary-close/consumed-worker-orders/v1";
+        let mut digest = sha2::Sha256::new();
+        digest.update((domain.len() as u64).to_le_bytes());
+        digest.update(domain);
+        Self {
+            digest,
+            sweeps: 0,
+            slots: 0,
+        }
+    }
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+impl ConsumedOrderTrace {
+    fn observe(&mut self, bite: u64, worker: usize, order: &[usize]) {
+        use sha2::Digest;
+        self.digest.update([1]);
+        self.digest.update(self.sweeps.to_le_bytes());
+        self.digest.update(bite.to_le_bytes());
+        self.digest.update((worker as u64).to_le_bytes());
+        self.digest.update((order.len() as u64).to_le_bytes());
+        for piece in order {
+            self.digest.update((*piece as u64).to_le_bytes());
+        }
+        self.sweeps += 1;
+        self.slots += order.len() as u64;
+    }
+
+    fn digest_hex(&self) -> String {
+        use sha2::Digest;
+        format!("{:x}", self.digest.clone().finalize())
+    }
+}
+
 /// One `CutCloseRelocate` trajectory's result.
 #[derive(Clone, Debug)]
 pub struct ScheduleOutcome {
@@ -2150,6 +2329,14 @@ pub struct ScheduleOutcome {
     pub bites: Vec<BiteRecord>,
     pub publications: Vec<PublishedBite>,
     pub fingerprints: Vec<IterationFingerprint>,
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub consumed_order_digest_sha256: Option<String>,
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub consumed_order_sweeps: u64,
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub consumed_order_slots: u64,
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub complete_state_digest_sha256: Option<String>,
     /// `D*`: the width the loop entered at.
     pub start_depth_mm: f64,
     /// `D`: the last exact-valid depth the loop is standing on, and the width
@@ -2290,6 +2477,8 @@ struct Slot {
     work: WorkVector,
     #[cfg(feature = "conflict-cluster-budget")]
     partition: PartitionTrace,
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    consumed_order: Vec<usize>,
     /// Nanoseconds this worker spent inside `worker_sweep`. Written only under
     /// `ics-profile`; one `u64` in an already-allocated vector otherwise, and
     /// read by nothing the engine decides on.
@@ -2301,12 +2490,24 @@ impl Slot {
     /// Step 3: one complete sequential relocate sweep, in this worker's own
     /// state, descent and work vector.
     #[cfg(not(feature = "conflict-cluster-budget"))]
-    fn sweep(&mut self, sources: &[PieceSource], contract: &Contract) -> SweepOutcome {
+    fn sweep(
+        &mut self,
+        sources: &[PieceSource],
+        contract: &Contract,
+        #[cfg(feature = "minimum-conflict-binary-close")] record_consumed_orders: bool,
+    ) -> SweepOutcome {
         #[cfg(feature = "ics-profile")]
         let started = std::time::Instant::now();
         let outcome = self
             .descent
-            .worker_sweep(&mut self.state, sources, contract, &mut self.work);
+            .worker_sweep(
+                &mut self.state,
+                sources,
+                contract,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                record_consumed_orders.then_some(&mut self.consumed_order),
+                &mut self.work,
+            );
         #[cfg(feature = "ics-profile")]
         {
             self.sweep_ns = started.elapsed().as_nanos() as u64;
@@ -2320,12 +2521,20 @@ impl Slot {
         sources: &[PieceSource],
         contract: &Contract,
         field: Option<&ClusterField>,
+        #[cfg(feature = "minimum-conflict-binary-close")] record_consumed_orders: bool,
     ) -> SweepOutcome {
         #[cfg(feature = "ics-profile")]
         let started = std::time::Instant::now();
         let outcome = if self.descent.partition_arm() == PartitionArm::Off {
             self.descent
-                .worker_sweep(&mut self.state, sources, contract, &mut self.work)
+                .worker_sweep(
+                    &mut self.state,
+                    sources,
+                    contract,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    record_consumed_orders.then_some(&mut self.consumed_order),
+                    &mut self.work,
+                )
         } else {
             self.descent.worker_sweep_partitioned(
                 &mut self.state,

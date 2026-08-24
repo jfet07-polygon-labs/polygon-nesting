@@ -339,6 +339,7 @@ fn binary_close_arm(options: &Options, key: &str) -> Result<BinaryCloseArm, Stri
 #[cfg(feature = "minimum-conflict-binary-close")]
 fn binary_close_json(trace: &BinaryCloseTrace) -> Value {
     json!({
+        "arm": trace.arm.as_str(),
         "invalidDecisions": trace.invalid_decisions,
         "decisions": trace.decisions.iter().map(|decision| json!({
             "key": {
@@ -360,6 +361,14 @@ fn binary_close_json(trace: &BinaryCloseTrace) -> Value {
                 "second": term.second,
                 "violationBits": term.violations_mm.map(|row| row.map(f64::to_bits)),
                 "costBits": term.costs.map(|row| row.map(f64::to_bits)),
+                "rowBits": term.row_bits.map(|states| states.map(|row| json!({
+                    "violation": row.violation_mm,
+                    "weight": row.weight,
+                    "signedGap": row.signed_gap_mm,
+                    "normal": row.normal,
+                    "witnessA": row.witness_a,
+                    "witnessB": row.witness_b,
+                }))),
                 "finiteNonnegative": term.finite_nonnegative,
                 "zeroDiagonal": term.zero_diagonal,
                 "submodular": term.submodular,
@@ -368,6 +377,11 @@ fn binary_close_json(trace: &BinaryCloseTrace) -> Value {
                 "piece": term.piece,
                 "violationBits": term.violations_mm.map(|row| row.map(f64::to_bits)),
                 "rowCostBits": term.row_costs.map(|row| row.map(f64::to_bits)),
+                "rowBits": term.row_bits.map(|states| states.map(|row| json!({
+                    "violation": row.violation_mm,
+                    "weight": row.weight,
+                    "witness": row.witness,
+                }))),
                 "sumBits": term.sums.map(f64::to_bits),
                 "finiteNonnegative": term.finite_nonnegative,
             })).collect::<Vec<_>>(),
@@ -404,6 +418,7 @@ fn binary_close_json(trace: &BinaryCloseTrace) -> Value {
             "cutTableBitsEqual": decision.cut_table_bits_equal,
             "tableColdBitsEqual": decision.table_cold_bits_equal,
             "installedRowsMatchTable": decision.installed_rows_match_table,
+            "selectedTotalsFiniteNonnegative": decision.selected_totals_finite_nonnegative,
             "fieldWork": work_json(&decision.field_work),
             "valid": decision.valid,
             "invalidReason": decision.invalid_reason,
@@ -425,6 +440,8 @@ fn binary_close_vectors_json(report: &BinaryCloseGate0VectorReport) -> Value {
         "rejectsNegative": report.rejects_negative,
         "rejectsNonzeroDiagonal": report.rejects_nonzero_diagonal,
         "rejectsNonsubmodular": report.rejects_nonsubmodular,
+        "rejectsAggregateOverflow": report.rejects_aggregate_overflow,
+        "rejectsNonnegativeDelta": report.rejects_nonnegative_delta,
         "allZeroLabels": report.all_zero_labels,
         "allOneLabels": report.all_one_labels,
         "tieLabelsFirst": report.tie_labels_first,
@@ -1304,6 +1321,15 @@ fn schedule_json(
         document["partition"] = partition_json(&outcome.trace.partition);
     }
     #[cfg(feature = "minimum-conflict-binary-close")]
+    if let Some(digest) = &outcome.consumed_order_digest_sha256 {
+        document["consumedWorkerOrders"] = json!({
+            "digestSha256": digest,
+            "sweeps": outcome.consumed_order_sweeps,
+            "slots": outcome.consumed_order_slots,
+            "completeStateDigestSha256": outcome.complete_state_digest_sha256,
+        });
+    }
+    #[cfg(feature = "minimum-conflict-binary-close")]
     if !outcome.binary_close.decisions.is_empty() {
         document["binaryClose"] = binary_close_json(&outcome.binary_close);
     }
@@ -1562,11 +1588,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )?;
                 let decision = engine.binary_close_vector(1);
                 let real_trace = BinaryCloseTrace {
+                    arm: BinaryCloseArm::MinCut,
                     invalid_decisions: u64::from(!decision.valid),
                     decisions: vec![decision],
                 };
                 let geometry_vector = geometry_gate0_vector_report();
                 let synthetic_geometry_trace = BinaryCloseTrace {
+                    arm: BinaryCloseArm::MinCut,
                     invalid_decisions: u64::from(!geometry_vector.decision.valid),
                     decisions: vec![geometry_vector.decision],
                 };
@@ -2505,6 +2533,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let probe_iterations = options.integer("probeiters", 200)?;
             let record_fingerprints = options.integer("fingerprints", 0)? != 0;
             #[cfg(feature = "minimum-conflict-binary-close")]
+            let record_consumed_orders = options.integer("consumedorders", 0)? != 0;
+            #[cfg(feature = "minimum-conflict-binary-close")]
             let prefix_binary_close_arm = binary_close_arm(&options, "prefixbinaryclose")?;
             #[cfg(feature = "minimum-conflict-binary-close")]
             let probe_binary_close_arm = binary_close_arm(&options, "binaryclose")?;
@@ -2529,6 +2559,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     workers: prefix_workers,
                     record_fingerprints,
                     #[cfg(feature = "minimum-conflict-binary-close")]
+                    record_consumed_orders,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
                     binary_close_arm: prefix_binary_close_arm,
                     ..ScheduleConfig::default()
                 },
@@ -2540,12 +2572,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
             );
             let prefix_seconds = prefix_started.elapsed().as_secs_f64();
+            let prefix_legacy_proposals = engine.proposals();
             wall.insert("prefixSeconds".to_owned(), json!(prefix_seconds));
             let search_started = Instant::now();
             let outcome = engine.run_cutclose(
                 ScheduleConfig {
                     workers,
                     record_fingerprints,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    record_consumed_orders,
                     #[cfg(feature = "minimum-conflict-binary-close")]
                     binary_close_arm: probe_binary_close_arm,
                     ..ScheduleConfig::default()
@@ -2558,7 +2593,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
             );
             let search_seconds = search_started.elapsed().as_secs_f64();
+            let total_legacy_proposals = engine.proposals();
             wall.insert("searchSeconds".to_owned(), json!(search_seconds));
+            wall.insert(
+                "totalSearchSeconds".to_owned(),
+                json!(prefix_seconds + search_seconds),
+            );
 
             let shelf_index = 0usize;
             let prefix: Vec<&_> = prefix_outcome.bites.iter().collect();
@@ -2574,7 +2614,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "placementFingerprint": constructor_fingerprint,
                 "placementCount": placements.len(),
                 "lowerScaleMm": lower_scale_mm,
-                "seconds": constructor_seconds,
             });
             document["spawnTax"] = json!({
                 "workers": workers,
@@ -2592,6 +2631,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     && prefix.len() == shelf_bites as usize,
                 "prefixDepthMm": prefix_outcome.depth_mm,
                 "prefixFingerprint": prefix_outcome.incumbent.placement_fingerprint,
+                "prefixPoseDigestSha256": pose_digest(&prefix_outcome.final_poses),
+                "prefixPoses": poses_json(&prefix_outcome.final_poses),
+                "prefixLegacyProposals": prefix_legacy_proposals,
+                "probeLegacyProposals": total_legacy_proposals - prefix_legacy_proposals,
+                "totalLegacyProposals": total_legacy_proposals,
                 "shelfDepthMm": outcome.depth_mm,
                 "shelfEntryWidthMm": shelf.map(|row| row.bite.width_after_mm),
                 "shelfPublished": shelf.map(|row| row.published.is_some()),
@@ -2620,8 +2664,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "work": work_json(&outcome.trace.work),
                 "prefixWork": work_json(&prefix_outcome.trace.work),
             });
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            if record_consumed_orders {
+                document["spawnTax"]["prefixCompleteStateDigestSha256"] =
+                    json!(prefix_outcome.complete_state_digest_sha256);
+                document["spawnTax"]["prefixConsumedOrderDigestSha256"] =
+                    json!(prefix_outcome.consumed_order_digest_sha256);
+                document["spawnTax"]["prefixConsumedOrderSweeps"] =
+                    json!(prefix_outcome.consumed_order_sweeps);
+                document["spawnTax"]["prefixConsumedOrderSlots"] =
+                    json!(prefix_outcome.consumed_order_slots);
+            }
             document["outcome"] = schedule_json(
                 &outcome,
+                &constructor_fingerprint,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    contract: &contract,
+                    revalidate: options.integer("revalidate", 0)? != 0,
+                },
+            );
+            document["prefixOutcome"] = schedule_json(
+                &prefix_outcome,
                 &constructor_fingerprint,
                 &LayoutContext {
                     sources: &sources,

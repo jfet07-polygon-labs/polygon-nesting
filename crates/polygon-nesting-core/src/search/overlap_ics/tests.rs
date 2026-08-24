@@ -1535,7 +1535,14 @@ fn every_sweep_runs_exactly_one_weight_pass_and_a_worker_sweep_runs_none() {
     assert_eq!(work.weight_updates, 2);
 
     let before: Vec<u64> = state.pair_rows.iter().map(|row| row.weight.to_bits()).collect();
-    let outcome = descent.worker_sweep(&mut state, &sources, &contract, &mut work);
+    let outcome = descent.worker_sweep(
+        &mut state,
+        &sources,
+        &contract,
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        None,
+        &mut work,
+    );
     assert_eq!(
         work.weight_updates, 2,
         "a worker sweep charges no weight pass"
@@ -1543,6 +1550,24 @@ fn every_sweep_runs_exactly_one_weight_pass_and_a_worker_sweep_runs_none() {
     assert_eq!(outcome.active_rows, 0, "and reports none");
     let after: Vec<u64> = state.pair_rows.iter().map(|row| row.weight.to_bits()).collect();
     assert_eq!(before, after, "every weight is untouched, to the bit");
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+#[test]
+fn consumed_worker_order_digest_is_stable_and_order_sensitive() {
+    let mut first = super::ConsumedOrderTrace::default();
+    first.observe(22, 0, &[4, 1, 7]);
+    first.observe(22, 1, &[1, 4]);
+    let mut replay = super::ConsumedOrderTrace::default();
+    replay.observe(22, 0, &[4, 1, 7]);
+    replay.observe(22, 1, &[1, 4]);
+    let mut reordered = super::ConsumedOrderTrace::default();
+    reordered.observe(22, 0, &[1, 4, 7]);
+    reordered.observe(22, 1, &[1, 4]);
+
+    assert_eq!(first.digest_hex(), replay.digest_hex());
+    assert_ne!(first.digest_hex(), reordered.digest_hex());
+    assert_eq!((first.sweeps, first.slots), (2, 5));
 }
 
 /// A sweep advances the work quota by one per piece however small the colliding

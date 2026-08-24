@@ -375,7 +375,14 @@ impl Descent {
         contract: &Contract,
         work: &mut WorkVector,
     ) -> SweepOutcome {
-        let pass = self.gauss_seidel(state, sources, contract, work);
+        let pass = self.gauss_seidel(
+            state,
+            sources,
+            contract,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            None,
+            work,
+        );
         let active_rows = gls_update(state);
         work.weight_updates += 1;
         let totals = fold(state);
@@ -401,9 +408,17 @@ impl Descent {
         state: &mut IcsState,
         sources: &[PieceSource],
         contract: &Contract,
+        #[cfg(feature = "minimum-conflict-binary-close")] consumed_order: Option<&mut Vec<usize>>,
         work: &mut WorkVector,
     ) -> SweepOutcome {
-        let pass = self.gauss_seidel(state, sources, contract, work);
+        let pass = self.gauss_seidel(
+            state,
+            sources,
+            contract,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order,
+            work,
+        );
         let totals = fold(state);
         pass.finish(0, totals)
     }
@@ -618,6 +633,7 @@ impl Descent {
         state: &mut IcsState,
         sources: &[PieceSource],
         contract: &Contract,
+        #[cfg(feature = "minimum-conflict-binary-close")] consumed_order: Option<&mut Vec<usize>>,
         work: &mut WorkVector,
     ) -> GaussSeidelPass {
         let count = state.poses.len();
@@ -626,6 +642,10 @@ impl Descent {
         let key = self.stream_key();
         colliding_permutation(state, key, &mut self.order);
         let order = std::mem::take(&mut self.order);
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        if let Some(trace) = consumed_order {
+            trace.extend_from_slice(&order);
+        }
         let mut pass = GaussSeidelPass {
             raw_before,
             ..GaussSeidelPass::default()
