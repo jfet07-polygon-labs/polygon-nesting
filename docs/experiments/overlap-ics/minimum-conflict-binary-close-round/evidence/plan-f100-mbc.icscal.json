@@ -1,0 +1,37 @@
+{
+  "schema": "icscal/v1",
+  "key": {
+    "binaryKey": {
+      "executableSha256": "a6c53146a9481c3014bc33250ec5be20a2beaaa886282b4d84ca5f181908222b",
+      "features": [
+        "overlap-ics",
+        "minimum-conflict-binary-close"
+      ]
+    },
+    "currencyVersion": "U0-sample-evaluations",
+    "executor": "ephemeral-scope",
+    "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "workers": 8
+  },
+  "phases": [
+    {
+      "derivation": "single-fixture work plan, no transfer claim. trajectory bite 22 (the 179 shelf) alone, 400 master iterations, the driver's probe-only wall and sampleEvaluations charged to that bite; no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3). Safety factor 1.00, pre-derived for composed from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 2759025.975468987,
+      "observedSeconds": 2.394250746,
+      "observedUnits": 6605800,
+      "phase": "explore",
+      "safeUnitsPerSecond": 2759025.975468987,
+      "safetyFactor": 1.0
+    },
+    {
+      "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds Safety factor 1.00, pre-derived for composed from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 1408465.9444235826,
+      "observedSeconds": 5.530037862,
+      "observedUnits": 7788870,
+      "phase": "compress",
+      "safeUnitsPerSecond": 1408465.9444235826,
+      "safetyFactor": 1.0
+    }
+  ],
+  "provenance": "Minimum-Conflict Binary Close quality battery; exact clone of deterministic-30s-round plan-f100.icscal.json (source SHA-256 2023162b45c2b995275c7265605540df88145ef69c4da97ba8ac2e3a55dbd578), with only binary key and provenance changed; reviewed source bb13dad6e3eac54e7ce8095d339778d20ac0411f; Gate-0 aggregate SHA-256 0b8d3963cac4cd427bd6a654595690696a54255a245d13b3167b69a8f5279eb4; no recalibration."
+}
