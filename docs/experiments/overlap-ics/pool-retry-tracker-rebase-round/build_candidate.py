@@ -76,6 +76,12 @@ def main():
     if not os.path.isfile(BINARY) or not os.access(BINARY, os.X_OK):
         raise SystemExit(f'build did not produce an executable: {BINARY}')
 
+    rustc = version('rustc', '--version', '--verbose')
+    host = next(
+        (line.split(':', 1)[1].strip() for line in rustc.splitlines()
+         if line.startswith('host:')),
+        None,
+    )
     receipt = {
         'schema': 'pool-retry-tracker-rebase/build-receipt/v1',
         'reviewedSourceCommit': reviewed,
@@ -85,6 +91,9 @@ def main():
         'sourceStatusAfter': status_after,
         'sourceTree': git('rev-parse', f'{reviewed}^{{tree}}'),
         'buildCommand': COMMAND,
+        'package': 'polygon-nesting-core',
+        'example': 'overlap_ics_benchmark',
+        'profile': 'release',
         'features': FEATURES,
         'binaryPath': BINARY,
         'binarySha256': sha256(BINARY),
@@ -92,7 +101,8 @@ def main():
         'requestSha256': sha256(REQUEST),
         'sourcePlanSha256': sha256(SOURCE_PLAN),
         'cargoVersion': version('cargo', '--version', '--verbose'),
-        'rustcVersion': version('rustc', '--version', '--verbose'),
+        'rustcVersion': rustc,
+        'targetTriple': host,
         'startedUtc': started,
         'completedUtc': datetime.now(timezone.utc).isoformat(),
     }

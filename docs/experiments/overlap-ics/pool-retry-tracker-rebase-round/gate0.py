@@ -2,15 +2,16 @@
 """One-shot, artifact-first Gate 0 for Pool-Retry Tracker Rebase.
 
 Usage:
-    python3 gate0.py <frozen-b1235a1-binary> <reviewed-source-commit> \
-        <build-receipt.json> [new-output-dir]
+    python3 gate0.py <frozen-b1235a1-binary> <frozen-build-receipt.json> \
+        <reviewed-source-commit> <candidate-build-receipt.json> \
+        [new-output-dir]
 
 The candidate defaults to target/release/examples/overlap_ics_benchmark and
 may be overridden with ICS_POOL_REBASE_BIN. This script never builds, retries
 a cell, overwrites an artifact, or runs Primary30. Each seed has one prefix
 producer and two read-only, byte-identical checkpoint copies consumed by fresh
 Saved and Rebase processes. Seed 0's same canonical artifact is reused by G0.3
-and G0.4.
+while G0.4 reruns two complete fresh producer/checkpoint/resume pipelines.
 """
 
 import copy
@@ -39,6 +40,7 @@ SOURCE_PLAN = os.path.join(
 DEFAULT_CANDIDATE = os.path.join(
     ROOT, 'target', 'release', 'examples', 'overlap_ics_benchmark')
 FEATURES = ['overlap-ics', 'pool-retry-tracker-rebase']
+FROZEN_FEATURES = ['overlap-ics']
 PLAN_SECONDS = 27.67205079595
 RETRY_CAP = 400
 ALLOWED_STOPS = {'published', 'refused', 'struck', 'deadline', 'work-cap'}
@@ -200,6 +202,13 @@ def first_retry(document):
     trace = ((document or {}).get('outcome') or {}).get('poolRetryRebase') or {}
     rows = trace.get('decisions') or []
     return rows[0] if len(rows) == 1 else None
+
+
+def executable_bound(document, binary_sha, features):
+    return bool(
+        document
+        and document.get('executableSha256') == binary_sha
+        and document.get('buildFeatures') == features)
 
 
 def work_reconciles(row):
@@ -414,6 +423,46 @@ def checkpoint_copy(source, destination):
     }
 
 
+def refresh_checkpoint_meta(meta):
+    meta['sha256After'] = sha256(meta['path'])
+    meta['byteLengthAfter'] = os.path.getsize(meta['path'])
+    meta['readOnlyAfter'] = (os.stat(meta['path']).st_mode & 0o222) == 0
+    meta['unchanged'] = bool(
+        meta['sha256After'] == meta['sha256']
+        and meta['byteLengthAfter'] == meta['byteLength']
+        and meta['readOnly'] and meta['readOnlyAfter'])
+
+
+def integrity_snapshot(document, candidate, frozen):
+    plan = document.get('gatePlan') or {}
+    current = {
+        'candidateBinarySha256': sha256(candidate),
+        'frozenBinarySha256': sha256(frozen),
+        'candidateReceiptSha256': sha256(document['buildReceiptPath']),
+        'frozenReceiptSha256': sha256(document['frozenBuildReceiptPath']),
+        'specSha256': sha256(SPEC),
+        'requestSha256': sha256(REQUEST),
+        'sourcePlanSha256': sha256(SOURCE_PLAN),
+        'sourceCommit': git('rev-parse', 'HEAD'),
+        'sourceStatus': git('status', '--porcelain'),
+    }
+    if plan:
+        current['gatePlanSha256'] = sha256(plan['path'])
+    current['valid'] = bool(
+        current['candidateBinarySha256'] == document['candidateBinarySha256']
+        and current['frozenBinarySha256'] == document['frozenBinarySha256']
+        and current['candidateReceiptSha256'] == document['buildReceiptSha256']
+        and current['frozenReceiptSha256']
+            == document['frozenBuildReceiptSha256']
+        and current['specSha256'] == document['specSha256']
+        and current['requestSha256'] == document['requestSha256']
+        and current['sourcePlanSha256'] == document['sourcePlanSha256']
+        and current['sourceCommit'] == document['reviewedSourceCommit']
+        and current['sourceStatus'] == ''
+        and (not plan or current['gatePlanSha256'] == plan['sha256']))
+    return current
+
+
 def producer_args(seed, plan, checkpoint, reviewed):
     return [
         '--cell=cutclose', '--mode=calibrated', f'--plan={plan}',
@@ -438,7 +487,9 @@ def resume_args(seed, arm, plan, checkpoint, reviewed, timed=False):
 
 
 def pair_row(seed, producer, artifact, saved_copy, rebase_copy,
-             saved_run, rebase_run):
+             saved_run, rebase_run, candidate_sha):
+    refresh_checkpoint_meta(saved_copy)
+    refresh_checkpoint_meta(rebase_copy)
     saved_doc = saved_run['document']
     rebase_doc = rebase_run['document']
     saved = first_retry(saved_doc)
@@ -457,6 +508,7 @@ def pair_row(seed, producer, artifact, saved_copy, rebase_copy,
         producer_checkpoint.get('outputSha256') == artifact_sha
         and saved_copy['sha256'] == artifact_sha
         and rebase_copy['sha256'] == artifact_sha
+        and saved_copy['unchanged'] and rebase_copy['unchanged']
         and saved_checkpoint.get('inputSha256') == artifact_sha
         and rebase_checkpoint.get('inputSha256') == artifact_sha
         and saved_checkpoint == rebase_checkpoint
@@ -474,6 +526,9 @@ def pair_row(seed, producer, artifact, saved_copy, rebase_copy,
         'savedPath': saved_run['sourcePath'],
         'rebasePath': rebase_run['sourcePath'],
         'exitsZero': producer['exit'] == saved_run['exit'] == rebase_run['exit'] == 0,
+        'executablesBound': all(executable_bound(
+            run['document'], candidate_sha, FEATURES)
+            for run in (producer, saved_run, rebase_run)),
         'prefixArtifactBitIdentical': prefix_equal,
         'predecisionDigestSaved': canonical_digest(predecision(saved)),
         'predecisionDigestRebase': canonical_digest(predecision(rebase)),
@@ -510,6 +565,9 @@ def validate_receipt(receipt, receipt_path, candidate, reviewed):
         'sourceTree': receipt.get('sourceTree')
             == git('rev-parse', f'{reviewed}^{{tree}}'),
         'buildCommand': receipt.get('buildCommand') == expected_command,
+        'package': receipt.get('package') == 'polygon-nesting-core',
+        'example': receipt.get('example') == 'overlap_ics_benchmark',
+        'profile': receipt.get('profile') == 'release',
         'features': receipt.get('features') == FEATURES,
         'binaryPath': os.path.realpath(receipt.get('binaryPath', ''))
             == os.path.realpath(candidate),
@@ -517,6 +575,47 @@ def validate_receipt(receipt, receipt_path, candidate, reviewed):
         'specSha256': receipt.get('specSha256') == sha256(SPEC),
         'requestSha256': receipt.get('requestSha256') == sha256(REQUEST),
         'sourcePlanSha256': receipt.get('sourcePlanSha256') == sha256(SOURCE_PLAN),
+        'toolchain': bool(receipt.get('cargoVersion'))
+            and bool(receipt.get('rustcVersion'))
+            and bool(receipt.get('targetTriple')),
+        'receiptSha256': len(sha256(receipt_path)) == 64,
+    }
+
+
+def validate_frozen_receipt(receipt, receipt_path, frozen):
+    expected_command = [
+        'cargo', 'build', '--release', '--locked', '-p', 'polygon-nesting-core',
+        '--example', 'overlap_ics_benchmark', '--features',
+        ','.join(FROZEN_FEATURES),
+    ]
+    return {
+        'schema': receipt.get('schema')
+            == 'pool-retry-tracker-rebase/frozen-build-receipt/v1',
+        'sourceCommit': receipt.get('sourceCommit') == FROZEN_COMMIT,
+        'headFrozen': receipt.get('headBefore') == FROZEN_COMMIT
+            and receipt.get('headAfter') == FROZEN_COMMIT,
+        'statusClean': receipt.get('sourceStatusBefore') == ''
+            and receipt.get('sourceStatusAfter') == '',
+        'sourceTree': receipt.get('sourceTree')
+            == git('rev-parse', f'{FROZEN_COMMIT}^{{tree}}'),
+        'buildCommand': receipt.get('buildCommand') == expected_command,
+        'package': receipt.get('package') == 'polygon-nesting-core',
+        'example': receipt.get('example') == 'overlap_ics_benchmark',
+        'profile': receipt.get('profile') == 'release',
+        'features': receipt.get('features') == FROZEN_FEATURES,
+        'binaryPath': os.path.realpath(receipt.get('binaryPath', ''))
+            == os.path.realpath(frozen),
+        'targetPath': os.path.realpath(receipt.get('binaryPath', ''))
+            == os.path.realpath(os.path.join(
+                receipt.get('cargoTargetDir', ''), 'release', 'examples',
+                'overlap_ics_benchmark')),
+        'binarySha256': receipt.get('binarySha256') == sha256(frozen),
+        'specSha256': receipt.get('specSha256') == sha256(SPEC),
+        'requestSha256': receipt.get('requestSha256') == sha256(REQUEST),
+        'sourcePlanSha256': receipt.get('sourcePlanSha256') == sha256(SOURCE_PLAN),
+        'toolchain': bool(receipt.get('cargoVersion'))
+            and bool(receipt.get('rustcVersion'))
+            and bool(receipt.get('targetTriple')),
         'receiptSha256': len(sha256(receipt_path)) == 64,
     }
 
@@ -530,6 +629,20 @@ def write_result(document, clauses, candidate, frozen, out):
     clauses['frozenBinaryUnchanged'] = (
         document['frozenBinarySha256']
         == document['frozenBinarySha256After'])
+    document['buildReceiptSha256After'] = sha256(document['buildReceiptPath'])
+    document['frozenBuildReceiptSha256After'] = sha256(
+        document['frozenBuildReceiptPath'])
+    clauses['buildReceiptsUnchanged'] = (
+        document['buildReceiptSha256'] == document['buildReceiptSha256After']
+        and document['frozenBuildReceiptSha256']
+            == document['frozenBuildReceiptSha256After'])
+    document['specSha256After'] = sha256(SPEC)
+    document['requestSha256After'] = sha256(REQUEST)
+    document['sourcePlanSha256After'] = sha256(SOURCE_PLAN)
+    clauses['frozenInputsUnchanged'] = (
+        document['specSha256After'] == document['specSha256']
+        and document['requestSha256After'] == document['requestSha256']
+        and document['sourcePlanSha256After'] == document['sourcePlanSha256'])
     document['sourceCommitAfter'] = git('rev-parse', 'HEAD')
     document['sourceStatusAfter'] = git('status', '--porcelain')
     clauses['reviewedSourceStillFrozen'] = (
@@ -558,18 +671,20 @@ def stop_after(document, clauses, candidate, frozen, out, clause):
 
 
 def main():
-    if len(sys.argv) not in (4, 5):
+    if len(sys.argv) not in (5, 6):
         raise SystemExit(__doc__)
     frozen = os.path.abspath(sys.argv[1])
-    reviewed = sys.argv[2]
-    receipt_path = os.path.abspath(sys.argv[3])
-    out = (os.path.abspath(sys.argv[4]) if len(sys.argv) == 5 else
+    frozen_receipt_path = os.path.abspath(sys.argv[2])
+    reviewed = sys.argv[3]
+    receipt_path = os.path.abspath(sys.argv[4])
+    out = (os.path.abspath(sys.argv[5]) if len(sys.argv) == 6 else
            '/var/lib/t3/tmp/overlapics/pool-retry-tracker-rebase-gate0')
     candidate = os.path.abspath(
         os.environ.get('ICS_POOL_REBASE_BIN', DEFAULT_CANDIDATE))
     if os.path.exists(out):
         raise SystemExit(f'one-shot output directory already exists: {out}')
-    os.makedirs(out)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    os.mkdir(out)
     cells = os.path.join(out, 'cells')
     checkpoints = os.path.join(out, 'checkpoints')
     os.makedirs(cells)
@@ -579,6 +694,8 @@ def main():
             raise SystemExit(f'{label} binary is not executable: {binary}')
     with open(receipt_path, encoding='utf-8') as handle:
         receipt = json.load(handle)
+    with open(frozen_receipt_path, encoding='utf-8') as handle:
+        frozen_receipt = json.load(handle)
 
     head = git('rev-parse', 'HEAD')
     status = git('status', '--porcelain')
@@ -590,6 +707,9 @@ def main():
         'frozenCommit': FROZEN_COMMIT,
         'frozenBinary': frozen,
         'frozenBinarySha256': sha256(frozen),
+        'frozenBuildReceiptPath': frozen_receipt_path,
+        'frozenBuildReceiptSha256': sha256(frozen_receipt_path),
+        'frozenBuildReceipt': frozen_receipt,
         'candidateBinary': candidate,
         'candidateBinarySha256': sha256(candidate),
         'buildReceiptPath': receipt_path,
@@ -607,11 +727,15 @@ def main():
     }
     receipt_checks = validate_receipt(
         receipt, receipt_path, candidate, reviewed)
+    frozen_receipt_checks = validate_frozen_receipt(
+        frozen_receipt, frozen_receipt_path, frozen)
     document['buildReceiptChecks'] = receipt_checks
+    document['frozenBuildReceiptChecks'] = frozen_receipt_checks
     clauses = {
         'specDigest': document['specSha256'] == SPEC_SHA256,
         'reviewedFrozenSource': reviewed == head and status == '',
         'buildReceiptBound': all(receipt_checks.values()),
+        'frozenBuildReceiptBound': all(frozen_receipt_checks.values()),
     }
     if not all(clauses.values()):
         return write_result(document, clauses, candidate, frozen, out)
@@ -621,6 +745,12 @@ def main():
         base = run(frozen, argv, os.path.join(cells, f'g01-{name}-frozen.json'))
         saved = run(candidate, argv + ['--poolrebase=saved'],
                     os.path.join(cells, f'g01-{name}-saved.json'))
+        base_document = base['document'] or {}
+        saved_document = saved['document'] or {}
+        base_executable_bound = executable_bound(
+            base_document, sha256(frozen), FROZEN_FEATURES)
+        saved_executable_bound = executable_bound(
+            saved_document, sha256(candidate), FEATURES)
         identity.append({
             'cell': name,
             'baseExit': base['exit'],
@@ -629,11 +759,15 @@ def main():
             'savedPath': saved['sourcePath'],
             'baseSha256': base['sourceSha256'],
             'savedSha256': saved['sourceSha256'],
+            'baseDocumentExecutableSha256': base_document.get('executableSha256'),
+            'savedDocumentExecutableSha256': saved_document.get('executableSha256'),
+            'baseExecutableBound': base_executable_bound,
+            'savedExecutableBound': saved_executable_bound,
             'documentIdenticalAfterExactStrip': bool(
                 base['exit'] == 0 and saved['exit'] == 0
-                and (base['document'] or {}).get('buildFeatures')
-                    == ['overlap-ics']
-                and (saved['document'] or {}).get('buildFeatures') == FEATURES
+                and base_executable_bound and saved_executable_bound
+                and base_document.get('buildFeatures') == FROZEN_FEATURES
+                and saved_document.get('buildFeatures') == FEATURES
                 and strip_g01(base['document']) == strip_g01(saved['document'])),
         })
 
@@ -641,9 +775,12 @@ def main():
                  os.path.join(cells, 'g01-vectors.json'))
     vector_doc = (vector['document'] or {}).get('poolRetryRebaseVectors') or {}
     lifecycle = vector_doc.get('lifecycle') or {}
+    rollback = vector_doc.get('inSeparationRollback') or {}
     new_width = vector_doc.get('newWidthReset') or {}
     vector_pass = bool(
         vector['exit'] == 0
+        and executable_bound(
+            vector['document'], document['candidateBinarySha256'], FEATURES)
         and vector_doc.get('savedRestoredExactly') is True
         and vector_doc.get('rebaseAllExactlyOne') is True
         and vector_doc.get('computeIgnoreRestoredExactly') is True
@@ -654,6 +791,15 @@ def main():
         and lifecycle.get('savedValid') is True
         and lifecycle.get('rebaseValid') is True
         and lifecycle.get('computeIgnoreValid') is True
+        and rollback.get('valid') is True
+        and rollback.get('posesRestored') is True
+        and (rollback.get('evolvedWeights') or {}).get('countAboveFloor', 0) >= 2
+        and (rollback.get('restoredWeights') or {}).get('bits')
+            == (rollback.get('evolvedWeights') or {}).get('bits')
+        and rollback.get('preRollbackRawRowDigestSha256')
+            != rollback.get('snapshotRawRowDigestSha256')
+        and rollback.get('postRollbackRawRowDigestSha256')
+            == rollback.get('snapshotRawRowDigestSha256')
         and new_width.get('valid') is True
         and (new_width.get('weights') or {}).get('allExactlyOne') is True)
     default_tests = run_test([
@@ -671,11 +817,14 @@ def main():
         'defaultTests': default_tests,
         'featureTests': feature_tests,
     }
+    document['g01']['integrityAfter'] = integrity_snapshot(
+        document, candidate, frozen)
     clauses['g01FeatureRuntimeVectorsTests'] = bool(
         all(row['documentIdenticalAfterExactStrip'] for row in identity)
         and vector_pass
         and default_tests['exit'] == 0
-        and feature_tests['exit'] == 0)
+        and feature_tests['exit'] == 0
+        and document['g01']['integrityAfter']['valid'])
     stopped = stop_after(
         document, clauses, candidate, frozen, out,
         'g01FeatureRuntimeVectorsTests')
@@ -706,6 +855,7 @@ def main():
                 'rebaseComplete': False, 'savedToRebasePublication': False,
                 'reversePublication': False,
                 'alignedCausalDecisionChanged': False,
+                'executablesBound': False,
             })
             break
         os.chmod(artifact, 0o444)
@@ -723,7 +873,8 @@ def main():
             resume_args(seed, 'rebase', plan_path, rebase_path, reviewed),
             os.path.join(cells, f'g02-seed{seed}-rebase.json'))
         pairs.append(pair_row(
-            seed, producer, artifact, saved_copy, rebase_copy, saved, rebase))
+            seed, producer, artifact, saved_copy, rebase_copy, saved, rebase,
+            document['candidateBinarySha256']))
 
     treatment_wins = [row for row in pairs if row['savedToRebasePublication']]
     reverses = [row for row in pairs if row['reversePublication']]
@@ -735,14 +886,18 @@ def main():
         'reverseSeeds': [row['seed'] for row in reverses],
         'causalTreatmentWinSeeds': [row['seed'] for row in causal_wins],
     }
+    document['g02']['integrityAfter'] = integrity_snapshot(
+        document, candidate, frozen)
     clauses['g02NinePairedFirstRetries'] = bool(
         len(pairs) == 9
         and all(
-            row['exitsZero'] and row['prefixArtifactBitIdentical']
+            row['exitsZero'] and row['executablesBound']
+            and row['prefixArtifactBitIdentical']
             and row['predecisionBitIdentical'] and row['savedPolicyValid']
             and row['rebasePolicyValid'] and row['savedComplete']
             and row['rebaseComplete'] for row in pairs)
-        and len(treatment_wins) >= 2 and not reverses and len(causal_wins) >= 2)
+        and len(treatment_wins) >= 2 and not reverses and len(causal_wins) >= 2
+        and document['g02']['integrityAfter']['valid'])
     stopped = stop_after(
         document, clauses, candidate, frozen, out,
         'g02NinePairedFirstRetries')
@@ -771,6 +926,7 @@ def main():
                 candidate,
                 resume_args(0, arm, plan_path, checkpoint, reviewed, timed=True),
                 os.path.join(cells, f'g03-p{index}-{order}-{arm}.json'))
+            refresh_checkpoint_meta(copies[arm])
         saved_row = first_retry(runs['saved']['document'])
         compute_row = first_retry(runs['compute-ignore']['document'])
         saved_seconds = (saved_row or {}).get('pathSeconds') or 0.0
@@ -799,8 +955,16 @@ def main():
                 compute_row, 'compute-ignore'),
             'identityAfterExactStrip': bool(
                 runs['saved']['exit'] == runs['compute-ignore']['exit'] == 0
+                and executable_bound(
+                    runs['saved']['document'],
+                    document['candidateBinarySha256'], FEATURES)
+                and executable_bound(
+                    runs['compute-ignore']['document'],
+                    document['candidateBinarySha256'], FEATURES)
                 and copies['saved']['sha256'] == copies['compute-ignore']['sha256']
                     == sha256(seed0_artifact)
+                and copies['saved']['unchanged']
+                and copies['compute-ignore']['unchanged']
                 and strip_g03(runs['saved']['document'])
                     == strip_g03(runs['compute-ignore']['document'])),
         })
@@ -809,12 +973,15 @@ def main():
         'pairs': cost_pairs,
         'medianComputeIgnoreOverSaved': statistics.median(ratios),
     }
+    document['g03']['integrityAfter'] = integrity_snapshot(
+        document, candidate, frozen)
     clauses['g03ComputeIgnoreCostIdentity'] = bool(
         all(
             row['identityAfterExactStrip'] and row['savedComplete']
             and row['computeIgnoreComplete'] and row['computeIgnorePolicyValid']
             for row in cost_pairs)
-        and statistics.median(ratios) >= 0.95)
+        and statistics.median(ratios) >= 0.95
+        and document['g03']['integrityAfter']['valid'])
     stopped = stop_after(
         document, clauses, candidate, frozen, out,
         'g03ComputeIgnoreCostIdentity')
@@ -823,17 +990,45 @@ def main():
 
     replay_runs = []
     for label in ('a', 'b'):
-        checkpoint = os.path.join(checkpoints, f'g04-seed0-rebase-{label}.chk')
-        checkpoint_meta = checkpoint_copy(seed0_artifact, checkpoint)
+        artifact = os.path.join(
+            checkpoints, f'g04-seed0-canonical-{label}.chk')
+        producer = run(
+            candidate, producer_args(0, plan_path, artifact, reviewed),
+            os.path.join(cells, f'g04-seed0-producer-{label}.json'))
+        if not os.path.isfile(artifact):
+            document['g04'] = {
+                'failedProducer': label,
+                'producer': producer,
+            }
+            clauses['g04DeterminismAuthorityProvenance'] = False
+            return stop_after(
+                document, clauses, candidate, frozen, out,
+                'g04DeterminismAuthorityProvenance')
+        os.chmod(artifact, 0o444)
+        checkpoint = os.path.join(
+            checkpoints, f'g04-seed0-rebase-{label}.chk')
+        checkpoint_meta = checkpoint_copy(artifact, checkpoint)
         result = run(
             candidate,
             resume_args(0, 'rebase', plan_path, checkpoint, reviewed),
             os.path.join(cells, f'g04-seed0-rebase-{label}.json'))
-        replay_runs.append((checkpoint_meta, result))
-    replay_a = replay_runs[0][1]
-    replay_b = replay_runs[1][1]
+        refresh_checkpoint_meta(checkpoint_meta)
+        replay_runs.append({
+            'producer': producer,
+            'artifact': {
+                'path': artifact,
+                'sha256': sha256(artifact),
+                'byteLength': os.path.getsize(artifact),
+            },
+            'copy': checkpoint_meta,
+            'resume': result,
+        })
+    replay_a = replay_runs[0]['resume']
+    replay_b = replay_runs[1]['resume']
     replay_a_row = first_retry(replay_a['document'])
     replay_b_row = first_retry(replay_b['document'])
+    producer_a = replay_runs[0]['producer']
+    producer_b = replay_runs[1]['producer']
 
     diff_names = git('diff', '--name-only', FROZEN_COMMIT, reviewed).splitlines()
     dependency_diff = git(
@@ -856,8 +1051,16 @@ def main():
             for name in diff_names),
     }
     document['g04'] = {
-        'firstCopy': replay_runs[0][0],
-        'secondCopy': replay_runs[1][0],
+        'firstProducerPath': producer_a['sourcePath'],
+        'secondProducerPath': producer_b['sourcePath'],
+        'firstProducerSha256': producer_a['sourceSha256'],
+        'secondProducerSha256': producer_b['sourceSha256'],
+        'producerDeterministicAfterWallStrip':
+            strip_wall(producer_a['document']) == strip_wall(producer_b['document']),
+        'firstArtifact': replay_runs[0]['artifact'],
+        'secondArtifact': replay_runs[1]['artifact'],
+        'firstCopy': replay_runs[0]['copy'],
+        'secondCopy': replay_runs[1]['copy'],
         'firstPath': replay_a['sourcePath'],
         'secondPath': replay_b['sourcePath'],
         'firstSha256': replay_a['sourceSha256'],
@@ -870,10 +1073,22 @@ def main():
             replay_b['document'], replay_b_row, timed=False),
         'provenance': provenance,
     }
+    document['g04']['integrityAfter'] = integrity_snapshot(
+        document, candidate, frozen)
     clauses['g04DeterminismAuthorityProvenance'] = bool(
-        replay_a['exit'] == replay_b['exit'] == 0
-        and replay_runs[0][0]['sha256'] == replay_runs[1][0]['sha256']
-            == sha256(seed0_artifact)
+        producer_a['exit'] == producer_b['exit'] == 0
+        and replay_a['exit'] == replay_b['exit'] == 0
+        and all(executable_bound(
+            run['document'], document['candidateBinarySha256'], FEATURES)
+            for run in (producer_a, producer_b, replay_a, replay_b))
+        and replay_runs[0]['artifact']['sha256']
+            == replay_runs[1]['artifact']['sha256']
+        and replay_runs[0]['copy']['sha256']
+            == replay_runs[1]['copy']['sha256']
+            == replay_runs[0]['artifact']['sha256']
+        and replay_runs[0]['copy']['unchanged']
+        and replay_runs[1]['copy']['unchanged']
+        and document['g04']['producerDeterministicAfterWallStrip']
         and document['g04']['deterministicAfterWallStrip']
         and document['g04']['firstComplete'] and document['g04']['secondComplete']
         and (((replay_a['document'] or {}).get('outcome') or {})
@@ -882,9 +1097,10 @@ def main():
              .get('poolRetryRebase') or {}).get('invalidRetries') == 0
         and provenance['cargoLockUnchanged']
         and provenance['onlyFeatureAddedToDependencyManifests']
-        and not provenance['sparrowOrJaguaSourceFilesAdded'])
+        and not provenance['sparrowOrJaguaSourceFilesAdded']
+        and document['g04']['integrityAfter']['valid'])
     return write_result(document, clauses, candidate, frozen, out)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

@@ -124,8 +124,8 @@ use diagnostics::{ProxySample, QualityPoint, Trace, WorkVector};
 use icscal::PlanPhase;
 #[cfg(feature = "pool-retry-tracker-rebase")]
 use pool_rebase::{
-    NewWidthResetVector, PoolRebaseArm, PoolRebaseTrace, PoolRetryRecord, WeightSnapshot,
-    FIRST_RETRY_ITERATION_CAP,
+    NewWidthResetVector, PoolRebaseArm, PoolRebaseTrace, PoolRetryRecord, RollbackWeightVector,
+    WeightSnapshot, FIRST_RETRY_ITERATION_CAP,
 };
 use profile::{ics_time, PhaseProfile};
 use publish::{Publication, PublicationLimits};
@@ -1528,6 +1528,49 @@ impl<'a> Engine<'a> {
         )
         .1
         .expect("the lifecycle vector always records its branch")
+    }
+
+    /// G0.1's exact live rollback seam. The diagnostic mutates a private clone
+    /// so it cannot perturb the engine subsequently used by another vector.
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub fn pool_rebase_rollback_weight_vector(&self) -> RollbackWeightVector {
+        let snapshot = self.state.clone();
+        let mut evolved = snapshot.clone();
+        if let Some(row) = evolved.pair_rows.first_mut() {
+            row.weight = 64.0;
+            row.violation_mm += 0.125;
+        }
+        if let Some(rows) = evolved.edge_rows.first_mut() {
+            rows[0].weight = 8.0;
+            rows[0].violation_mm += 0.25;
+        }
+        if let Some(pose) = evolved.poses.first_mut() {
+            pose.tx_mm += 0.5;
+        }
+        let snapshot_weights = WeightSnapshot::of(&snapshot);
+        let evolved_weights = WeightSnapshot::of(&evolved);
+        let snapshot_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&snapshot);
+        let pre_rollback_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&evolved);
+        restore_keeping_weights(&mut evolved, &snapshot);
+        let restored_weights = WeightSnapshot::of(&evolved);
+        let post_rollback_raw_row_digest_sha256 = pool_rebase::raw_row_digest(&evolved);
+        let poses_restored = evolved.poses == snapshot.poses;
+        let valid = evolved_weights.all_finite
+            && evolved_weights.count_above_floor >= 2
+            && restored_weights.bits == evolved_weights.bits
+            && pre_rollback_raw_row_digest_sha256 != snapshot_raw_row_digest_sha256
+            && post_rollback_raw_row_digest_sha256 == snapshot_raw_row_digest_sha256
+            && poses_restored;
+        RollbackWeightVector {
+            snapshot_weights,
+            evolved_weights,
+            restored_weights,
+            snapshot_raw_row_digest_sha256,
+            pre_rollback_raw_row_digest_sha256,
+            post_rollback_raw_row_digest_sha256,
+            poses_restored,
+            valid,
+        }
     }
 
     /// G0.1's existing new-width seam: refresh authoritative rows at the new

@@ -317,6 +317,21 @@ pub struct NewWidthResetVector {
     pub valid: bool,
 }
 
+/// G0.1's printed proof that the live in-separation rollback restores the
+/// saved geometry/raw rows while retaining the weights learned since that
+/// snapshot.
+#[derive(Clone, Debug)]
+pub struct RollbackWeightVector {
+    pub snapshot_weights: WeightSnapshot,
+    pub evolved_weights: WeightSnapshot,
+    pub restored_weights: WeightSnapshot,
+    pub snapshot_raw_row_digest_sha256: [u8; 32],
+    pub pre_rollback_raw_row_digest_sha256: [u8; 32],
+    pub post_rollback_raw_row_digest_sha256: [u8; 32],
+    pub poses_restored: bool,
+    pub valid: bool,
+}
+
 impl PoolRetryRecord {
     pub(crate) fn finalize_validity(&mut self) {
         let mut failures = Vec::new();

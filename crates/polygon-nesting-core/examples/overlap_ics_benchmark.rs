@@ -1898,6 +1898,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let lifecycle_rebase = lifecycle(PoolRebaseArm::Rebase, false)?;
                 let lifecycle_compute = lifecycle(PoolRebaseArm::ComputeIgnore, false)?;
                 let lifecycle_nonfinite = lifecycle(PoolRebaseArm::Rebase, true)?;
+                let rollback = engine.pool_rebase_rollback_weight_vector();
                 let mut saved_state = engine.state.clone();
                 let saved_reset = apply_weight_policy(
                     &mut saved_state,
@@ -1981,6 +1982,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             == disruption_identity(&lifecycle_rebase)
                         && disruption_identity(&lifecycle_saved)
                             == disruption_identity(&lifecycle_compute),
+                    "inSeparationRollback": {
+                        "snapshotWeights": weight_snapshot_json(&rollback.snapshot_weights),
+                        "evolvedWeights": weight_snapshot_json(&rollback.evolved_weights),
+                        "restoredWeights": weight_snapshot_json(&rollback.restored_weights),
+                        "snapshotRawRowDigestSha256":
+                            hex_bytes(&rollback.snapshot_raw_row_digest_sha256),
+                        "preRollbackRawRowDigestSha256":
+                            hex_bytes(&rollback.pre_rollback_raw_row_digest_sha256),
+                        "postRollbackRawRowDigestSha256":
+                            hex_bytes(&rollback.post_rollback_raw_row_digest_sha256),
+                        "posesRestored": rollback.poses_restored,
+                        "valid": rollback.valid,
+                    },
                     "newWidthReset": {
                         "widthMm": new_width.width_mm,
                         "weights": weight_snapshot_json(&new_width.weights),

@@ -1651,6 +1651,26 @@ fn pool_retry_shared_lifecycle_and_existing_new_width_reset_are_exact() {
         "new-width reset/cold rebuild failed: {width:?}"
     );
     assert!(width.weights.all_exactly_one);
+
+    let rollback_engine = banded_deficit_engine(&pieces, 200.0);
+    let rollback = rollback_engine.pool_rebase_rollback_weight_vector();
+    assert!(
+        rollback.valid,
+        "printed rollback vector failed: {rollback:?}"
+    );
+    assert!(rollback.evolved_weights.count_above_floor >= 2);
+    assert_eq!(
+        rollback.restored_weights.bits,
+        rollback.evolved_weights.bits
+    );
+    assert_ne!(
+        rollback.pre_rollback_raw_row_digest_sha256,
+        rollback.snapshot_raw_row_digest_sha256
+    );
+    assert_eq!(
+        rollback.post_rollback_raw_row_digest_sha256,
+        rollback.snapshot_raw_row_digest_sha256
+    );
 }
 
 /// A sweep runs the Algorithm-8 pass exactly once, over every row, whether or
