@@ -56,6 +56,8 @@
 
 pub mod broad_phase;
 pub mod contact;
+#[cfg(feature = "conflict-cluster-budget")]
+pub mod cluster_budget;
 /// The deterministic contact corpus and its independent score: Gate 0's
 /// numeric-soundness cell. Diagnostic only; no acceptance path calls it.
 pub mod corpus;
@@ -117,6 +119,10 @@ use publish::{Publication, PublicationLimits};
 use state::{
     build_geometry, pair_count, Contract, ExactIncumbent, Geometry, IcsState, PairRow, PieceSource,
     Pose,
+};
+#[cfg(feature = "conflict-cluster-budget")]
+use cluster_budget::{
+    AtomicOrderTrace, ClusterField, PartitionArm, PartitionCostArmSample, PartitionTrace,
 };
 
 /// The engine's configuration for one locked-strip run.
@@ -207,6 +213,8 @@ pub struct Engine<'a> {
     pub trace: Trace,
     pub config: IcsConfig,
     descent: Descent,
+    #[cfg(feature = "conflict-cluster-budget")]
+    partition_field: Option<ClusterField>,
     /// The pose-bits digest of the last state offered for publication.
     last_attempt_pose_digest: Option<[u8; 32]>,
 }
@@ -316,6 +324,12 @@ impl<'a> Engine<'a> {
         trace.work.pose_transforms += count as u64;
         let allow_rotation = pieces.iter().map(|piece| piece.allow_rotation).collect();
         let descent = Descent::new(config.descent, allow_rotation);
+        #[cfg(feature = "conflict-cluster-budget")]
+        let partition_field = if config.descent.partition_arm.is_off() {
+            None
+        } else {
+            Some(ClusterField::from_sources(&sources))
+        };
         Self {
             pieces,
             sources,
@@ -326,6 +340,8 @@ impl<'a> Engine<'a> {
             trace,
             config,
             descent,
+            #[cfg(feature = "conflict-cluster-budget")]
+            partition_field,
             last_attempt_pose_digest: None,
         }
     }
@@ -348,6 +364,117 @@ impl<'a> Engine<'a> {
 
     pub fn proposals(&self) -> u64 {
         self.descent.proposals
+    }
+
+    /// Paired-cost Gate-0 primitive: reset to one immutable C175 entry state
+    /// before every complete worker sweep. `ComputeIgnore` pays for the source
+    /// field inside the measured interval, builds and discards the B schedule,
+    /// then consumes the same current Off order.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub fn partition_cost_arm(
+        &self,
+        arm: PartitionArm,
+        warmup_sweeps: usize,
+        measured_sweeps: usize,
+    ) -> PartitionCostArmSample {
+        use sha2::{Digest, Sha256};
+
+        assert!(
+            matches!(arm, PartitionArm::Off | PartitionArm::ComputeIgnore),
+            "the cost cell compares only Off and ComputeIgnore"
+        );
+        let snapshot = self.state.clone();
+        let piece_count = snapshot.poses.len();
+        let entry_colliding_pieces = (0..piece_count)
+            .filter(|piece| energy::incident_raw(&snapshot, *piece) > 0.0)
+            .count();
+        let mut state = snapshot.clone();
+        let mut config = self.config.descent;
+        config.partition_arm = arm;
+        let mut descent = Descent::new(config, self.descent.allow_rotation().to_vec());
+
+        let warm_field = (arm == PartitionArm::ComputeIgnore)
+            .then(|| ClusterField::from_sources(&self.sources));
+        let mut warm_trace = PartitionTrace::default();
+        for _ in 0..warmup_sweeps {
+            state.clone_from(&snapshot);
+            let mut work = WorkVector::default();
+            if arm == PartitionArm::ComputeIgnore {
+                descent.worker_sweep_partitioned(
+                    &mut state,
+                    &self.sources,
+                    &self.contract,
+                    warm_field.as_ref().expect("compute-ignore has a warm field"),
+                    &mut warm_trace,
+                    &mut work,
+                );
+            } else {
+                descent.worker_sweep(
+                    &mut state,
+                    &self.sources,
+                    &self.contract,
+                    &mut work,
+                );
+            }
+        }
+
+        let proposals_before = descent.proposals;
+        let mut work = WorkVector::default();
+        let mut partition = PartitionTrace::default();
+        let mut order_trace = AtomicOrderTrace::default();
+        let mut pose_sequence = Sha256::new();
+        let started = std::time::Instant::now();
+        // Runtime caches this immutable field once. Reconstructing it here,
+        // after the clock starts, charges that one-time cost to treatment.
+        let measured_field = (arm == PartitionArm::ComputeIgnore)
+            .then(|| ClusterField::from_sources(&self.sources));
+        for _ in 0..measured_sweeps {
+            state.clone_from(&snapshot);
+            let mut sweep_work = WorkVector::default();
+            if arm == PartitionArm::ComputeIgnore {
+                descent.worker_sweep_partitioned_cost_traced(
+                    &mut state,
+                    &self.sources,
+                    &self.contract,
+                    measured_field
+                        .as_ref()
+                        .expect("compute-ignore has a measured field"),
+                    &mut partition,
+                    &mut order_trace,
+                    &mut sweep_work,
+                );
+            } else {
+                descent.worker_sweep_cost_traced(
+                    &mut state,
+                    &self.sources,
+                    &self.contract,
+                    &mut order_trace,
+                    &mut sweep_work,
+                );
+            }
+            work.saturating_add(&sweep_work);
+            pose_sequence.update(pose_bits_digest(&state.poses));
+        }
+        let elapsed_seconds = started.elapsed().as_secs_f64();
+        let expected_atomic_slots = entry_colliding_pieces as u64 * measured_sweeps as u64;
+        let completed_atomic_slots = order_trace.actual_slots;
+
+        PartitionCostArmSample {
+            arm,
+            warmup_sweeps,
+            measured_sweeps,
+            piece_count,
+            entry_colliding_pieces,
+            expected_atomic_slots,
+            completed_atomic_slots,
+            legacy_proposals: descent.proposals - proposals_before,
+            elapsed_seconds,
+            slots_per_second: completed_atomic_slots as f64 / elapsed_seconds,
+            pose_sequence_digest_sha256: format!("{:x}", pose_sequence.finalize()),
+            consumed_order_digest_sha256: order_trace.digest_hex(),
+            work,
+            partition,
+        }
     }
 
     /// A cold reconstruction of every row. The throughput cell times this.
@@ -541,6 +668,7 @@ impl<'a> Engine<'a> {
         while self.descent.proposals + count <= self.config.proposal_budget
             && self.trace.work.sample_evaluations < self.config.relocate_eval_budget
         {
+            #[cfg(not(feature = "conflict-cluster-budget"))]
             let outcome = {
                 let Engine {
                     ref mut state,
@@ -551,6 +679,32 @@ impl<'a> Engine<'a> {
                     ..
                 } = *self;
                 descent.sweep(state, sources, contract, &mut trace.work)
+            };
+            #[cfg(feature = "conflict-cluster-budget")]
+            let outcome = {
+                let Engine {
+                    ref mut state,
+                    ref sources,
+                    ref contract,
+                    ref mut trace,
+                    ref mut descent,
+                    ref partition_field,
+                    ..
+                } = *self;
+                if descent.partition_arm() == PartitionArm::Off {
+                    descent.sweep(state, sources, contract, &mut trace.work)
+                } else {
+                    descent.sweep_partitioned(
+                        state,
+                        sources,
+                        contract,
+                        partition_field
+                            .as_ref()
+                            .expect("an armed descent has a cluster field"),
+                        &mut trace.partition,
+                        &mut trace.work,
+                    )
+                }
             };
             self.trace.sweeps += 1;
             // A converged state is not a stall: a sweep that changes nothing
@@ -691,6 +845,8 @@ impl<'a> Engine<'a> {
                     state: self.state.clone(),
                     descent,
                     work: WorkVector::default(),
+                    #[cfg(feature = "conflict-cluster-budget")]
+                    partition: PartitionTrace::default(),
                     sweep_ns: 0,
                 });
             }
@@ -699,17 +855,30 @@ impl<'a> Engine<'a> {
 
         let sources: &[PieceSource] = &self.sources;
         let contract: &Contract = &self.contract;
+        #[cfg(feature = "conflict-cluster-budget")]
+        let partition_field = self.partition_field.as_ref();
         let mut outcomes: Vec<SweepOutcome> = Vec::with_capacity(workers);
         #[cfg(feature = "ics-profile")]
         let dispatch_started = std::time::Instant::now();
         if workers == 1 {
             let slot = &mut slots[0];
+            #[cfg(not(feature = "conflict-cluster-budget"))]
             outcomes.push(slot.sweep(sources, contract));
+            #[cfg(feature = "conflict-cluster-budget")]
+            outcomes.push(slot.sweep(sources, contract, partition_field));
         } else {
             std::thread::scope(|scope| {
+                #[cfg(not(feature = "conflict-cluster-budget"))]
                 let handles: Vec<_> = slots
                     .iter_mut()
                     .map(|slot| scope.spawn(move || slot.sweep(sources, contract)))
+                    .collect();
+                #[cfg(feature = "conflict-cluster-budget")]
+                let handles: Vec<_> = slots
+                    .iter_mut()
+                    .map(|slot| {
+                        scope.spawn(move || slot.sweep(sources, contract, partition_field))
+                    })
                     .collect();
                 // The barrier. Joined in ordinal order, so the vector is a
                 // function of the ordinals and not of who finished first.
@@ -736,6 +905,8 @@ impl<'a> Engine<'a> {
 
         for slot in &slots {
             self.trace.work.saturating_add(&slot.work);
+            #[cfg(feature = "conflict-cluster-budget")]
+            self.trace.partition.append(&slot.partition);
         }
 
         // Steps 5-7: the ordinal merge, the install, and one Algorithm-8 pass.
@@ -2007,6 +2178,8 @@ struct Slot {
     state: IcsState,
     descent: Descent,
     work: WorkVector,
+    #[cfg(feature = "conflict-cluster-budget")]
+    partition: PartitionTrace,
     /// Nanoseconds this worker spent inside `worker_sweep`. Written only under
     /// `ics-profile`; one `u64` in an already-allocated vector otherwise, and
     /// read by nothing the engine decides on.
@@ -2017,12 +2190,42 @@ struct Slot {
 impl Slot {
     /// Step 3: one complete sequential relocate sweep, in this worker's own
     /// state, descent and work vector.
+    #[cfg(not(feature = "conflict-cluster-budget"))]
     fn sweep(&mut self, sources: &[PieceSource], contract: &Contract) -> SweepOutcome {
         #[cfg(feature = "ics-profile")]
         let started = std::time::Instant::now();
         let outcome = self
             .descent
             .worker_sweep(&mut self.state, sources, contract, &mut self.work);
+        #[cfg(feature = "ics-profile")]
+        {
+            self.sweep_ns = started.elapsed().as_nanos() as u64;
+        }
+        outcome
+    }
+
+    #[cfg(feature = "conflict-cluster-budget")]
+    fn sweep(
+        &mut self,
+        sources: &[PieceSource],
+        contract: &Contract,
+        field: Option<&ClusterField>,
+    ) -> SweepOutcome {
+        #[cfg(feature = "ics-profile")]
+        let started = std::time::Instant::now();
+        let outcome = if self.descent.partition_arm() == PartitionArm::Off {
+            self.descent
+                .worker_sweep(&mut self.state, sources, contract, &mut self.work)
+        } else {
+            self.descent.worker_sweep_partitioned(
+                &mut self.state,
+                sources,
+                contract,
+                field.expect("an armed worker has a cluster field"),
+                &mut self.partition,
+                &mut self.work,
+            )
+        };
         #[cfg(feature = "ics-profile")]
         {
             self.sweep_ns = started.elapsed().as_nanos() as u64;

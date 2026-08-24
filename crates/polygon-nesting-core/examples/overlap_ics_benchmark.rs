@@ -24,6 +24,8 @@
 //! parameter source - and no constant in `search::overlap_ics` was chosen by
 //! looking at it.
 
+#![recursion_limit = "256"]
+
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
@@ -36,6 +38,11 @@ use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, GeneralFastPiece, GeneralFastPlacement, GeneralFastSettings,
 };
 use polygon_nesting_core::search::overlap_ics::contact::convex_cell_gap;
+#[cfg(feature = "conflict-cluster-budget")]
+use polygon_nesting_core::search::overlap_ics::cluster_budget::{
+    FallbackKind, Gate0VectorReport, PartitionArm, PartitionCostArmSample, PartitionTrace,
+    gate0_vector_report,
+};
 use polygon_nesting_core::search::overlap_ics::corpus;
 use polygon_nesting_core::search::overlap_ics::descent::{
     counter_hash, DescentConfig, RejectionCensus,
@@ -233,6 +240,163 @@ fn work_json(work: &WorkVector) -> Value {
         object.insert(key.to_owned(), json!(value));
     }
     Value::Object(object)
+}
+
+#[cfg(feature = "conflict-cluster-budget")]
+fn partition_json(trace: &PartitionTrace) -> Value {
+    let fallback = |kind: FallbackKind| match kind {
+        FallbackKind::None => "none",
+        FallbackKind::ZeroSignal => "zero-signal",
+        FallbackKind::Invalid => "invalid",
+    };
+    json!({
+        "partitionDecisions": trace.partition_decisions,
+        "eligibleDecisions": trace.eligible_decisions,
+        "eligibleDisagreementDecisions": trace.eligible_disagreement_decisions,
+        "eligibleDisagreementRate": trace.eligible_disagreement_rate(),
+        "entryCollidingPieces": trace.entry_colliding_pieces,
+        "componentCount": trace.component_count,
+        "positivePairEdges": trace.positive_pair_edges,
+        "partitionSlots": trace.partition_slots,
+        "executedSlots": trace.executed_slots,
+        "fullRelocateSlots": trace.full_relocate_slots,
+        "zeroEnergySlots": trace.zero_energy_slots,
+        "pairDiscTerms": trace.pair_disc_terms,
+        "positiveBoundaryRows": trace.positive_boundary_rows,
+        "zeroSignalFallbackDecisions": trace.zero_signal_fallback_decisions,
+        "invalidFallbackDecisions": trace.invalid_fallback_decisions,
+        "planIdentityFailureDecisions": trace.plan_identity_failure_decisions,
+        "executionIdentityFailureDecisions": trace.execution_identity_failure_decisions,
+        "slotIdentitiesHold": trace.slot_identities_hold(),
+        "graphDigestSha256": hex_bytes(&trace.graph_digest_sha256),
+        "allocationDigestSha256": hex_bytes(&trace.allocation_digest_sha256),
+        "scheduleDigestSha256": hex_bytes(&trace.schedule_digest_sha256),
+        "decisions": trace.decisions.iter().map(|row| json!({
+            "seed": row.key.seed,
+            "bite": row.key.bite,
+            "iteration": row.key.iteration,
+            "worker": row.key.worker,
+            "Q": row.q(),
+            "entry": row.entry,
+            "components": row.components.iter().map(|component| json!({
+                "id": component.id,
+                "members": component.members,
+            })).collect::<Vec<_>>(),
+            "positivePairEdges": row.positive_pair_edges.iter().map(|edge| json!({
+                "pairId": edge.pair_id,
+                "first": edge.first,
+                "second": edge.second,
+            })).collect::<Vec<_>>(),
+            "pairDiscTerms": row.pair_disc_terms,
+            "positiveBoundaryRows": row.positive_boundary_rows,
+            "massBits": row.mass_bits,
+            "maxViolationBits": row.max_violation_bits,
+            "massQuotas": row.mass_quotas,
+            "shuffledQuotas": row.shuffled_quotas,
+            "maxViolationQuotas": row.max_violation_quotas,
+            "massDiffersFromMaxViolation": row.mass_quotas != row.max_violation_quotas,
+            "memberPermutations": row.member_permutations,
+            "massSchedule": row.mass_schedule,
+            "shuffledSchedule": row.shuffled_schedule,
+            "maxViolationSchedule": row.max_violation_schedule,
+            "massFallback": fallback(row.mass_fallback),
+            "shuffledFallback": fallback(row.shuffled_fallback),
+            "maxViolationFallback": fallback(row.max_violation_fallback),
+            "placeboOffset": row.placebo_offset,
+            "planIdentitiesHold": row.plan_identities_hold(),
+            "spearmanFieldMassMaxViolation": row.spearman_field_mass_max,
+            "spearmanQuotaMassMaxViolation": row.spearman_quota_mass_max,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+#[cfg(feature = "conflict-cluster-budget")]
+fn hex_bytes(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    let mut out = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        write!(&mut out, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    out
+}
+
+#[cfg(feature = "conflict-cluster-budget")]
+fn partition_cost_json(sample: &PartitionCostArmSample) -> Value {
+    json!({
+        "arm": sample.arm.as_str(),
+        "warmupSweeps": sample.warmup_sweeps,
+        "measuredSweeps": sample.measured_sweeps,
+        "pieceCount": sample.piece_count,
+        "entryCollidingPieces": sample.entry_colliding_pieces,
+        "expectedAtomicSlots": sample.expected_atomic_slots,
+        "completedAtomicSlots": sample.completed_atomic_slots,
+        "legacyProposals": sample.legacy_proposals,
+        "elapsedSeconds": sample.elapsed_seconds,
+        "slotsPerSecond": sample.slots_per_second,
+        "poseSequenceDigestSha256": sample.pose_sequence_digest_sha256,
+        "consumedOrderDigestSha256": sample.consumed_order_digest_sha256,
+        "work": work_json(&sample.work),
+        "partition": partition_json(&sample.partition),
+    })
+}
+
+#[cfg(feature = "conflict-cluster-budget")]
+fn partition_vectors_json(report: &Gate0VectorReport) -> Value {
+    let fallback = |kind: FallbackKind| match kind {
+        FallbackKind::None => "none",
+        FallbackKind::ZeroSignal => "zero-signal",
+        FallbackKind::Invalid => "invalid",
+    };
+    json!({
+        "unitSquare": {
+            "center": report.unit_square_center,
+            "radius": report.unit_square_radius,
+        },
+        "transformedDisc": {
+            "mirror": true,
+            "sin": 1.0,
+            "cos": 0.0,
+            "translation": [10.0, 5.0],
+            "center": report.transformed_center,
+            "radius": report.transformed_radius,
+        },
+        "pairInversion": {
+            "kind": "pure-frozen-row-field-vector",
+            "callsMeasurePair": !report.inversion_is_pure_frozen_row_field_vector,
+            "massTermsMm2": report.pair_mass_terms,
+            "massQuotas": report.mass_inversion_quotas,
+            "maxViolationWeightsMm": [2.0, 1.0],
+            "maxViolationQuotas": report.max_violation_inversion_quotas,
+        },
+        "boundaryV3TermMm2": report.boundary_term,
+        "largestRemainder": {
+            "componentIds": report.largest_remainder_component_ids,
+            "quotas": report.largest_remainder_quotas,
+        },
+        "mixedZeroQuotas": report.mixed_zero_quotas,
+        "zeroSignalQuotas": report.zero_signal_quotas,
+        "zeroSignalFallback": fallback(report.zero_signal_fallback),
+        "placebo": {
+            "offset": report.placebo_offset,
+            "input": report.placebo_input,
+            "rotated": report.placebo_rotated,
+            "quotas": report.placebo_quotas,
+            "multisetPreserved": report.placebo_multiset_preserved,
+            "nonIdentity": report.placebo_non_identity,
+        },
+        "memberPermutation": report.member_permutation,
+        "roundRobinSchedule": report.round_robin_schedule,
+        "invalidQuotas": report.invalid_quotas,
+        "invalidFallback": fallback(report.invalid_fallback),
+        "nonfiniteSourceRejected": report.nonfinite_source_rejected,
+        "nonfinitePairRejected": report.nonfinite_pair_rejected,
+        "accountingIdentities": {
+            "quotaSumEqualsQ": report.quota_sum_identity,
+            "scheduleLengthEqualsQ": report.schedule_length_identity,
+            "executedSlotsEqualsQ": report.executed_slots_identity,
+            "fullPlusZeroEqualsQ": report.full_plus_zero_identity,
+        },
+    })
 }
 
 /// The rejection census both reviews require before any statement about the
@@ -461,6 +625,9 @@ fn executable_sha256() -> Option<String> {
 /// The features this binary was built with, in a fixed order, for the same key.
 fn build_features() -> Vec<String> {
     let mut features = vec!["overlap-ics".to_owned()];
+    if cfg!(feature = "conflict-cluster-budget") {
+        features.push("conflict-cluster-budget".to_owned());
+    }
     if cfg!(feature = "ics-profile") {
         features.push("ics-profile".to_owned());
     }
@@ -640,7 +807,7 @@ fn calibration_plan(
 }
 
 fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
-    json!({
+    let mut document = json!({
         "incumbent": {
             "rawSourceDepthMm": outcome.incumbent.raw_source_depth_mm,
             "fromConstructor": outcome.incumbent.from_constructor,
@@ -741,7 +908,12 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
         "repairMaxGivebackMm": outcome.trace.checkpoints.iter()
             .filter(|row| row.published_raw_depth_mm.is_some())
             .map(|row| row.repair_depth_giveback_mm).fold(0.0f64, f64::max),
-    })
+    });
+    #[cfg(feature = "conflict-cluster-budget")]
+    if outcome.trace.partition.partition_decisions > 0 {
+        document["partition"] = partition_json(&outcome.trace.partition);
+    }
+    document
 }
 
 /// **The `CutCloseRelocate` trajectory, as a document.**
@@ -878,7 +1050,7 @@ fn schedule_json(
         .iter()
         .map(|row| row.exact_checkpoint_calls)
         .sum();
-    json!({
+    let mut document = json!({
         "startDepthMm": outcome.start_depth_mm,
         "depthMm": outcome.depth_mm,
         "finalWidthMm": outcome.final_width_mm,
@@ -1009,7 +1181,12 @@ fn schedule_json(
         "repairMaxGivebackMm": outcome.trace.checkpoints.iter()
             .filter(|row| row.published_raw_depth_mm.is_some())
             .map(|row| row.repair_depth_giveback_mm).fold(0.0f64, f64::max),
-    })
+    });
+    #[cfg(feature = "conflict-cluster-budget")]
+    if outcome.trace.partition.partition_decisions > 0 {
+        document["partition"] = partition_json(&outcome.trace.partition);
+    }
+    document
 }
 
 /// **The relocate metric version**, arbitration 4 / Sol review 17 Round 2 §2.
@@ -1233,6 +1410,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     match cell.as_str() {
+        "partition-vectors" => {
+            #[cfg(feature = "conflict-cluster-budget")]
+            {
+                document["partitionVectors"] = partition_vectors_json(&gate0_vector_report());
+            }
+            #[cfg(not(feature = "conflict-cluster-budget"))]
+            return Err("partition-vectors requires conflict-cluster-budget".into());
+        }
         "s0" | "s1" | "s2" => {
             let poses_path = options.required("poses")?.to_owned();
             let poses_bytes = fs::read(&poses_path)?;
@@ -1316,7 +1501,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             document["outcome"] = outcome_json(&outcome, &placement_fingerprint(&placements));
             document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
         }
-        "constructor" | "c175" | "c168" | "triangle" | "run" => {
+        "constructor" | "c175" | "c168" | "triangle" | "run" | "partition-cost" => {
             let constructor_started = Instant::now();
             let placements = ShortSideFirst.layout(&pieces, settings)?;
             wall.insert(
@@ -1327,7 +1512,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let constructor_fingerprint = placement_fingerprint(&placements);
             let parent = poses_of(&pieces, &sources, &placements)?;
             let target = match cell.as_str() {
-                "c175" => constructor_depth - 0.10 * (constructor_depth - lower_scale_mm),
+                "c175" | "partition-cost" => {
+                    constructor_depth - 0.10 * (constructor_depth - lower_scale_mm)
+                }
                 _ => options.number("target", constructor_depth)?,
             };
             document["constructor"] = json!({
@@ -1418,29 +1605,109 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                     .into());
                 }
-                let outcome = engine.run();
-                wall.insert(
-                    "solverSeconds".to_owned(),
-                    json!(solver_started.elapsed().as_secs_f64()),
-                );
-                document["shock"] = json!({
-                    "affineFactor": factor,
-                    "entryDepthWithinTarget": entry_depth <= target + 1e-9,
-                    "entryDepthSlackMm": target - entry_depth,
-                    "shockMm": options.number("shockmm", 0.25)?,
-                    "shockDeg": options.number("shockdeg", 1.0)?,
-                    "shockedPoseDigest": pose_digest(&shocked),
-                });
-                document["entry"] = json!({
-                    "rawPhi": entry_totals.raw,
-                    "guidedPhi": entry_totals.guided,
-                    "maxViolationMm": entry_totals.max_violation_mm,
-                    "rawSourceDepthMm": entry_depth,
-                    "lockedTargetMm": target,
-                });
-                document["outcome"] = outcome_json(&outcome, &constructor_fingerprint);
-                document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
-                document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+                #[cfg(feature = "conflict-cluster-budget")]
+                if cell == "partition-cost" {
+                    let sequence = options.get("sequence").unwrap_or("AB");
+                    if sequence != "AB" && sequence != "BA" {
+                        return Err("--sequence must be AB|BA".into());
+                    }
+                    let warmups = options.integer("warmups", 32)? as usize;
+                    let measured = options.integer("measured", 256)? as usize;
+                    let samples = sequence
+                        .chars()
+                        .map(|label| {
+                            let arm = match label {
+                                'A' => PartitionArm::Off,
+                                'B' => PartitionArm::ComputeIgnore,
+                                _ => unreachable!(),
+                            };
+                            engine.partition_cost_arm(arm, warmups, measured)
+                        })
+                        .collect::<Vec<_>>();
+                    let by_arm = |arm: PartitionArm| {
+                        samples
+                            .iter()
+                            .find(|sample| sample.arm == arm)
+                            .expect("both cost arms ran")
+                    };
+                    let off = by_arm(PartitionArm::Off);
+                    let compute = by_arm(PartitionArm::ComputeIgnore);
+                    document["partitionCost"] = json!({
+                        "sequence": sequence,
+                        "warmups": warmups,
+                        "measured": measured,
+                        "samples": samples.iter().map(partition_cost_json).collect::<Vec<_>>(),
+                        "ratioComputeIgnoreOverOff":
+                            compute.slots_per_second / off.slots_per_second,
+                        "poseIdentity": compute.pose_sequence_digest_sha256
+                            == off.pose_sequence_digest_sha256,
+                        "orderIdentity": compute.consumed_order_digest_sha256
+                            == off.consumed_order_digest_sha256,
+                        "workIdentity": compute.work == off.work,
+                        "actualSlotsIdentity": compute.completed_atomic_slots
+                            == off.completed_atomic_slots,
+                        "offActualMatchesExpected": off.completed_atomic_slots
+                            == off.expected_atomic_slots,
+                        "computeActualMatchesExpected": compute.completed_atomic_slots
+                            == compute.expected_atomic_slots,
+                        "computePartitionSlotsMatchActual": compute.partition.partition_slots
+                            == compute.completed_atomic_slots,
+                        "legacyProposalIdentity": compute.legacy_proposals
+                            == off.legacy_proposals,
+                        "computeSlotIdentitiesHold": compute.partition.slot_identities_hold(),
+                        "computeInvalidFallbacks":
+                            compute.partition.invalid_fallback_decisions,
+                    });
+                    wall.insert(
+                        "solverSeconds".to_owned(),
+                        json!(solver_started.elapsed().as_secs_f64()),
+                    );
+                    document["shock"] = json!({
+                        "affineFactor": factor,
+                        "entryDepthWithinTarget": entry_depth <= target + 1e-9,
+                        "entryDepthSlackMm": target - entry_depth,
+                        "shockMm": options.number("shockmm", 0.25)?,
+                        "shockDeg": options.number("shockdeg", 1.0)?,
+                        "shockedPoseDigest": pose_digest(&shocked),
+                    });
+                    document["entry"] = json!({
+                        "rawPhi": entry_totals.raw,
+                        "guidedPhi": entry_totals.guided,
+                        "maxViolationMm": entry_totals.max_violation_mm,
+                        "rawSourceDepthMm": entry_depth,
+                        "lockedTargetMm": target,
+                    });
+                    document["finalPoseDigest"] = json!(pose_digest(engine.state().poses.as_slice()));
+                }
+                #[cfg(not(feature = "conflict-cluster-budget"))]
+                if cell == "partition-cost" {
+                    return Err("partition-cost requires conflict-cluster-budget".into());
+                }
+                if cell != "partition-cost" {
+                    let outcome = engine.run();
+                    wall.insert(
+                        "solverSeconds".to_owned(),
+                        json!(solver_started.elapsed().as_secs_f64()),
+                    );
+                    document["shock"] = json!({
+                        "affineFactor": factor,
+                        "entryDepthWithinTarget": entry_depth <= target + 1e-9,
+                        "entryDepthSlackMm": target - entry_depth,
+                        "shockMm": options.number("shockmm", 0.25)?,
+                        "shockDeg": options.number("shockdeg", 1.0)?,
+                        "shockedPoseDigest": pose_digest(&shocked),
+                    });
+                    document["entry"] = json!({
+                        "rawPhi": entry_totals.raw,
+                        "guidedPhi": entry_totals.guided,
+                        "maxViolationMm": entry_totals.max_violation_mm,
+                        "rawSourceDepthMm": entry_depth,
+                        "lockedTargetMm": target,
+                    });
+                    document["outcome"] = outcome_json(&outcome, &constructor_fingerprint);
+                    document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
+                    document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+                }
             }
         }
         // ---------------------------------------------------- CutCloseRelocate --
@@ -2293,6 +2560,28 @@ fn descent_config(
         Some("always") => true,
         Some(other) => return Err(format!("--jumpcommit must be always|guided, not `{other}`")),
     };
+    #[cfg(feature = "conflict-cluster-budget")]
+    {
+        config.partition_arm = match options.get("partition").unwrap_or("off") {
+            "off" => PartitionArm::Off,
+            "mass" => PartitionArm::Mass,
+            "shuffled-mass" => PartitionArm::ShuffledMass,
+            "max-violation" => PartitionArm::MaxViolation,
+            "shadow" => PartitionArm::Shadow,
+            "compute-ignore" => PartitionArm::ComputeIgnore,
+            other => {
+                return Err(format!(
+                    "--partition must be off|mass|shuffled-mass|max-violation|shadow|compute-ignore, not `{other}`"
+                ));
+            }
+        };
+    }
+    #[cfg(not(feature = "conflict-cluster-budget"))]
+    if let Some(partition) = options.get("partition") {
+        if partition != "off" {
+            return Err("--partition requires --features conflict-cluster-budget".to_owned());
+        }
+    }
     Ok(config)
 }
 

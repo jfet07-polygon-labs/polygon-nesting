@@ -206,6 +206,10 @@ pub struct Trace {
     pub work: WorkVector,
     pub checkpoints: Vec<ExactCheckpoint>,
     pub quality: Vec<QualityPoint>,
+    /// Present only in the conflict-cluster experiment build and never emitted
+    /// by runtime Off.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub partition: super::cluster_budget::PartitionTrace,
     /// Raw/guided Φ and `max_g` at epoch boundaries. Diagnostics, never quality.
     pub proxy_samples: Vec<ProxySample>,
     pub sweeps: u64,
