@@ -25,9 +25,14 @@ directory outside the repository, by default
 `/var/lib/t3/tmp/overlapics/pool-retry-tracker-rebase-gate0`; an existing path
 is refused rather than overwritten.
 
-No result exists until all three consultants return `REVIEW PASS` on the same
-implementation commit and the driver is then executed once against that
-commit.
+Sol, Grok, and ox-alpha returned `REVIEW PASS` on
+`fb76044424a4d5064e783422c2a2258c83fe4efc`. The driver then executed exactly
+once and **failed G0.2**: one treatment win (seed 6) against the required two,
+one forbidden reverse (seed 0), and one causally supported treatment win
+against the required two. G0.1 passed; G0.3, G0.4, Primary30, and the report-only
+10-/60-second points did not run. The mechanism is closed. See
+[`evidence/verdict.md`](evidence/verdict.md) and
+[`evidence/gate0.json`](evidence/gate0.json).
 
 The one-shot invocation is:
 

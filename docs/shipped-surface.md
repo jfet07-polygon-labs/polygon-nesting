@@ -210,6 +210,15 @@ have to re-discover them:
    claim can be made at a fixed **work** budget instead - where the documents
    are provably identical and only the seconds move - it should be
    (`consolidation` §3).
+5. **Resetting the GLS tracker on a pool retry is closed, not an untried
+   Sparrow-inspired shortcut.** Pool-Retry Tracker Rebase passed its complete
+   isolation/vector corpus and all nine literal checkpoint forks, but produced
+   only one Saved-unpublished→Rebase-published seed against the required two
+   and one forbidden reverse (seed 0). The one-shot Gate stopped at G0.2; no
+   Primary30 or report-only quality point ran. See
+   `overlap-ics/pool-retry-tracker-rebase-round/evidence/verdict.md`. Reopening
+   it by decay, partial reset, a different floor, extra retry, or seed selection
+   would repeat a precommitted failure rather than test the recorded mechanism.
 
 ---
 
