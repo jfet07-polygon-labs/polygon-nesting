@@ -1,0 +1,290 @@
+{
+ "spec": "docs/deterministic-30s-round-spec.md",
+ "formula": "Wo(f) = Co + (W0.80 - C4) * f / 0.80",
+ "holdbackFormula": "kappa = max(0.050 s, 2 * largest within-arm Gate-0 constructor range)",
+ "W0.80Seconds": 9.5271,
+ "C4Seconds": 2.3279492040500003,
+ "largestWithinArmGate0RangeSeconds": 0.03623284799999982,
+ "kappaSeconds": 0.07246569599999964,
+ "rangesSeconds": [
+  0.03190788599999994,
+  0.01444183599999993,
+  0.03623284799999982,
+  0.019925267999999996,
+  0.004946741000000001,
+  0.005538299
+ ],
+ "f4": {
+  "name": "f4*",
+  "orders": 4,
+  "constructorP95Seconds": 2.3279492040500003,
+  "candidates": [
+   {
+    "factor": 0.8,
+    "modeledWallSeconds": 9.5271,
+    "modeledPlusKappaSeconds": 9.599565696,
+    "eligible": true
+   },
+   {
+    "factor": 0.81,
+    "modeledWallSeconds": 9.617089384949377,
+    "modeledPlusKappaSeconds": 9.689555080949377,
+    "eligible": true
+   },
+   {
+    "factor": 0.82,
+    "modeledWallSeconds": 9.70707876989875,
+    "modeledPlusKappaSeconds": 9.77954446589875,
+    "eligible": true
+   },
+   {
+    "factor": 0.83,
+    "modeledWallSeconds": 9.797068154848125,
+    "modeledPlusKappaSeconds": 9.869533850848125,
+    "eligible": true
+   },
+   {
+    "factor": 0.84,
+    "modeledWallSeconds": 9.8870575397975,
+    "modeledPlusKappaSeconds": 9.9595232357975,
+    "eligible": true
+   },
+   {
+    "factor": 0.85,
+    "modeledWallSeconds": 9.977046924746876,
+    "modeledPlusKappaSeconds": 10.049512620746876,
+    "eligible": false
+   },
+   {
+    "factor": 0.86,
+    "modeledWallSeconds": 10.06703630969625,
+    "modeledPlusKappaSeconds": 10.13950200569625,
+    "eligible": false
+   },
+   {
+    "factor": 0.87,
+    "modeledWallSeconds": 10.157025694645625,
+    "modeledPlusKappaSeconds": 10.229491390645626,
+    "eligible": false
+   },
+   {
+    "factor": 0.88,
+    "modeledWallSeconds": 10.247015079595,
+    "modeledPlusKappaSeconds": 10.319480775595,
+    "eligible": false
+   },
+   {
+    "factor": 0.89,
+    "modeledWallSeconds": 10.337004464544375,
+    "modeledPlusKappaSeconds": 10.409470160544375,
+    "eligible": false
+   },
+   {
+    "factor": 0.9,
+    "modeledWallSeconds": 10.42699384949375,
+    "modeledPlusKappaSeconds": 10.49945954549375,
+    "eligible": false
+   },
+   {
+    "factor": 0.91,
+    "modeledWallSeconds": 10.516983234443126,
+    "modeledPlusKappaSeconds": 10.589448930443126,
+    "eligible": false
+   },
+   {
+    "factor": 0.92,
+    "modeledWallSeconds": 10.6069726193925,
+    "modeledPlusKappaSeconds": 10.6794383153925,
+    "eligible": false
+   },
+   {
+    "factor": 0.93,
+    "modeledWallSeconds": 10.696962004341875,
+    "modeledPlusKappaSeconds": 10.769427700341875,
+    "eligible": false
+   },
+   {
+    "factor": 0.94,
+    "modeledWallSeconds": 10.78695138929125,
+    "modeledPlusKappaSeconds": 10.85941708529125,
+    "eligible": false
+   },
+   {
+    "factor": 0.95,
+    "modeledWallSeconds": 10.876940774240625,
+    "modeledPlusKappaSeconds": 10.949406470240625,
+    "eligible": false
+   },
+   {
+    "factor": 0.96,
+    "modeledWallSeconds": 10.96693015919,
+    "modeledPlusKappaSeconds": 11.03939585519,
+    "eligible": false
+   },
+   {
+    "factor": 0.97,
+    "modeledWallSeconds": 11.056919544139376,
+    "modeledPlusKappaSeconds": 11.129385240139376,
+    "eligible": false
+   },
+   {
+    "factor": 0.98,
+    "modeledWallSeconds": 11.14690892908875,
+    "modeledPlusKappaSeconds": 11.21937462508875,
+    "eligible": false
+   },
+   {
+    "factor": 0.99,
+    "modeledWallSeconds": 11.236898314038125,
+    "modeledPlusKappaSeconds": 11.309364010038125,
+    "eligible": false
+   },
+   {
+    "factor": 1.0,
+    "modeledWallSeconds": 11.3268876989875,
+    "modeledPlusKappaSeconds": 11.3993533949875,
+    "eligible": false
+   }
+  ],
+  "chosenFactor": 0.84
+ },
+ "f1": {
+  "name": "f1*",
+  "orders": 1,
+  "constructorP95Seconds": 0.6213649453,
+  "candidates": [
+   {
+    "factor": 0.8,
+    "modeledWallSeconds": 7.82051574125,
+    "modeledPlusKappaSeconds": 7.8929814372500005,
+    "eligible": true
+   },
+   {
+    "factor": 0.81,
+    "modeledWallSeconds": 7.910505126199376,
+    "modeledPlusKappaSeconds": 7.982970822199375,
+    "eligible": true
+   },
+   {
+    "factor": 0.82,
+    "modeledWallSeconds": 8.00049451114875,
+    "modeledPlusKappaSeconds": 8.07296020714875,
+    "eligible": true
+   },
+   {
+    "factor": 0.83,
+    "modeledWallSeconds": 8.090483896098124,
+    "modeledPlusKappaSeconds": 8.162949592098125,
+    "eligible": true
+   },
+   {
+    "factor": 0.84,
+    "modeledWallSeconds": 8.1804732810475,
+    "modeledPlusKappaSeconds": 8.2529389770475,
+    "eligible": true
+   },
+   {
+    "factor": 0.85,
+    "modeledWallSeconds": 8.270462665996876,
+    "modeledPlusKappaSeconds": 8.342928361996876,
+    "eligible": true
+   },
+   {
+    "factor": 0.86,
+    "modeledWallSeconds": 8.36045205094625,
+    "modeledPlusKappaSeconds": 8.43291774694625,
+    "eligible": true
+   },
+   {
+    "factor": 0.87,
+    "modeledWallSeconds": 8.450441435895625,
+    "modeledPlusKappaSeconds": 8.522907131895625,
+    "eligible": true
+   },
+   {
+    "factor": 0.88,
+    "modeledWallSeconds": 8.540430820845,
+    "modeledPlusKappaSeconds": 8.612896516845,
+    "eligible": true
+   },
+   {
+    "factor": 0.89,
+    "modeledWallSeconds": 8.630420205794374,
+    "modeledPlusKappaSeconds": 8.702885901794374,
+    "eligible": true
+   },
+   {
+    "factor": 0.9,
+    "modeledWallSeconds": 8.720409590743749,
+    "modeledPlusKappaSeconds": 8.79287528674375,
+    "eligible": true
+   },
+   {
+    "factor": 0.91,
+    "modeledWallSeconds": 8.810398975693126,
+    "modeledPlusKappaSeconds": 8.882864671693126,
+    "eligible": true
+   },
+   {
+    "factor": 0.92,
+    "modeledWallSeconds": 8.9003883606425,
+    "modeledPlusKappaSeconds": 8.9728540566425,
+    "eligible": true
+   },
+   {
+    "factor": 0.93,
+    "modeledWallSeconds": 8.990377745591875,
+    "modeledPlusKappaSeconds": 9.062843441591875,
+    "eligible": true
+   },
+   {
+    "factor": 0.94,
+    "modeledWallSeconds": 9.08036713054125,
+    "modeledPlusKappaSeconds": 9.15283282654125,
+    "eligible": true
+   },
+   {
+    "factor": 0.95,
+    "modeledWallSeconds": 9.170356515490624,
+    "modeledPlusKappaSeconds": 9.242822211490624,
+    "eligible": true
+   },
+   {
+    "factor": 0.96,
+    "modeledWallSeconds": 9.260345900439999,
+    "modeledPlusKappaSeconds": 9.33281159644,
+    "eligible": true
+   },
+   {
+    "factor": 0.97,
+    "modeledWallSeconds": 9.350335285389376,
+    "modeledPlusKappaSeconds": 9.422800981389376,
+    "eligible": true
+   },
+   {
+    "factor": 0.98,
+    "modeledWallSeconds": 9.44032467033875,
+    "modeledPlusKappaSeconds": 9.51279036633875,
+    "eligible": true
+   },
+   {
+    "factor": 0.99,
+    "modeledWallSeconds": 9.530314055288125,
+    "modeledPlusKappaSeconds": 9.602779751288125,
+    "eligible": true
+   },
+   {
+    "factor": 1.0,
+    "modeledWallSeconds": 9.6203034402375,
+    "modeledPlusKappaSeconds": 9.6927691362375,
+    "eligible": true
+   }
+  ],
+  "chosenFactor": 1.0
+ },
+ "fixedBeforeCalibrationOrQuality": true,
+ "gate0Path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/gate0/gate0.json",
+ "gate0Sha256": "98b77ba7129d726b09bc5169727da8f106d9b11169638e7a7442cd923a473b40",
+ "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark",
+ "binarySha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e"
+}

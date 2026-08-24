@@ -471,10 +471,10 @@ fn build_features() -> Vec<String> {
 ///
 /// The rate is `sampleEvaluations / seconds` measured on bite 22, never on the
 /// cheap prefix: pre-named defect (3). The seconds are the shelf's own
-/// barrier-to-barrier wall when the profile measured one, and the whole
-/// search's wall otherwise - the latter is a *slower* rate because it includes
-/// the prefix, so a plan built without `ics-profile` under-promises rather
-/// than over-promising, and `derivation` says which of the two it was.
+/// barrier-to-barrier wall when the profile measured one, and the driver's
+/// bracket around the shelf probe otherwise. In both cases the numerator is
+/// the shelf bite's own counter. Mixing the cumulative trajectory numerator
+/// with the probe-only denominator over-promises the non-profile rate.
 ///
 /// `compress` is Wave 3's addition and it is **additive**: passing `None`
 /// produces exactly the bytes Wave 1 wrote, which is why the census's
@@ -514,11 +514,16 @@ fn shelf_work_plan(
     } else {
         (
             search_seconds,
-            outcome.trace.work.sample_evaluations,
+            // `search_seconds` brackets this probe, not the prefix that built
+            // its parent. Its numerator must therefore be this bite's own
+            // counter too. The former cumulative numerator made the plain
+            // writer about 16% fast while its provenance claimed the opposite.
+            shelf.profile.sample_evaluations,
             format!(
-                "whole {}-bite fixed-work trajectory wall; no ics-profile timers, so this \
-                 rate includes the cheap prefix and is deliberately slower than the shelf's",
-                outcome.bites.len()
+                "trajectory bite {shelf_ordinal} (the 179 shelf) alone, {} master iterations, \
+                 the driver's probe-only wall and sampleEvaluations charged to that bite; \
+                 no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3).",
+                shelf.master_iterations
             ),
         )
     };

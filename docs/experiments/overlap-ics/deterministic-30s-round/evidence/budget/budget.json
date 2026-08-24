@@ -1,0 +1,613 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "deterministic-30s-round-budget",
+ "label": "single-fixture work plan, no transfer claim",
+ "spec": "docs/deterministic-30s-round-spec.md",
+ "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark",
+ "binarySha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+ "gate0Path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/gate0/gate0.json",
+ "gate0Sha256": "98b77ba7129d726b09bc5169727da8f106d9b11169638e7a7442cd923a473b40",
+ "factorDerivationPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/factor-derivation.json",
+ "factorDerivationSha256": "4c16f5140ae675831c3de71851b85f45da702ee5b3b3b760a3573c5c8699ca00",
+ "factorDerivation": {
+  "spec": "docs/deterministic-30s-round-spec.md",
+  "formula": "Wo(f) = Co + (W0.80 - C4) * f / 0.80",
+  "holdbackFormula": "kappa = max(0.050 s, 2 * largest within-arm Gate-0 constructor range)",
+  "W0.80Seconds": 9.5271,
+  "C4Seconds": 2.3279492040500003,
+  "largestWithinArmGate0RangeSeconds": 0.03623284799999982,
+  "kappaSeconds": 0.07246569599999964,
+  "rangesSeconds": [
+   0.03190788599999994,
+   0.01444183599999993,
+   0.03623284799999982,
+   0.019925267999999996,
+   0.004946741000000001,
+   0.005538299
+  ],
+  "f4": {
+   "name": "f4*",
+   "orders": 4,
+   "constructorP95Seconds": 2.3279492040500003,
+   "candidates": [
+    {
+     "factor": 0.8,
+     "modeledWallSeconds": 9.5271,
+     "modeledPlusKappaSeconds": 9.599565696,
+     "eligible": true
+    },
+    {
+     "factor": 0.81,
+     "modeledWallSeconds": 9.617089384949377,
+     "modeledPlusKappaSeconds": 9.689555080949377,
+     "eligible": true
+    },
+    {
+     "factor": 0.82,
+     "modeledWallSeconds": 9.70707876989875,
+     "modeledPlusKappaSeconds": 9.77954446589875,
+     "eligible": true
+    },
+    {
+     "factor": 0.83,
+     "modeledWallSeconds": 9.797068154848125,
+     "modeledPlusKappaSeconds": 9.869533850848125,
+     "eligible": true
+    },
+    {
+     "factor": 0.84,
+     "modeledWallSeconds": 9.8870575397975,
+     "modeledPlusKappaSeconds": 9.9595232357975,
+     "eligible": true
+    },
+    {
+     "factor": 0.85,
+     "modeledWallSeconds": 9.977046924746876,
+     "modeledPlusKappaSeconds": 10.049512620746876,
+     "eligible": false
+    },
+    {
+     "factor": 0.86,
+     "modeledWallSeconds": 10.06703630969625,
+     "modeledPlusKappaSeconds": 10.13950200569625,
+     "eligible": false
+    },
+    {
+     "factor": 0.87,
+     "modeledWallSeconds": 10.157025694645625,
+     "modeledPlusKappaSeconds": 10.229491390645626,
+     "eligible": false
+    },
+    {
+     "factor": 0.88,
+     "modeledWallSeconds": 10.247015079595,
+     "modeledPlusKappaSeconds": 10.319480775595,
+     "eligible": false
+    },
+    {
+     "factor": 0.89,
+     "modeledWallSeconds": 10.337004464544375,
+     "modeledPlusKappaSeconds": 10.409470160544375,
+     "eligible": false
+    },
+    {
+     "factor": 0.9,
+     "modeledWallSeconds": 10.42699384949375,
+     "modeledPlusKappaSeconds": 10.49945954549375,
+     "eligible": false
+    },
+    {
+     "factor": 0.91,
+     "modeledWallSeconds": 10.516983234443126,
+     "modeledPlusKappaSeconds": 10.589448930443126,
+     "eligible": false
+    },
+    {
+     "factor": 0.92,
+     "modeledWallSeconds": 10.6069726193925,
+     "modeledPlusKappaSeconds": 10.6794383153925,
+     "eligible": false
+    },
+    {
+     "factor": 0.93,
+     "modeledWallSeconds": 10.696962004341875,
+     "modeledPlusKappaSeconds": 10.769427700341875,
+     "eligible": false
+    },
+    {
+     "factor": 0.94,
+     "modeledWallSeconds": 10.78695138929125,
+     "modeledPlusKappaSeconds": 10.85941708529125,
+     "eligible": false
+    },
+    {
+     "factor": 0.95,
+     "modeledWallSeconds": 10.876940774240625,
+     "modeledPlusKappaSeconds": 10.949406470240625,
+     "eligible": false
+    },
+    {
+     "factor": 0.96,
+     "modeledWallSeconds": 10.96693015919,
+     "modeledPlusKappaSeconds": 11.03939585519,
+     "eligible": false
+    },
+    {
+     "factor": 0.97,
+     "modeledWallSeconds": 11.056919544139376,
+     "modeledPlusKappaSeconds": 11.129385240139376,
+     "eligible": false
+    },
+    {
+     "factor": 0.98,
+     "modeledWallSeconds": 11.14690892908875,
+     "modeledPlusKappaSeconds": 11.21937462508875,
+     "eligible": false
+    },
+    {
+     "factor": 0.99,
+     "modeledWallSeconds": 11.236898314038125,
+     "modeledPlusKappaSeconds": 11.309364010038125,
+     "eligible": false
+    },
+    {
+     "factor": 1.0,
+     "modeledWallSeconds": 11.3268876989875,
+     "modeledPlusKappaSeconds": 11.3993533949875,
+     "eligible": false
+    }
+   ],
+   "chosenFactor": 0.84
+  },
+  "f1": {
+   "name": "f1*",
+   "orders": 1,
+   "constructorP95Seconds": 0.6213649453,
+   "candidates": [
+    {
+     "factor": 0.8,
+     "modeledWallSeconds": 7.82051574125,
+     "modeledPlusKappaSeconds": 7.8929814372500005,
+     "eligible": true
+    },
+    {
+     "factor": 0.81,
+     "modeledWallSeconds": 7.910505126199376,
+     "modeledPlusKappaSeconds": 7.982970822199375,
+     "eligible": true
+    },
+    {
+     "factor": 0.82,
+     "modeledWallSeconds": 8.00049451114875,
+     "modeledPlusKappaSeconds": 8.07296020714875,
+     "eligible": true
+    },
+    {
+     "factor": 0.83,
+     "modeledWallSeconds": 8.090483896098124,
+     "modeledPlusKappaSeconds": 8.162949592098125,
+     "eligible": true
+    },
+    {
+     "factor": 0.84,
+     "modeledWallSeconds": 8.1804732810475,
+     "modeledPlusKappaSeconds": 8.2529389770475,
+     "eligible": true
+    },
+    {
+     "factor": 0.85,
+     "modeledWallSeconds": 8.270462665996876,
+     "modeledPlusKappaSeconds": 8.342928361996876,
+     "eligible": true
+    },
+    {
+     "factor": 0.86,
+     "modeledWallSeconds": 8.36045205094625,
+     "modeledPlusKappaSeconds": 8.43291774694625,
+     "eligible": true
+    },
+    {
+     "factor": 0.87,
+     "modeledWallSeconds": 8.450441435895625,
+     "modeledPlusKappaSeconds": 8.522907131895625,
+     "eligible": true
+    },
+    {
+     "factor": 0.88,
+     "modeledWallSeconds": 8.540430820845,
+     "modeledPlusKappaSeconds": 8.612896516845,
+     "eligible": true
+    },
+    {
+     "factor": 0.89,
+     "modeledWallSeconds": 8.630420205794374,
+     "modeledPlusKappaSeconds": 8.702885901794374,
+     "eligible": true
+    },
+    {
+     "factor": 0.9,
+     "modeledWallSeconds": 8.720409590743749,
+     "modeledPlusKappaSeconds": 8.79287528674375,
+     "eligible": true
+    },
+    {
+     "factor": 0.91,
+     "modeledWallSeconds": 8.810398975693126,
+     "modeledPlusKappaSeconds": 8.882864671693126,
+     "eligible": true
+    },
+    {
+     "factor": 0.92,
+     "modeledWallSeconds": 8.9003883606425,
+     "modeledPlusKappaSeconds": 8.9728540566425,
+     "eligible": true
+    },
+    {
+     "factor": 0.93,
+     "modeledWallSeconds": 8.990377745591875,
+     "modeledPlusKappaSeconds": 9.062843441591875,
+     "eligible": true
+    },
+    {
+     "factor": 0.94,
+     "modeledWallSeconds": 9.08036713054125,
+     "modeledPlusKappaSeconds": 9.15283282654125,
+     "eligible": true
+    },
+    {
+     "factor": 0.95,
+     "modeledWallSeconds": 9.170356515490624,
+     "modeledPlusKappaSeconds": 9.242822211490624,
+     "eligible": true
+    },
+    {
+     "factor": 0.96,
+     "modeledWallSeconds": 9.260345900439999,
+     "modeledPlusKappaSeconds": 9.33281159644,
+     "eligible": true
+    },
+    {
+     "factor": 0.97,
+     "modeledWallSeconds": 9.350335285389376,
+     "modeledPlusKappaSeconds": 9.422800981389376,
+     "eligible": true
+    },
+    {
+     "factor": 0.98,
+     "modeledWallSeconds": 9.44032467033875,
+     "modeledPlusKappaSeconds": 9.51279036633875,
+     "eligible": true
+    },
+    {
+     "factor": 0.99,
+     "modeledWallSeconds": 9.530314055288125,
+     "modeledPlusKappaSeconds": 9.602779751288125,
+     "eligible": true
+    },
+    {
+     "factor": 1.0,
+     "modeledWallSeconds": 9.6203034402375,
+     "modeledPlusKappaSeconds": 9.6927691362375,
+     "eligible": true
+    }
+   ],
+   "chosenFactor": 1.0
+  },
+  "fixedBeforeCalibrationOrQuality": true,
+  "gate0Path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/gate0/gate0.json",
+  "gate0Sha256": "98b77ba7129d726b09bc5169727da8f106d9b11169638e7a7442cd923a473b40",
+  "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark",
+  "binarySha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e"
+ },
+ "shelfWorkPlanWitness": {
+  "sourcePath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-probe.json",
+  "sourceSha256": "4fe3befba45b35ce2d4236391e3c89578682cfebf1141a73d8ad10e142938c19",
+  "writerPlanPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-writer.icscal.json",
+  "writerPlanSha256": "952c755bcf042f480b01ad67592171c3de693506a0db8a28d7726db9cd53a64c",
+  "processWallSeconds": 5.11907767993398,
+  "shelfLocalSampleEvaluations": 6605800,
+  "trajectoryCumulativeSampleEvaluations": 7694847,
+  "writerObservedUnits": 6605800,
+  "writerObservedSeconds": 2.394250746,
+  "writerMeasuredUnitsPerSecond": 2759025.975468987,
+  "oldNumeratorWouldHaveBeen": 7694847,
+  "oldNumeratorDiffers": true,
+  "green": true
+ },
+ "compressCalibration": {
+  "sourcePath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-calibration.json",
+  "sourceSha256": "0202ff9f5e0d7e27ebbe0fc9e7b0f1e56de6e139b77ea71f978be17a900d2b9d",
+  "writerPlanPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-writer.icscal.json",
+  "writerPlanSha256": "7c25c5ac059f405844daf325ee1b1a3d6bed433631048f88e836974a71c7b2bc",
+  "processWallSeconds": 30.059726438019425,
+  "compressBites": 83,
+  "phase": {
+   "derivation": "the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds",
+   "measuredUnitsPerSecond": 1408465.9444235826,
+   "observedSeconds": 5.530037862,
+   "observedUnits": 7788870,
+   "phase": "compress",
+   "safeUnitsPerSecond": 1126772.7555388662,
+   "safetyFactor": 0.8
+  },
+  "qualityDepthNotUsed": true
+ },
+ "plans": {
+  "f080": {
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f080.icscal.json",
+   "sha256": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf",
+   "factor": 0.8,
+   "arms": [
+    "control",
+    "orders"
+   ],
+   "plan": {
+    "schema": "icscal/v1",
+    "key": {
+     "binaryKey": {
+      "executableSha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+      "features": [
+       "overlap-ics"
+      ]
+     },
+     "currencyVersion": "U0-sample-evaluations",
+     "executor": "ephemeral-scope",
+     "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+     "workers": 8
+    },
+    "phases": [
+     {
+      "derivation": "single-fixture work plan, no transfer claim. trajectory bite 22 (the 179 shelf) alone, 400 master iterations, the driver's probe-only wall and sampleEvaluations charged to that bite; no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3). Safety factor 0.80, pre-derived for control/orders from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 2759025.975468987,
+      "observedSeconds": 2.394250746,
+      "observedUnits": 6605800,
+      "phase": "explore",
+      "safeUnitsPerSecond": 2207220.7803751896,
+      "safetyFactor": 0.8
+     },
+     {
+      "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds Safety factor 0.80, pre-derived for control/orders from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 1408465.9444235826,
+      "observedSeconds": 5.530037862,
+      "observedUnits": 7788870,
+      "phase": "compress",
+      "safeUnitsPerSecond": 1126772.7555388662,
+      "safetyFactor": 0.8
+     }
+    ],
+    "provenance": "single-fixture work plan, no transfer claim. deterministic-30s-round/budget.py; explore from the repaired shelf_work_plan writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-probe.json; compress from the phase writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-calibration.json; factor=0.80, fixed by /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/factor-derivation.json before calibration and quality."
+   }
+  },
+  "f084": {
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f084.icscal.json",
+   "sha256": "ef57ef166c6fb7dbe590984b415cd4e7ad05de95ae5731c49b7a8ff9d16d56f6",
+   "factor": 0.84,
+   "arms": [
+    "factor"
+   ],
+   "plan": {
+    "schema": "icscal/v1",
+    "key": {
+     "binaryKey": {
+      "executableSha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+      "features": [
+       "overlap-ics"
+      ]
+     },
+     "currencyVersion": "U0-sample-evaluations",
+     "executor": "ephemeral-scope",
+     "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+     "workers": 8
+    },
+    "phases": [
+     {
+      "derivation": "single-fixture work plan, no transfer claim. trajectory bite 22 (the 179 shelf) alone, 400 master iterations, the driver's probe-only wall and sampleEvaluations charged to that bite; no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3). Safety factor 0.84, pre-derived for factor from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 2759025.975468987,
+      "observedSeconds": 2.394250746,
+      "observedUnits": 6605800,
+      "phase": "explore",
+      "safeUnitsPerSecond": 2317581.819393949,
+      "safetyFactor": 0.84
+     },
+     {
+      "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds Safety factor 0.84, pre-derived for factor from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 1408465.9444235826,
+      "observedSeconds": 5.530037862,
+      "observedUnits": 7788870,
+      "phase": "compress",
+      "safeUnitsPerSecond": 1183111.3933158093,
+      "safetyFactor": 0.84
+     }
+    ],
+    "provenance": "single-fixture work plan, no transfer claim. deterministic-30s-round/budget.py; explore from the repaired shelf_work_plan writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-probe.json; compress from the phase writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-calibration.json; factor=0.84, fixed by /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/factor-derivation.json before calibration and quality."
+   }
+  },
+  "f100": {
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f100.icscal.json",
+   "sha256": "2023162b45c2b995275c7265605540df88145ef69c4da97ba8ac2e3a55dbd578",
+   "factor": 1.0,
+   "arms": [
+    "composed"
+   ],
+   "plan": {
+    "schema": "icscal/v1",
+    "key": {
+     "binaryKey": {
+      "executableSha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+      "features": [
+       "overlap-ics"
+      ]
+     },
+     "currencyVersion": "U0-sample-evaluations",
+     "executor": "ephemeral-scope",
+     "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+     "workers": 8
+    },
+    "phases": [
+     {
+      "derivation": "single-fixture work plan, no transfer claim. trajectory bite 22 (the 179 shelf) alone, 400 master iterations, the driver's probe-only wall and sampleEvaluations charged to that bite; no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3). Safety factor 1.00, pre-derived for composed from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 2759025.975468987,
+      "observedSeconds": 2.394250746,
+      "observedUnits": 6605800,
+      "phase": "explore",
+      "safeUnitsPerSecond": 2759025.975468987,
+      "safetyFactor": 1.0
+     },
+     {
+      "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds Safety factor 1.00, pre-derived for composed from Gate 0 before any quality cell.",
+      "measuredUnitsPerSecond": 1408465.9444235826,
+      "observedSeconds": 5.530037862,
+      "observedUnits": 7788870,
+      "phase": "compress",
+      "safeUnitsPerSecond": 1408465.9444235826,
+      "safetyFactor": 1.0
+     }
+    ],
+    "provenance": "single-fixture work plan, no transfer claim. deterministic-30s-round/budget.py; explore from the repaired shelf_work_plan writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-probe.json; compress from the phase writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-calibration.json; factor=1.00, fixed by /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/factor-derivation.json before calibration and quality."
+   }
+  }
+ },
+ "arms": {
+  "control": {
+   "orders": 4,
+   "factor": 0.8,
+   "planName": "f080",
+   "planPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f080.icscal.json",
+   "planSha256": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf"
+  },
+  "orders": {
+   "orders": 1,
+   "factor": 0.8,
+   "planName": "f080",
+   "planPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f080.icscal.json",
+   "planSha256": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf"
+  },
+  "factor": {
+   "orders": 4,
+   "factor": 0.84,
+   "planName": "f084",
+   "planPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f084.icscal.json",
+   "planSha256": "ef57ef166c6fb7dbe590984b415cd4e7ad05de95ae5731c49b7a8ff9d16d56f6"
+  },
+  "composed": {
+   "orders": 1,
+   "factor": 1.0,
+   "planName": "f100",
+   "planPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/plan-f100.icscal.json",
+   "planSha256": "2023162b45c2b995275c7265605540df88145ef69c4da97ba8ac2e3a55dbd578"
+  }
+ },
+ "budget": {
+  "constructorReference": "Gate-0 mixed-61 orders=4 p95 C4",
+  "pinnedConstructorSeconds": 2.3279492040500003,
+  "searchBudgetSecondsByBudget": {
+   "3.0": 0.6720507959499997,
+   "10.0": 7.67205079595,
+   "30.0": 27.67205079595,
+   "60.0": 57.67205079595
+  },
+  "exploreRatio": 0.8,
+  "retuned": false,
+  "fixedBeforeQuality": true
+ },
+ "planHitChecks": {
+  "control": {
+   "sourcePath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-control.json",
+   "sourceSha256": "29dec750019a51ad60201d62a5065ec2e33f37b7823a8f0eb6364f3941e4e0f1",
+   "processWallSeconds": 2.351727548055351,
+   "orders": 4,
+   "factor": 0.8,
+   "match": "hit",
+   "planSha256Expected": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf",
+   "planSha256AsRead": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf",
+   "hit": true
+  },
+  "orders": {
+   "sourcePath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-orders.json",
+   "sourceSha256": "fe437aab794f418ff2186fbe07cbbea283097d2d169cb765954d88b2d5faa0ef",
+   "processWallSeconds": 0.6607961509143934,
+   "orders": 1,
+   "factor": 0.8,
+   "match": "hit",
+   "planSha256Expected": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf",
+   "planSha256AsRead": "3c615e645977da0566ad0da339a2ac8ccb0d9a26587ab1d6d48a8b2ad8287acf",
+   "hit": true
+  },
+  "factor": {
+   "sourcePath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-factor.json",
+   "sourceSha256": "a0cdf14cf5c8103d00183fc8e0c312b016609231992bdd35038a0c217dda79c4",
+   "processWallSeconds": 2.354498110944405,
+   "orders": 4,
+   "factor": 0.84,
+   "match": "hit",
+   "planSha256Expected": "ef57ef166c6fb7dbe590984b415cd4e7ad05de95ae5731c49b7a8ff9d16d56f6",
+   "planSha256AsRead": "ef57ef166c6fb7dbe590984b415cd4e7ad05de95ae5731c49b7a8ff9d16d56f6",
+   "hit": true
+  },
+  "composed": {
+   "sourcePath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-composed.json",
+   "sourceSha256": "ab5c86090d9c01e7d99c68e23c6050c793ff1f49b47987e2095c04b573a34994",
+   "processWallSeconds": 0.6806886360282078,
+   "orders": 1,
+   "factor": 1.0,
+   "match": "hit",
+   "planSha256Expected": "2023162b45c2b995275c7265605540df88145ef69c4da97ba8ac2e3a55dbd578",
+   "planSha256AsRead": "2023162b45c2b995275c7265605540df88145ef69c4da97ba8ac2e3a55dbd578",
+   "hit": true
+  }
+ },
+ "ALL_PLAN_HITS": true,
+ "binarySha256After": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+ "cellSources": [
+  {
+   "cell": "spawntax",
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-probe.json",
+   "sha256": "4fe3befba45b35ce2d4236391e3c89578682cfebf1141a73d8ad10e142938c19",
+   "bytes": 67311,
+   "exit": 0,
+   "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-calibration.json",
+   "sha256": "0202ff9f5e0d7e27ebbe0fc9e7b0f1e56de6e139b77ea71f978be17a900d2b9d",
+   "bytes": 6023471,
+   "exit": 0,
+   "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-control.json",
+   "sha256": "29dec750019a51ad60201d62a5065ec2e33f37b7823a8f0eb6364f3941e4e0f1",
+   "bytes": 134901,
+   "exit": 0,
+   "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-orders.json",
+   "sha256": "fe437aab794f418ff2186fbe07cbbea283097d2d169cb765954d88b2d5faa0ef",
+   "bytes": 134901,
+   "exit": 0,
+   "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-factor.json",
+   "sha256": "a0cdf14cf5c8103d00183fc8e0c312b016609231992bdd35038a0c217dda79c4",
+   "bytes": 136117,
+   "exit": 0,
+   "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark"
+  },
+  {
+   "cell": "cutclose",
+   "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/plan-hit-composed.json",
+   "sha256": "ab5c86090d9c01e7d99c68e23c6050c793ff1f49b47987e2095c04b573a34994",
+   "bytes": 274050,
+   "exit": 0,
+   "binary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark"
+  }
+ ],
+ "binaryUnchanged": true,
+ "BUDGET_PASS": true
+}

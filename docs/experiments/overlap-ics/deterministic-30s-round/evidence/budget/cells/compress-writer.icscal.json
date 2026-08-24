@@ -1,0 +1,36 @@
+{
+  "schema": "icscal/v1",
+  "key": {
+    "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "currencyVersion": "U0-sample-evaluations",
+    "binaryKey": {
+      "executableSha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+      "features": [
+        "overlap-ics"
+      ]
+    },
+    "workers": 8,
+    "executor": "ephemeral-scope"
+  },
+  "phases": [
+    {
+      "phase": "explore",
+      "safeUnitsPerSecond": 1798647.0827269945,
+      "measuredUnitsPerSecond": 2248308.853408743,
+      "safetyFactor": 0.8,
+      "observedUnits": 49794017,
+      "observedSeconds": 22.147320607,
+      "derivation": "the explore phase of one wall trajectory: 120 bites, sampleEvaluations charged per bite by PhaseProfile, over the loop's own exploreSeconds"
+    },
+    {
+      "phase": "compress",
+      "safeUnitsPerSecond": 1126772.7555388662,
+      "measuredUnitsPerSecond": 1408465.9444235826,
+      "safetyFactor": 0.8,
+      "observedUnits": 7788870,
+      "observedSeconds": 5.530037862,
+      "derivation": "the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds"
+    }
+  ],
+  "provenance": "overlap_ics_benchmark --cell=cutclose --mode=wall --icscal=<path>: the calibration entry point. Spend it with --mode=calibrated --plan=<path>, in a different process, which reads no clock."
+}
