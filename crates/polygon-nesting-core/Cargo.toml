@@ -550,6 +550,10 @@ overlap-ics = ["round-envelope-kernel", "fast-contract-validator"]
 # default; it changes only the frozen order producer in overlap-ICS and has no
 # route outside that engine. See docs/conflict-cluster-budget-spec.md.
 conflict-cluster-budget = []
+# The independently-authored minimum-conflict binary close experiment. Off by
+# default; it changes only the explore-bite injection in overlap-ICS and has no
+# route outside that engine. See docs/minimum-conflict-binary-close-spec.md.
+minimum-conflict-binary-close = []
 # The overlap-ICS master-iteration phase census: nanosecond accumulators around
 # slot preparation, thread dispatch/join, the worker sweeps, the ordinal merge
 # and Algorithm-8 pass, and the exact attempt. **Measurement only, and off in

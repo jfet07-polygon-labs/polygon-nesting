@@ -89,6 +89,70 @@ pub fn measure_pair(
     }
 }
 
+/// Measures one pair whose two pieces come from independently transformed
+/// versions of the same layout.
+///
+/// The minimum-conflict binary-close experiment needs the four combinations
+/// `(0,0)`, `(0,1)`, `(1,0)`, `(1,1)` without installing any of them in the
+/// live engine. This is the existing pair-row authority with only the two
+/// geometry operands split; broad phase, cell order, contact field and strict
+/// maximum are otherwise identical to [`measure_pair`]. Its work vector is
+/// owned by the diagnostic decision and is never added to the trajectory's
+/// legacy currency.
+#[cfg(feature = "minimum-conflict-binary-close")]
+pub fn measure_pair_cross(
+    first_geometry: &Geometry,
+    first: usize,
+    second_geometry: &Geometry,
+    second: usize,
+    clearance_mm: f64,
+    work: &mut WorkVector,
+) -> (f64, Contact) {
+    work.pair_row_probes += 1;
+    let empty = Contact {
+        signed_gap_mm: f64::INFINITY,
+        normal: [0.0, 0.0],
+        witness_a: [0.0, 0.0],
+        witness_b: [0.0, 0.0],
+    };
+    if !pair_is_near(
+        first_geometry.piece_bounds[first],
+        second_geometry.piece_bounds[second],
+        clearance_mm,
+    ) {
+        work.broad_phase_rejects += 1;
+        return (0.0, empty);
+    }
+    let (first_start, first_end) = first_geometry.piece_cells[first];
+    let (second_start, second_end) = second_geometry.piece_cells[second];
+    let mut worst = 0.0f64;
+    let mut worst_contact = empty;
+    for a in first_start..first_end {
+        for b in second_start..second_end {
+            if box_gap(
+                first_geometry.cell_bounds[a],
+                second_geometry.cell_bounds[b],
+            ) >= clearance_mm
+            {
+                continue;
+            }
+            work.convex_cell_gap_queries += 1;
+            let contact =
+                convex_cell_gap(first_geometry.cell_slice(a), second_geometry.cell_slice(b));
+            let violation = clearance_mm - contact.signed_gap_mm;
+            if violation > worst {
+                worst = violation;
+                worst_contact = contact;
+            }
+        }
+    }
+    if worst <= 0.0 {
+        (0.0, empty)
+    } else {
+        (worst, worst_contact)
+    }
+}
+
 /// Measures the four boundary rows of one piece.
 pub fn measure_edges(
     geometry: &Geometry,

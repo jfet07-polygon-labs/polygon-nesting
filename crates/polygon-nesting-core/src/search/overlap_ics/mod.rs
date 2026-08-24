@@ -54,6 +54,8 @@
 //! the shipped binary, and the census asserts the two builds' whole fixed-work
 //! documents against each other rather than asking to be believed.
 
+#[cfg(feature = "minimum-conflict-binary-close")]
+pub mod binary_close;
 pub mod broad_phase;
 pub mod contact;
 #[cfg(feature = "conflict-cluster-budget")]
@@ -111,6 +113,8 @@ pub trait InitialLayoutProvider {
 use crate::search::overlap_ics_meter::currency::WorkTerms;
 use crate::search::overlap_ics_meter::pacer::{NoClock, WorkPlanPacer};
 use crate::search::overlap_ics_meter::strike_meter::{ShadowCounters, StrikeConfig, StrikeMeter};
+#[cfg(feature = "minimum-conflict-binary-close")]
+use binary_close::{BinaryCloseArm, BinaryCloseDecision, BinaryCloseTrace};
 use descent::{Descent, DescentConfig, SweepOutcome};
 use diagnostics::{ProxySample, QualityPoint, Trace, WorkVector};
 use icscal::PlanPhase;
@@ -215,6 +219,11 @@ pub struct Engine<'a> {
     descent: Descent,
     #[cfg(feature = "conflict-cluster-budget")]
     partition_field: Option<ClusterField>,
+    /// Global explore ordinal across repeated `run_cutclose` calls. The frozen
+    /// shelf probe calls the method once for bites 1..=21 and again for bite
+    /// 22; treatment diagnostics must name the latter honestly.
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    explore_bite_ordinal: u64,
     /// The pose-bits digest of the last state offered for publication.
     last_attempt_pose_digest: Option<[u8; 32]>,
 }
@@ -342,6 +351,8 @@ impl<'a> Engine<'a> {
             descent,
             #[cfg(feature = "conflict-cluster-budget")]
             partition_field,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            explore_bite_ordinal: 0,
             last_attempt_pose_digest: None,
         }
     }
@@ -364,6 +375,22 @@ impl<'a> Engine<'a> {
 
     pub fn proposals(&self) -> u64 {
         self.descent.proposals
+    }
+
+    /// Cold, non-installing real-geometry half of Gate 0's printed vector.
+    /// The live integration calls the same constructor immediately before an
+    /// explore bite; this entry point exists only so the arithmetic cell can
+    /// print the complete table without running a search trajectory.
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub fn binary_close_vector(&self, explore_bite_ordinal: u64) -> BinaryCloseDecision {
+        BinaryCloseDecision::build(
+            &self.sources,
+            &self.contract,
+            &self.state,
+            self.config.descent.seed,
+            explore_bite_ordinal,
+            self.state.target_depth_mm,
+        )
     }
 
     /// Paired-cost Gate-0 primitive: reset to one immutable C175 entry state
@@ -1285,6 +1312,10 @@ impl<'a> Engine<'a> {
         let mut bites: Vec<BiteRecord> = Vec::new();
         let mut publications: Vec<PublishedBite> = Vec::new();
         let mut fingerprints: Vec<IterationFingerprint> = Vec::new();
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        let mut binary_close = BinaryCloseTrace::default();
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        let mut binary_close_aborted = false;
 
         // The entry width is the exact incumbent's own depth: `D*`. A
         // trajectory entered from a pose fixture that carries no incumbent
@@ -1308,11 +1339,74 @@ impl<'a> Engine<'a> {
         let mut explore_bites = 0u64;
         while !pacer.phase_done(Phase::Explore, explore_bites) {
             bite_ordinal += 1;
-            let bite =
-                homotopy::explore_bite(&self.sources, &mut self.state.poses, width_mm);
+            #[cfg(not(feature = "minimum-conflict-binary-close"))]
+            let bite = homotopy::explore_bite(&self.sources, &mut self.state.poses, width_mm);
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let bite = {
+                self.explore_bite_ordinal += 1;
+                let maybe_bite = match schedule.binary_close_arm {
+                    BinaryCloseArm::Centre => Some(homotopy::explore_bite(
+                        &self.sources,
+                        &mut self.state.poses,
+                        width_mm,
+                    )),
+                    arm @ (BinaryCloseArm::MinCut | BinaryCloseArm::ComputeIgnore) => {
+                        let decision = BinaryCloseDecision::build(
+                            &self.sources,
+                            &self.contract,
+                            &self.state,
+                            seed,
+                            self.explore_bite_ordinal,
+                            width_mm,
+                        );
+                        if !decision.valid {
+                            binary_close.push(decision);
+                            binary_close_aborted = true;
+                            None
+                        } else {
+                            let bite = if arm == BinaryCloseArm::MinCut {
+                                decision.install(&mut self.state.poses);
+                                homotopy::Bite {
+                                    width_before_mm: width_mm,
+                                    width_after_mm: decision.target_depth_mm,
+                                    delta_mm: decision.delta_mm,
+                                    split_y_mm: homotopy::centre_cut_mm(width_mm),
+                                    moved_pieces: decision.moved_pieces,
+                                    step: homotopy::EXPLORE_SHRINK_STEP,
+                                }
+                            } else {
+                                homotopy::explore_bite(
+                                    &self.sources,
+                                    &mut self.state.poses,
+                                    width_mm,
+                                )
+                            };
+                            binary_close.push(decision);
+                            Some(bite)
+                        }
+                    }
+                };
+                let Some(bite) = maybe_bite else {
+                    break;
+                };
+                bite
+            };
             width_mm = bite.width_after_mm;
             self.state.target_depth_mm = width_mm;
             self.refresh_all();
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            if schedule.binary_close_arm == BinaryCloseArm::MinCut {
+                let live_valid = binary_close
+                    .decisions
+                    .last_mut()
+                    .expect("a MinCut bite has one decision")
+                    .verify_live_install(&self.state);
+                if !live_valid {
+                    binary_close.invalid_decisions += 1;
+                    binary_close_aborted = true;
+                    break;
+                }
+            }
             // A new width is a new landscape: `change_strip_width` rebuilds
             // their tracker, so the weights start again at the floor.
             energy::reset_weights(&mut self.state);
@@ -1444,6 +1538,10 @@ impl<'a> Engine<'a> {
         let phase_started_s = explore_seconds.unwrap_or(0.0);
         let mut compress_bites = 0u64;
         while !pacer.phase_done(Phase::Compress, compress_bites) {
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            if binary_close_aborted {
+                break;
+            }
             bite_ordinal += 1;
             self.install_poses(&parent_poses, depth_mm);
             energy::reset_weights(&mut self.state);
@@ -1555,6 +1653,8 @@ impl<'a> Engine<'a> {
             explore_seconds,
             strike_arm: strikes_config,
             calibrated,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            binary_close,
         }
     }
 
@@ -1816,6 +1916,10 @@ pub struct ScheduleConfig {
     /// identity of "each master snapshot, winning worker ordinal, pose and
     /// weight fingerprint after every master iteration"; this is that record.
     pub record_fingerprints: bool,
+    /// Explore-bite injection arm of the minimum-conflict experiment. Compiled
+    /// out with the feature; runtime default is the historical centre path.
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub binary_close_arm: BinaryCloseArm,
 }
 
 impl Default for ScheduleConfig {
@@ -1825,6 +1929,8 @@ impl Default for ScheduleConfig {
             strikes: StrikeConfig::CONTROL,
             explore_time_ratio: homotopy::EXPLORE_TIME_RATIO,
             record_fingerprints: false,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            binary_close_arm: BinaryCloseArm::Centre,
         }
     }
 }
@@ -2075,6 +2181,10 @@ pub struct ScheduleOutcome {
     /// The calibrated plan's ledger, or `None` in the wall and fixed-work
     /// arms. `None` is not "nothing was spent": it is "no plan was spending".
     pub calibrated: Option<CalibratedSummary>,
+    /// Empty for runtime `Centre`; complete for every treatment or
+    /// compute-ignore decision attempted by this call.
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    pub binary_close: BinaryCloseTrace,
 }
 
 /// **What a calibrated plan spent, and what it did not charge.**

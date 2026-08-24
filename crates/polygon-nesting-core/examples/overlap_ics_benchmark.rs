@@ -37,12 +37,17 @@ use polygon_nesting_core::geometry::general_source::polygon_set_from_imported_pi
 use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, GeneralFastPiece, GeneralFastPlacement, GeneralFastSettings,
 };
-use polygon_nesting_core::search::overlap_ics::contact::convex_cell_gap;
+#[cfg(feature = "minimum-conflict-binary-close")]
+use polygon_nesting_core::search::overlap_ics::binary_close::{
+    gate0_vector_report as binary_close_gate0_vector_report, geometry_gate0_vector_report,
+    BinaryCloseArm, BinaryCloseTrace, Gate0VectorReport as BinaryCloseGate0VectorReport,
+};
 #[cfg(feature = "conflict-cluster-budget")]
 use polygon_nesting_core::search::overlap_ics::cluster_budget::{
-    FallbackKind, Gate0VectorReport, PartitionArm, PartitionCostArmSample, PartitionTrace,
-    gate0_vector_report,
+    gate0_vector_report as partition_gate0_vector_report, FallbackKind, Gate0VectorReport,
+    PartitionArm, PartitionCostArmSample, PartitionTrace,
 };
+use polygon_nesting_core::search::overlap_ics::contact::convex_cell_gap;
 use polygon_nesting_core::search::overlap_ics::corpus;
 use polygon_nesting_core::search::overlap_ics::descent::{
     counter_hash, DescentConfig, RejectionCensus,
@@ -310,7 +315,6 @@ fn partition_json(trace: &PartitionTrace) -> Value {
     })
 }
 
-#[cfg(feature = "conflict-cluster-budget")]
 fn hex_bytes(bytes: &[u8]) -> String {
     use std::fmt::Write;
     let mut out = String::with_capacity(bytes.len() * 2);
@@ -318,6 +322,116 @@ fn hex_bytes(bytes: &[u8]) -> String {
         write!(&mut out, "{byte:02x}").expect("writing to a String cannot fail");
     }
     out
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn binary_close_arm(options: &Options, key: &str) -> Result<BinaryCloseArm, String> {
+    match options.get(key).unwrap_or("centre") {
+        "centre" => Ok(BinaryCloseArm::Centre),
+        "mincut" => Ok(BinaryCloseArm::MinCut),
+        "compute-ignore" => Ok(BinaryCloseArm::ComputeIgnore),
+        other => Err(format!(
+            "--{key} must be centre|mincut|compute-ignore, not `{other}`"
+        )),
+    }
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn binary_close_json(trace: &BinaryCloseTrace) -> Value {
+    json!({
+        "invalidDecisions": trace.invalid_decisions,
+        "decisions": trace.decisions.iter().map(|decision| json!({
+            "key": {
+                "requestSeed": decision.request_seed,
+                "exploreBiteOrdinal": decision.explore_bite_ordinal,
+            },
+            "depthBeforeMm": decision.depth_before_mm,
+            "depthBeforeBits": decision.depth_before_mm.to_bits(),
+            "targetDepthMm": decision.target_depth_mm,
+            "targetDepthBits": decision.target_depth_mm.to_bits(),
+            "deltaMm": decision.delta_mm,
+            "deltaBits": decision.delta_mm.to_bits(),
+            "poseStateBitsValid": decision.pose_state_bits_valid,
+            "parentProxyPairLegal": decision.parent_proxy_pair_legal,
+            "parentPoseDigestSha256": hex_bytes(&decision.parent_pose_digest_sha256),
+            "pairs": decision.pair_terms.iter().map(|term| json!({
+                "pairId": term.pair_id,
+                "first": term.first,
+                "second": term.second,
+                "violationBits": term.violations_mm.map(|row| row.map(f64::to_bits)),
+                "costBits": term.costs.map(|row| row.map(f64::to_bits)),
+                "finiteNonnegative": term.finite_nonnegative,
+                "zeroDiagonal": term.zero_diagonal,
+                "submodular": term.submodular,
+            })).collect::<Vec<_>>(),
+            "unaries": decision.unary_terms.iter().map(|term| json!({
+                "piece": term.piece,
+                "violationBits": term.violations_mm.map(|row| row.map(f64::to_bits)),
+                "rowCostBits": term.row_costs.map(|row| row.map(f64::to_bits)),
+                "sumBits": term.sums.map(f64::to_bits),
+                "finiteNonnegative": term.finite_nonnegative,
+            })).collect::<Vec<_>>(),
+            "allFiniteNonnegative": decision.all_finite_nonnegative,
+            "allZeroDiagonal": decision.all_zero_diagonal,
+            "allSubmodular": decision.all_submodular,
+            "graphEdges": decision.graph_edges.iter().map(|edge| json!({
+                "from": edge.from,
+                "to": edge.to,
+                "capacityBits": edge.capacity.to_bits(),
+            })).collect::<Vec<_>>(),
+            "residualSourceReachable": decision.residual_source_reachable,
+            "labels": decision.labels,
+            "centreLabels": decision.centre_labels,
+            "hammingDisagreement": decision.hamming_disagreement,
+            "movedPieces": decision.moved_pieces,
+            "centreMovedPieces": decision.centre_moved_pieces,
+            "digests": {
+                "termTableSha256": hex_bytes(&decision.term_table_digest_sha256),
+                "graphSha256": hex_bytes(&decision.graph_digest_sha256),
+                "residualSha256": hex_bytes(&decision.residual_digest_sha256),
+                "labelsSha256": hex_bytes(&decision.label_digest_sha256),
+                "installedPosesSha256": hex_bytes(&decision.installed_pose_digest_sha256),
+                "installedRowsSha256": hex_bytes(&decision.installed_row_digest_sha256),
+            },
+            "selectedCutCapacity": decision.selected_cut_capacity.is_finite()
+                .then_some(decision.selected_cut_capacity),
+            "selectedCutCapacityBits": decision.selected_cut_capacity.to_bits(),
+            "selectedTableEnergy": decision.selected_table_energy.is_finite()
+                .then_some(decision.selected_table_energy),
+            "selectedTableEnergyBits": decision.selected_table_energy.to_bits(),
+            "coldRawPhi": decision.cold_raw_phi.is_finite().then_some(decision.cold_raw_phi),
+            "coldRawPhiBits": decision.cold_raw_phi.to_bits(),
+            "cutTableBitsEqual": decision.cut_table_bits_equal,
+            "tableColdBitsEqual": decision.table_cold_bits_equal,
+            "installedRowsMatchTable": decision.installed_rows_match_table,
+            "fieldWork": work_json(&decision.field_work),
+            "valid": decision.valid,
+            "invalidReason": decision.invalid_reason,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn binary_close_vectors_json(report: &BinaryCloseGate0VectorReport) -> Value {
+    json!({
+        "expectedLabels": report.expected_labels,
+        "solverLabels": report.solver_labels,
+        "exhaustiveEnergyBits": report.exhaustive_energies.iter()
+            .map(|value| value.to_bits()).collect::<Vec<_>>(),
+        "uniqueNontrivialMinimum": report.unique_nontrivial_minimum,
+        "everyLabelCutEnergyIdentity": report.every_label_cut_energy_identity,
+        "acceptsZeroDiagonalSubmodular": report.accepts_zero_diagonal_submodular,
+        "rejectsNonfinite": report.rejects_nonfinite,
+        "rejectsNegative": report.rejects_negative,
+        "rejectsNonzeroDiagonal": report.rejects_nonzero_diagonal,
+        "rejectsNonsubmodular": report.rejects_nonsubmodular,
+        "allZeroLabels": report.all_zero_labels,
+        "allOneLabels": report.all_one_labels,
+        "tieLabelsFirst": report.tie_labels_first,
+        "tieLabelsSecond": report.tie_labels_second,
+        "tieStable": report.tie_labels_first == report.tie_labels_second,
+        "graphDigestSha256": hex_bytes(&report.graph_digest_sha256),
+    })
 }
 
 #[cfg(feature = "conflict-cluster-budget")]
@@ -627,6 +741,9 @@ fn build_features() -> Vec<String> {
     let mut features = vec!["overlap-ics".to_owned()];
     if cfg!(feature = "conflict-cluster-budget") {
         features.push("conflict-cluster-budget".to_owned());
+    }
+    if cfg!(feature = "minimum-conflict-binary-close") {
+        features.push("minimum-conflict-binary-close".to_owned());
     }
     if cfg!(feature = "ics-profile") {
         features.push("ics-profile".to_owned());
@@ -1186,6 +1303,10 @@ fn schedule_json(
     if outcome.trace.partition.partition_decisions > 0 {
         document["partition"] = partition_json(&outcome.trace.partition);
     }
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    if !outcome.binary_close.decisions.is_empty() {
+        document["binaryClose"] = binary_close_json(&outcome.binary_close);
+    }
     document
 }
 
@@ -1413,10 +1534,64 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "partition-vectors" => {
             #[cfg(feature = "conflict-cluster-budget")]
             {
-                document["partitionVectors"] = partition_vectors_json(&gate0_vector_report());
+                document["partitionVectors"] =
+                    partition_vectors_json(&partition_gate0_vector_report());
             }
             #[cfg(not(feature = "conflict-cluster-budget"))]
             return Err("partition-vectors requires conflict-cluster-budget".into());
+        }
+        "binary-close-vectors" => {
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            {
+                let placements = ShortSideFirst.layout(&pieces, settings)?;
+                let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+                let config = IcsConfig {
+                    target_depth_mm: constructor_depth,
+                    proposal_budget: 0,
+                    relocate_eval_budget: u64::MAX,
+                    checkpoint_every_sweeps: u64::MAX,
+                    descent: descent_config(&options, &contract, &sources, seed)?,
+                    limits: publication_limits(&options)?,
+                };
+                let engine = Engine::from_constructor_at_depth(
+                    &pieces,
+                    settings,
+                    &placements,
+                    constructor_depth,
+                    config,
+                )?;
+                let decision = engine.binary_close_vector(1);
+                let real_trace = BinaryCloseTrace {
+                    invalid_decisions: u64::from(!decision.valid),
+                    decisions: vec![decision],
+                };
+                let geometry_vector = geometry_gate0_vector_report();
+                let synthetic_geometry_trace = BinaryCloseTrace {
+                    invalid_decisions: u64::from(!geometry_vector.decision.valid),
+                    decisions: vec![geometry_vector.decision],
+                };
+                document["binaryCloseVectors"] = json!({
+                    "synthetic": binary_close_vectors_json(&binary_close_gate0_vector_report()),
+                    "syntheticGeometry": {
+                        "poseStates": geometry_vector.pose_states.iter().map(|state| json!({
+                            "piece": state.piece,
+                            "zeroBits": state.zero,
+                            "oneBits": state.one,
+                            "mirrored": state.mirrored,
+                        })).collect::<Vec<_>>(),
+                        "incrementalPoseDigestSha256":
+                            hex_bytes(&geometry_vector.incremental_pose_digest_sha256),
+                        "incrementalRowDigestSha256":
+                            hex_bytes(&geometry_vector.incremental_row_digest_sha256),
+                        "incrementalRawPhiBits": geometry_vector.incremental_raw_phi.to_bits(),
+                        "incrementalMatchesCold": geometry_vector.incremental_matches_cold,
+                        "decision": binary_close_json(&synthetic_geometry_trace),
+                    },
+                    "realGeometry": binary_close_json(&real_trace),
+                });
+            }
+            #[cfg(not(feature = "minimum-conflict-binary-close"))]
+            return Err("binary-close-vectors requires minimum-conflict-binary-close".into());
         }
         "s0" | "s1" | "s2" => {
             let poses_path = options.required("poses")?.to_owned();
@@ -1779,10 +1954,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return Err(format!("--arm must be control|treatment, not `{other}`").into())
                 }
             };
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let binary_close_arm = binary_close_arm(&options, "binaryclose")?;
             let schedule = ScheduleConfig {
                 workers,
                 strikes,
                 record_fingerprints: options.integer("fingerprints", 0)? != 0,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                binary_close_arm,
                 ..ScheduleConfig::default()
             };
             let wall_budget_s = options.number("wall", 10.0)?;
@@ -2325,6 +2504,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let prefix_iterations = options.integer("prefixiters", 400)?;
             let probe_iterations = options.integer("probeiters", 200)?;
             let record_fingerprints = options.integer("fingerprints", 0)? != 0;
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let prefix_binary_close_arm = binary_close_arm(&options, "prefixbinaryclose")?;
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let probe_binary_close_arm = binary_close_arm(&options, "binaryclose")?;
             let config = IcsConfig {
                 target_depth_mm: constructor_depth,
                 proposal_budget: 0,
@@ -2345,6 +2528,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ScheduleConfig {
                     workers: prefix_workers,
                     record_fingerprints,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    binary_close_arm: prefix_binary_close_arm,
                     ..ScheduleConfig::default()
                 },
                 Budget::FixedWork {
@@ -2361,6 +2546,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ScheduleConfig {
                     workers,
                     record_fingerprints,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    binary_close_arm: probe_binary_close_arm,
                     ..ScheduleConfig::default()
                 },
                 Budget::FixedWork {
@@ -2443,6 +2630,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     revalidate: options.integer("revalidate", 0)? != 0,
                 },
             );
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            if !prefix_outcome.binary_close.decisions.is_empty() {
+                document["binaryClosePrefix"] = binary_close_json(&prefix_outcome.binary_close);
+            }
             document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
 
             // **The icscal write path, exercised on a real measurement.**
