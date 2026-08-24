@@ -530,13 +530,16 @@ pub fn cold_totals(state: &mut IcsState, contract: &Contract, work: &mut WorkVec
 
 /// Returns every guided weight to the floor.
 ///
-/// **Called on a successful width change, and nowhere else.** Grok review 12
-/// Round 2 §6.4: weights persist across a rollback *inside* a width - Sparrow's
+/// **Called on a successful width change and, only under the experiment
+/// feature, after a pool restore before disruption.** Grok review 12 Round 2
+/// §6.4: weights persist across a rollback *inside* a width - Sparrow's
 /// `tracker.rs::restore_but_keep_weights` is explicit about it, and a schedule
 /// that forgot the pressure it had learned on every failed separation would be
-/// a different algorithm - and reset when the landscape itself changes, because
-/// their tracker is rebuilt by `change_strip_width`. The schedule agent owns
-/// both call sites; this module owns the meaning.
+/// a different algorithm - and reset when the landscape itself changes. Their
+/// tracker is rebuilt by `change_strip_width`; their exploration-pool restore
+/// also rebuilds it, which is the independently gated seam in
+/// `docs/pool-retry-tracker-rebase-spec.md`. The schedule agent owns the call
+/// sites; this module owns the meaning.
 pub fn reset_weights(state: &mut IcsState) {
     for row in &mut state.pair_rows {
         row.weight = GLS_WEIGHT_FLOOR;

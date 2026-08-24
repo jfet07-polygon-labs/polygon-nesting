@@ -554,6 +554,10 @@ conflict-cluster-budget = []
 # default; it changes only the explore-bite injection in overlap-ICS and has no
 # route outside that engine. See docs/minimum-conflict-binary-close-spec.md.
 minimum-conflict-binary-close = []
+# Resets GLS weights only when an exploration-pool pose is restored before a
+# topological disruption. Off by default; the unchanged Saved arm remains the
+# control. See docs/pool-retry-tracker-rebase-spec.md.
+pool-retry-tracker-rebase = []
 # The overlap-ICS master-iteration phase census: nanosecond accumulators around
 # slot preparation, thread dispatch/join, the worker sweeps, the ordinal merge
 # and Algorithm-8 pass, and the exact attempt. **Measurement only, and off in

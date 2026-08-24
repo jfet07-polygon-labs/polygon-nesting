@@ -58,6 +58,11 @@ use polygon_nesting_core::search::overlap_ics::icscal::{
     BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase, WorkPlan,
 };
 use polygon_nesting_core::search::overlap_ics::icscal_read::plan_from_bytes;
+#[cfg(feature = "pool-retry-tracker-rebase")]
+use polygon_nesting_core::search::overlap_ics::pool_rebase::{
+    apply_weight_policy, raw_row_digest as pool_raw_row_digest, PoolRebaseArm, PoolRebaseTrace,
+    WeightSnapshot, FIRST_RETRY_ITERATION_CAP,
+};
 use polygon_nesting_core::search::overlap_ics::profile::PhaseProfile;
 use polygon_nesting_core::search::overlap_ics::publish;
 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -334,6 +339,97 @@ fn binary_close_arm(options: &Options, key: &str) -> Result<BinaryCloseArm, Stri
             "--{key} must be centre|mincut|compute-ignore, not `{other}`"
         )),
     }
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn pool_rebase_arm(options: &Options) -> Result<PoolRebaseArm, String> {
+    match options.get("poolrebase").unwrap_or("saved") {
+        "saved" => Ok(PoolRebaseArm::Saved),
+        "rebase" => Ok(PoolRebaseArm::Rebase),
+        "compute-ignore" => Ok(PoolRebaseArm::ComputeIgnore),
+        other => Err(format!(
+            "--poolrebase must be saved|rebase|compute-ignore, not `{other}`"
+        )),
+    }
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn weight_snapshot_json(snapshot: &WeightSnapshot) -> Value {
+    json!({
+        "bits": snapshot.bits,
+        "digestSha256": hex_bytes(&snapshot.digest_sha256),
+        "count": snapshot.bits.len(),
+        "countAboveFloor": snapshot.count_above_floor,
+        "minimum": if snapshot.minimum.is_finite() { json!(snapshot.minimum) } else { Value::Null },
+        "maximum": if snapshot.maximum.is_finite() { json!(snapshot.maximum) } else { Value::Null },
+        "allFinite": snapshot.all_finite,
+        "allExactlyOne": snapshot.all_exactly_one,
+    })
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn pool_rebase_json(
+    trace: &PoolRebaseTrace,
+    fingerprints: &[polygon_nesting_core::search::overlap_ics::IterationFingerprint],
+) -> Value {
+    json!({
+        "arm": trace.arm.as_str(),
+        "invalidRetries": trace.invalid_retries,
+        "decisions": trace.decisions.iter().map(|row| json!({
+            "key": {
+                "requestSeed": row.request_seed,
+                "exploreBiteOrdinal": row.explore_bite_ordinal,
+                "attemptOrdinal": row.attempt_ordinal,
+            },
+            "widthMm": row.width_mm,
+            "widthBits": row.width_mm.to_bits(),
+            "poolLength": row.pool_length,
+            "selectedRank": row.selected_rank,
+            "poolEntryRawPhi": row.pool_entry_raw_phi,
+            "poolEntryRawPhiBits": row.pool_entry_raw_phi.to_bits(),
+            "selectedPoseDigestSha256": hex_bytes(&row.selected_pose_digest_sha256),
+            "savedWeights": weight_snapshot_json(&row.saved_weights),
+            "postInstallPoseDigestSha256": hex_bytes(&row.post_install_pose_digest_sha256),
+            "postInstallRawRowDigestSha256": hex_bytes(&row.post_install_raw_row_digest_sha256),
+            "resetWeights": row.reset_weights.as_ref().map(weight_snapshot_json),
+            "postPolicyWeights": weight_snapshot_json(&row.post_policy_weights),
+            "disruption": {
+                "fired": row.disruption.fired,
+                "swapped": row.disruption.swapped,
+                "distinct": row.disruption.distinct,
+                "followers": row.disruption.followers,
+                "followersCapped": row.disruption.followers_capped,
+                "work": work_json(&row.disruption_work_delta),
+                "poseTransformDigestSha256":
+                    hex_bytes(&row.disruption_pose_transform_digest_sha256),
+            },
+            "postDisruptionPoseDigestSha256": hex_bytes(&row.post_disruption_pose_digest_sha256),
+            "postDisruptionRawRowDigestSha256": hex_bytes(&row.post_disruption_raw_row_digest_sha256),
+            "coldPostDisruptionRawRowDigestSha256":
+                hex_bytes(&row.cold_post_disruption_raw_row_digest_sha256),
+            "incrementalColdRawRowsIdentical": row.post_disruption_raw_row_digest_sha256
+                == row.cold_post_disruption_raw_row_digest_sha256,
+            "postDisruptionWeights": weight_snapshot_json(&row.post_disruption_weights),
+            "fingerprintStart": row.fingerprint_start,
+            "fingerprintEnd": row.fingerprint_end,
+            "downstreamFingerprints": fingerprints[row.fingerprint_start..row.fingerprint_end]
+                .iter().map(|fingerprint| json!({
+                    "bite": fingerprint.bite,
+                    "attempt": fingerprint.attempt,
+                    "iteration": fingerprint.iteration,
+                    "winner": fingerprint.winner,
+                    "winnerGuided": fingerprint.winner_guided,
+                    "contested": fingerprint.contested,
+                    "state": fingerprint.state,
+                })).collect::<Vec<_>>(),
+            "retryIterations": row.retry_iterations,
+            "retryStop": row.retry_stop,
+            "retryPublished": row.retry_published,
+            "pathWork": work_json(&row.path_work_delta),
+            "pathSeconds": row.path_seconds,
+            "valid": row.valid,
+        })).collect::<Vec<_>>(),
+    })
 }
 
 #[cfg(feature = "minimum-conflict-binary-close")]
@@ -761,6 +857,9 @@ fn build_features() -> Vec<String> {
     }
     if cfg!(feature = "minimum-conflict-binary-close") {
         features.push("minimum-conflict-binary-close".to_owned());
+    }
+    if cfg!(feature = "pool-retry-tracker-rebase") {
+        features.push("pool-retry-tracker-rebase".to_owned());
     }
     if cfg!(feature = "ics-profile") {
         features.push("ics-profile".to_owned());
@@ -1333,6 +1432,10 @@ fn schedule_json(
     if !outcome.binary_close.decisions.is_empty() {
         document["binaryClose"] = binary_close_json(&outcome.binary_close);
     }
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    if !outcome.pool_rebase.decisions.is_empty() {
+        document["poolRetryRebase"] = pool_rebase_json(&outcome.pool_rebase, &outcome.fingerprints);
+    }
     document
 }
 
@@ -1557,6 +1660,103 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     match cell.as_str() {
+        "pool-rebase-vectors" => {
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            {
+                let placements = ShortSideFirst.layout(&pieces, settings)?;
+                let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+                let config = IcsConfig {
+                    target_depth_mm: constructor_depth,
+                    proposal_budget: 0,
+                    relocate_eval_budget: u64::MAX,
+                    checkpoint_every_sweeps: u64::MAX,
+                    descent: descent_config(&options, &contract, &sources, seed)?,
+                    limits: publication_limits(&options)?,
+                };
+                let mut engine = Engine::from_constructor_at_depth(
+                    &pieces,
+                    settings,
+                    &placements,
+                    constructor_depth,
+                    config,
+                )?;
+                if let Some(row) = engine.state.pair_rows.first_mut() {
+                    row.weight = 2.0;
+                }
+                if let Some(row) = engine.state.pair_rows.last_mut() {
+                    row.weight = 17.0;
+                }
+                if let Some(rows) = engine.state.edge_rows.first_mut() {
+                    rows[3].weight = 1_024.0;
+                }
+                let saved_pair = engine
+                    .state
+                    .pair_rows
+                    .iter()
+                    .map(|row| row.weight)
+                    .collect::<Vec<_>>();
+                let saved_edges = engine
+                    .state
+                    .edge_rows
+                    .iter()
+                    .map(|rows| rows.map(|row| row.weight))
+                    .collect::<Vec<_>>();
+                let saved = WeightSnapshot::of_saved(&saved_pair, &saved_edges);
+                let raw_before = pool_raw_row_digest(&engine.state);
+
+                let mut saved_state = engine.state.clone();
+                let saved_reset = apply_weight_policy(
+                    &mut saved_state,
+                    PoolRebaseArm::Saved,
+                    &saved_pair,
+                    &saved_edges,
+                );
+                let mut rebase_state = engine.state.clone();
+                let rebase_reset = apply_weight_policy(
+                    &mut rebase_state,
+                    PoolRebaseArm::Rebase,
+                    &saved_pair,
+                    &saved_edges,
+                );
+                let mut compute_state = engine.state.clone();
+                let compute_reset = apply_weight_policy(
+                    &mut compute_state,
+                    PoolRebaseArm::ComputeIgnore,
+                    &saved_pair,
+                    &saved_edges,
+                );
+                let nonfinite = WeightSnapshot::of_saved(&[f64::NAN], &[]);
+                document["poolRetryRebaseVectors"] = json!({
+                    "savedInput": weight_snapshot_json(&saved),
+                    "saved": {
+                        "reset": saved_reset.as_ref().map(weight_snapshot_json),
+                        "post": weight_snapshot_json(&WeightSnapshot::of(&saved_state)),
+                        "rawRowDigestSha256": hex_bytes(&pool_raw_row_digest(&saved_state)),
+                    },
+                    "rebase": {
+                        "reset": rebase_reset.as_ref().map(weight_snapshot_json),
+                        "post": weight_snapshot_json(&WeightSnapshot::of(&rebase_state)),
+                        "rawRowDigestSha256": hex_bytes(&pool_raw_row_digest(&rebase_state)),
+                    },
+                    "computeIgnore": {
+                        "reset": compute_reset.as_ref().map(weight_snapshot_json),
+                        "post": weight_snapshot_json(&WeightSnapshot::of(&compute_state)),
+                        "rawRowDigestSha256": hex_bytes(&pool_raw_row_digest(&compute_state)),
+                    },
+                    "nonfiniteSavedVisible": !nonfinite.all_finite,
+                    "rawRowDigestSha256": hex_bytes(&raw_before),
+                    "rawRowsUnchanged": raw_before == pool_raw_row_digest(&saved_state)
+                        && raw_before == pool_raw_row_digest(&rebase_state)
+                        && raw_before == pool_raw_row_digest(&compute_state),
+                    "savedRestoredExactly": WeightSnapshot::of(&saved_state).bits == saved.bits,
+                    "rebaseAllExactlyOne": WeightSnapshot::of(&rebase_state).all_exactly_one,
+                    "computeIgnoreRestoredExactly":
+                        WeightSnapshot::of(&compute_state).bits == saved.bits,
+                });
+            }
+            #[cfg(not(feature = "pool-retry-tracker-rebase"))]
+            return Err("pool-rebase-vectors requires pool-retry-tracker-rebase".into());
+        }
         "partition-vectors" => {
             #[cfg(feature = "conflict-cluster-budget")]
             {
@@ -1984,14 +2184,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             #[cfg(feature = "minimum-conflict-binary-close")]
             let binary_close_arm = binary_close_arm(&options, "binaryclose")?;
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            let pool_rebase_arm = pool_rebase_arm(&options)?;
             let schedule = ScheduleConfig {
                 workers,
                 strikes,
                 record_fingerprints: options.integer("fingerprints", 0)? != 0,
                 #[cfg(feature = "minimum-conflict-binary-close")]
                 binary_close_arm,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                pool_rebase_arm,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                record_pool_rebase: options.integer("poolrebasetrace", 0)? != 0,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                stop_after_first_pool_retry: options.integer("firstretry", 0)? != 0,
                 ..ScheduleConfig::default()
             };
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if schedule.stop_after_first_pool_retry
+                && (!schedule.record_pool_rebase || !schedule.record_fingerprints)
+            {
+                return Err(
+                    "--firstretry=1 requires --poolrebasetrace=1 and --fingerprints=1".into(),
+                );
+            }
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if schedule.stop_after_first_pool_retry && mode == "wall" {
+                return Err("--firstretry=1 requires fixed or calibrated work, not wall".into());
+            }
             let wall_budget_s = options.number("wall", 10.0)?;
             // Built before the budget, because a calibrated budget moves into
             // `run_cutclose` and a plan is worth printing whether or not the
@@ -2227,6 +2447,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "calibratedPlan": plan_document,
                 "calibratedAttemptsPerBite": calibrated_attempts_per_bite,
             });
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            {
+                document["schedule"]["poolRetryArm"] = json!(schedule.pool_rebase_arm.as_str());
+                document["schedule"]["recordPoolRetryRebase"] = json!(schedule.record_pool_rebase);
+                document["schedule"]["stopAfterFirstPoolRetry"] =
+                    json!(schedule.stop_after_first_pool_retry);
+                document["schedule"]["firstPoolRetryIterationCap"] =
+                    schedule.stop_after_first_pool_retry
+                        .then_some(FIRST_RETRY_ITERATION_CAP).into();
+            }
             document["outcome"] = schedule_json(
                 &outcome,
                 &constructor_fingerprint,

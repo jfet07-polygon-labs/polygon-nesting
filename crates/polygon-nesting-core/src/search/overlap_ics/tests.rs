@@ -1510,6 +1510,93 @@ fn the_gls_schedule_is_the_published_one_and_the_only_one() {
     }
 }
 
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn pool_retry_policy_resets_only_the_rebase_arm_and_compute_ignore_restores() {
+    use super::pool_rebase::{PoolRebaseArm, WeightSnapshot};
+
+    let fixture = Fixture::squares(3, 20.0);
+    let (_, _, mut state) = state_of_poses(
+        &fixture,
+        vec![
+            pose_at(10.0, 10.0),
+            pose_at(40.0, 40.0),
+            pose_at(70.0, 70.0),
+        ],
+        300.0,
+    );
+    state.pair_rows[0].weight = 2.0;
+    state.pair_rows[1].weight = 17.0;
+    state.edge_rows[1][3].weight = 1_024.0;
+    let entry = super::PoolEntry::of(&state, fold(&state).raw);
+    let saved = WeightSnapshot::of(&state);
+    assert_eq!(saved.count_above_floor, 3);
+    assert!(saved.all_finite);
+    assert!(!saved.all_exactly_one);
+
+    super::energy::reset_weights(&mut state);
+    let saved_report = entry.apply_rebase_policy(&mut state, PoolRebaseArm::Saved);
+    assert!(saved_report.is_none());
+    assert_eq!(WeightSnapshot::of(&state).bits, saved.bits);
+
+    let reset_report = entry
+        .apply_rebase_policy(&mut state, PoolRebaseArm::Rebase)
+        .expect("the treatment emits its exact reset vector");
+    assert!(reset_report.all_finite);
+    assert!(reset_report.all_exactly_one);
+    assert_eq!(WeightSnapshot::of(&state), reset_report);
+
+    let compute_report = entry
+        .apply_rebase_policy(&mut state, PoolRebaseArm::ComputeIgnore)
+        .expect("compute-ignore emits the reset it discarded");
+    assert!(compute_report.all_exactly_one);
+    assert_eq!(WeightSnapshot::of(&state).bits, saved.bits);
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn pool_retry_digests_separate_raw_rows_from_weights_and_rollback_keeps_weights() {
+    use super::pool_rebase::{raw_row_digest, WeightSnapshot};
+
+    let fixture = Fixture::squares(3, 20.0);
+    let (_, _, mut state) = state_of_poses(
+        &fixture,
+        vec![
+            pose_at(10.0, 10.0),
+            pose_at(10.0, 10.0),
+            pose_at(80.0, 80.0),
+        ],
+        300.0,
+    );
+    let snapshot = state.clone();
+    let raw_before = raw_row_digest(&state);
+    state.pair_rows[0].weight = 64.0;
+    state.edge_rows[0][0].weight = 8.0;
+    assert_eq!(raw_before, raw_row_digest(&state));
+    let weights_before = WeightSnapshot::of(&state);
+
+    // This is the rollback used *inside* a separation. Poses/raw rows come
+    // from the snapshot, while the evolved live weights remain untouched.
+    super::restore_keeping_weights(&mut state, &snapshot);
+    assert_eq!(WeightSnapshot::of(&state).bits, weights_before.bits);
+    assert_eq!(raw_row_digest(&state), raw_row_digest(&snapshot));
+
+    state.pair_rows[0].violation_mm += 0.125;
+    assert_ne!(raw_row_digest(&state), raw_row_digest(&snapshot));
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn a_nonfinite_saved_weight_is_visible_even_if_treatment_would_reset_it() {
+    use super::pool_rebase::WeightSnapshot;
+
+    let pair = [f64::NAN, 2.0];
+    let edge = [[1.0, 1.0, 1.0, 1.0]];
+    let saved = WeightSnapshot::of_saved(&pair, &edge);
+    assert!(!saved.all_finite);
+    assert!(!saved.all_exactly_one);
+}
+
 /// A sweep runs the Algorithm-8 pass exactly once, over every row, whether or
 /// not it improved anything - and **a worker sweep runs none at all.**
 ///
