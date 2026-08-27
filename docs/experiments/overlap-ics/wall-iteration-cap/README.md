@@ -393,3 +393,47 @@ rather than an argument from elegance.
 The proportionality is not linear on this evidence - 50 at ten seconds against
 at least 100 at thirty - and the upper end at thirty seconds is still being
 searched.
+
+## The thirty-second optimum, and the shape of the rule
+
+Larger caps at thirty seconds, `ratio = 0.95`, two repetitions
+(`evidence/large-caps-30s/`):
+
+| cap | rep | median | best | under 168.484 | seed 7 | seed 8 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| **100** | 0 | 164.003 | **159.309** | 9/9 | 164.004 | 164.010 |
+| **100** | 1 | 164.001 | **159.245** | 9/9 | 164.001 | 164.010 |
+| 200 | 0 | 164.015 | 161.012 | 9/9 | 161.353 | 161.717 |
+| 200 | 1 | 164.016 | 160.782 | 9/9 | 161.454 | 161.700 |
+| 400 | 0 | 164.122 | 160.195 | 9/9 | 166.014 | 165.454 |
+
+`cap = 100` is the thirty-second optimum on both median and best, reproduced.
+Across this sweep and the budget sweep it has now been run four times at thirty
+seconds and returned **159.172, 159.245, 159.262 and 159.309** - every one of
+them below Round 4's own thirty-second best of 160.89229, and every one 9/9.
+
+Note `cap = 200`'s tail: seeds 7 and 8 at 161.35-161.72, the tightest tail
+measured, at the cost of a worse best. The bounds are trading the same thing at
+every setting - depth per separation against number of separations - and which
+end of that trade you want depends on whether the median, the tail or the best
+is the number being asked for.
+
+## What the two informative budgets say about the rule
+
+| budget | optimum cap | evidence |
+| ---: | ---: | --- |
+| 3 s | undetermined | every setting is 0/9 at 21 bites; only the best moves |
+| 10 s | **50** (70 close) | 15/25/35 clearly worse, 150 passes 2 of 5 reps |
+| 30 s | **100** | 25/50 also 9/9, 200 and 400 worse on median and best |
+
+Budget triples, optimum roughly doubles. The growth is **sub-linear**, and
+`cap ≈ 16·sqrt(seconds)` fits both points - 50.6 at ten seconds, 87.6 at thirty
+- as does a shallow linear rule. **Two informative budgets are not enough to
+choose between them, and this file does not choose.** What the measurement does
+settle is the *shape*: the cap must scale with the budget rather than be a
+constant, which is exactly the objection Part One was open to, and it is
+answered by evidence rather than by taste.
+
+The practical reading, stated as such: `50` at ten seconds and `100` at thirty,
+both measured and both reproduced, with a derived rule still owed a third
+budget.
