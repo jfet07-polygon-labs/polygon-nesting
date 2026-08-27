@@ -106,10 +106,34 @@ pub fn uniform_cut_mm(contract: &Contract, width_mm: f64, seed: u64, bite: u64) 
     low + unit_of(counter_hash(&[seed, bite, CUT_STREAM_TAG])) * (high - low)
 }
 
+/// **The explore step, overridable for measurement.** `0` means "use
+/// [`EXPLORE_SHRINK_STEP`]", which is Sparrow `config.rs`'s `shrink_step` and a
+/// Table 1 value the paper's §11.3 says was tuned for twenty-minute runs and
+/// never re-tuned for other limits. Whether 0.1 % is still the right bite at a
+/// ten-second budget is a measurement, and this is how it gets measured. The
+/// default is unchanged, and a run that does not name it takes exactly the path
+/// it always took.
+static EXPLORE_STEP_OVERRIDE: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_explore_shrink_step(step: f64) {
+    EXPLORE_STEP_OVERRIDE.store(step.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn explore_shrink_step() -> f64 {
+    let bits = EXPLORE_STEP_OVERRIDE.load(std::sync::atomic::Ordering::Relaxed);
+    let value = f64::from_bits(bits);
+    if value > 0.0 && value < 1.0 {
+        value
+    } else {
+        EXPLORE_SHRINK_STEP
+    }
+}
+
 /// The exploration width after one bite.
 #[inline]
 pub fn explore_width_mm(width_mm: f64) -> f64 {
-    width_mm * (1.0 - EXPLORE_SHRINK_STEP)
+    width_mm * (1.0 - explore_shrink_step())
 }
 
 /// The compression width after one bite at `step`.
@@ -184,7 +208,7 @@ pub fn explore_bite(sources: &[PieceSource], poses: &mut [Pose], width_mm: f64) 
         delta_mm,
         split_y_mm,
         moved_pieces,
-        step: EXPLORE_SHRINK_STEP,
+        step: explore_shrink_step(),
     }
 }
 

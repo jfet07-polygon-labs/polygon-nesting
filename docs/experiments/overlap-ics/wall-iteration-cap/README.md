@@ -246,3 +246,27 @@ they were simply inherited from a twenty-minute schedule and applied to ten
 seconds without anyone asking whether they still meant the same thing.
 
 Round 4's own ten-second best was 165.42489. This reads **163.400**.
+
+## Thirty seconds with both bounds: nine of nine, twice
+
+`cap = 50, ratio = 0.95` against the closed member, nine seeds, two repetitions,
+bare thirty-second requests (`evidence/combined-30s/`):
+
+| arm | rep | median | best | under 168.484 | seed 7 | seed 8 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| base | 0 | 164.005 | 160.573 | **7/9** | 179.082 | 179.082 |
+| base | 1 | 164.006 | 161.030 | **7/9** | 179.082 | 179.011 |
+| **tuned** | 0 | 164.001 | 160.849 | **9/9** | **161.904** | **164.001** |
+| **tuned** | 1 | 164.003 | 161.142 | **9/9** | **162.013** | **164.003** |
+
+Nine of nine on both repetitions. Seed 7 goes 179.082 to **161.904 and 162.013**
+- **-17.1 mm** - and seed 8 to 164.001 and 164.003, **-15.1 mm**, on both. Under
+the closed member they are pinned at 179 after thirty seconds, exactly where they
+sit after three.
+
+The median is unchanged, 164.005 against 164.001, and the best pays 0.28 mm,
+160.573 against 160.849. That is the honest shape of the trade: the bounds buy
+the tail and cost a little at the very top.
+
+This is the clause Round 4 could not reach and the clause the T-row
+specification was written for and failed to move.

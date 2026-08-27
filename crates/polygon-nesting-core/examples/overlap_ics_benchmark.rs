@@ -2540,6 +2540,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             polygon_nesting_core::search::overlap_ics::set_wall_iteration_cap(
                 options.integer("itercap", 0)? as u64,
             );
+            homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
             #[cfg(feature = "t-row-repair")]
             {
                 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -3476,6 +3477,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json!(started.elapsed().as_secs_f64()),
     );
     document["wall"] = Value::Object(wall);
+    document["exploreShrinkStep"] = json!(homotopy::explore_shrink_step());
     document["wallIterationCap"] =
         json!(polygon_nesting_core::search::overlap_ics::wall_iteration_cap());
     document["executableSha256"] = json!(executable_sha256());
