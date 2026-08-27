@@ -3448,6 +3448,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     document["wall"] = Value::Object(wall);
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());
+    // Instrument only, and present only on a census build: which publication
+    // gate refused, counted at the band entry.
+    #[cfg(feature = "ics-publish-census")]
+    {
+        let census = polygon_nesting_core::search::overlap_ics::publish_census::snapshot();
+        document["publishCensus"] = json!({
+            "bandEntries": census.band_entries,
+            "digestRepeat": census.digest_repeat,
+            "aboveTarget": census.above_target,
+            "notImproving": census.not_improving,
+            "called": census.called,
+            "aboveTargetMinMm": census.above_target_min_mm.is_finite()
+                .then_some(census.above_target_min_mm),
+            "aboveTargetMaxMm": census.above_target_max_mm.is_finite()
+                .then_some(census.above_target_max_mm),
+            "aboveTargetBetterThanIncumbent": census.above_target_better_than_incumbent,
+            "aboveTargetBestGainMm": census.above_target_best_gain_mm,
+        });
+    }
     println!("{}", serde_json::to_string_pretty(&document)?);
     Ok(())
 }

@@ -1165,6 +1165,42 @@ impl<'a> Engine<'a> {
                 band_reached = true;
                 exact_band_entries += 1;
                 profile.band_entries += 1;
+                // Instrument only: classify the refusal `attempt_publication`
+                // is about to make, using the same three predicates it uses,
+                // read here where all three inputs are in scope.
+                #[cfg(feature = "ics-publish-census")]
+                {
+                    let digest = pose_bits_digest(&self.state.poses);
+                    let proxy =
+                        state::raw_source_depth_mm(&self.state.geometry, &self.contract);
+                    let limits = self.config.limits;
+                    let target = self.state.target_depth_mm;
+                    let incumbent = self.incumbent.raw_source_depth_mm;
+                    let repeat = self.last_attempt_pose_digest == Some(digest);
+                    publish_census::record(|census| {
+                        census.band_entries += 1;
+                        if repeat {
+                            census.digest_repeat += 1;
+                        } else if proxy > target {
+                            census.above_target += 1;
+                            let excess = proxy - target;
+                            census.above_target_min_mm =
+                                census.above_target_min_mm.min(excess);
+                            census.above_target_max_mm =
+                                census.above_target_max_mm.max(excess);
+                            let gain = incumbent - proxy;
+                            if gain > limits.minimum_improvement_mm {
+                                census.above_target_better_than_incumbent += 1;
+                                census.above_target_best_gain_mm =
+                                    census.above_target_best_gain_mm.max(gain);
+                            }
+                        } else if proxy > incumbent - limits.minimum_improvement_mm {
+                            census.not_improving += 1;
+                        } else {
+                            census.called += 1;
+                        }
+                    });
+                }
                 let called_before = self.trace.work.exact_checkpoints;
                 let repaired_before = self.trace.work.repair_rows;
                 let outcome = ics_time!(profile, exact_ns, self.attempt_publication());
@@ -3631,6 +3667,63 @@ fn plan_phase(phase: Phase) -> PlanPhase {
 /// degrees and the translations on the 1 µm canonical grid, because it exists
 /// to answer "is this the constructor's layout"; this exists to answer "has
 /// anything at all moved", so it compares raw bits and nothing is rounded away.
+/// **The publication-gate census: instrument only, no trajectory effect.**
+///
+/// A bite that enters the proxy band thousands of times and never calls the
+/// exact authority is being refused *before* the authority sees it, and
+/// `attempt_publication`'s three early returns have three different causes:
+/// the pose-digest guard (the state is not moving), the target-depth gate (the
+/// overlap was resolved by undoing the shrink) and the improvement gate. The
+/// funnel cannot tell them apart, so this counts them at the one site that
+/// knows all three. Counters live in a thread local because the band entry is
+/// on the master thread and nothing here may change an engine field.
+#[cfg(feature = "ics-publish-census")]
+pub mod publish_census {
+    use std::cell::RefCell;
+
+    #[derive(Default, Clone, Copy, Debug)]
+    pub struct Census {
+        pub band_entries: u64,
+        pub digest_repeat: u64,
+        pub above_target: u64,
+        pub not_improving: u64,
+        pub called: u64,
+        /// The widest and narrowest proxy-minus-target seen on an
+        /// `above_target` refusal, in mm. A refusal at +0.000001 mm and one at
+        /// +0.09 mm are different stories.
+        pub above_target_min_mm: f64,
+        pub above_target_max_mm: f64,
+        /// On an `above_target` refusal, how much better than the incumbent
+        /// the refused layout's proxy depth was, in mm. A refusal that was
+        /// also worse than the incumbent costs nothing; one that was better is
+        /// progress the target gate threw away.
+        pub above_target_better_than_incumbent: u64,
+        pub above_target_best_gain_mm: f64,
+    }
+
+    thread_local! {
+        static CENSUS: RefCell<Census> = const { RefCell::new(Census {
+            band_entries: 0,
+            digest_repeat: 0,
+            above_target: 0,
+            not_improving: 0,
+            called: 0,
+            above_target_min_mm: f64::INFINITY,
+            above_target_max_mm: f64::NEG_INFINITY,
+            above_target_better_than_incumbent: 0,
+            above_target_best_gain_mm: 0.0,
+        }) };
+    }
+
+    pub fn record(update: impl FnOnce(&mut Census)) {
+        CENSUS.with(|cell| update(&mut cell.borrow_mut()));
+    }
+
+    pub fn snapshot() -> Census {
+        CENSUS.with(|cell| *cell.borrow())
+    }
+}
+
 pub fn pose_bits_digest(poses: &[Pose]) -> [u8; 32] {
     use sha2::{Digest, Sha256};
     let mut digest = Sha256::new();

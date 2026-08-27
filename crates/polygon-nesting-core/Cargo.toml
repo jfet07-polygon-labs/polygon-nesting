@@ -21,6 +21,13 @@ jagua-experimental = ["dep:jagua-rs"]
 # default so that a normal profiling run measures the phase counters alone and
 # heap numbers are collected in a separate, deliberately slower build.
 profiling-allocator = []
+# **Instrument only.** A census of which publication gate refused, counted at
+# the band entry in `separate`. It answers one question the funnel cannot: a
+# bite that enters the proxy band thousands of times and never calls the exact
+# authority is being refused by the digest guard, by the target-depth gate or
+# by the improvement gate, and those have different causes. Counters only, no
+# trajectory effect, off by default so no gate binary carries it.
+ics-publish-census = []
 # Compiles the deep-operator (`general_persistent_vacancy`) phase spans in.
 # Off by default: those sites sit inside a generated function whose inlining
 # they perturb, which costs about 4.5% of a mode-20 stream even with recording
