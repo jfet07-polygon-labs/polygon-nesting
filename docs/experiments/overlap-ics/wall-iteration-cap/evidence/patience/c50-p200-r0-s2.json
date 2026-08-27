@@ -1,0 +1,69 @@
+{
+ "buildFeatures": [
+  "overlap-ics"
+ ],
+ "constructor": {
+  "lowerScaleMm": 115.83870984650393,
+  "placementCount": 61,
+  "placementFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+  "rawSourceDepthMm": 182.976
+ },
+ "executableSha256": "3a4d019b57efb258d5d247540828cc7107434c0ff336c81d488f6ddcd52eb8ea",
+ "explorePatience": 200,
+ "exploreShrinkStep": 0.001,
+ "outcome": {
+  "biteTotals": {
+   "attempts": 21,
+   "biteRecords": 96,
+   "disruptions": 17,
+   "strikes": 0
+  },
+  "compressBites": 7,
+  "depthMm": 167.3469907288155,
+  "exploreBites": 88,
+  "invalidPublications": 0,
+  "publicationCount": 92
+ },
+ "schedule": {
+  "arm": "control",
+  "armLabel": "control-iteration-strikes",
+  "calibratedAttemptsPerBite": null,
+  "calibratedPlan": null,
+  "compressIterationsWithoutImprovement": 100,
+  "compressStrikes": 5,
+  "exploreIterationsWithoutImprovement": 200,
+  "exploreStrikes": 3,
+  "exploreTimeRatio": 0.95,
+  "fixedWork": null,
+  "mode": "wall",
+  "recordFingerprints": false,
+  "strikePolicy": {
+   "compress": {
+    "iterationsWithoutImprovement": 100,
+    "patience": "iterations",
+    "strikes": 5,
+    "workQuantumSampleEvaluations": null
+   },
+   "explore": {
+    "iterationsWithoutImprovement": 200,
+    "patience": "iterations",
+    "strikes": 3,
+    "workQuantumSampleEvaluations": null
+   },
+   "frozenLiteralsIntact": true,
+   "improvingResetRatio": 0.98
+  },
+  "wallBudgetSeconds": 10.0,
+  "workers": 8
+ },
+ "seed": 2,
+ "wall": {
+  "constructorSeconds": 0.620843972,
+  "loopEntrySeconds": 0.620963994,
+  "loopExploreSeconds": 8.91954269,
+  "loopSearchSeconds": 9.383617448,
+  "searchSeconds": 9.383618126,
+  "totalSeconds": 10.017530103
+ },
+ "wallIterationCap": 50
+}

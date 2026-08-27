@@ -468,3 +468,47 @@ best of **164.025**, better than the unbounded engine's **165.162** at **ten**.
 Its median is worse - 173.957 against 169.672 - so this is not "twice as fast at
 equal quality", and it is not claimed as such. It is one seed reaching deeper in
 half the time.
+
+---
+
+# Part five: the sharp instrument loses to the blunt one
+
+The obvious criticism of the cap is that it is **blind**: it truncates every
+separation at N iterations, including ones that are still improving. The
+principled version should be to truncate only the separations that are *not*
+improving - which is exactly what `iter_no_imprv_limit` is for, and which sits
+at `200`, the fourth Table 1 value in this file. Same restart rate on stuck
+separations, no truncation of productive ones. It should dominate.
+
+**It does not.** Three repetitions, nine seeds, ten seconds, `ratio = 0.95`
+(`evidence/patience/`):
+
+| cap | patience | median of medians | best ever | under-bar per rep |
+| ---: | ---: | ---: | ---: | --- |
+| **50** | **200** (frozen) | **167.687** | **163.370** | **6, 6, 6** |
+| 50 | 3 | 168.812 | 164.687 | 4, 4, 4 |
+| none | 2 | 169.837 | 166.965 | 2, 2 |
+| none | 3 | 170.143 | 165.571 | 2, 2 |
+| 200 | 3 | 170.162 | 165.599 | 2, 1 |
+
+Patience alone, with no cap, barely beats the closed member: 2/9, the same as
+doing nothing. Patience *combined* with the cap makes the cap **worse**, 4/9
+against 6/9. The blunt bound with Sparrow's own frozen patience is the best
+configuration measured, on every column and every repetition.
+
+**The explanation is the useful part, and it inverts the intuition.** Cutting
+off a *productive* separation is exactly what helps. A separation that keeps
+finding small Φ improvements is not making progress toward a publication - it is
+grinding inside one basin, and each micro-improvement resets the patience
+counter and buys it more time to keep grinding. The blunt cap works **because**
+it ignores them: it ends the separation on wall-clock terms rather than on the
+separator's own opinion of whether it is doing well, and hands the budget to a
+pool restore and a disruption that sample a different basin.
+
+So `iter_no_imprv_limit = 200` is not a twenty-minute constant that failed to
+scale, the way `EXPLORE_TIME_RATIO` and the missing wall bound were. Inside a
+separation it is doing its job. What was missing was a bound *above* it, on the
+separation as a whole, and that bound has to be indifferent to Φ.
+
+Recorded because the hypothesis was mine, it was the principled one, and it is
+wrong.

@@ -251,6 +251,27 @@ pub fn compress_bite(
 /// the live pose path - M17 pins `f64::sin_cos` only for poses, for identity
 /// with the publication transform - and a vendored transcendental is the
 /// stronger determinism here.
+/// **The pool-restart spread, overridable for measurement.** `0` means the
+/// frozen `0.25`, which is Sparrow `config.rs`'s
+/// `solution_pool_distribution_stddev` and the fourth Table 1 value in this
+/// campaign. If restarts are what the wall iteration cap buys - and the census
+/// says they are - then how *far* a restart reaches into the pool is the next
+/// thing that matters, and it is another twenty-minute constant.
+static POOL_SPREAD: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_pool_spread(spread: f64) {
+    POOL_SPREAD.store(spread.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn pool_spread() -> f64 {
+    let value = f64::from_bits(POOL_SPREAD.load(std::sync::atomic::Ordering::Relaxed));
+    if value > 0.0 && value.is_finite() {
+        value
+    } else {
+        0.25
+    }
+}
+
 pub fn normal_biased_rank(len: usize, seed: u64, bite: u64, attempt: u64) -> usize {
     if len <= 1 {
         return 0;
@@ -263,7 +284,7 @@ pub fn normal_biased_rank(len: usize, seed: u64, bite: u64, attempt: u64) -> usi
     let second = unit_of(counter_hash(&[root, 1]));
     let deviate = libm::sqrt(-2.0 * libm::log(first))
         * libm::cos(2.0 * std::f64::consts::PI * second);
-    let scaled = libm::fabs(deviate * 0.25) * len as f64;
+    let scaled = libm::fabs(deviate * pool_spread()) * len as f64;
     if !scaled.is_finite() {
         return 0;
     }

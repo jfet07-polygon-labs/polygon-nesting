@@ -2541,6 +2541,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 options.integer("itercap", 0)? as u64,
             );
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
+            homotopy::set_pool_spread(options.number("poolspread", 0.0)?);
             #[cfg(feature = "t-row-repair")]
             {
                 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -2558,8 +2559,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 });
             }
+            polygon_nesting_core::search::overlap_ics::set_explore_patience(
+                options.integer("patience", 0)? as u64,
+            );
             let strikes = match arm.as_str() {
-                "control" => StrikeConfig::CONTROL,
+                "control" => StrikeConfig::control_live(),
                 "treatment" => StrikeConfig::TREATMENT,
                 other => {
                     return Err(format!("--arm must be control|treatment, not `{other}`").into())
@@ -3478,6 +3482,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     document["wall"] = Value::Object(wall);
     document["exploreShrinkStep"] = json!(homotopy::explore_shrink_step());
+    document["poolSpread"] = json!(homotopy::pool_spread());
+    document["explorePatience"] =
+        json!(polygon_nesting_core::search::overlap_ics::explore_patience());
     document["wallIterationCap"] =
         json!(polygon_nesting_core::search::overlap_ics::wall_iteration_cap());
     document["executableSha256"] = json!(executable_sha256());

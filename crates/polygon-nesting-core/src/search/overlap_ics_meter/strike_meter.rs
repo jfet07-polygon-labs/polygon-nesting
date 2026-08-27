@@ -107,6 +107,16 @@ impl StrikeConfig {
         compress: SeparateLimits::COMPRESS,
     };
 
+    /// `CONTROL` with the explore patience override applied. Identical to
+    /// `CONTROL` unless a caller named a patience, which only a measurement
+    /// build's driver does.
+    pub fn control_live() -> Self {
+        Self::IterationStrikes {
+            explore: SeparateLimits::explore_live(),
+            compress: SeparateLimits::COMPRESS,
+        }
+    }
+
     /// The treatment arm exactly as the spec's KNOB froze it.
     pub const TREATMENT: Self = Self::WorkStrikes {
         explore_quantum: EXPLORE_WORK_QUANTUM,

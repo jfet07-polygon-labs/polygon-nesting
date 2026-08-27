@@ -2619,11 +2619,45 @@ pub struct SeparateLimits {
     pub strikes: u32,
 }
 
+/// **The explore patience, overridable for measurement.** `0` means "use the
+/// frozen 200", which is Sparrow's `iter_no_imprv_limit` and a Table 1 value the
+/// paper's §11.3 says was tuned for twenty-minute runs and never re-tuned.
+///
+/// This is the *principled* form of the wall iteration cap. The cap is blind:
+/// it truncates every separation at N iterations, productive ones included. The
+/// patience truncates only the ones that are **not improving**, which is the
+/// same restart rate on stuck separations and no truncation of the others.
+/// Whether the sharper instrument beats the blunt one is a measurement.
+static EXPLORE_PATIENCE: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_explore_patience(iterations: u64) {
+    EXPLORE_PATIENCE.store(iterations, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn explore_patience() -> u64 {
+    let value = EXPLORE_PATIENCE.load(std::sync::atomic::Ordering::Relaxed);
+    if value == 0 {
+        200
+    } else {
+        value
+    }
+}
+
 impl SeparateLimits {
     pub const EXPLORE: Self = Self {
         iterations_without_improvement: 200,
         strikes: 3,
     };
+
+    /// `EXPLORE` with the measurement override applied. Identical to `EXPLORE`
+    /// unless a caller named a patience.
+    pub fn explore_live() -> Self {
+        Self {
+            iterations_without_improvement: explore_patience(),
+            strikes: 3,
+        }
+    }
     pub const COMPRESS: Self = Self {
         iterations_without_improvement: 100,
         strikes: 5,
