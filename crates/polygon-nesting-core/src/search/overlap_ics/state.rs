@@ -348,9 +348,69 @@ pub struct Geometry {
     pub piece_rings: Vec<(usize, usize)>,
     pub piece_bounds: Vec<[f64; 4]>,
     pub centroids: Vec<[f64; 2]>,
+    /// **The cached SAT axes, one per cell vertex, indexed exactly like
+    /// `cell_points`.** A cell's outward edge normals depend only on that
+    /// cell's transformed points, and the evaluation-cost work measured a
+    /// candidate using the same cell about nine times - once per surviving
+    /// cell pair - so they were being recomputed nine times, each with a
+    /// `libm::hypot` and two divisions.
+    ///
+    /// `[0.0, 0.0]` marks a degenerate edge, which is what the streamed SAT
+    /// skips. The values are produced by the identical expressions the
+    /// uncached path uses, so a cached run is bit-for-bit the uncached one.
+    pub cell_axes: Vec<[f64; 2]>,
+    /// The cell's own projection interval on each of its own axes, `[low,
+    /// high]`, same indexing. In SAT, half of every axis test projects the
+    /// cell the axis came from, and that half is pose-invariant for a fixed
+    /// pose.
+    pub cell_own: Vec<[f64; 2]>,
+    /// Whether `cell_axes` and `cell_own` are current for that cell.
+    pub cell_axes_valid: Vec<bool>,
 }
 
 impl Geometry {
+    /// Fills `cell_axes` and `cell_own` for one cell if they are stale.
+    ///
+    /// The expressions are the streamed SAT's own, character for character, so
+    /// that a cached axis and a freshly computed one are the same `f64`.
+    pub fn ensure_cell_axes(&mut self, cell: usize) {
+        if self.cell_axes_valid[cell] {
+            return;
+        }
+        let range = self.cells[cell];
+        let (start, len) = (range.start, range.len);
+        for index in 0..len {
+            let first = self.cell_points[start + index];
+            let second = self.cell_points[start + (index + 1) % len];
+            let (dx, dy) = (second[0] - first[0], second[1] - first[1]);
+            let length = libm::hypot(dx, dy);
+            if !(length > 0.0) {
+                self.cell_axes[start + index] = [0.0, 0.0];
+                self.cell_own[start + index] = [0.0, 0.0];
+                continue;
+            }
+            let axis = [dy / length, -dx / length];
+            let mut low = f64::INFINITY;
+            let mut high = f64::NEG_INFINITY;
+            for point in &self.cell_points[start..start + len] {
+                let value = point[0] * axis[0] + point[1] * axis[1];
+                low = low.min(value);
+                high = high.max(value);
+            }
+            self.cell_axes[start + index] = axis;
+            self.cell_own[start + index] = [low, high];
+        }
+        self.cell_axes_valid[cell] = true;
+    }
+
+    pub fn cell_axes_slice(&self, cell: usize) -> (&[[f64; 2]], &[[f64; 2]]) {
+        let range = self.cells[cell];
+        (
+            &self.cell_axes[range.start..range.start + range.len],
+            &self.cell_own[range.start..range.start + range.len],
+        )
+    }
+
     pub fn cell_slice(&self, cell: usize) -> &[[f64; 2]] {
         let range = self.cells[cell];
         &self.cell_points[range.start..range.start + range.len]
@@ -417,6 +477,7 @@ pub fn transform_piece(sources: &[PieceSource], geometry: &mut Geometry, poses: 
     let (sin, cos) = pose_sin_cos(pose.theta_deg);
     let (cell_start, cell_end) = geometry.piece_cells[piece];
     for cell in cell_start..cell_end {
+        geometry.cell_axes_valid[cell] = false;
         let range = geometry.cells[cell];
         let local = source.decomposition.cells[cell - cell_start];
         for offset in 0..range.len {
@@ -489,6 +550,9 @@ pub fn build_geometry(sources: &[PieceSource], poses: &[Pose]) -> Geometry {
     }
     let cell_count = cells.len();
     let mut geometry = Geometry {
+        cell_axes: vec![[0.0; 2]; cell_total],
+        cell_own: vec![[0.0; 2]; cell_total],
+        cell_axes_valid: vec![false; cell_count],
         cell_points: vec![[0.0; 2]; cell_total],
         cells,
         cell_bounds: vec![[0.0; 4]; cell_count],

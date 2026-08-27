@@ -1,0 +1,89 @@
+{
+ "buildFeatures": [
+  "overlap-ics"
+ ],
+ "executableSha256": "fd3443bc5d813ce6025ffae53a0dfceef9f1a0426514972837f90b89d5c812af",
+ "outcome": {
+  "biteTotals": {
+   "attempts": 0,
+   "biteRecords": 24,
+   "disruptions": 0,
+   "masterIterations": 255
+  },
+  "compressBites": 2,
+  "depthMm": 178.8299981014161,
+  "exploreBites": 22,
+  "invalidPublications": 0,
+  "publicationCount": 24,
+  "work": {
+   "acceptedMoves": 10035,
+   "broadPhaseRejects": 204092328,
+   "cellPairBoxTests": 31725420,
+   "containerCommits": 88,
+   "containerSamples": 723800,
+   "containerWinners": 88,
+   "convexCellGapQueries": 22632335,
+   "disruptionMoves": 0,
+   "disruptions": 0,
+   "exactCheckpoints": 27,
+   "focusedSamples": 361900,
+   "focusedWinners": 750,
+   "jumpProposals": 0,
+   "pairRowProbes": 218670030,
+   "pieceProposals": 124440,
+   "poseTransforms": 3646117,
+   "relocates": 14476,
+   "repairRows": 11,
+   "sampleEvaluations": 3628408,
+   "stayPutWinners": 13638,
+   "weightUpdates": 255
+  }
+ },
+ "schedule": {
+  "arm": "control",
+  "armLabel": "control-iteration-strikes",
+  "calibratedAttemptsPerBite": null,
+  "calibratedPlan": null,
+  "compressIterationsWithoutImprovement": 100,
+  "compressStrikes": 5,
+  "exploreIterationsWithoutImprovement": 200,
+  "exploreStrikes": 3,
+  "exploreTimeRatio": 0.8,
+  "fixedWork": {
+   "attemptsPerBite": 2,
+   "compressBites": 2,
+   "exploreBites": 22,
+   "iterationsPerSeparation": 500
+  },
+  "mode": "fixed",
+  "recordFingerprints": false,
+  "strikePolicy": {
+   "compress": {
+    "iterationsWithoutImprovement": 100,
+    "patience": "iterations",
+    "strikes": 5,
+    "workQuantumSampleEvaluations": null
+   },
+   "explore": {
+    "iterationsWithoutImprovement": 200,
+    "patience": "iterations",
+    "strikes": 3,
+    "workQuantumSampleEvaluations": null
+   },
+   "frozenLiteralsIntact": true,
+   "improvingResetRatio": 0.98
+  },
+  "wallBudgetSeconds": null,
+  "workers": 8
+ },
+ "seed": 3,
+ "wall": {
+  "constructorSeconds": 0.620494863,
+  "loopEntrySeconds": 0.620612343,
+  "loopExploreSeconds": null,
+  "loopSearchSeconds": null,
+  "searchSeconds": 0.927523984,
+  "totalSeconds": 1.551815449
+ },
+ "wallIterationCap": 0
+}

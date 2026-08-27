@@ -1,0 +1,89 @@
+{
+ "buildFeatures": [
+  "overlap-ics"
+ ],
+ "executableSha256": "fd3443bc5d813ce6025ffae53a0dfceef9f1a0426514972837f90b89d5c812af",
+ "outcome": {
+  "biteTotals": {
+   "attempts": 1,
+   "biteRecords": 24,
+   "disruptions": 1,
+   "masterIterations": 715
+  },
+  "compressBites": 2,
+  "depthMm": 178.8499784477406,
+  "exploreBites": 22,
+  "invalidPublications": 0,
+  "publicationCount": 24,
+  "work": {
+   "acceptedMoves": 12500,
+   "broadPhaseRejects": 532056320,
+   "cellPairBoxTests": 91801601,
+   "containerCommits": 116,
+   "containerSamples": 1919300,
+   "containerWinners": 116,
+   "convexCellGapQueries": 67119340,
+   "disruptionMoves": 4,
+   "disruptions": 1,
+   "exactCheckpoints": 35,
+   "focusedSamples": 959650,
+   "focusedWinners": 866,
+   "jumpProposals": 0,
+   "pairRowProbes": 571123050,
+   "pieceProposals": 348920,
+   "poseTransforms": 9520338,
+   "relocates": 38386,
+   "repairRows": 20,
+   "sampleEvaluations": 9478654,
+   "stayPutWinners": 37404,
+   "weightUpdates": 715
+  }
+ },
+ "schedule": {
+  "arm": "control",
+  "armLabel": "control-iteration-strikes",
+  "calibratedAttemptsPerBite": null,
+  "calibratedPlan": null,
+  "compressIterationsWithoutImprovement": 100,
+  "compressStrikes": 5,
+  "exploreIterationsWithoutImprovement": 200,
+  "exploreStrikes": 3,
+  "exploreTimeRatio": 0.8,
+  "fixedWork": {
+   "attemptsPerBite": 2,
+   "compressBites": 2,
+   "exploreBites": 22,
+   "iterationsPerSeparation": 500
+  },
+  "mode": "fixed",
+  "recordFingerprints": false,
+  "strikePolicy": {
+   "compress": {
+    "iterationsWithoutImprovement": 100,
+    "patience": "iterations",
+    "strikes": 5,
+    "workQuantumSampleEvaluations": null
+   },
+   "explore": {
+    "iterationsWithoutImprovement": 200,
+    "patience": "iterations",
+    "strikes": 3,
+    "workQuantumSampleEvaluations": null
+   },
+   "frozenLiteralsIntact": true,
+   "improvingResetRatio": 0.98
+  },
+  "wallBudgetSeconds": null,
+  "workers": 8
+ },
+ "seed": 0,
+ "wall": {
+  "constructorSeconds": 0.628065577,
+  "loopEntrySeconds": 0.628181159,
+  "loopExploreSeconds": null,
+  "loopSearchSeconds": null,
+  "searchSeconds": 2.402143075,
+  "totalSeconds": 3.033325322
+ },
+ "wallIterationCap": 0
+}

@@ -35,6 +35,12 @@ use std::collections::BTreeMap;
 pub struct WorkVector {
     pub pair_row_probes: u64,
     pub convex_cell_gap_queries: u64,
+    /// Cell-pair box tests inside `measure_pair`: `|A cells| x |B cells|` for
+    /// every pair the piece-level broad phase let through. The evaluation-cost
+    /// work says the surviving pairs are 60-70 % of a candidate evaluation, and
+    /// this is the number that says whether that is the cell scan or the SAT
+    /// inside it.
+    pub cell_pair_box_tests: u64,
     pub pose_transforms: u64,
     /// Vestigial: candidates of the retired topology jump. Always zero under
     /// `CutCloseRelocate`.
@@ -105,6 +111,9 @@ impl WorkVector {
             convex_cell_gap_queries: self
                 .convex_cell_gap_queries
                 .saturating_sub(earlier.convex_cell_gap_queries),
+            cell_pair_box_tests: self
+                .cell_pair_box_tests
+                .saturating_sub(earlier.cell_pair_box_tests),
             pose_transforms: self.pose_transforms.saturating_sub(earlier.pose_transforms),
             jump_proposals: self.jump_proposals.saturating_sub(earlier.jump_proposals),
             exact_checkpoints: self
@@ -145,6 +154,7 @@ impl WorkVector {
     pub fn saturating_add(&mut self, other: &Self) {
         self.pair_row_probes += other.pair_row_probes;
         self.convex_cell_gap_queries += other.convex_cell_gap_queries;
+        self.cell_pair_box_tests += other.cell_pair_box_tests;
         self.pose_transforms += other.pose_transforms;
         self.jump_proposals += other.jump_proposals;
         self.exact_checkpoints += other.exact_checkpoints;
@@ -190,6 +200,7 @@ impl WorkVector {
         let mut map = BTreeMap::new();
         map.insert("pairRowProbes", self.pair_row_probes);
         map.insert("convexCellGapQueries", self.convex_cell_gap_queries);
+        map.insert("cellPairBoxTests", self.cell_pair_box_tests);
         map.insert("poseTransforms", self.pose_transforms);
         map.insert("jumpProposals", self.jump_proposals);
         map.insert("exactCheckpoints", self.exact_checkpoints);

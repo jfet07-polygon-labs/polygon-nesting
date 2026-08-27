@@ -109,6 +109,69 @@ fn support(points: &[[f64; 2]], axis: [f64; 2]) -> [f64; 2] {
 /// overlapping branch it is the minimum-translation axis; on the separated
 /// branch it is the direction from the witness on `b` to the witness on `a`,
 /// which is the same vector for a nondegenerate closest feature.
+/// [`convex_cell_gap`] with both cells' axes and own-projections supplied.
+///
+/// Identical arithmetic: the caller's cached axis is the same `f64` pair this
+/// function would have computed, and the cached own-interval is the same
+/// `project` of the same points on it. A zero axis marks the degenerate edge
+/// the uncached path skips with `continue`.
+pub fn convex_cell_gap_cached(
+    a: &[[f64; 2]],
+    a_axes: &[[f64; 2]],
+    a_own: &[[f64; 2]],
+    b: &[[f64; 2]],
+    b_axes: &[[f64; 2]],
+    b_own: &[[f64; 2]],
+) -> Contact {
+    debug_assert!(a.len() >= 3 && b.len() >= 3);
+    let mut best_depth = f64::INFINITY;
+    let mut best_axis = [0.0f64, 0.0];
+    let mut separated = false;
+    let mut touch_axis = [0.0f64, 0.0];
+    'axes: for source in 0..2 {
+        let (axes, own, count) = if source == 0 {
+            (a_axes, a_own, a.len())
+        } else {
+            (b_axes, b_own, b.len())
+        };
+        for index in 0..count {
+            let axis = axes[index];
+            if axis == [0.0, 0.0] {
+                continue;
+            }
+            let interval = own[index];
+            let (a_low, a_high, b_low, b_high) = if source == 0 {
+                let (b_low, b_high) = project(b, axis);
+                (interval[0], interval[1], b_low, b_high)
+            } else {
+                let (a_low, a_high) = project(a, axis);
+                (a_low, a_high, interval[0], interval[1])
+            };
+            let move_positive = b_high - a_low;
+            let move_negative = a_high - b_low;
+            if move_positive <= 0.0 || move_negative <= 0.0 {
+                separated = true;
+                touch_axis = if move_positive <= 0.0 {
+                    axis
+                } else {
+                    [-axis[0], -axis[1]]
+                };
+                break 'axes;
+            }
+            let (depth, signed_axis) = if move_negative <= move_positive {
+                (move_negative, [-axis[0], -axis[1]])
+            } else {
+                (move_positive, axis)
+            };
+            if depth < best_depth {
+                best_depth = depth;
+                best_axis = signed_axis;
+            }
+        }
+    }
+    finish_gap(a, b, separated, best_depth, best_axis, touch_axis)
+}
+
 pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
     debug_assert!(a.len() >= 3 && b.len() >= 3);
     // Streamed SAT. No axes `Vec`: the two edge loops run in place, and the
@@ -160,6 +223,18 @@ pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
             }
         }
     }
+    finish_gap(a, b, separated, best_depth, best_axis, touch_axis)
+}
+
+/// The shared tail of both spellings of the streamed SAT.
+fn finish_gap(
+    a: &[[f64; 2]],
+    b: &[[f64; 2]],
+    separated: bool,
+    best_depth: f64,
+    best_axis: [f64; 2],
+    touch_axis: [f64; 2],
+) -> Contact {
     if !separated && best_depth.is_finite() {
         let witness_a = support(a, [-best_axis[0], -best_axis[1]]);
         let witness_b = support(b, best_axis);

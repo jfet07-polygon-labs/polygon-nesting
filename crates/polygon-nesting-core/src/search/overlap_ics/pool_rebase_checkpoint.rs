@@ -464,7 +464,12 @@ fn decode_geometry(input: &mut Decoder<'_>) -> Result<Geometry, String> {
     let centroids = (0..input.len()?)
         .map(|_| decode_point(input))
         .collect::<Result<Vec<[f64; 2]>, _>>()?;
+    let cell_total = cell_points.len();
+    let cell_count = cells.len();
     Ok(Geometry {
+        cell_axes: vec![[0.0; 2]; cell_total],
+        cell_own: vec![[0.0; 2]; cell_total],
+        cell_axes_valid: vec![false; cell_count],
         cell_points,
         cells,
         cell_bounds,

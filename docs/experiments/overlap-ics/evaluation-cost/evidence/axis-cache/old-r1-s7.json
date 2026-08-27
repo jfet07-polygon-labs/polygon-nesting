@@ -1,0 +1,83 @@
+{
+ "buildFeatures": [
+  "overlap-ics"
+ ],
+ "executableSha256": "e2d53f7c4dfbb90b63e0b22ccef2ccf47ae0e0239c24c34ec028a7e3d8696c72",
+ "outcome": {
+  "biteTotals": {
+   "attempts": 20,
+   "biteRecords": 82,
+   "disruptions": 16,
+   "masterIterations": 1291
+  },
+  "compressBites": 11,
+  "depthMm": 170.2524625228129,
+  "exploreBites": 70,
+  "invalidPublications": 0,
+  "publicationCount": 78,
+  "work": {
+   "acceptedMoves": 45837,
+   "broadPhaseRejects": 1148364896,
+   "containerCommits": 461,
+   "containerSamples": 4048900,
+   "containerWinners": 461,
+   "convexCellGapQueries": 178216755,
+   "disruptionMoves": 41,
+   "disruptions": 16,
+   "exactCheckpoints": 128,
+   "focusedSamples": 2024450,
+   "focusedWinners": 3208,
+   "jumpProposals": 0,
+   "pairRowProbes": 1232900700,
+   "pieceProposals": 630008,
+   "poseTransforms": 20553693,
+   "relocates": 80978,
+   "repairRows": 92,
+   "sampleEvaluations": 20461084,
+   "stayPutWinners": 77309,
+   "weightUpdates": 1291
+  }
+ },
+ "schedule": {
+  "arm": "control",
+  "armLabel": "control-iteration-strikes",
+  "calibratedAttemptsPerBite": null,
+  "calibratedPlan": null,
+  "compressIterationsWithoutImprovement": 100,
+  "compressStrikes": 5,
+  "exploreIterationsWithoutImprovement": 200,
+  "exploreStrikes": 3,
+  "exploreTimeRatio": 0.95,
+  "fixedWork": null,
+  "mode": "wall",
+  "recordFingerprints": false,
+  "strikePolicy": {
+   "compress": {
+    "iterationsWithoutImprovement": 100,
+    "patience": "iterations",
+    "strikes": 5,
+    "workQuantumSampleEvaluations": null
+   },
+   "explore": {
+    "iterationsWithoutImprovement": 200,
+    "patience": "iterations",
+    "strikes": 3,
+    "workQuantumSampleEvaluations": null
+   },
+   "frozenLiteralsIntact": true,
+   "improvingResetRatio": 0.98
+  },
+  "wallBudgetSeconds": 10.0,
+  "workers": 8
+ },
+ "seed": 7,
+ "wall": {
+  "constructorSeconds": 0.622424949,
+  "loopEntrySeconds": 0.62254279,
+  "loopExploreSeconds": 8.909570446,
+  "loopSearchSeconds": 9.378331767,
+  "searchSeconds": 9.378332327,
+  "totalSeconds": 10.011320266
+ },
+ "wallIterationCap": 50
+}

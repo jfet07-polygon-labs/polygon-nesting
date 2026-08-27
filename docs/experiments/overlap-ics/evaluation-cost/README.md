@@ -158,3 +158,68 @@ correction stands where the claim did.
 The near set stays: it is exact, it costs nothing, and it removes a real `O(n)`
 term. But the lever is confirmed to be `convex_cell_gap` on the surviving pairs,
 and that is where the next work goes.
+
+---
+
+# The axis cache: 1.27x, bit-identical, and it moves the depth
+
+With the near set in and the regime understood, the counters name the target
+precisely. Per candidate evaluation, on a real ten-second search:
+
+| | per evaluation |
+| --- | ---: |
+| piece-level box tests | 60.3 |
+| surviving pairs | 4.15 |
+| **cell-pair box tests** | **20.4** |
+| **`convex_cell_gap` calls** | **9.2** |
+
+The cell scan is small - 4.9 cell-pair tests per surviving pair, of which 44.8 %
+become a SAT call. So it is not the scan. At roughly 190 ns a call, the 9.2 SAT
+calls are **~1.75 us of a 2.7 us evaluation, about 65 %**.
+
+Inside, the streamed SAT is `O((|A|+|B|)^2)`: for **every** edge of both cells it
+derives the outward normal - a `libm::hypot` and two divisions - and then
+projects **both** cells onto it. And a cell's normals depend only on that cell's
+transformed points, while a candidate uses the same cell about nine times, once
+per surviving cell pair. They were being derived nine times over.
+
+## What was added
+
+`Geometry` gains `cell_axes`, `cell_own` and `cell_axes_valid`, indexed exactly
+like `cell_points`: the unit edge normals of each cell and that cell's own
+projection interval on each of them. `transform_piece` invalidates the cells it
+moves; `measure_pair` fills what it needs and calls
+`convex_cell_gap_cached`, which is the same streamed SAT with the axis and the
+own-interval supplied instead of recomputed. Half of every axis test - the
+projection of the cell the axis came from - becomes two array reads.
+
+**It is exact.** The cached axis is produced by the identical expression, from
+the identical points, and the cached interval is the identical `project` of them
+on it, so a cached run is the uncached one bit for bit. Verified against the
+frozen pre-change binary on three fixed-work cells as whole documents:
+
+| seed | frozen | cached | digest |
+| ---: | ---: | ---: | --- |
+| 0 | 178.849978 | 178.849978 | **identical** |
+| 3 | 178.829998 | 178.829998 | **identical** |
+| 7 | 179.036238 | 179.036238 | **identical** |
+
+## And it is worth having
+
+Three repetitions, nine seeds, twenty-seven cells per arm, bare ten-second
+requests at `cap = 50, ratio = 0.95` (`evidence/axis-cache/`):
+
+| | master iterations / s | median of medians | best ever | under-bar per rep |
+| --- | ---: | ---: | ---: | --- |
+| frozen | 137.7 | 167.516 | 163.526 | 6, 6, 6 |
+| **near set + axis cache** | **174.8** | **166.766** | **162.868** | **7, 7, 7** |
+
+**1.270x of throughput**, and unlike the near set alone it moves the answer:
+**-0.75 mm of median, -0.66 mm of best, and six of nine becomes seven of nine on
+every repetition.**
+
+That is the loop this campaign proved buys depth, closed: the same seconds now
+hold 27 % more iterations, and the iterations were the currency all along.
+
+Four pinned gates reproduce, 839 `overlap-ics` tests and 1,104 workspace tests
+pass.

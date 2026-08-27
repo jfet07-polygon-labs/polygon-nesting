@@ -21,7 +21,7 @@
 //! module's tests is the enforcement.
 
 use super::broad_phase::{boundary_residuals, pair_is_near};
-use super::contact::{box_gap, convex_cell_gap, Contact};
+use super::contact::{box_gap, convex_cell_gap, convex_cell_gap_cached, Contact};
 use super::diagnostics::WorkVector;
 use super::state::{
     pair_index, Contract, EdgeRow, Geometry, IcsState, PairRow, EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT,
@@ -50,7 +50,7 @@ const EMPTY_CONTACT: Contact = Contact {
 };
 
 pub fn measure_pair(
-    geometry: &Geometry,
+    geometry: &mut Geometry,
     first: usize,
     second: usize,
     clearance_mm: f64,
@@ -68,6 +68,15 @@ pub fn measure_pair(
     }
     let (first_start, first_end) = geometry.piece_cells[first];
     let (second_start, second_end) = geometry.piece_cells[second];
+    // The axes of every cell that can matter, computed once for this pose and
+    // then reused by every cell pair and every neighbour this candidate is
+    // measured against.
+    for cell in first_start..first_end {
+        geometry.ensure_cell_axes(cell);
+    }
+    for cell in second_start..second_end {
+        geometry.ensure_cell_axes(cell);
+    }
     let mut worst = 0.0f64;
     let mut worst_contact = empty;
     for a in first_start..first_end {
@@ -75,11 +84,21 @@ pub fn measure_pair(
             // The cell-level box proof, for the nonconvex pieces whose cells
             // are triangles: most triangle pairs of two adjacent decagons
             // cannot reach the clearance and never become a query.
+            work.cell_pair_box_tests += 1;
             if box_gap(geometry.cell_bounds[a], geometry.cell_bounds[b]) >= clearance_mm {
                 continue;
             }
             work.convex_cell_gap_queries += 1;
-            let contact = convex_cell_gap(geometry.cell_slice(a), geometry.cell_slice(b));
+            let (a_axes, a_own) = geometry.cell_axes_slice(a);
+            let (b_axes, b_own) = geometry.cell_axes_slice(b);
+            let contact = convex_cell_gap_cached(
+                geometry.cell_slice(a),
+                a_axes,
+                a_own,
+                geometry.cell_slice(b),
+                b_axes,
+                b_own,
+            );
             let violation = clearance_mm - contact.signed_gap_mm;
             if violation > worst {
                 worst = violation;
@@ -206,7 +225,7 @@ pub fn rebuild_all(state: &mut IcsState, contract: &Contract, work: &mut WorkVec
         for second in (first + 1)..count {
             let index = pair_index(count, first, second);
             let (violation, contact) =
-                measure_pair(&state.geometry, first, second, clearance, work);
+                measure_pair(&mut state.geometry, first, second, clearance, work);
             state.pair_rows[index].violation_mm = violation;
             state.pair_rows[index].contact = contact;
             // The index is built in ascending `second` for each `first` and in
@@ -271,7 +290,7 @@ pub fn rebuild_piece_rows(
         } else {
             (piece, other)
         };
-        let (violation, contact) = measure_pair(&state.geometry, first, second, clearance, work);
+        let (violation, contact) = measure_pair(&mut state.geometry, first, second, clearance, work);
         if violation > 0.0 {
             let index = pair_index(count, first, second);
             state.pair_rows[index].violation_mm = violation;
