@@ -149,3 +149,75 @@ with all `4n = 244` of its rows unspent.
 This directory records that and stops. Whether "one or two rows short with the
 budget untouched" makes the 4 um per-row guard a declared competence or an
 inconsistency is the charge put to both reviewers, and it is theirs to answer.
+
+## Both reviewers: paradigm, not a bug — and two instrument defects in the build
+
+The no-failure-without-autopsy charge went to both. They agree on the verdict
+and both refute the "unused budget" framing.
+
+**The 4 um guard is a validity domain, not a step size.** `EPSILON_GRID_MM` is
+`2 * ceil(sqrt(2) * 1 um)`: the most `GridSet::of` can move two rings toward
+each other. A row that is 12 um infeasible is not a proxy-versus-exact
+disagreement at all, and `repair_one_row` classifies it as outside competence.
+The per-piece 16 um cap does a different job - it lets one piece absorb about
+two independent in-band corrections as rows interact - and does not license
+sixteen micrometres of packing in a single row. Applying `min(shortfall, 4 um)`
+and re-scanning would turn the guard into a step size and the micro-corrector
+into a small PGS, which the module's own tests forbid: a 3 um deficit publishes,
+a half-millimetre deficit is discarded *even after the attempt band is widened*,
+so that the repair is what refuses.
+
+**Three corrections to this directory's earlier prose, all fixed above:**
+
+1. `blockedRowBudget = 0` means "never exhausted", **not** "all 244 rows
+   unused". The eleven-row witness had already spent in-band rows and then met
+   an out-of-band pair. Leftover budget is the classifier firing, not a stuck
+   loop.
+2. `blockedDisplacementCap = 0` is **not** unused headroom - it is the guard
+   firing first. A 12 um pair shortfall would demand `correction = 16 um`, and
+   the T-row has already spent 6-8 um on the pieces that created it; the entire
+   16-32 um bucket (882 of seed 7's 4,284) is already over the cap on its own.
+3. Seed 8's `published: 1` in the first table was **not** a bite-22 conversion.
+   `exploreBites` stayed at 21 and the depth at 179.007: it was a compress
+   publication. Clause 3 is "publishes bite 22".
+
+**And two instrument defects in the implementation**, both Sol's, both real,
+both repaired here before any Gate 0 is run:
+
+- **The T-row was quantization-lossy.** Tightening the kernel box's far-`y` was
+  algebraically right and instrumentally wrong: `raw_source_depth_mm` reads
+  unquantized `f64` rings while both the point and the box round to the nearest
+  micrometre, so a positive continuous overhang can vanish on the grid. Seed 8
+  showed it - 1,527 eligible states, only 1,510 with a first-scan row - which is
+  the condition the specification's clause 2 calls a wiring `AUTOFAIL`. The
+  strip top is now **its own continuous row**, measured where the publication
+  gate is measured (`piece_bounds.max_y + offset_y` against
+  `T - depth_top_inset_mm()`), with an explicit `[0, -1]` direction, the same
+  `shortfall + guard` formula every boundary row uses, the same frozen guard,
+  cap and `4n` budget, re-measured after every correction, and the physical
+  sheet box left untouched.
+- **Neither arm memoized the eligible digest**, so one proud layout paid the
+  whole repair as many times as the descent revisited it, which makes clause 2's
+  "invokes T-repair exactly once" unmeasurable and inflates `ComputeIgnore`'s
+  cost clause. An eligible digest is now offered once and repeats are logged and
+  skipped.
+
+**After both fixes, 30 s wall, the result is unchanged and the instrument is
+clean** (`evidence/fix-*.json`):
+
+| seed | depth / bites | eligible | with T-row | wiring | conversions | refused | repeats skipped | blocked on pair |
+| ---: | ---: | ---: | ---: | :---: | ---: | ---: | ---: | ---: |
+| 7 | 179.0821 / 21 | 4109 | 4109 | **OK** | **0** | 4109 | 25 | 4109 |
+| 8 | 179.0821 / 21 | 1849 | 1849 | **OK** | **0** | 1849 | 47 | 1849 |
+| 4 | **165.1705 / 100** | 844 | 844 | **OK** | **17** | 823 | 110 | 813 |
+
+`eligible == eligibleWithTRow` exactly on every seed: the wiring clause is now
+clean, and the continuous row sees every overhang the gate sees. Seeds 7 and 8
+still convert zero. Seed 4 - frozen at 179.0812 with 21 bites under the closed
+member - reaches **165.1705 with 100 bites**, under the 168.484 bar.
+
+What remains is Gate 0 itself, on the frozen residual rather than a wall clock.
+Both reviewers hold the specification as written: if seed 7 or seed 8 does not
+close bite 22 there, the mechanism is closed and the pair cascade is the causal
+result rather than an out-of-competence input. The 37 conversions and seed 4 do
+not re-aim the gate afterwards.

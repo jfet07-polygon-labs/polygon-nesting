@@ -377,3 +377,77 @@ with
 
 Without that replacement the thirty-second battery is unsound as a test of this mechanism. Seeds 7 and 8 are the eighth and ninth of nine; converting both to `168.484 mm` — the movement §0 and §4 themselves name as the claim — leaves the median at the current fifth seed, `162.94241 mm`. Seed 8’s own 60-second cell lands at `167.563 mm`. A 1 mm paired-median demand over T-repair-off therefore fails the honest success of the tail clause. The standing 1 mm is composed versus the frozen member, already `1.232 mm` at this median. Asking it again of this repair over itself-off tests a median promise neither the tail clause nor the ten-second-residual Gate 0 makes.
 
+
+---
+
+# Autopsy — the T-row as built
+
+Same charge, answered independently. Verbatim:
+
+**Paradigm, not a bug. The implementation is the mechanism I signed. The finding explains a miss; it does not void the instrument. Nothing on this mechanism is licensed next.** These wall runs are not Gate 0 and I am not closing Gate 0. The structural result is still enough to answer the four charges.
+
+---
+
+## 1. Paradigm. The 16 µm cap and the 4 µm per-row guard are not the same quantity, and refusing a 12 µm row with 244 rows unspent is the repair’s declared competence, not a defect in it.
+
+The 4 µm band is **derived grid disagreement**, not a walk budget. `EPSILON_GRID_MM` is `2 * ceil(sqrt(2) * 1 µm)`: the most `GridSet::of` can move two rings toward each other. The module header states the competence in one sentence: a source-faithful Φ at zero may disagree with exact geometry **at grid scale and nowhere else**; a repair that returns half a millimetre is a broken proxy wearing a legalizer’s coat, and the checkpoint is discarded. Grok 9, which this engine still runs under, said the same thing as a publication rule: *repair only inside `ε_grid = 4 µm`, freeze θ, cap 16 µm/piece, else discard the checkpoint. 16 µm is quantization.* The unit tests lock both sides: a 3 µm pair deficit publishes (`a_four_micrometre_deficit_is_repaired_inside_the_same_strip`); a 0.5 mm deficit is thrown away even after the attempt band is widened so the repair is what refuses (`a_half_millimetre_deficit_is_discarded_rather_than_legalized`).
+
+Those two numbers do different jobs:
+
+- **Per-row guard.** This residual is a grid-scale disagreement. If a single constraint is 12 µm infeasible, the state is not “nearly legal in the proxy-vs-exact sense.” `repair_one_row` classifies that row as outside competence and returns `None` for the whole repair. That is an admissibility test on the residual, not a step size.
+- **Per-piece cap.** Gauss–Seidel may apply several *in-band* corrections as rows interact. Each accepted correction is `shortfall + guard`, so a max-band row already moves 8 µm. `4 * ε_grid = 16 µm` is room for about two such corrections on one piece, not a licence to spend 16 µm on one packing move.
+
+A 12 µm pair shortfall would itself demand `correction = 16 µm`. After the T-row has already spent ~6–8 µm on the proud pieces (the 11-row checkpoint: 8 µm spent, depth pulled 4.55 µm *below* a target it was 1.6 µm above — that is `shortfall + guard` on a 1.6 µm overhang), the remaining cap on those pieces is ~8 µm. The guard is refusing a row that would also fail the cap on the pieces that created it. `blockedDisplacementCap = 0` on the tail is not unused headroom; it is the guard firing first. Lift the guard and a large slice of the 8–16 µm mass becomes a cap refusal, and the entire 16–32 µm bucket (882 of seed 7’s 4,284) is already `correction = 20–36 µm > 16`.
+
+**Bounded step and re-scan would be a different operator.** The loop already re-scans after every *accepted* in-band row. That is what the `4n` budget is for. Applying `min(shortfall, 4 µm)` to a 12 µm row and continuing would turn the guard into a step size and the micro-corrector into a small PGS. The inflation test exists to forbid that. I will not call “the budget was unspent” a bug: the budget is for iterating in-band rows, not for chopping a row the classifier has already rejected.
+
+Two corrections to the charge.
+
+- **“All 244 rows unspent” is true as “never exhausted” (`blockedRowBudget = 0` on every seed) and overstated as “every attempt starts at row 0.”** The 11-row checkpoint you cite is a repair that *did* spend in-band rows, then hit an out-of-band pair. Leftover budget is the classifier firing, not a stuck loop.
+- **The 812-row `≤4 µm` bucket is not a second mystery.** `blocking_row` re-derives the first failing row and the closed-form criticals and then stops. It does not reproduce `sheet_slack`, and on pairs it also does not reproduce the displacement cap. Those 812 passed the guard and then had no remaining strip room along the pair normal — the T-row having already spent the Y slack the pair now wants back. Same packing as the 8–16 µm mass, at a distance the guard still accepts. I agree they are not explained *by the guard*. I do not agree they are unattributed in kind.
+
+The 4 µm band was never “we will absorb 4 µm of depth by creating 12 µm of overlap and then legalizing that too.” On the tail, `max_g ≤ 4 µm` already allows pairs that are 4 µm infeasible in the proxy; the T-row then pushes the front by `shortfall + guard ≈ 6–8 µm` (three failing boundaries per eligible state on seed 7: 12,824 / 4,284). That is a structured Y-shock, not a grid disagreement. The guard is doing the job it was derived for.
+
+---
+
+## 2. Yes. `inset[3] = min(inset[3], T − depth_top_inset + expansion)` is the faithful reading of “the locked-strip top injected as a repair row.” I do not want a separate row type for this miss.
+
+I signed, in round 2, *“injected as a repair **boundary**”*, and I wrote why: the current boundary corrector already pushes in `[0, −1]` and the loop already re-scans; it has never been shown a strip-top shortfall because the pre-gate returns `None` first. Tightening the kernel box *is* showing it that shortfall. Sol’s “repair row, rechecking that row and every exact pair and boundary row after each correction” is the same GS loop that already exists.
+
+The coordinate is the grid encoding of `raw_depth ≤ T`, not a heuristic.
+
+- `raw_source_depth_mm = max source y + sheet_edge_clearance_mm`
+- `depth_top_inset_mm = sheet_edge_clearance_mm` on this contract, so `raw_depth ≤ T` iff `max_y ≤ T − depth_top_inset`
+- `boundary_admissible` requires `max_y_grid + radius ≤ high_y` with `radius = expansion_mm`
+- `t_row_far_y = T − depth_top_inset + expansion` is the `high_y` that states the same inequality
+
+On mixed-61 the physical sheet top is 2697.5 mm against a strip top near 176 mm, so `min` is always the strip. A piece 2 µm proud of `T` has top slack ~2,498 µm against millimetres on the other three sides. Binding-side picks the top. **Starvation behind three other sides is a real design question and this autopsy refutes it as the failure mode:** `blockedOnBoundary = 0` on seeds 7 and 8. The T-row is processed and it clears. A separate row type that the binding-side rule cannot starve would have produced the same Y-push, then the same pair cascade. Pair admissibility does not use the box; tightening `inset[3]` does not shrink the pair world. The cascade is the push.
+
+I will not recommend a separate T-row type that pushes only the continuous excess, without `+ guard`. That would be a different correction formula than the existing boundary row, which is always `shortfall + guard`. We signed the existing repair. The 1.6 µm → 4.55 µm-below overshoot is that formula, and it is load-bearing for how large the pair shortfalls become. Changing it is a new operator.
+
+One small infidelity, not the miss: `eligibleWithTRow` can be strictly less than `eligible` (seed 8 at 30 s: 1,510 / 1,527; seed 7: 4,284 / 4,284). The injection is in grid space; the target is continuous. A sub-micron continuous overhang can vanish on `GridSet::of`, so a `t_row_eligible` state can have zero failing far-`y` rows on the first scan. Spec §3 clause 4 would not count those as conversions. They are not why 7 and 8 fail.
+
+Three arms, entry gate relaxed only for `0 < proxy_depth − T ≤ band`, final `published_depth > T` untouched: that is §1 as written.
+
+---
+
+## 3. It explains the verdict the specification already named. It does not change it into an instrument failure.
+
+§3’s pre-declared FAIL is “either seed 7 or seed 8 does not convert,” reading: *the depth lip is not legalizable with the existing frozen-θ repair.* §5 already named the way this was allowed to die: *an overhang that reproducible may be one the repair cannot legally push.* The overhang *can* be pushed — that is `blockedOnBoundary = 0` and the 11-row checkpoint. What cannot be legally pushed, inside this repair’s competence, is the pair cascade the push creates. That is the same miss, diagnosed.
+
+Instrument invalidity, as we wrote it: the control partition does not reproduce; an eligible digest bypasses the repair; too few unique eligible states; wiring (`eligibleWithTRow = 0` on a lip witness). None of those hold here. Seed 7 at 30 s: 4,284 eligible, 4,273 distinct above-target digests, 4,284 with a T-row, 0 conversions. Seed 8: 1,527 eligible, 1,510 with a T-row, `exploreBites` still 21. Eligible states arrive by the thousand. The T-row is wired. The existing repair then refuses a residual outside `ε_grid`. That is a mechanism result.
+
+**“The T-row handed the repair a problem outside the repair’s competence” is the content of the miss, not a reason to void the instrument.** We signed the *existing* repair, froze the 4 µm guard, the 16 µm cap, and the `4n` row cap, and forbade a millimetre legalizer. Asking the existing repair whether a 2–3 µm depth lip is a grid-scale disagreement, and being told “no, it is an 8–16 µm packing cascade,” is the experiment we specified.
+
+Two refutations of the table-as-clause-3 reading.
+
+- These are **wall runs**, not the residual fork. They cannot close Gate 0. I am answering the mechanism, not stamping `GATE0_FAIL`.
+- Seed 8’s census `published: 1` at 30 s is **not** a bite-22 conversion. `exploreBites` remains 21 and `depthMm` remains 179.007. Clause 3 is “publishes bite 22,” not “`attempt` returned `Some` once in compress.” Your prose (“neither converts”) is the right reading; the table’s `converted = 1` is not clause 3.
+
+If Gate 0’s residual fork later prints the same partition — 7 and 8 eligible, T-row clears, pair-blocked, no bite-22 publication — I hold the spec as written. The autopsy does not convert that into an invalid instrument.
+
+---
+
+## 4. Nothing on this mechanism. The 8–16 µm pair cascade is nameable as a new specification’s subject only if someone independently funds a different operator; this miss does not license that spec, and the 37 conversions plus seed 4’s +8.28 mm do not re-aim this gate, because that would reopen the retired ten-second chase on a seed the 30-second control already closes.
+
+The entry sweep is not licensed: eligible states arrive. A bounded-step or 16 µm-per-row repair would be a packing legalizer, which this repair exists to refuse. Seed 4 at 10 s wall is the 30-second control’s work done early; we already refused to reopen 10 s on that arithmetic. The 37 legal conversions prove the wiring and that *some* lips are grid-legalizable. They are not a quality clause, and seeds 2, 3 and 6 finishing worse on a wall clock are a warning, not a pairing.

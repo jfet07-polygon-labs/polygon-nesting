@@ -224,6 +224,18 @@ pub mod t_row_census {
         /// micrometres, summed over failing pairs and bucketed
         /// `[<=16, <=32, <=64, <=128, <=256, >256]`.
         pub give_up_total_shortfall_um: [u64; 6],
+        /// **Spec §3 clause 2, the unique install.** An eligible digest is
+        /// offered to the repair exactly once; a repeat is logged here and
+        /// skipped. Without this the same proud layout pays the whole repair
+        /// thousands of times, which inflates `ComputeIgnore`'s cost clause and
+        /// makes "invokes T-repair exactly once" unmeasurable
+        /// (`sol-review-21` autopsy §3).
+        pub repeat_skipped: u64,
+    }
+
+    #[derive(Default)]
+    pub struct Offered {
+        pub digests: std::collections::HashSet<[u8; 32]>,
     }
 
     thread_local! {
@@ -245,7 +257,19 @@ pub mod t_row_census {
             give_up_failing_pairs: [0; 6],
             give_up_failing_boundaries: [0; 6],
             give_up_total_shortfall_um: [0; 6],
+            repeat_skipped: 0,
         }) };
+    }
+
+    thread_local! {
+        static OFFERED: RefCell<Offered> = RefCell::new(Offered {
+            digests: std::collections::HashSet::new(),
+        });
+    }
+
+    /// True the first time this eligible digest is offered to the repair.
+    pub fn first_offer(digest: [u8; 32]) -> bool {
+        OFFERED.with(|cell| cell.borrow_mut().digests.insert(digest))
     }
 
     pub fn record(update: impl FnOnce(&mut Census)) {
@@ -306,20 +330,40 @@ pub fn t_row_arm() -> TRowArm {
     }
 }
 
-/// The kernel-box far-`y` that expresses "the layout's raw depth is at most
-/// `T`", in the same convention `inset_box` uses.
+/// **The T-row, continuous and identifiable** (`sol-review-21` autopsy §2).
 ///
-/// `boundary_admissible` asks for every canonical grid point to sit at least
-/// `radius` inside the box, and `raw_source_depth_mm` is
-/// `max source y + sheet_edge_clearance_mm`, so `raw_depth <= T` is exactly
-/// `max source y <= T - depth_top_inset_mm()`. Adding the radius back gives the
-/// box coordinate that states it. This is the whole of the "T-row": it is not a
-/// new predicate, a new cap or a new authority - it is `inset[3]`, tightened to
-/// the strip the bite already chose.
+/// The first implementation tightened the kernel box's far-`y`, which was
+/// algebraically right and *instrumentally* wrong: `raw_source_depth_mm` reads
+/// unquantized `f64` rings while both the point and the box are rounded to the
+/// nearest micrometre, so a positive continuous overhang can vanish on the
+/// grid. The evidence showed it directly - seed 8 had 1,527 eligible states and
+/// only 1,510 with a first-scan far-`y` row - and `t_row_census` declares
+/// exactly that gap a wiring failure. A box row also loses which side it was.
+///
+/// So the strip top is its own row, measured where the publication gate is
+/// measured: `piece_bounds.max_y + offset_y` against `T - depth_top_inset_mm()`,
+/// in millimetres, on the same shifted bounds the pair rows already use for
+/// slack. The physical sheet box is left untouched.
+///
+/// Returns the worst offender and its shortfall in mm, or `None` when no piece
+/// is proud of the strip.
 #[cfg(feature = "t-row-repair")]
-fn t_row_far_y(contract: &Contract, target_depth_mm: f64) -> Option<i64> {
-    let far = target_depth_mm - contract.depth_top_inset_mm() + contract.expansion_mm();
-    Some(to_grid_mm(far)? as i64)
+fn worst_t_row(
+    state: &IcsState,
+    offsets: &[[f64; 2]],
+    contract: &Contract,
+    target_depth_mm: f64,
+) -> Option<(usize, f64)> {
+    let strip_top = target_depth_mm - contract.depth_top_inset_mm();
+    let mut worst: Option<(usize, f64)> = None;
+    for piece in 0..offsets.len() {
+        let top = state.geometry.piece_bounds[piece][3] + offsets[piece][1];
+        let shortfall = top - strip_top;
+        if shortfall > 0.0 && worst.is_none_or(|(_, best)| shortfall > best) {
+            worst = Some((piece, shortfall));
+        }
+    }
+    worst
 }
 
 fn inset_box(contract: &Contract) -> Option<[i64; 4]> {
@@ -533,6 +577,16 @@ pub fn attempt(
     if proxy_depth > state.target_depth_mm && !t_row_eligible {
         return None;
     }
+    // **The unique install.** A state that is eligible only through the T-row
+    // relaxation is offered to the repair once. Repeats are logged and skipped,
+    // which is what §3 clause 2 asks for and what makes `ComputeIgnore`'s cost
+    // clause mean anything: without it one proud layout pays the whole repair
+    // as many times as the descent revisits it.
+    #[cfg(feature = "t-row-repair")]
+    if t_row_eligible && !t_row_census::first_offer(super::pose_bits_digest(&state.poses)) {
+        t_row_census::record(|census| census.repeat_skipped += 1);
+        return None;
+    }
     if proxy_depth > incumbent_depth_mm - limits.minimum_improvement_mm {
         return None;
     }
@@ -576,7 +630,7 @@ pub fn attempt(
             publication: None,
         });
     }
-    let mut inset = match inset_box(contract) {
+    let inset = match inset_box(contract) {
         Some(value) => value,
         None => {
             checkpoint.refusal = Some("the inset rectangle is outside the canonical grid".to_owned());
@@ -586,27 +640,6 @@ pub fn attempt(
             });
         }
     };
-    // **The T-row.** Tighten the far-`y` boundary to the locked strip's top,
-    // keeping the sheet top whenever it is the stricter of the two. Everything
-    // downstream - `scan`, `boundary_admissible`, `critical_boundary_radius_micron`
-    // and `repair_one_row`'s binding-side rule - then treats a piece proud of
-    // the strip as an ordinary failing boundary row and pushes it inward, under
-    // the same 4 um guard, the same 16 um per-piece cap and the same `4n` row
-    // budget as every other row. No new predicate, no new cap, no new authority.
-    #[cfg(feature = "t-row-repair")]
-    if t_row_eligible {
-        match t_row_far_y(contract, state.target_depth_mm) {
-            Some(strip_top) => inset[3] = inset[3].min(strip_top),
-            None => {
-                checkpoint.refusal =
-                    Some("the strip top is not an integer micrometre".to_owned());
-                return Some(Attempt {
-                    checkpoint,
-                    publication: None,
-                });
-            }
-        }
-    }
 
     let mut sets = Vec::with_capacity(placements.len());
     for (piece, placement) in pieces.iter().zip(&placements) {
@@ -637,17 +670,6 @@ pub fn attempt(
     // The witness, taken on the first scan: an eligible state must actually
     // produce a failing far-`y` row under the tightened box, or the T-row was
     // never wired to anything.
-    #[cfg(feature = "t-row-repair")]
-    if t_row_eligible {
-        let rows = result.failing_boundaries.len() as u64;
-        t_row_census::record(|census| {
-            census.eligible += 1;
-            census.first_scan_boundary_rows += rows;
-            if rows > 0 {
-                census.eligible_with_t_row += 1;
-            }
-        });
-    }
     let mut displacement = vec![0.0f64; placements.len()];
     // The *vector* each piece has already been moved by inside this repair
     // pass. `displacement` is the scalar cap; this is what the next row's slack
@@ -655,9 +677,36 @@ pub fn attempt(
     // geometry and a second row that reads it would grant slack a previous
     // correction has already spent (Sol review 15 §D, `publish.rs:550`).
     let mut offsets = vec![[0.0f64; 2]; placements.len()];
+    #[cfg(feature = "t-row-repair")]
+    if t_row_eligible {
+        // The witness is now the continuous T-row itself, not a grid boundary
+        // row that a sub-micron overhang can round away. An eligible state with
+        // no T-row would be a wiring failure and the driver must treat it as
+        // one; with the continuous measure the two counts should agree exactly.
+        let has_t_row =
+            worst_t_row(state, &offsets, contract, state.target_depth_mm).is_some();
+        let rows = result.failing_boundaries.len() as u64;
+        t_row_census::record(|census| {
+            census.eligible += 1;
+            census.first_scan_boundary_rows += rows;
+            if has_t_row {
+                census.eligible_with_t_row += 1;
+            }
+        });
+    }
     let mut rows = 0u64;
     let row_budget = limits.repair_rows_per_piece * placements.len();
-    while !result.admissible {
+    // The strip top's own row, re-measured from the shifted continuous bounds
+    // after every correction, exactly like the kernel rows are re-scanned.
+    #[cfg(feature = "t-row-repair")]
+    let mut t_row = if t_row_eligible {
+        worst_t_row(state, &offsets, contract, state.target_depth_mm)
+    } else {
+        None
+    };
+    #[cfg(not(feature = "t-row-repair"))]
+    let t_row: Option<(usize, f64)> = None;
+    while !result.admissible || t_row.is_some() {
         if rows as usize >= row_budget {
             #[cfg(feature = "t-row-repair")]
             if t_row_eligible {
@@ -670,6 +719,44 @@ pub fn attempt(
             ));
             break;
         }
+        // **The T-row goes first when it is failing.** It is the row the
+        // mechanism exists for, and it is corrected by the same formula every
+        // boundary row uses - `shortfall + guard`, frozen theta, one direction
+        // - under the same guard and the same per-piece cap. Sol's autopsy §2
+        // is explicit that changing the `+ guard` overshoot would be a
+        // different operator, so it is not changed.
+        #[cfg(feature = "t-row-repair")]
+        let corrected = if let Some((index, shortfall_mm)) = t_row {
+            let guard = limits.epsilon_grid_mm;
+            if shortfall_mm > guard {
+                None
+            } else {
+                let correction = shortfall_mm + guard;
+                if displacement[index] + correction > limits.max_piece_displacement_mm {
+                    None
+                } else {
+                    poses[index].ty_mm -= correction;
+                    displacement[index] += correction;
+                    offsets[index][1] -= correction;
+                    Some(vec![index])
+                }
+            }
+        } else {
+            repair_one_row(
+                &result,
+                &sets,
+                state,
+                &mut poses,
+                &mut displacement,
+                &mut offsets,
+                contract,
+                &limits,
+                two_r,
+                radius,
+                inset,
+            )
+        };
+        #[cfg(not(feature = "t-row-repair"))]
         let corrected = repair_one_row(
             &result,
             &sets,
@@ -790,6 +877,14 @@ pub fn attempt(
             }
         }
         result = scan(&sets, two_r, radius, inset);
+        #[cfg(feature = "t-row-repair")]
+        {
+            t_row = if t_row_eligible {
+                worst_t_row(state, &offsets, contract, state.target_depth_mm)
+            } else {
+                None
+            };
+        }
     }
 
     checkpoint.repair_rows = rows;

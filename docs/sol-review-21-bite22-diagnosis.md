@@ -173,3 +173,64 @@ Sol returned, on sha256 `06054148b294309498823f3a29e4e801478b1e4c5cba2baff85ba84
 > against my own round-2 text, the census evidence, and the five resolutions
 > above, and I confirm it without reservation or hidden amendment.
 
+
+---
+
+# Autopsy — the T-row as built
+
+Sol was sent the implementation, its evidence, and the explicit
+no-failure-without-autopsy charge: bug or paradigm, is this the mechanism you
+signed, does the finding void the instrument, and what does the evidence
+license. His verdict is paradigm on the guard **and two concrete instrument
+defects in my implementation** that must be repaired before Gate 0 may render
+any verdict. Both are real and both are fixed. Verbatim:
+
+Verdetto sintetico: il cascade da 8–16 µm è un limite deliberato del micro-repair, non un bug. Però l’implementazione T-row ha due difetti strumentali concreti; quindi Gate 0 non può ancora emettere il verdetto finale.
+
+1. **Bug o paradigma: paradigma del member, non bug del guard.**
+
+Il limite di 4 µm è il dominio di validità di ogni singola correzione, derivato dall’errore massimo di canonicalizzazione, non la dimensione massima di un passo numerico ([publish.rs:46](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/publish.rs:46)). `repair_one_row` autorizza solo `shortfall <= 4 µm`, poi applica `shortfall + 4 µm`; una riga corta di 12 µm richiederebbe quindi una correzione di 16 µm, non 12 ([publish.rs:962](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/publish.rs:962)).
+
+Il cap cumulativo di 16 µm consente a un pezzo di assorbire più discrepanze indipendenti, ciascuna grid-scale. Non autorizza una singola riga quattro volte fuori dal dominio. Applicare passi parziali e riscan permetterebbe di aggirare arbitrariamente il guard consumando più ticket: trasformerebbe il micro-corrector in un solver, esattamente ciò che il suo contratto esclude ([publish.rs:25](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/publish.rs:25), [sol-review-14:242](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/sol-review-14-the-overlap-engine-design.md:242)).
+
+Due correzioni ai claim:
+
+- `blockedRowBudget == 0` significa “budget non esaurito”, non “244 righe tutte inutilizzate”: il witness aveva già consumato 11 correzioni.
+- “Ogni refusal è pair” vale per seed 7, non per seed 8: lì ci sono 1.526 refusal ma solo 1.518 classificate pair, più una pubblicazione ([w30-repair-8.json:1095](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/overlap-ics/t-row-repair/evidence/w30-repair-8.json:1095)). L’attribuzione al guard resta però dominante e solida; il bucket ≤4 µm resta correttamente non attribuito.
+
+2. **La formula è algebricamente corretta, ma non implementa fedelmente la T-row su tutto il dominio.**
+
+In aritmetica reale:
+
+```text
+raw_depth <= T
+max_y + edge <= T
+max_y + radius <= T - edge + radius
+```
+
+quindi `T - depth_top_inset + expansion` è la coordinata giusta per il box kernel ([publish.rs:294](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/publish.rs:294)). Il `min` col top fisico è corretto.
+
+Ma `raw_depth` usa gli anelli `f64` non quantizzati ([state.rs:491](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/state.rs:491)), mentre sia il punto sia il box vengono arrotondati al micron più vicino ([offset_policy.rs:14](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/canonical_grid/offset_policy.rs:14)). Un overhang continuo positivo può quindi scomparire sulla griglia. L’evidenza lo dimostra direttamente: seed 8 ha 1.527 stati eligible ma solo 1.510 con una boundary row iniziale ([w30-repair-8.json:1106](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/overlap-ics/t-row-repair/evidence/w30-repair-8.json:1106)); il codice stesso dichiara questa situazione una wiring failure ([publish.rs:182](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/publish.rs:182)).
+
+Serve dunque una T-row separata, continua e identificabile:
+
+- shortfall da `piece_bounds.max_y + offset_y − (T − depth_top_inset)`;
+- direzione esplicita `[0, −1]`;
+- stesso guard, cap e budget congelati;
+- dopo ogni correzione, riscan della T-row e di tutte le righe kernel;
+- box fisico lasciato invariato.
+
+Non è principalmente un problema di starvation: l’attuale Gauss–Seidel riscanerebbe le altre sides. È un problema di quantizzazione e di witness causale; `failing_boundaries` perde anche l’identità della side.
+
+3. **Il finding spiega un probabile miss, ma non chiude ancora formalmente il meccanismo.**
+
+Queste sono wall run; la specifica richiede il fork della continuazione deterministica completa ([t-row-repair-spec.md:84](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/t-row-repair-spec.md:84)). Lo dice anche l’evidenza stessa ([README.md:7](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/experiments/overlap-ics/t-row-repair/README.md:7)).
+
+Prima di Gate 0 vanno corretti soltanto due difetti strumentali, senza toccare il guard:
+
+- la T-row continua mancante appena descritta;
+- `ComputeIgnore` non memoizza il digest: esegue il repair shadow, poi `Off` ritorna `None` e `last_attempt_pose_digest` non viene scritto perché l’assegnazione è dopo l’early return ([mod.rs:595](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/mod.rs:595), [mod.rs:604](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/mod.rs:604), [mod.rs:637](/var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/crates/polygon-nesting-core/src/search/overlap_ics/mod.rs:637)). Può quindi pagare ripetutamente lo stesso repair e falsare la clausola di costo/unique-install.
+
+Dopo queste correzioni si esegue il Gate 0 congelato. Se 7 o 8 non chiude bite 22, il meccanismo è chiuso: il pair cascade è allora il risultato causale, non un input “fuori competenza” dell’instrumento. Le 37 conversioni e il +8,28 mm di seed 4 non consentono di cambiare ex post il bersaglio.
+
+4. **Se Gate 0 corretto conferma il miss, l’unica nuova direzione licenziata è un exact contact-chain repair congiunto T–pair, pre-committato e ancora vincolato da 16 µm/pezzo e `4n`; non è licenziato né alzare il guard né reinterpretare le 37 conversioni come promozione del T-row attuale.**

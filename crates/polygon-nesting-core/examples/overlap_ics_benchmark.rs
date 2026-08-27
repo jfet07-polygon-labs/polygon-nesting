@@ -3495,6 +3495,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "giveUpFailingPairs": census.give_up_failing_pairs,
             "giveUpFailingBoundaries": census.give_up_failing_boundaries,
             "giveUpTotalShortfallMicrometre": census.give_up_total_shortfall_um,
+            "repeatSkipped": census.repeat_skipped,
         });
     }
     #[cfg(feature = "ics-publish-census")]
