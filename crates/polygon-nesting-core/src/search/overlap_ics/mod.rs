@@ -1188,6 +1188,8 @@ impl<'a> Engine<'a> {
                                 census.above_target_min_mm.min(excess);
                             census.above_target_max_mm =
                                 census.above_target_max_mm.max(excess);
+                            let bucket = ((excess * 2000.0) as usize).min(8);
+                            census.excess_histogram_half_um[bucket] += 1;
                             let gain = incumbent - proxy;
                             if gain > limits.minimum_improvement_mm {
                                 census.above_target_better_than_incumbent += 1;
@@ -3699,6 +3701,12 @@ pub mod publish_census {
         /// progress the target gate threw away.
         pub above_target_better_than_incumbent: u64,
         pub above_target_best_gain_mm: f64,
+        /// The excess `proxy_depth - target`, bucketed in half micrometres
+        /// from 0 to the 4 um band. Index `i` covers `[i*0.5, (i+1)*0.5) um`;
+        /// the last bucket carries anything at or above 4 um. A mechanism that
+        /// has to close 3.9 um is a different mechanism from one that has to
+        /// close 1 um, and the spec needs to know which it is.
+        pub excess_histogram_half_um: [u64; 9],
     }
 
     thread_local! {
@@ -3712,6 +3720,7 @@ pub mod publish_census {
             above_target_max_mm: f64::NEG_INFINITY,
             above_target_better_than_incumbent: 0,
             above_target_best_gain_mm: 0.0,
+            excess_histogram_half_um: [0; 9],
         }) };
     }
 

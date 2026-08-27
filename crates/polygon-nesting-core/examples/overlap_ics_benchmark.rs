@@ -3465,6 +3465,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .then_some(census.above_target_max_mm),
             "aboveTargetBetterThanIncumbent": census.above_target_better_than_incumbent,
             "aboveTargetBestGainMm": census.above_target_best_gain_mm,
+            "excessHistogramHalfMicrometre": census.excess_histogram_half_um,
         });
     }
     println!("{}", serde_json::to_string_pretty(&document)?);

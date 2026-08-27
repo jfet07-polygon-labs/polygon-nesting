@@ -189,3 +189,29 @@ structural facts this directory rests on - thousands of band entries, ~99 %
 refused on the lip, `exploreBites` frozen at 21 - are far outside that
 variance; individual decimals of a single wall cell are not evidence and are
 not used as any clause.
+
+## 6. How big is the lip - the number that sizes the mechanism
+
+`evidence/frozen-five/h-s{7,8,4}.json`, 30 s wall, census extended with a
+half-micrometre histogram of `proxy_depth - target` on every above-target
+refusal. Buckets are `[i*0.5, (i+1)*0.5) um`; the last carries `>= 4 um`.
+
+| seed | depth | bites | 0-.5 | .5-1 | 1-1.5 | 1.5-2 | 2-2.5 | 2.5-3 | 3-3.5 | 3.5-4 | >=4 | total |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 179.0821 | 21 | 1 | 2 | 0 | 124 | **3009** | **1907** | 129 | 2 | 0 | 5174 |
+| 8 | 179.0200 | 21 | 170 | 11 | 5 | **965** | **925** | 216 | 17 | 573 | 0 | 2882 |
+| 4 | 164.0067 | 109 | 84 | 42 | 13 | **470** | 3 | **611** | 7 | 6 | 0 | 1236 |
+
+**The typical lip is 2-3 micrometres**, against a repair displacement cap of
+16 um per piece: about five times the headroom. That is the number in favour.
+
+**The number against**, stated because it is the honest risk: seed 7 has
+essentially nothing below 1.5 um - 3 refusals out of 5,174 - and 95 % of its
+refusals sit in the 2-3 um band. It is not a layout that keeps *nearly*
+arriving; it is a layout that is stably, reproducibly two to three micrometres
+proud, five thousand times. If that overhang is rigid - a chain that has to
+move together rather than one piece with slack - then a per-piece cap of 16 um
+is not the binding constraint and the frozen-theta repair may still fail to
+find a legal push. That is precisely what the pre-committed Gate 0 has to
+answer before any quality battery is funded, and it is the reading under which
+this mechanism dies.
