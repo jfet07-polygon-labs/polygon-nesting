@@ -1,0 +1,306 @@
+{
+ "GATE0_PASS": false,
+ "clauses": {
+  "authorityAndCaps": true,
+  "causalWitness": true,
+  "censusIntegrity": true,
+  "computeIgnoreIsolation": true,
+  "conversion": false,
+  "instrumentPartition": true,
+  "noReverse": false,
+  "twoProcessIdentity": true,
+  "uniqueInstall": true
+ },
+ "computeignore-0-r0": {
+  "digestWithoutWall": "b0cc3145ba07c33593ea6dec869823141b2f464f40a2156c1f0ced36de5eb018",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-0-r1": {
+  "digestWithoutWall": "b0cc3145ba07c33593ea6dec869823141b2f464f40a2156c1f0ced36de5eb018",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-1-r0": {
+  "digestWithoutWall": "3f433c504366e2fe437fef970acdb476d6f9104f8d3a928830f4320847038314",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-1-r1": {
+  "digestWithoutWall": "3f433c504366e2fe437fef970acdb476d6f9104f8d3a928830f4320847038314",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-2-r0": {
+  "digestWithoutWall": "8638e0efea1a69337c31cb4c93179dffe6f8bc25780ac2cc3257faf8a0d16ceb",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-2-r1": {
+  "digestWithoutWall": "8638e0efea1a69337c31cb4c93179dffe6f8bc25780ac2cc3257faf8a0d16ceb",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-3-r0": {
+  "digestWithoutWall": "996ab7be71d65754fee61d4cd34a26265d5b310d2c8d67eb079314992639d85d",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-3-r1": {
+  "digestWithoutWall": "996ab7be71d65754fee61d4cd34a26265d5b310d2c8d67eb079314992639d85d",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-4-r0": {
+  "digestWithoutWall": "422da2428db9ba97b217968291b8fd0d281f3ee46ee14489936e7dba6acfbd46",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-4-r1": {
+  "digestWithoutWall": "422da2428db9ba97b217968291b8fd0d281f3ee46ee14489936e7dba6acfbd46",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-5-r0": {
+  "digestWithoutWall": "620579f3b9e8ca0bf0e4740a71d39859da18f8778ebd25db61a519f50e4bd0e3",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-5-r1": {
+  "digestWithoutWall": "620579f3b9e8ca0bf0e4740a71d39859da18f8778ebd25db61a519f50e4bd0e3",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-6-r0": {
+  "digestWithoutWall": "7999059874fb324264ee9de4d277310accb305c2a7d4792a8827bc6902f61876",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-6-r1": {
+  "digestWithoutWall": "7999059874fb324264ee9de4d277310accb305c2a7d4792a8827bc6902f61876",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-7-r0": {
+  "digestWithoutWall": "fdfc74a8d643466764668389661445782802c0e78fae1124034be56520b3e026",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-7-r1": {
+  "digestWithoutWall": "fdfc74a8d643466764668389661445782802c0e78fae1124034be56520b3e026",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-8-r0": {
+  "digestWithoutWall": "b98ad44e8f5bcdf175f006be475cfac0bdfeff41d5c682fe25c57887fd9565e9",
+  "exit": 0,
+  "stderr": ""
+ },
+ "computeignore-8-r1": {
+  "digestWithoutWall": "b98ad44e8f5bcdf175f006be475cfac0bdfeff41d5c682fe25c57887fd9565e9",
+  "exit": 0,
+  "stderr": ""
+ },
+ "controlClosed": [
+  0,
+  2,
+  3,
+  6
+ ],
+ "controlOpen": [
+  1,
+  4,
+  5,
+  7,
+  8
+ ],
+ "converted": [],
+ "off-0-r0": {
+  "digestWithoutWall": "263750621d7cc863fbf96bbb16b5710146869196a6871a5a3cdb2e8ede19f9a8",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-0-r1": {
+  "digestWithoutWall": "263750621d7cc863fbf96bbb16b5710146869196a6871a5a3cdb2e8ede19f9a8",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-1-r0": {
+  "digestWithoutWall": "b656be4b9b2434d2d4f6fd962271c14c4a57bb2435bfc613efcbb62f082ee0ff",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-1-r1": {
+  "digestWithoutWall": "b656be4b9b2434d2d4f6fd962271c14c4a57bb2435bfc613efcbb62f082ee0ff",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-2-r0": {
+  "digestWithoutWall": "c651f2db223404d39a22500759ce6e75fef148ed2e952a0cd51c1169eb86389d",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-2-r1": {
+  "digestWithoutWall": "c651f2db223404d39a22500759ce6e75fef148ed2e952a0cd51c1169eb86389d",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-3-r0": {
+  "digestWithoutWall": "46eb8a328f9c7e9d1bb81e84cddaafc8a6b3359a34352eba399bd695d9f02e20",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-3-r1": {
+  "digestWithoutWall": "46eb8a328f9c7e9d1bb81e84cddaafc8a6b3359a34352eba399bd695d9f02e20",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-4-r0": {
+  "digestWithoutWall": "2f3bfeaa5be2865901d23eedf6c10b6d51ccb0767ccb4f041094fec0292f4e4a",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-4-r1": {
+  "digestWithoutWall": "2f3bfeaa5be2865901d23eedf6c10b6d51ccb0767ccb4f041094fec0292f4e4a",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-5-r0": {
+  "digestWithoutWall": "11eed21721d110e1d1b121cff6f98f38455a9ceab23d22f56ab1a6a42a1c5d99",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-5-r1": {
+  "digestWithoutWall": "11eed21721d110e1d1b121cff6f98f38455a9ceab23d22f56ab1a6a42a1c5d99",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-6-r0": {
+  "digestWithoutWall": "81dc01fa665587a2f6b62e312ec031e4eeb5002e45aa8753b20ec05cf48444a4",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-6-r1": {
+  "digestWithoutWall": "81dc01fa665587a2f6b62e312ec031e4eeb5002e45aa8753b20ec05cf48444a4",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-7-r0": {
+  "digestWithoutWall": "0051703bd2e6506afae4a0d16344c03f6e3964c256ec5aa8f798f912c146f190",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-7-r1": {
+  "digestWithoutWall": "0051703bd2e6506afae4a0d16344c03f6e3964c256ec5aa8f798f912c146f190",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-8-r0": {
+  "digestWithoutWall": "3570d89f9399c2bdc6ac0008da2a6c21a6647512dfb94f24bde6223ee737ce28",
+  "exit": 0,
+  "stderr": ""
+ },
+ "off-8-r1": {
+  "digestWithoutWall": "3570d89f9399c2bdc6ac0008da2a6c21a6647512dfb94f24bde6223ee737ce28",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-0-r0": {
+  "digestWithoutWall": "53683b3d36af890b4fbd34b55daaa8175e8b19644b22b2324eb7779614745d08",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-0-r1": {
+  "digestWithoutWall": "53683b3d36af890b4fbd34b55daaa8175e8b19644b22b2324eb7779614745d08",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-1-r0": {
+  "digestWithoutWall": "0939f18cacd4cf89b022b753a1818ec53a6d0fd8020e995defbdba963831a54e",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-1-r1": {
+  "digestWithoutWall": "0939f18cacd4cf89b022b753a1818ec53a6d0fd8020e995defbdba963831a54e",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-2-r0": {
+  "digestWithoutWall": "0703b37f4eecd1ab9cbb5d9017e6b69cbce4758e35a8d95bf82a159ff99e4eea",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-2-r1": {
+  "digestWithoutWall": "0703b37f4eecd1ab9cbb5d9017e6b69cbce4758e35a8d95bf82a159ff99e4eea",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-3-r0": {
+  "digestWithoutWall": "9313b48d04a66cd336d0c7f69c28d34a1bbef33b70e6d8e44b0803275c6e9f54",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-3-r1": {
+  "digestWithoutWall": "9313b48d04a66cd336d0c7f69c28d34a1bbef33b70e6d8e44b0803275c6e9f54",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-4-r0": {
+  "digestWithoutWall": "96b9b5e933e283f4d0cafc212abfa85ed294f61dbb594f28cb563b2e30822075",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-4-r1": {
+  "digestWithoutWall": "96b9b5e933e283f4d0cafc212abfa85ed294f61dbb594f28cb563b2e30822075",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-5-r0": {
+  "digestWithoutWall": "0b6745c18b29c6ab81b08c9f4e97c2070b6ed573570e5663a82253e6f44d30fc",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-5-r1": {
+  "digestWithoutWall": "0b6745c18b29c6ab81b08c9f4e97c2070b6ed573570e5663a82253e6f44d30fc",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-6-r0": {
+  "digestWithoutWall": "42a8df49f2ac517c6bbd5777fc09f6ba7cbd384c0e728b9b3f85a3efecd9b82c",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-6-r1": {
+  "digestWithoutWall": "42a8df49f2ac517c6bbd5777fc09f6ba7cbd384c0e728b9b3f85a3efecd9b82c",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-7-r0": {
+  "digestWithoutWall": "c442673b9a1b78726bc93094f194b230c16eb4ef9e0225164b93be3dfc376873",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-7-r1": {
+  "digestWithoutWall": "c442673b9a1b78726bc93094f194b230c16eb4ef9e0225164b93be3dfc376873",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-8-r0": {
+  "digestWithoutWall": "efd45e33f6abb7de4815ee80c02f803c797d25de2538ce9ae8e258ebfc9527d0",
+  "exit": 0,
+  "stderr": ""
+ },
+ "repair-8-r1": {
+  "digestWithoutWall": "efd45e33f6abb7de4815ee80c02f803c797d25de2538ce9ae8e258ebfc9527d0",
+  "exit": 0,
+  "stderr": ""
+ },
+ "residual": {
+  "attempts": 2,
+  "iterationsPerSeparation": 500
+ },
+ "reverse": [
+  2,
+  3
+ ]
+}
