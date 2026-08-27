@@ -154,3 +154,38 @@ target/release/examples/overlap_ics_benchmark --cell=cutclose \
 The committed cells are that command's document with the pose, publication and
 fingerprint arrays dropped and the per-bite `profile`/`strikeMeter` blocks
 removed; every counter this README cites is retained verbatim.
+
+## 5. The frozen five at two clocks, and which mechanism the numbers pick
+
+`evidence/frozen-five/b-s{1,4,5,7,8}-w{10,30}.json`, same command with
+`--wall=10` and `--wall=30`. This was measured after the first cross-exchange
+went out, to answer the reviewers' split: one proposed repairing the **exit**
+(the terminal depth lip) and the other improving the **entry** (a sequential
+pass before the first `separate()` of a bite).
+
+| seed | 10 s depth | bites | band entries | above target | 30 s depth | bites | band entries | above target |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 179.0810 | 21 | 34 | 4 | 165.0150 | 99 | 1885 | 1654 |
+| 4 | 179.0812 | 21 | 197 | 171 | 164.0011 | 109 | 1639 | 1373 |
+| 5 | 168.3083 | 37 | 381 | 92 | 162.5926 | 117 | 918 | 462 |
+| **7** | **179.0821** | **21** | 254 | 232 | **179.0821** | **21** | **5235** | **5212** |
+| **8** | **179.0821** | **21** | 282 | 255 | **179.0096** | **21** | 3060 | 3026 |
+
+Seed 7 at 30 s reaches the publication band **5,235 times** and is refused on
+the depth lip **5,212 of them - 99.6 %** - and still holds 21 explore bites.
+Seed 8: 3,060 and 3,026, 98.9 %. They are not entry-limited at that clock;
+they are entirely lip-limited, with thousands of shots and nothing to show.
+
+Seeds 1, 4 and 5 escape by 30 s on their own. That is the reading that picks
+the discriminating clock: at a 30 s leftover budget the control already closes
+three of the five, so a "3 of 5" conversion clause would be vacuous there and
+must be measured on the 10 s leftover instead - which is where the two arms
+actually differ.
+
+**Honesty about variance.** Wall mode is not the round's deterministic
+calibrated pacer, and single wall runs move: seed 5 printed `175.0016 mm` at
+41 bites in the section-3 sweep and `168.3083 mm` at 37 bites here. The
+structural facts this directory rests on - thousands of band entries, ~99 %
+refused on the lip, `exploreBites` frozen at 21 - are far outside that
+variance; individual decimals of a single wall cell are not evidence and are
+not used as any clause.

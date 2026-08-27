@@ -273,3 +273,89 @@ Reuse the existing shelf probe, not a 10 s battery: **400 master iterations at b
 ---
 
 **Bottom line.** The table is a geometry-and-search fact at explore bite 22, not a counter-artefact, once you drop the “every seed, 0.61 s, 94 %, 2 compress pubs” overclaim. Line 2002 is not the bug; the inner loop is already Algorithm 12, and Algorithm 12’s tickets have already been shown not to buy 10 s. The next spec should test one cheap pass over the 34 pieces the 22nd cut actually moved, and should be willing to die on the 400-iteration shelf probe.
+
+---
+
+# Round 2 — cross-exchange
+
+Grok was sent the publication-gate census (which neither reviewer had when
+they answered round 1) together with Sol's complete round-1 answer, and asked
+to converge, to name the one mechanism in final form, to merge the two gates,
+and to say honestly which bar the mechanism is aimed at. Verbatim below.
+
+# Bite 22 — cross-exchange, round 2
+
+## 1. Converge: **(a) I adopt theirs.**
+
+The census does not sit evenly between the two proposals at the clock that actually refuses bite 22. It classifies the refusal.
+
+On the 10 s wall microscope, unpublished explore bite 22 is in-band and then discarded **entirely** by `proxy_depth > T`:
+
+| seed | bite-22 master iters | band entries | exact checkpoint calls | published |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 1,090 | 1 | **0** | no |
+| 4 | 1,599 | 3 | **0** | no |
+| 7 | 1,114 | 1 | **0** | no |
+| 8 | 1,151 | **215** | **0** | no |
+
+The whole-run `called` counts on those freeze seeds are the cheap prefix (plus one compress consolation). They are not failed exact attempts at ordinal 22. Compress bite 24 is the same seam: seed 7 has 44 in-band entries and 0 calls; seed 8 has 215 and 0. Pose-digest is 0–3; the improvement gate is 0; the excess is 1.5–4.0 µm, bounded by the band that admitted it; every above-target refusal is a full 0.1 % bite better than the incumbent.
+
+That is Sol’s terminal lip, counted. It is also why I withdraw the post-cut far-side sweep from this specification. My 400-iteration shelf probe still has `proxyBandReached = false`. That reading is true of the **first third** of a 10 s bite-22 `separate()`. It does not describe the 10 s refusal: by the end of that call the band has been reached, and every in-band state is then thrown away at `publish.rs:364` before Exclusive, before frozen-θ repair, and before the contractual validator. A Gauss-Seidel pass over the 34 cut-moved pieces has no witness in this census. The lip has thousands.
+
+I do **not** claim the entry-side operator is refuted. I claim it is not what this round should fund. If Gate 0 fails because the new path **never fires** on ≥3 freeze seeds (leftover work never in band), that is a new-spec question about entry, not a retune of this repair, and not a rescue of this gate.
+
+The 400-iteration unreadiness **does** kill my proposed gate as the instrument for *this* operator: a terminal repair that has not yet been offered a band entry cannot cheapen `minRawPhi` in a window where it does not run. That is a gate-merge point, not a reason to keep the sweep.
+
+Diagnosis and `mod.rs:2002` stay as we both had them. One disagreement of wording, not of mechanism: I still would not call the 10 s median a throughput deficit. Equal explore units, five seeds at 21 publications, is a success-rate collapse at one width. More work raising P(escape) is the 30 s / 60 s column, which both of us already said.
+
+## 2. Mechanism, one sentence
+
+When `max_g ≤ 4 µm` and `0 < proxy_depth − T ≤ 4 µm`, clone the state and run the existing frozen-θ, ≤16 µm, ≤4n-row Gauss-Seidel repair with the locked-strip top **injected as a repair boundary** (Exclusive kernel, 4 µm band, 16 µm cap, target `T`, and contract validator unchanged), then publish only if the result is dual-valid and `raw_depth ≤ T`.
+
+That is not “delete `publish.rs:364`.” Sol is right that the Exclusive scan uses the physical sheet (`inset_box` is sheet inset, not `T − depth_top_inset`), so a 1.5–4 µm proud state can already be Exclusive-admissible and still die at `published_depth > T`. The new operation is the T-row. The current boundary corrector already pushes in `[0, −1]` and the loop already re-scans; it has never been shown a strip-top shortfall because the pre-gate returns `None` first.
+
+Frozen, as both of us already required: no `2002` change, no 80/20 steal, no 200/3 retune, no tracker-rebase, no persistent lanes, no millimetre legalizer.
+
+## 3. The gate, final form
+
+**Instrument (Sol’s, not mine).** The nine Round 4 composed bite-21 exact parents, leftover explore work of that arm’s 10 s plan, mixed-61, `--orders=1 --workers=8 --edge=5 --pair=5`. Control is today’s `attempt()`. Shadow is the T-row repair, allowed to publish. ComputeIgnore runs the same repair and discards it.
+
+I am dropping the 400-iteration shelf probe, the visit-set / digest / Φ-drop install checks, and the “cheapen `minRawPhi` on 3/5 **or** publish on 1/5” clause. Those were the right NO-conditions for an entry sweep. They are the wrong NO-conditions for a terminal repair.
+
+**Seed sets, unchanged.** Control closures `{0, 2, 3, 6}`. Freeze set `{1, 4, 5, 7, 8}`.
+
+**PASS only if all of these hold:**
+
+1. **Partition.** Control publishes bite 22 on `{0, 2, 3, 6}` and does **not** publish bite 22 on `{1, 4, 5, 7, 8}`. I do **not** require SHA identity with the historical Round 4 `gate10` JSON unless the driver continues a recorded engine checkpoint. The required fact is the closed/open partition under this leftover-work driver, plus two-process identity of *these* cells.
+2. **Install.** On every freeze seed whose control leftover census records `aboveTarget ≥ 1` at bite 22, Shadow must enter the T-row path at least once. Zero entries on a lip witness is wiring, `AUTOFAIL`. A freeze seed with `aboveTarget = 0` cannot count as a conversion; it is a miss.
+3. **Conversion.** Shadow publishes bite 22 on **at least 3 of 5** freeze seeds `{1, 4, 5, 7, 8}`.
+4. **Cause.** Every new bite-22 success is from a state the current three pre-gates would have classified as in-band, improving, and `proxy_depth > T` only. `ics-publish-census` is the witness. A conversion that went through today’s `proxy_depth ≤ T` path does not count.
+5. **No reverse.** None of `{0, 2, 3, 6}` loses its bite-22 publication; none of those four ends worse than control.
+6. **Authority.** Every publication has `raw_depth ≤ T`, per-piece displacement ≤ 16 µm, Exclusive `r = 2.500`, contract-valid, independently revalidated; zero invalid publications.
+7. **Cost / identity.** ComputeIgnore matches control on poses, publications, fingerprints, work vector and pacer charges after stripping timing and the diagnostic record, and keeps at least 95 % of control’s paired rate. Two-process identity on every seed.
+
+**Pre-declared FAIL, and now closed:** fewer than three freeze conversions; any reverse; no causal depth-gated witness; T / 16 µm / Exclusive / contract broken; ComputeIgnore diverges or loses more than 5 % rate; two-process identity fails. Reading: the 4 µm depth lip is not legalizable with the existing frozen-θ repair. No 3/10/30 quality battery. The 10-second quality gate stays retired. The far-side entry sweep is not licensed as a rescue of this gate.
+
+Where I disagree with Sol’s gate text:
+
+> “il controllo riproduce bit-for-bit le quattro chiusure note `{0,2,3,6}`”
+
+The closed/open partition, yes. Bit-for-bit against the Round 4 cell files, only if the driver is a recorded checkpoint continuation. A parent restart is a new RNG/GLS stream.
+
+## 4. Sufficiency: **30-second quality improvement. 10 s is reported, not claimed. Do not reopen the retired 10-second gate.**
+
+Where I disagree with Sol:
+
+> “Un PASS licenzia soltanto una nuova batteria end-to-end col vecchio bar non ammorbidito”
+
+I agree the bar is not softened. I disagree that a mechanical PASS licenses a 10-second reopening attempt. The unsoftened 10 s clauses are still `5/9 ≤ 168.484` and median `≤ 168.484`. Clearing bite 22 is necessary for those clauses and not sufficient, which both of us already said, and the census makes the arithmetic worse rather than better.
+
+- 168.484 / 182.976 at 0.1 % is ~83 successful explore bites; from the bite-21 parent that is still ~62 publications.
+- Seeds 0 and 6 **already** win the 22-lottery at 10 s (46 and 74 bites) and finish at 170.44 and 169.35.
+- Seed 5 on the wall microscope **does** publish bite 22 (1,142 iterations, `minRawPhi = 0`) and then reaches 41 explore bites / **175.00 mm** — twenty bites of cascade, still 6.5 mm above the bar.
+- Freeze bite 22 costs ~1,100–1,600 master iterations. The first 400 do not enter the band. A T-row conversion at the first in-band state is therefore a late-clock event on a budget that has almost nothing left for a 62-bite cascade.
+- So even a perfect 3/5 or 5/5 conversion at this seam can easily print a 10 s column that is still 2/9, median still 179-class or 175-class. That would be a quality miss of a mechanism that engaged, and it would not be a reason to reopen 200/3, 80/20, or the sweep.
+
+What this mechanism can honestly move is the **30 s frozen tail**. Round 4 already passes 7/9 at 30 s; the two unpublished 21-bite cells are seeds 7 and 8, the same seeds that sit on 5,885 in-band / 0 exact calls. That is the lip with thousands of shots and leftover time to cascade. After a Gate 0 PASS, the quality battery is the composed 30 s arm under the standing unsoftened 30 s clauses (median ≤ 163.00461 mm, 7/9 ≤ 168.484 mm, paired gain ≥ 1 mm, zero invalid), **plus** a tail clause that is a tightening, not a softening: seeds 7 and 8 at or below 168.484 mm. 10 s cells are run and reported against 5/9 / median / 168.484. They do not reopen the retired gate, and a 10 s 5/9 miss does not close a 30 s tail conversion.
+
+Gate 0 remains allowed to say NO on the 10 s leftover clock. That clock is where control and Shadow actually differ on `{1,4,5,7,8}` (at 30 s leftover, control already closes 1, 4 and 5, and 3/5 would be vacuous). A 10 s leftover FAIL still means this repair is closed. It does not mean “try the sweep on the same gate.”
