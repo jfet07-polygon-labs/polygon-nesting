@@ -342,3 +342,54 @@ exactly the path it always took.
 - **Sparrow is still ahead.** 150.165 at ten seconds against 163.699. The
   distance did not fall today. What fell is the belief that a wall stood in
   front of it, and a "permanent" retirement decided on a wrong diagnosis.
+
+---
+
+# Part four: is the cap budget-dependent? Yes — and that settles the shape
+
+The obvious objection to Part One is that curing a constant which failed to
+scale by introducing another constant is the same disease one level down. So
+before writing a formula, the prior question: **does the optimal cap actually
+move with the budget?**
+
+## Three seconds: nothing helps, and the reason is informative
+
+Two repetitions, nine seeds, `ratio = 0.95` except where noted
+(`evidence/budget-dependence/`):
+
+| cap | ratio | median of medians | best | under-bar |
+| ---: | ---: | ---: | ---: | --- |
+| none | 0.80 | 179.076 | 173.426 | 0, 0 |
+| 25 | 0.95 | 179.024 | 173.553 | 0, 0 |
+| 50 | 0.80 | 179.007 | 171.763 | 0, 0 |
+| 50 | 0.95 | 179.006 | 171.051 | 0, 0 |
+| 100 | 0.95 | 179.024 | **169.690** | 0, 0 |
+
+Every arm sits at ~179 and no seed clears the bar. The bite counts say why:
+**every configuration is still at 21 explore bites.** The cap does engage -
+retry attempts go from 2 to 12 and disruptions from 0 to 11 - but at three
+seconds none of those restarts wins. Bite 22 is not passable in three seconds by
+any setting measured. Only the *best* moves, and there a larger cap wins.
+
+## Thirty seconds: every cap reaches nine of nine, and the large one goes deepest
+
+| cap | ratio | median | best | under 168.484 | seed 7 | seed 8 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| none | 0.80 | 164.002 | 160.973 | **7/9** | 179.082 | 179.082 |
+| 25 | 0.95 | 164.001 | 161.165 | **9/9** | 161.165 | 165.520 |
+| 50 | 0.95 | 164.002 | 161.153 | **9/9** | 161.873 | 164.002 |
+| **100** | 0.95 | 164.004 | **159.262** | **9/9** | 164.004 | 164.004 |
+
+**The optimum moves.** `cap = 25` returns 2/9 at ten seconds and **9/9** at
+thirty. At thirty seconds the largest cap measured gives the best result of the
+whole campaign at that budget: **159.262 mm**, against Round 4's 160.89229.
+
+That is the mechanism being consistent rather than lucky: the cap trades depth
+per separation against number of separations, and how much depth per separation
+you can afford is exactly what a larger budget buys. A cap proportional to the
+budget is therefore the right *shape*, and this is the measurement that says so
+rather than an argument from elegance.
+
+The proportionality is not linear on this evidence - 50 at ten seconds against
+at least 100 at thirty - and the upper end at thirty seconds is still being
+searched.
