@@ -3466,6 +3466,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "aboveTargetBetterThanIncumbent": census.above_target_better_than_incumbent,
             "aboveTargetBestGainMm": census.above_target_best_gain_mm,
             "excessHistogramHalfMicrometre": census.excess_histogram_half_um,
+            "frontWithinMicrometre": census.front_within_um,
+            "frontSamples": census.front_sampled,
+            "aboveTargetUniqueDigests": census.above_target_unique,
         });
     }
     println!("{}", serde_json::to_string_pretty(&document)?);

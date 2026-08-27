@@ -1177,6 +1177,28 @@ impl<'a> Engine<'a> {
                     let target = self.state.target_depth_mm;
                     let incumbent = self.incumbent.raw_source_depth_mm;
                     let repeat = self.last_attempt_pose_digest == Some(digest);
+                    // The rigidity sample: how crowded the top front is on an
+                    // above-target refusal. Taken once every 512 refusals so a
+                    // five-thousand-refusal cell pays for ~160 scans, not five
+                    // thousand.
+                    let front: Option<[u64; 6]> = (!repeat && proxy > target).then(|| {
+                        let deepest = proxy - self.contract.sheet_edge_clearance_mm;
+                        let mut counts = [0u64; 6];
+                        for piece in 0..self.sources.len() {
+                            let top = self.state.geometry.ring_slice(piece)
+                                .iter()
+                                .fold(f64::NEG_INFINITY, |acc, point| acc.max(point[1]));
+                            let gap_um = (deepest - top) * 1000.0;
+                            for (index, limit) in
+                                [1.0f64, 2.0, 4.0, 8.0, 16.0, 32.0].iter().enumerate()
+                            {
+                                if gap_um <= *limit {
+                                    counts[index] += 1;
+                                }
+                            }
+                        }
+                        counts
+                    });
                     publish_census::record(|census| {
                         census.band_entries += 1;
                         if repeat {
@@ -1188,8 +1210,21 @@ impl<'a> Engine<'a> {
                                 census.above_target_min_mm.min(excess);
                             census.above_target_max_mm =
                                 census.above_target_max_mm.max(excess);
+                            if publish_census::first_sighting(digest) {
+                                census.above_target_unique += 1;
+                            }
                             let bucket = ((excess * 2000.0) as usize).min(8);
                             census.excess_histogram_half_um[bucket] += 1;
+                            if let Some(counts) = front {
+                                if census.above_target % 32 == 1 {
+                                    for (slot, value) in
+                                        census.front_within_um.iter_mut().zip(counts)
+                                    {
+                                        *slot += value;
+                                    }
+                                    census.front_sampled += 1;
+                                }
+                            }
                             let gain = incumbent - proxy;
                             if gain > limits.minimum_improvement_mm {
                                 census.above_target_better_than_incumbent += 1;
@@ -3707,6 +3742,27 @@ pub mod publish_census {
         /// has to close 3.9 um is a different mechanism from one that has to
         /// close 1 um, and the spec needs to know which it is.
         pub excess_histogram_half_um: [u64; 9],
+        /// **The rigidity question.** On the deepest above-target refusal seen,
+        /// how many *pieces* have their own top within `k` micrometres of the
+        /// layout's deepest point, for `k` in `{1, 2, 4, 8, 16, 32}`. One piece
+        /// proud with the next 50 um below has slack the repair can use; a
+        /// dozen pieces sharing the front within a micrometre is a rigid front,
+        /// and the per-piece 16 um cap is then not the binding constraint.
+        pub front_within_um: [u64; 6],
+        pub front_sampled: u64,
+        /// **Sol review 21 round 2, the correction that matters most.**
+        /// `last_attempt_pose_digest` is written only *after* `publish::attempt`
+        /// returns `Some`, and the target guard returns `None`, so an
+        /// above-target state is never memoized and the same proud layout can
+        /// be counted thousands of times. "5,235 refusals" is therefore a count
+        /// of entries and not of opportunities. This is the opportunity count:
+        /// distinct pose digests refused above target.
+        pub above_target_unique: u64,
+    }
+
+    #[derive(Default)]
+    pub struct Seen {
+        pub digests: std::collections::HashSet<[u8; 32]>,
     }
 
     thread_local! {
@@ -3721,7 +3777,21 @@ pub mod publish_census {
             above_target_better_than_incumbent: 0,
             above_target_best_gain_mm: 0.0,
             excess_histogram_half_um: [0; 9],
+            front_within_um: [0; 6],
+            front_sampled: 0,
+            above_target_unique: 0,
         }) };
+    }
+
+    thread_local! {
+        static SEEN: RefCell<Seen> = RefCell::new(Seen {
+            digests: std::collections::HashSet::new(),
+        });
+    }
+
+    /// True the first time this digest is refused above target.
+    pub fn first_sighting(digest: [u8; 32]) -> bool {
+        SEEN.with(|cell| cell.borrow_mut().digests.insert(digest))
     }
 
     pub fn record(update: impl FnOnce(&mut Census)) {

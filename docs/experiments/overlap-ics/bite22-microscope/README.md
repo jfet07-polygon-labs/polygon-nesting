@@ -102,18 +102,36 @@ All nine seeds, 10 s, wall mode (`g-seed*.json`, field `publishCensus`):
 | 7 | 179.0821 | 67 | 45 | 22 | **45** | 0.175196 mm |
 | 8 | 179.0821 | 462 | 435 | 27 | **435** | 0.179719 mm |
 
-The pose-digest guard fires 0-3 times in a whole run; the improvement gate
-never fires. **`proxy_depth > target_depth_mm` is the whole difference**, and
-the excess is between `1.5 um` and `4.0 um` - bounded above by the 4 um band,
-because the depth overhang *is* a boundary violation and the band admitted it.
+**`proxy_depth > target_depth_mm` is the whole difference**, and the excess is
+bounded above by the 4 um band, because the depth overhang *is* a boundary
+violation and the band admitted it.
+
+**Three corrections Sol made to the first draft of this section, verified
+against the committed cells above and kept because the first draft's numbers
+were read off an earlier four-seed sweep rather than these files**
+(`sol-review-21` round 2 §1):
+
+1. The pose-digest guard does **not** fire "0-3 times in a whole run". The
+   nine cells total **302** repeats; seed 0 alone has 150 and seed 6 has 120.
+   It is negligible on the frozen seeds - 4, 5, 7 and 8 record zero - but not
+   in general.
+2. **Not every** above-target state improves: seed 2 has 1,038 above-target
+   entries and 1,034 improvements. The honest statement is "all but four of
+   the 4,077 above-target refusals across the nine cells beat the incumbent".
+3. The excess is **not** globally 1.5-4.0 um. Seed 0's minimum is `2.8e-14 mm`,
+   seed 6's `1.2e-06 mm`, seed 2's `3.9e-06 mm`. The correct bound is
+   `0 < excess <= 4 um`; the 2-3 um mass is a property of the frozen tail
+   (section 6), not of every seed.
+
+The improvement gate never fires in any of the nine cells.
 
 ## 4. What that means
 
 The explore step is 0.1 % of 179 mm, `0.179 mm`. The refused layouts are
 **0.175-0.180 mm better than the incumbent**: a full bite of real, measured
-progress. They are discarded for missing the bite's own self-set target by one
-and a half micrometres, and the engine then spends thousands of iterations
-failing to recover those micrometres. When it gives up, `mod.rs`'s
+progress. They are discarded for missing the bite's own self-set target by
+somewhere between a hair and four micrometres - two to three on the frozen tail
+- and the engine then spends thousands of iterations failing to recover them. When it gives up, `mod.rs`'s
 `None => break` ends the entire explore phase and the run is over at 179.
 
 Whether a descent lands a micrometre under the target or a micrometre over it
@@ -215,3 +233,51 @@ is not the binding constraint and the frozen-theta repair may still fail to
 find a legal push. That is precisely what the pre-committed Gate 0 has to
 answer before any quality battery is funded, and it is the reading under which
 this mechanism dies.
+
+## 7. Entries are not opportunities - the count that had to be made
+
+Sol's sharpest correction is methodological, and the code confirms it:
+`last_attempt_pose_digest` is written **only after** `publish::attempt` returns
+`Some` (`mod.rs:612`), and the target guard returns `None` (`publish.rs:364`),
+so an above-target state is **never memoized**. The same proud layout can be
+counted thousands of times. "5,235 refusals" is a count of *entries*, and a
+mechanism does not get one shot per entry - it gets one per distinct state.
+
+The census therefore now carries the opportunity count directly: distinct pose
+digests refused above target. 30 s wall cells, `evidence/frozen-five/u-s*.json`:
+
+| seed | depth | bites | above-target entries | **distinct digests** | repeat ratio |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 179.0821 | 21 | 5344 | **4300** | 1.2x |
+| 8 | 179.0821 | 21 | 2856 | **1281** | 2.2x |
+| 1 | 165.0468 | 99 | 2152 | **866** | 2.5x |
+| 4 | 164.0073 | 109 | 1264 | **1132** | 1.1x |
+| 5 | 162.4744 | 117 | 467 | **446** | 1.0x |
+
+The caveat was worth raising and the answer runs the mechanism's way: seed 7 is
+refusing **four thousand three hundred genuinely different layouts**, not a
+handful revisited. The opportunities are real and numerous.
+
+## 8. The rigidity risk, measured
+
+Section 6 named the reading under which this mechanism dies: a *rigid* front,
+where the overhang is a chain that must move together rather than one or two
+pieces with slack. The census now samples it - every 32nd above-target refusal,
+counting how many pieces have their own top within `k` micrometres of the
+layout's deepest point (`evidence/frozen-five/f-s*.json`):
+
+| seed | distinct refusals | 1 um | 2 um | 4 um | 8 um | 16 um | 32 um | samples |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 3884 | **1.4** | 1.4 | 2.9 | 3.1 | 4.1 | 4.6 | 154 |
+| 8 | 1218 | **2.1** | 2.5 | 3.8 | 4.7 | 5.6 | 9.8 | 88 |
+| 4 | 1012 | **2.1** | 2.2 | 5.1 | 7.6 | 10.4 | 12.1 | 36 |
+
+**The front is small.** On the frozen tail it is typically one or two pieces at
+the very top and about three within 4 um, against a repair that may spend
+`4n` correction rows and 16 um of cumulative displacement per piece. The
+rigid-front reading is not what the data shows.
+
+That is a statement about *crowding*, not about *legality*: it says the repair
+would have few pieces to push, not that a legal push exists. Whether one does
+is exactly what Gate 0 has to answer, and it remains the reading under which
+the mechanism closes.
