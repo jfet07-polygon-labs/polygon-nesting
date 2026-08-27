@@ -39,6 +39,16 @@ pub struct Totals {
 }
 
 /// Measures one piece-pair row from the current geometry.
+/// The contact a zero row carries: the same value `measure_pair` returns when
+/// the broad phase rejects, written once so the near set's unlink and the
+/// measurement agree by construction.
+const EMPTY_CONTACT: Contact = Contact {
+    signed_gap_mm: f64::INFINITY,
+    normal: [0.0, 0.0],
+    witness_a: [0.0, 0.0],
+    witness_b: [0.0, 0.0],
+};
+
 pub fn measure_pair(
     geometry: &Geometry,
     first: usize,
@@ -47,12 +57,7 @@ pub fn measure_pair(
     work: &mut WorkVector,
 ) -> (f64, Contact) {
     work.pair_row_probes += 1;
-    let empty = Contact {
-        signed_gap_mm: f64::INFINITY,
-        normal: [0.0, 0.0],
-        witness_a: [0.0, 0.0],
-        witness_b: [0.0, 0.0],
-    };
+    let empty = EMPTY_CONTACT;
     if !pair_is_near(
         geometry.piece_bounds[first],
         geometry.piece_bounds[second],
@@ -194,6 +199,9 @@ pub fn measure_edges(
 pub fn rebuild_all(state: &mut IcsState, contract: &Contract, work: &mut WorkVector) {
     let count = state.poses.len();
     let clearance = contract.pair_clearance_mm();
+    for near in &mut state.near {
+        near.clear();
+    }
     for first in 0..count {
         for second in (first + 1)..count {
             let index = pair_index(count, first, second);
@@ -201,7 +209,17 @@ pub fn rebuild_all(state: &mut IcsState, contract: &Contract, work: &mut WorkVec
                 measure_pair(&state.geometry, first, second, clearance, work);
             state.pair_rows[index].violation_mm = violation;
             state.pair_rows[index].contact = contact;
+            // The index is built in ascending `second` for each `first` and in
+            // ascending `first` for each `second`, so both lists come out
+            // sorted without a sort.
+            if violation > 0.0 {
+                state.near[first].push(second as u32);
+                state.near[second].push(first as u32);
+            }
         }
+    }
+    for near in &mut state.near {
+        near.sort_unstable();
     }
     for piece in 0..count {
         state.edge_rows[piece] = measure_edges(
@@ -224,6 +242,26 @@ pub fn rebuild_piece_rows(
 ) {
     let count = state.poses.len();
     let clearance = contract.pair_clearance_mm();
+    // Zero every row this piece currently owns, and unlink it from the other
+    // end. A row that was zero before and is zero now is never touched at all,
+    // which is the whole point: it is the reaching that costs, not the value.
+    let previous = std::mem::take(&mut state.near[piece]);
+    for &other in &previous {
+        let other = other as usize;
+        let (first, second) = if other < piece {
+            (other, piece)
+        } else {
+            (piece, other)
+        };
+        let index = pair_index(count, first, second);
+        state.pair_rows[index].violation_mm = 0.0;
+        state.pair_rows[index].contact = EMPTY_CONTACT;
+        if let Ok(at) = state.near[other].binary_search(&(piece as u32)) {
+            state.near[other].remove(at);
+        }
+    }
+    let mut current = previous;
+    current.clear();
     for other in 0..count {
         if other == piece {
             continue;
@@ -233,11 +271,19 @@ pub fn rebuild_piece_rows(
         } else {
             (piece, other)
         };
-        let index = pair_index(count, first, second);
         let (violation, contact) = measure_pair(&state.geometry, first, second, clearance, work);
-        state.pair_rows[index].violation_mm = violation;
-        state.pair_rows[index].contact = contact;
+        if violation > 0.0 {
+            let index = pair_index(count, first, second);
+            state.pair_rows[index].violation_mm = violation;
+            state.pair_rows[index].contact = contact;
+            current.push(other as u32);
+            let insert = state.near[other]
+                .binary_search(&(piece as u32))
+                .unwrap_or_else(|at| at);
+            state.near[other].insert(insert, piece as u32);
+        }
     }
+    state.near[piece] = current;
     state.edge_rows[piece] = measure_edges(
         &state.geometry,
         piece,
@@ -295,10 +341,12 @@ pub fn incident_totals(state: &IcsState, piece: usize) -> (f64, f64) {
     let count = state.poses.len();
     let mut raw = 0.0;
     let mut guided = 0.0;
-    for other in 0..count {
-        if other == piece {
-            continue;
-        }
+    // `near[piece]` is ascending and holds exactly the non-zero rows, so this
+    // visits the same rows in the same order the `0..count` walk did once its
+    // `violation_mm > 0.0` test had thrown the rest away. The sum is therefore
+    // identical bit for bit, not merely equal.
+    for &other in &state.near[piece] {
+        let other = other as usize;
         let (first, second) = if other < piece {
             (other, piece)
         } else {

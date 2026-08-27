@@ -431,6 +431,7 @@ fn state_of(fixture: &Fixture, target: f64) -> (Vec<PieceSource>, Contract, IcsS
         pair_rows: vec![PairRow::default(); pair_count(count)],
         edge_rows: vec![[EdgeRow::default(); 4]; count],
         target_depth_mm: target,
+        near: vec![Vec::new(); count],
     };
     let mut work = WorkVector::default();
     rebuild_all(&mut state, &contract, &mut work);
@@ -979,6 +980,7 @@ fn state_of_poses(
         pair_rows: vec![PairRow::default(); pair_count(count)],
         edge_rows: vec![[EdgeRow::default(); 4]; count],
         target_depth_mm: target,
+        near: vec![Vec::new(); count],
     };
     let mut work = WorkVector::default();
     rebuild_all(&mut state, &contract, &mut work);
@@ -2459,6 +2461,7 @@ fn a_repaired_publication_becomes_the_next_bites_exact_parent() {
         pair_rows: vec![PairRow::default(); pair_count(count)],
         edge_rows: vec![[EdgeRow::default(); 4]; count],
         target_depth_mm: publication.raw_source_depth_mm,
+        near: vec![Vec::new(); count],
     };
     let mut work = WorkVector::default();
     rebuild_all(&mut cold, &contract, &mut work);

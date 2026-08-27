@@ -574,6 +574,7 @@ fn decode_state(input: &mut Decoder<'_>) -> Result<IcsState, String> {
         pair_rows,
         edge_rows,
         target_depth_mm: input.f64()?,
+        near: vec![Vec::new(); count],
     })
 }
 

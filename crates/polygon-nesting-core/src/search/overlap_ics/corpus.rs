@@ -656,6 +656,7 @@ pub fn run(
             pair_rows: vec![PairRow::default(); pair_count(count)],
             edge_rows: vec![[EdgeRow::default(); 4]; count],
             target_depth_mm,
+            near: vec![Vec::new(); count],
         };
         let mut work = WorkVector::default();
         rebuild_all(&mut state, contract, &mut work);

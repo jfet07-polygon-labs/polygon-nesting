@@ -371,6 +371,22 @@ pub struct IcsState {
     pub edge_rows: Vec<[EdgeRow; 4]>,
     /// The locked strip depth this state is being descended into.
     pub target_depth_mm: f64,
+    /// **The near set: for each piece, the others whose pair row with it is
+    /// non-zero, ascending.**
+    ///
+    /// It is a pure index over `pair_rows` and changes no value in it. The
+    /// invariant is `other in near[piece]` if and only if
+    /// `pair_rows[pair_index(piece, other)].violation_mm > 0.0`, maintained
+    /// symmetrically at the only two sites that write a violation:
+    /// `energy::rebuild_all` and `energy::rebuild_piece_rows`. Every other
+    /// writer touches `weight` alone, which the invariant does not mention.
+    ///
+    /// It exists because the evaluation-cost bench measured
+    /// `rebuild_piece_rows`' walk over all `n-1` others - 60 box tests and 60
+    /// scattered writes into a 100 kB triangular array - at about 445 ns of a
+    /// 740 ns evaluation, and `incident_totals` folds the same `n-1` rows
+    /// again. Both already skip zero rows; this lets them skip *reaching* them.
+    pub near: Vec<Vec<u32>>,
 }
 
 /// The protected exact incumbent: the only quality series this engine reports.

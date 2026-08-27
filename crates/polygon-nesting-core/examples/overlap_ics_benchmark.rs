@@ -3562,7 +3562,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             transform_piece(&engine.sources, &mut engine.state.geometry,
                             &engine.state.poses, piece);
 
+            // **Box tests without the row writes.** `rebuild_piece_rows` does
+            // two things per other piece: a cheap box test, and a scattered
+            // write into the triangular `pair_rows` array - 1,830 rows, about
+            // 100 kB, indexed by `pair_index`. This times the tests alone, so
+            // the two are told apart before anything is redesigned around the
+            // wrong one.
+            let count = engine.state.poses.len();
+            let clearance = contract.pair_clearance_mm();
+            let started = std::time::Instant::now();
+            let mut near_count = 0u64;
+            for step in 0..rounds {
+                engine.state.poses[piece].tx_mm = base.tx_mm + (step % 7) as f64 * 1e-6;
+                transform_piece(&engine.sources, &mut engine.state.geometry,
+                                &engine.state.poses, piece);
+                let mine = engine.state.geometry.piece_bounds[piece];
+                for other in 0..count {
+                    if other != piece
+                        && polygon_nesting_core::search::overlap_ics::broad_phase::pair_is_near(
+                            mine,
+                            engine.state.geometry.piece_bounds[other],
+                            clearance,
+                        )
+                    {
+                        near_count += 1;
+                    }
+                }
+            }
+            let box_tests_ns = started.elapsed().as_nanos() as f64 / rounds as f64;
+            engine.state.poses[piece] = base;
+            transform_piece(&engine.sources, &mut engine.state.geometry,
+                            &engine.state.poses, piece);
+
             document["evalCost"] = json!({
+                "boxTestsOnlyNs": box_tests_ns - transform_ns,
+                "nearPerRound": near_count as f64 / rounds as f64,
                 "rounds": rounds,
                 "piece": piece,
                 "transformNs": transform_ns,

@@ -105,3 +105,56 @@ target/release/examples/overlap_ics_benchmark --cell=evalcost \
     --request=tests/fixtures/mixed-61/mixed61-request-exact-clearance.json \
     --edge=5 --pair=5 --orders=1 --seed=0 --rounds=300000 --piece=20
 ```
+
+---
+
+# The near set: implemented, bit-identical, and much smaller than the bench promised
+
+`IcsState` now carries `near: Vec<Vec<u32>>` - for each piece, the others whose
+pair row with it is non-zero, ascending. The invariant is maintained at the only
+two sites that write a violation, `rebuild_all` and `rebuild_piece_rows`; every
+other writer touches `weight` alone. `rebuild_piece_rows` zeroes only the rows it
+owned and writes only the rows that survive, and `incident_totals` folds
+`near[piece]` instead of walking all `n-1`.
+
+**It is exact, not approximately exact.** Both functions already skipped zero
+rows, so visiting the same non-zero rows in the same ascending order gives the
+same sum bit for bit. Verified against the frozen pre-change binary on three
+fixed-work cells, whole documents with the wall stripped:
+
+| seed | frozen | near set | document digest |
+| ---: | ---: | ---: | --- |
+| 0 | 178.849978 | 178.849978 | **identical** |
+| 3 | 178.829998 | 178.829998 | **identical** |
+| 7 | 179.036238 | 179.036238 | **identical** |
+
+839 `overlap-ics` unit tests and 1,104 workspace tests pass.
+
+## And the honest number
+
+On the bench it looks excellent - 1.63x, 1.81x, 1.48x on pieces 0, 5 and 40, and
+1.08x on the crowded piece 20. In the real ten-second search it is **1.044x**:
+
+| | master iterations / s | median | best | under-bar |
+| --- | ---: | ---: | ---: | --- |
+| frozen | 136.7 | 167.687 | 163.440 | 6, 6, 6 |
+| near set | **142.7** | 167.687 | 163.362 | 6, 6, 6 |
+
+Three repetitions, nine seeds, twenty-seven cells per arm. The depth does not
+move at all, which is what a 4 % throughput change should do.
+
+**The bench was measuring the wrong regime, and the gap between 1.7x and 1.04x
+is the finding.** It ran at the constructor's depth, where pieces are sparse and
+the `O(n)` walk really is most of an evaluation. The real search spends its time
+*inside a bite*, where the layout is overlapping and four or more pairs survive
+per candidate - piece 20's regime, where the near set buys 1.08x because the
+cell-by-cell gap queries of the surviving pairs dominate everything else.
+
+So the earlier claim in this file - that the `O(n)` parts are 75 % of an
+evaluation and a near set is worth about 2.5x - is **wrong for the regime that
+matters**. It is true at constructor density and false under the search. The
+correction stands where the claim did.
+
+The near set stays: it is exact, it costs nothing, and it removes a real `O(n)`
+term. But the lever is confirmed to be `convex_cell_gap` on the surviving pairs,
+and that is where the next work goes.

@@ -385,6 +385,7 @@ impl BinaryCloseDecision {
                 pair_rows: vec![PairRow::default(); pair_count(count)],
                 edge_rows: vec![[EdgeRow::default(); 4]; count],
                 target_depth_mm,
+                near: vec![Vec::new(); count],
             };
             field_work.pose_transforms += count as u64;
             energy::rebuild_all(&mut selected_state, contract, &mut field_work);
@@ -718,6 +719,7 @@ pub fn geometry_gate0_vector_report() -> GeometryGate0VectorReport {
         pair_rows: vec![PairRow::default(); pair_count(count)],
         edge_rows: vec![[EdgeRow::default(); 4]; count],
         target_depth_mm: 24.011,
+        near: vec![Vec::new(); count],
     };
     let mut work = WorkVector::default();
     energy::rebuild_all(&mut parent, &contract, &mut work);

@@ -336,6 +336,7 @@ impl<'a> Engine<'a> {
             pair_rows: vec![PairRow::default(); pair_count(count)],
             edge_rows: vec![[state::EdgeRow::default(); 4]; count],
             target_depth_mm: config.target_depth_mm,
+            near: vec![Vec::new(); count],
         };
         let mut trace = Trace::default();
         energy::rebuild_all(&mut state, &contract, &mut trace.work);
