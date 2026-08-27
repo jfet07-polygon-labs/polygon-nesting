@@ -359,3 +359,21 @@ I agree the bar is not softened. I disagree that a mechanical PASS licenses a 10
 What this mechanism can honestly move is the **30 s frozen tail**. Round 4 already passes 7/9 at 30 s; the two unpublished 21-bite cells are seeds 7 and 8, the same seeds that sit on 5,885 in-band / 0 exact calls. That is the lip with thousands of shots and leftover time to cascade. After a Gate 0 PASS, the quality battery is the composed 30 s arm under the standing unsoftened 30 s clauses (median ≤ 163.00461 mm, 7/9 ≤ 168.484 mm, paired gain ≥ 1 mm, zero invalid), **plus** a tail clause that is a tightening, not a softening: seeds 7 and 8 at or below 168.484 mm. 10 s cells are run and reported against 5/9 / median / 168.484. They do not reopen the retired gate, and a 10 s 5/9 miss does not close a 30 s tail conversion.
 
 Gate 0 remains allowed to say NO on the 10 s leftover clock. That clock is where control and Shadow actually differ on `{1,4,5,7,8}` (at 30 s leftover, control already closes 1, 4 and 5, and 3/5 would be vacuous). A 10 s leftover FAIL still means this repair is closed. It does not mean “try the sweep on the same gate.”
+
+---
+
+# Ballot on the frozen specification
+
+Grok returned a single `AMEND` on the same sha256, and it is a soundness
+repair rather than a preference. Verbatim:
+
+**AMEND.** In §4, replace
+
+`paired median gain >= 1.000 mm over the T-repair-off control;`
+
+with
+
+`paired median gain >= 1.000 mm over the Round-4 frozen-member control (the standing pairing), not over T-repair-off;`
+
+Without that replacement the thirty-second battery is unsound as a test of this mechanism. Seeds 7 and 8 are the eighth and ninth of nine; converting both to `168.484 mm` — the movement §0 and §4 themselves name as the claim — leaves the median at the current fifth seed, `162.94241 mm`. Seed 8’s own 60-second cell lands at `167.563 mm`. A 1 mm paired-median demand over T-repair-off therefore fails the honest success of the tail clause. The standing 1 mm is composed versus the frozen member, already `1.232 mm` at this median. Asking it again of this repair over itself-off tests a median promise neither the tail clause nor the ten-second-residual Gate 0 makes.
+

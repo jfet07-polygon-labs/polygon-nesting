@@ -163,3 +163,13 @@ After Gate 0 passes, run a from-request, contemporaneously paired deterministic 
 - zero invalid publications and all plan/charge identities green.
 
 Those preserve the standing 30-second clauses [deterministic-30s-round-spec.md:105](</var/lib/t3/worktrees/polygon-nesting/t3code-ae6e3e8a/docs/deterministic-30s-round-spec.md:105>) and add a causal tail tightening. The 10-second column is run and reported against its old unsoftened numbers, but carries no verdict. If the 30-second gate misses, T-repair closes; it does not reopen the sweep, patience constants, tracker rebase, or the retired 10-second chase.
+---
+
+# Ballot on the frozen specification
+
+Sol returned, on sha256 `06054148b294309498823f3a29e4e801478b1e4c5cba2baff85ba8496c5975f7`:
+
+> **CONFIRM.** I read the complete file identified by its sha256, checked it
+> against my own round-2 text, the census evidence, and the five resolutions
+> above, and I confirm it without reservation or hidden amendment.
+

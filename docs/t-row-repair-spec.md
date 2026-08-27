@@ -1,6 +1,10 @@
 # The T-row repair — immutable specification
 
-**Status: signed by two of three. Sol (Codex, `model_reasoning_effort="max"`)
+**Status: signed by two of three, after one amendment.** Sol returned
+`CONFIRM` on sha256 `06054148...`; Grok returned a single `AMEND` on §4, which is
+folded in below and recorded there with its reasoning. The amendment was made
+before any measurement was taken and repairs a clause that would have failed a
+complete success; it is not a clause moved to rescue a miss. **Two of three. Sol (Codex, `model_reasoning_effort="max"`)
 and Grok (`--reasoning-effort xhigh`) converged after one cross-exchange, on
 the same mechanism, having entered it with two different ones. ox-alpha could
 not vote: the provider returns `UnknownError` on a two-word prompt via both
@@ -144,7 +148,8 @@ battery. PASS requires all of:
 
 - median `<= 163.00461 mm`;
 - at least 7 of 9 at or below `168.484 mm`;
-- paired median gain `>= 1.000 mm` over the T-repair-off control;
+- paired median gain `>= 1.000 mm` over the Round-4 frozen-member control (the
+  standing pairing), **not** over T-repair-off;
 - **seeds 7 and 8 individually at or below `168.484 mm`** — a causal tail
   tightening, not a softening;
 - zero invalid publications, every publication independently revalidated, all
@@ -152,6 +157,19 @@ battery. PASS requires all of:
 
 The first three and the last are the standing Round-4 clauses, unchanged. The
 fourth is added because it is the clause this mechanism claims to move.
+
+**Amendment, Grok's ballot, folded in before any measurement was taken.** The
+first draft of this section demanded the 1 mm paired median gain *over
+T-repair-off*, and that clause was unsound as a test of this mechanism. Seeds 7
+and 8 are the eighth and ninth of nine. Converting both to `168.484 mm` — the
+movement §0 and §4 themselves name as the claim — changes the sorted list only
+at positions 8 and 9 and leaves the median at the current fifth value,
+`162.94241 mm`, for a paired median gain of **0.000 mm**. The gate would have
+failed an honest and complete success. The standing 1 mm is composed against
+the frozen member and already reads `1.23247 mm` at this median; asking it again
+of the repair against itself-off tests a median promise that neither the tail
+clause nor the ten-second-residual Gate 0 makes. This is a soundness repair made
+before any number existed, not a clause moved to rescue a miss.
 
 The 3-, 10- and 60-second columns are run and reported. They carry no verdict.
 
