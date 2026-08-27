@@ -426,14 +426,45 @@ is the number being asked for.
 | 10 s | **50** (70 close) | 15/25/35 clearly worse, 150 passes 2 of 5 reps |
 | 30 s | **100** | 25/50 also 9/9, 200 and 400 worse on median and best |
 
-Budget triples, optimum roughly doubles. The growth is **sub-linear**, and
-`cap ≈ 16·sqrt(seconds)` fits both points - 50.6 at ten seconds, 87.6 at thirty
-- as does a shallow linear rule. **Two informative budgets are not enough to
-choose between them, and this file does not choose.** What the measurement does
-settle is the *shape*: the cap must scale with the budget rather than be a
-constant, which is exactly the objection Part One was open to, and it is
-answered by evidence rather than by taste.
+Budget triples, optimum roughly doubles, so a sub-linear rule looked likely:
+`cap ~ 16*sqrt(seconds)` fits both points - 50.6 at ten seconds, 87.6 at thirty
+- as does a shallow linear rule. A third budget was run specifically to
+discriminate them, at five seconds, where the two rules predict **36** and
+**25**.
 
-The practical reading, stated as such: `50` at ten seconds and `100` at thirty,
-both measured and both reproduced, with a derived rule still owed a third
-budget.
+**Both predictions are falsified.** Three repetitions, nine seeds
+(`evidence/five-second/`):
+
+| cap | median of medians | best ever | under-bar per rep |
+| ---: | ---: | ---: | --- |
+| 15 | 175.099 | 173.443 | 0, 0, 0 |
+| **25** (linear rule's prediction) | 179.010 | 169.795 | 0, 0, 0 |
+| **36** (sqrt rule's prediction) | 173.249 | 169.184 | 0, 0, 0 |
+| 50 | 173.957 | **164.025** | **2, 2, 2** |
+| **70** | **171.866** | 166.741 | 1, 1, 1 |
+
+Neither predicted value wins on any column. The five-second optimum is 50-70 -
+the same as ten seconds or wider, not narrower. **The optimum is not a simple
+function of the budget on this evidence**, and the two rules that fitted two
+points are dead as soon as a third is measured. Written down here because
+falsifying my own candidate rule is the point of running the third budget.
+
+What survives is weaker and more useful:
+
+- **The catastrophic case is no bound at all.** That is the finding, and it is
+  not close: 2/9 five times of five at ten seconds, 7/9 at thirty with the tail
+  pinned at 179.
+- **A fixed cap anywhere in 50-100 works across a six-fold budget range** -
+  5 s, 10 s and 30 s - and both ends of that band are measured at every budget.
+- Below about 35 and above about 200 it is worse everywhere it was measured.
+
+So the honest engineering answer is a band rather than a formula: **50 at ten
+seconds, 100 at thirty, and nothing outside 50-100 justified by this evidence**.
+A derived rule would need a mechanism, not another fit; three points have now
+refused two fits.
+
+One more reading worth keeping: at **five** seconds the bounded engine returns a
+best of **164.025**, better than the unbounded engine's **165.162** at **ten**.
+Its median is worse - 173.957 against 169.672 - so this is not "twice as fast at
+equal quality", and it is not claimed as such. It is one seed reaching deeper in
+half the time.
