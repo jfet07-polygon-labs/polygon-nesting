@@ -8,13 +8,13 @@
 //! directional field, and rounding a continuous broad phase to 1 µm would put
 //! quantization inside the move loop.
 
-use super::contact::box_gap;
+use super::contact::box_gap_below;
 use super::state::Contract;
 
 /// Whether a pair of boxes can possibly hold material closer than `clearance`.
 #[inline]
 pub fn pair_is_near(first: [f64; 4], second: [f64; 4], clearance: f64) -> bool {
-    box_gap(first, second) < clearance
+    box_gap_below(first, second, clearance)
 }
 
 /// The four boundary residuals of one box, `[left, right, bottom, top]`, each

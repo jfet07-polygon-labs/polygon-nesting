@@ -21,7 +21,9 @@
 //! module's tests is the enforcement.
 
 use super::broad_phase::{boundary_residuals, pair_is_near};
-use super::contact::{box_gap, convex_cell_gap, convex_cell_gap_cached, Contact};
+use super::contact::{
+    box_gap, box_gap_below, convex_cell_gap, convex_cell_gap_cached, Contact, PRUNE_SLACK_MM,
+};
 use super::diagnostics::WorkVector;
 use super::state::{
     pair_index, Contract, EdgeRow, Geometry, IcsState, PairRow, EDGE_BOTTOM, EDGE_LEFT, EDGE_RIGHT,
@@ -49,6 +51,15 @@ const EMPTY_CONTACT: Contact = Contact {
     witness_b: [0.0, 0.0],
 };
 
+/// **The single most executed line in the engine, and the reason it is split.**
+///
+/// A ten-second mixed-61 request runs this 1.7 billion times and 93 % of those
+/// stop at the box proof below. Left as one body the whole thing is far too
+/// large to inline, so every one of those rejects paid a call, a prologue and
+/// an epilogue to do four subtractions. The reject path is now a small
+/// `#[inline]` shell that the row rebuild absorbs, and the cell scan - the
+/// other 7 % - keeps its own frame in [`measure_pair_near`].
+#[inline]
 pub fn measure_pair(
     geometry: &mut Geometry,
     first: usize,
@@ -57,15 +68,27 @@ pub fn measure_pair(
     work: &mut WorkVector,
 ) -> (f64, Contact) {
     work.pair_row_probes += 1;
-    let empty = EMPTY_CONTACT;
     if !pair_is_near(
         geometry.piece_bounds[first],
         geometry.piece_bounds[second],
         clearance_mm,
     ) {
         work.broad_phase_rejects += 1;
-        return (0.0, empty);
+        return (0.0, EMPTY_CONTACT);
     }
+    measure_pair_near(geometry, first, second, clearance_mm, work)
+}
+
+/// [`measure_pair`] past the box proof: the two pieces are known to be near.
+#[inline(never)]
+fn measure_pair_near(
+    geometry: &mut Geometry,
+    first: usize,
+    second: usize,
+    clearance_mm: f64,
+    work: &mut WorkVector,
+) -> (f64, Contact) {
+    let empty = EMPTY_CONTACT;
     let (first_start, first_end) = geometry.piece_cells[first];
     let (second_start, second_end) = geometry.piece_cells[second];
     // The axes of every cell that can matter, computed once for this pose and
@@ -79,30 +102,58 @@ pub fn measure_pair(
     }
     let mut worst = 0.0f64;
     let mut worst_contact = empty;
+    // **The running cut.** A cell pair earns the incumbent only if
+    // `clearance - gap > worst`, so a gap at or above `clearance - worst` is
+    // discarded whatever it is. Handing that number down to the box proof and
+    // to the SAT lets both stop as soon as they can *prove* the answer will be
+    // discarded, and it tightens with every violation the scan finds.
+    let mut cut_mm = clearance_mm;
     for a in first_start..first_end {
         for b in second_start..second_end {
             // The cell-level box proof, for the nonconvex pieces whose cells
             // are triangles: most triangle pairs of two adjacent decagons
             // cannot reach the clearance and never become a query.
             work.cell_pair_box_tests += 1;
-            if box_gap(geometry.cell_bounds[a], geometry.cell_bounds[b]) >= clearance_mm {
+            // `box_gap` is clamped at zero, so it proves a *distance* and says
+            // nothing about penetration: it may only be read against a positive
+            // cut. Once an overlap has set `worst` past the clearance the cut
+            // goes negative and the threshold correctly falls back to the
+            // clearance alone.
+            let threshold = if cut_mm > 0.0 {
+                clearance_mm.min(cut_mm + PRUNE_SLACK_MM)
+            } else {
+                clearance_mm
+            };
+            if !box_gap_below(geometry.cell_bounds[a], geometry.cell_bounds[b], threshold) {
                 continue;
             }
             work.convex_cell_gap_queries += 1;
             let (a_axes, a_own) = geometry.cell_axes_slice(a);
             let (b_axes, b_own) = geometry.cell_axes_slice(b);
-            let contact = convex_cell_gap_cached(
+            let Some(contact) = convex_cell_gap_cached(
                 geometry.cell_slice(a),
                 a_axes,
                 a_own,
                 geometry.cell_slice(b),
                 b_axes,
                 b_own,
-            );
+                cut_mm,
+            ) else {
+                work.sat_separated_calls += 1;
+                work.sat_discarded_calls += 1;
+                continue;
+            };
+            if contact.signed_gap_mm >= 0.0 {
+                work.sat_separated_calls += 1;
+            }
+            if contact.signed_gap_mm >= clearance_mm {
+                work.sat_discarded_calls += 1;
+            }
             let violation = clearance_mm - contact.signed_gap_mm;
             if violation > worst {
                 worst = violation;
                 worst_contact = contact;
+                cut_mm = clearance_mm - worst;
             }
         }
     }

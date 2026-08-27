@@ -41,6 +41,15 @@ pub struct WorkVector {
     /// this is the number that says whether that is the cell scan or the SAT
     /// inside it.
     pub cell_pair_box_tests: u64,
+    /// Of the `convex_cell_gap_queries`, how many ended on the **separated**
+    /// branch and therefore paid the `O(|a| * |b|)` `closest_feature` segment
+    /// scan rather than stopping inside the axis loop.
+    pub sat_separated_calls: u64,
+    /// Of the `convex_cell_gap_queries`, how many returned a gap at or above
+    /// the pair clearance. Their answer cannot beat any `worst >= 0`, so the
+    /// exact query was pure waste: this is the size of the prize a separating
+    /// axis prune can take, and nothing else in the vector measures it.
+    pub sat_discarded_calls: u64,
     pub pose_transforms: u64,
     /// Vestigial: candidates of the retired topology jump. Always zero under
     /// `CutCloseRelocate`.
@@ -114,6 +123,12 @@ impl WorkVector {
             cell_pair_box_tests: self
                 .cell_pair_box_tests
                 .saturating_sub(earlier.cell_pair_box_tests),
+            sat_separated_calls: self
+                .sat_separated_calls
+                .saturating_sub(earlier.sat_separated_calls),
+            sat_discarded_calls: self
+                .sat_discarded_calls
+                .saturating_sub(earlier.sat_discarded_calls),
             pose_transforms: self.pose_transforms.saturating_sub(earlier.pose_transforms),
             jump_proposals: self.jump_proposals.saturating_sub(earlier.jump_proposals),
             exact_checkpoints: self
@@ -155,6 +170,8 @@ impl WorkVector {
         self.pair_row_probes += other.pair_row_probes;
         self.convex_cell_gap_queries += other.convex_cell_gap_queries;
         self.cell_pair_box_tests += other.cell_pair_box_tests;
+        self.sat_separated_calls += other.sat_separated_calls;
+        self.sat_discarded_calls += other.sat_discarded_calls;
         self.pose_transforms += other.pose_transforms;
         self.jump_proposals += other.jump_proposals;
         self.exact_checkpoints += other.exact_checkpoints;
@@ -201,6 +218,8 @@ impl WorkVector {
         map.insert("pairRowProbes", self.pair_row_probes);
         map.insert("convexCellGapQueries", self.convex_cell_gap_queries);
         map.insert("cellPairBoxTests", self.cell_pair_box_tests);
+        map.insert("satSeparatedCalls", self.sat_separated_calls);
+        map.insert("satDiscardedCalls", self.sat_discarded_calls);
         map.insert("poseTransforms", self.pose_transforms);
         map.insert("jumpProposals", self.jump_proposals);
         map.insert("exactCheckpoints", self.exact_checkpoints);

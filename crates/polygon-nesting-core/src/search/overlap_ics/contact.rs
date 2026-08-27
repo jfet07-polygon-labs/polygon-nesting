@@ -63,6 +63,39 @@ pub fn box_gap(a: [f64; 4], b: [f64; 4]) -> f64 {
     libm::hypot(dx, dy)
 }
 
+/// `box_gap(a, b) < threshold`, decided without the `hypot` wherever one leg
+/// already settles it.
+///
+/// **This is the same predicate, not an approximation of it.** For
+/// non-negative legs `hypot(dx, dy) >= max(dx, dy)` exactly, and `hypot` is
+/// correctly rounded, so a leg at or above the threshold proves the gap is
+/// too - no rounding can reverse it. `hypot(0, dy)` is exactly `dy`, so a zero
+/// leg settles it as well. Only a pair whose two legs are both strictly inside
+/// the threshold, the corner annulus, still pays for the square root.
+///
+/// The reason it is worth its own function: the pair broad phase is the single
+/// most executed line in the engine - a ten-second mixed-61 request runs it
+/// 1.7 billion times and rejects 93 % - and on a strip layout the rejects are
+/// overwhelmingly *far in one axis*, which is the branch that now returns
+/// before the second leg is even computed.
+#[inline]
+pub fn box_gap_below(a: [f64; 4], b: [f64; 4], threshold: f64) -> bool {
+    let dx = (b[0] - a[2]).max(a[0] - b[2]).max(0.0);
+    if dx >= threshold {
+        return false;
+    }
+    let dy = (b[1] - a[3]).max(a[1] - b[3]).max(0.0);
+    if dy >= threshold {
+        return false;
+    }
+    // Both legs are below the threshold. A zero leg makes the hypotenuse the
+    // other leg exactly, which the two tests above have already accepted.
+    if dx == 0.0 || dy == 0.0 {
+        return true;
+    }
+    libm::hypot(dx, dy) < threshold
+}
+
 /// The axis-aligned box `[min x, min y, max x, max y]` of a point run.
 #[inline]
 pub fn bounds(points: &[[f64; 2]]) -> [f64; 4] {
@@ -115,6 +148,44 @@ fn support(points: &[[f64; 2]], axis: [f64; 2]) -> [f64; 2] {
 /// function would have computed, and the cached own-interval is the same
 /// `project` of the same points on it. A zero axis marks the degenerate edge
 /// the uncached path skips with `continue`.
+/// The absolute slack, in millimetres, that turns a rounded lower bound into a
+/// **proof**.
+///
+/// Every bound this module prunes on - a projection interval gap, a box gap -
+/// is computed in `f64` from coordinates the contract quantises to the
+/// micrometre. Each carries at most a handful of roundings on values no larger
+/// than the sheet, so its absolute error is under `1e-12 mm`. Requiring the
+/// bound to clear the cut by `1e-9 mm` is therefore a genuine proof with three
+/// orders of magnitude to spare, and it costs nothing: it only declines to
+/// prune a pair whose gap sits within a nanometre of the cut, and the contract
+/// cannot distinguish those from the cut itself.
+pub const PRUNE_SLACK_MM: f64 = 1e-9;
+
+/// [`convex_cell_gap`] with both cells' axes and own-projections supplied, and
+/// with the caller's **cut**: the gap at or above which the answer is thrown
+/// away.
+///
+/// Identical arithmetic to the uncached spelling: the caller's cached axis is
+/// the same `f64` pair this function would have computed, and the cached
+/// own-interval is the same `project` of the same points on it. A zero axis
+/// marks the degenerate edge the uncached path skips with `continue`.
+///
+/// **The cut is what makes it cheaper, not just tidier.** On the separated
+/// branch the exact answer costs an `O(|a| * |b|)` segment scan, and on this
+/// campaign's population 38 % of all queries spend it to return a gap the
+/// caller then discards for being at or above the pair clearance. Every unit
+/// axis carries a lower bound on the true distance - the gap between the two
+/// projected intervals - so the scan of the axes that is already happening can
+/// often *prove* the answer will be discarded. When it does, `None` comes back
+/// and the segment scan never runs.
+///
+/// Two details keep the surviving answers bit-identical to the unpruned ones:
+///
+/// 1. the separating axis no longer ends the loop, because a later axis may
+///    carry a stronger bound - but `touch_axis` still records the **first**
+///    one, which is the only thing `finish_gap` reads from that loop; and
+/// 2. the bound must clear the cut by [`PRUNE_SLACK_MM`], so no pair is pruned
+///    whose exact answer could have been kept.
 pub fn convex_cell_gap_cached(
     a: &[[f64; 2]],
     a_axes: &[[f64; 2]],
@@ -122,13 +193,15 @@ pub fn convex_cell_gap_cached(
     b: &[[f64; 2]],
     b_axes: &[[f64; 2]],
     b_own: &[[f64; 2]],
-) -> Contact {
+    cut_mm: f64,
+) -> Option<Contact> {
     debug_assert!(a.len() >= 3 && b.len() >= 3);
+    let prune_at = cut_mm + PRUNE_SLACK_MM;
     let mut best_depth = f64::INFINITY;
     let mut best_axis = [0.0f64, 0.0];
     let mut separated = false;
     let mut touch_axis = [0.0f64, 0.0];
-    'axes: for source in 0..2 {
+    for source in 0..2 {
         let (axes, own, count) = if source == 0 {
             (a_axes, a_own, a.len())
         } else {
@@ -150,13 +223,30 @@ pub fn convex_cell_gap_cached(
             let move_positive = b_high - a_low;
             let move_negative = a_high - b_low;
             if move_positive <= 0.0 || move_negative <= 0.0 {
-                separated = true;
-                touch_axis = if move_positive <= 0.0 {
-                    axis
+                // The interval gap on a unit axis is a lower bound on the
+                // distance between the cells.
+                let separation = if move_positive <= 0.0 {
+                    -move_positive
                 } else {
-                    [-axis[0], -axis[1]]
+                    -move_negative
                 };
-                break 'axes;
+                if separation >= prune_at {
+                    return None;
+                }
+                if !separated {
+                    separated = true;
+                    touch_axis = if move_positive <= 0.0 {
+                        axis
+                    } else {
+                        [-axis[0], -axis[1]]
+                    };
+                }
+                continue;
+            }
+            if separated {
+                // Already proven disjoint; the overlap bookkeeping below is
+                // dead and only a stronger separation bound is still wanted.
+                continue;
             }
             let (depth, signed_axis) = if move_negative <= move_positive {
                 (move_negative, [-axis[0], -axis[1]])
@@ -169,7 +259,15 @@ pub fn convex_cell_gap_cached(
             }
         }
     }
-    finish_gap(a, b, separated, best_depth, best_axis, touch_axis)
+    Some(finish_gap(
+        a,
+        b,
+        separated,
+        best_depth,
+        best_axis,
+        touch_axis,
+        cut_mm,
+    ))
 }
 
 pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
@@ -223,7 +321,15 @@ pub fn convex_cell_gap(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
             }
         }
     }
-    finish_gap(a, b, separated, best_depth, best_axis, touch_axis)
+    finish_gap(
+        a,
+        b,
+        separated,
+        best_depth,
+        best_axis,
+        touch_axis,
+        f64::INFINITY,
+    )
 }
 
 /// The shared tail of both spellings of the streamed SAT.
@@ -234,6 +340,7 @@ fn finish_gap(
     best_depth: f64,
     best_axis: [f64; 2],
     touch_axis: [f64; 2],
+    cut_mm: f64,
 ) -> Contact {
     if !separated && best_depth.is_finite() {
         let witness_a = support(a, [-best_axis[0], -best_axis[1]]);
@@ -245,7 +352,7 @@ fn finish_gap(
             witness_b,
         };
     }
-    let mut contact = closest_feature(a, b);
+    let mut contact = closest_feature(a, b, cut_mm);
     if contact.normal == [0.0, 0.0] {
         // **Exact material contact keeps the SAT axis.** At `distance == 0` the
         // witness difference is the zero vector and `closest_feature` has no
@@ -278,23 +385,56 @@ fn finish_gap(
 /// `O(|a| * |b|)` segment pairs, which on this campaign's population is at most
 /// `10 * 10`: mixed-61's rings are 3, 4, 6 and 10 vertices and every nonconvex
 /// one is decomposed into triangles.
-fn closest_feature(a: &[[f64; 2]], b: &[[f64; 2]]) -> Contact {
+fn closest_feature(a: &[[f64; 2]], b: &[[f64; 2]], cut_mm: f64) -> Contact {
     let mut best = f64::INFINITY;
     let mut witness_a = a[0];
     let mut witness_b = b[0];
+    // **The scan keeps its order and its strict `<`, and only skips pairs it
+    // has proven cannot beat the incumbent.** `hypot(dx, dy) >= dx.max(dy)`
+    // for non-negative legs, so the larger box-gap leg of a segment pair is a
+    // lower bound on that pair's distance - two subtractions and two maxima,
+    // against a `segment_distance` that costs divisions and a `hypot`.
+    //
+    // `bar` starts at the caller's cut because a distance at or above it is
+    // discarded anyway, so the very first pairs are already pruned against a
+    // real threshold rather than against infinity.
+    let mut bar = cut_mm;
     for first in 0..a.len() {
         let a0 = a[first];
         let a1 = a[(first + 1) % a.len()];
+        let (ax_low, ax_high) = if a0[0] < a1[0] { (a0[0], a1[0]) } else { (a1[0], a0[0]) };
+        let (ay_low, ay_high) = if a0[1] < a1[1] { (a0[1], a1[1]) } else { (a1[1], a0[1]) };
         for second in 0..b.len() {
             let b0 = b[second];
             let b1 = b[(second + 1) % b.len()];
+            let (bx_low, bx_high) = if b0[0] < b1[0] { (b0[0], b1[0]) } else { (b1[0], b0[0]) };
+            let (by_low, by_high) = if b0[1] < b1[1] { (b0[1], b1[1]) } else { (b1[1], b0[1]) };
+            let dx = (bx_low - ax_high).max(ax_low - bx_high);
+            let dy = (by_low - ay_high).max(ay_low - by_high);
+            if dx.max(dy) >= bar + PRUNE_SLACK_MM {
+                continue;
+            }
             let (distance, pa, pb) = segment_distance(a0, a1, b0, b1);
             if distance < best {
                 best = distance;
+                bar = best;
                 witness_a = pa;
                 witness_b = pb;
             }
         }
+    }
+    if !best.is_finite() {
+        // Every pair was pruned against the caller's cut, which proves the
+        // exact distance is above it and the caller discards the contact
+        // whatever it holds. An infinite gap is the value that cannot be
+        // mistaken for a real one by any caller's threshold, and it is exactly
+        // what the empty pair row already carries.
+        return Contact {
+            signed_gap_mm: f64::INFINITY,
+            normal: [0.0, 0.0],
+            witness_a,
+            witness_b,
+        };
     }
     let (dx, dy) = (witness_a[0] - witness_b[0], witness_a[1] - witness_b[1]);
     let length = libm::hypot(dx, dy);
