@@ -270,3 +270,75 @@ the tail and cost a little at the very top.
 
 This is the clause Round 4 could not reach and the clause the T-row
 specification was written for and failed to move.
+
+---
+
+# Part three: the shrink step, and where the day ends
+
+## The step is the one Sparrow got right
+
+`EXPLORE_SHRINK_STEP = 0.001` is Sparrow `config.rs`'s `shrink_step`, the third
+Table 1 value in this file. Three repetitions, nine seeds, ten seconds, at
+`cap = 50, ratio = 0.95` (`evidence/shrink-step/`):
+
+| step | median of medians | best ever | under-bar per rep | both clauses |
+| ---: | ---: | ---: | --- | :---: |
+| **0.0007** | 167.737 | 163.699 | **7, 7, 7** | 3/3 |
+| **0.0010** (Sparrow) | **167.687** | **163.487** | 6, 6, 6 | 3/3 |
+| 0.0015 | 167.782 | 165.175 | **7, 7, 7** | 3/3 |
+| 0.0020 | 168.222 | 165.387 | 5, 5 | 2/2 |
+
+Unlike the other two, this one is nearly flat, and Sparrow's value holds the
+best median and the best best. The only thing that moves is the *count*:
+`0.0007` and `0.0015` each put one more seed under the bar than `0.0010` does,
+on every repetition. So it is a real trade and a small one - **0.05 mm of median
+for one seed** - and it is reported as such rather than claimed as a win.
+
+`0.0020` is the first setting that clearly loses: 41 bites instead of 87, and
+each one a bigger shock than a 50-iteration separation can absorb.
+
+## Where the day ends
+
+Ten seconds, mixed-61, nine seeds, three repetitions of the tuned arm and five
+of the base:
+
+| | median | best | under 168.484 |
+| --- | ---: | ---: | ---: |
+| the engine this morning | 169.672 | 165.162 | **2/9**, five of five |
+| `cap = 50, ratio = 0.95` | 167.687 | **163.487** | 6/9, three of three |
+| `cap = 50, ratio = 0.95, step = 0.0007` | 167.737 | 163.699 | **7/9**, three of three |
+
+Thirty seconds, two repetitions each (`evidence/full-config-30s/`):
+
+| | median | best | under 168.484 | seed 7 | seed 8 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| base | 164.005 | 160.573 | **7/9** | 179.082 | 179.082 |
+| tuned, step 0.0010 | 164.001 | 160.849 | **9/9** | 161.904 | 164.001 |
+| tuned, step 0.0007 | 164.000 | **161.017** | **9/9** | **161.017** | 164.951 |
+
+**Seed 7 was the worst of nine at 179.082 this morning. At thirty seconds it is
+now the best of nine at 161.017**, on both repetitions.
+
+## Regression floor
+
+Fresh build, everything above compiled in and every default preserved:
+
+- four pinned regression gates: **4/4, `ALL_PASS: true`**;
+- default workspace suite: **1,104 passed, 0 failed**;
+- `overlap-ics` suite: **839 passed, 0 failed**.
+
+Every knob added here defaults to the historical behaviour - `itercap = 0` is
+unbounded, `exploreratio` defaults to `EXPLORE_TIME_RATIO`, `shrinkstep = 0`
+means `EXPLORE_SHRINK_STEP` - so a build or a run that does not name them takes
+exactly the path it always took.
+
+## What is still true
+
+- **None of this is a signed gate.** No specification was pre-committed, no
+  quorum has ruled, and three constants were chosen by sweeping.
+- **`50` and `0.95` are swept, not derived.** Curing a constant that failed to
+  scale with another constant is the same disease one level down. The honest
+  form is budget-derived, and that is the next piece of work, not a claim here.
+- **Sparrow is still ahead.** 150.165 at ten seconds against 163.699. The
+  distance did not fall today. What fell is the belief that a wall stood in
+  front of it, and a "permanent" retirement decided on a wrong diagnosis.
