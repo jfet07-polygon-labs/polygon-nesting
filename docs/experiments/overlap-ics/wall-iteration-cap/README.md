@@ -170,3 +170,79 @@ is one repetition so far.
 The honest form of the knob is almost certainly budget-derived rather than
 constant, precisely because the defect it repairs is a constant that did not
 scale. That is the next thing to establish, not something to assert here.
+
+---
+
+# Part two: the cap has an optimum, and it is not the only twenty-minute constant
+
+## What the cap actually buys
+
+Medians over 45 cells per arm, ten seconds, mixed-61:
+
+| cap | explore bites | retry attempts | **disruptions** | strikes |
+| --- | ---: | ---: | ---: | ---: |
+| **none** | 36 | **3** | **1** | 2 |
+| 50 | **79** | **23** | **14** | 0 |
+| 150 | 72 | 17 | 11 | 0 |
+
+**Under the closed member, Algorithm 12 fires once in a whole ten-second run.**
+The two-large-item swap this campaign implemented from the paper, whose strike
+predicate it found and repaired with red-to-green evidence, and whose behaviour
+it verified cell by cell, gets a single turn at the production budget. With the
+cap it gets fourteen.
+
+Strikes fall to zero because the cap (50) acts below the no-improvement limit
+(200): the separation now ends on the bound rather than on the strike counter.
+At ten seconds the frozen `200 / 3` is not being fought, it is being reached
+by a bound that acts first.
+
+## The cap has a real optimum
+
+Three repetitions per cap, nine seeds each (`evidence/cap-refinement/`):
+
+| cap | median of medians | under-bar per rep | both clauses |
+| ---: | ---: | --- | :---: |
+| 15 | 171.652 | 1, 1, 1 | 0/3 |
+| 25 | 171.264 | 2, 2, 2 | 0/3 |
+| 35 | 169.097 | 4, 4, 4 | 0/3 |
+| **50** | **168.230** | **5, 6** | **2/2** |
+| 70 | 168.361 | 5, 5 | 2/2 |
+| 150 | 168.678 | 5, 4, 4, 5, 4 | 2/5 |
+
+Monotone up to about 50 and flat-to-worse after. This is a genuine trade and not
+a free parameter: too short and a separation accomplishes nothing before it is
+cut, too long and the restart never happens. `50` is the measured optimum.
+
+## The 80/20 split is the same kind of constant
+
+`DEFAULT_EXPLORE_TIME_RATIO = 0.8` is Sparrow `consts.rs` and Table 1, tuned for
+twenty minutes. At ten seconds it hands 20 % of the budget to a phase whose
+steps are 0.05 % decaying to 0.001 %, against explore's flat 0.1 % - on a layout
+with 48 mm of certified headroom still ahead of it. That is polishing something
+that is nowhere near finished.
+
+Three repetitions, nine seeds, `cap = 50` (`evidence/explore-ratio/`):
+
+| ratio | median of medians | best ever | under-bar per rep | both clauses |
+| ---: | ---: | ---: | --- | :---: |
+| **0.80** (Sparrow) | 168.387 | 164.002 | 6, 5, 5 | 3/3 |
+| 0.90 | 167.906 | 163.602 | 5, 5, 5 | 3/3 |
+| **0.95** | **167.603** | **163.400** | **6, 6, 6** | **3/3** |
+| 1.00 | 167.687 | 163.696 | 6, 6 | 2/2 |
+
+`0.95` wins on every column. Note that `1.00` - no compress phase at all - is
+slightly *worse* than `0.95`, so the compress phase does earn its keep at ten
+seconds; it just does not earn a fifth of the budget.
+
+## Where ten seconds stands now
+
+| | median | best | under 168.484 |
+| --- | ---: | ---: | ---: |
+| this morning's engine | 169.672 | 165.162 | **2/9**, five times of five |
+| `cap = 50`, `ratio = 0.95` | **167.603** | **163.400** | **6/9**, three times of three |
+
+**-2.07 mm of median and 2/9 to 6/9**, from two bounds that were never wrong -
+they were simply inherited from a twenty-minute schedule and applied to ten
+seconds without anyone asking whether they still meant the same thing.
+
+Round 4's own ten-second best was 165.42489. This reads **163.400**.

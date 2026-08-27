@@ -2584,6 +2584,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 capture_first_pool_retry_checkpoint: options.get("checkpointout").is_some(),
                 #[cfg(feature = "pool-retry-tracker-rebase")]
                 record_pool_rebase_timing: options.integer("poolrebasetiming", 0)? != 0,
+                // **The explore/compress split, exposed rather than changed.**
+                // `ScheduleConfig::default()` is Sparrow's 0.8, which
+                // `consts.rs` sets and the paper's Table 1 tuned for
+                // twenty-minute runs. At ten seconds it hands 20 % of the
+                // budget to a phase whose steps are 0.05 % decaying to 0.001 %,
+                // against explore's flat 0.1 %. Whether that is the right
+                // division at this budget is a measurement, and this flag is
+                // how it gets measured. The default is unchanged.
+                explore_time_ratio: options
+                    .number("exploreratio", homotopy::EXPLORE_TIME_RATIO)?,
                 ..ScheduleConfig::default()
             };
             #[cfg(feature = "pool-retry-tracker-rebase")]

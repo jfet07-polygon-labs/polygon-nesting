@@ -20,7 +20,15 @@
   "twoRMicron": 5000.0
  },
  "executableSha256": "72b5900b2b239274743692e198761823cb0668bd7b81bfbcae1334436c6dba33",
+ "lowerScaleMm": null,
  "outcome": {
+  "biteTotals": {
+   "attempts": 0,
+   "biteRecords": 0,
+   "disruptions": 0,
+   "masterIterations": 0,
+   "strikes": 0
+  },
   "compressBites": 50,
   "depthMm": 168.14851073218261,
   "exploreBites": 77,
