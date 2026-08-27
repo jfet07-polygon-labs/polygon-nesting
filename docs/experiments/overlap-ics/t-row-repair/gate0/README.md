@@ -102,3 +102,20 @@ is licensed and that a bounded-step or 16 um-per-row repair would be a packing
 legalizer this repair exists to refuse. That divergence is a new round's
 business. The 37 wall-run conversions and seed 4's escape do not re-aim this
 gate afterwards, and the ten-second gate stays retired.
+
+## Regression floor at the verdict
+
+Fresh build, after the T-row is compiled in and switched off by default:
+
+- four pinned regression gates: **4/4 reproduce**, `ALL_PASS: true`;
+- default workspace suite: **1,104 passed, 0 failed**;
+- `overlap-ics` suite with and without `t-row-repair`: **839 passed, 0 failed**
+  each.
+
+One honest note about the first run of the workspace suite: it stopped at
+`search::layout_scorer::tests::free_material_multi_eviction_shrinks_retained_container_capacity`,
+whose assertion is `cache.entries.capacity() < entries_capacity_before`. That
+test passes three times out of three in isolation and the suite is green on a
+re-run; it is an allocator-capacity assertion that is sensitive to parallel test
+execution, it is in a module this work does not touch, and it is recorded here
+rather than quietly re-run.
