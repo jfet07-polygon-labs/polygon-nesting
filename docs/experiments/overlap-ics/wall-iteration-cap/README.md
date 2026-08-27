@@ -127,28 +127,36 @@ the one clause it claimed to move, that the T-row's Gate 0 died on without
 converting either, and that nothing tried in this campaign had shifted by a
 micrometre.
 
-## It does not transfer to shapes-17, and shapes-17 has a worse problem
+## The other two fixtures are already at their certified floor
 
-The severe test against "you tuned it on your own fixture" is the two fixtures
-that were never looked at while the knob was found. On `shapes-17`, ten seconds,
-nine seeds, two repetitions, the cap does **nothing**: medians 200.349 against
-200.348, per-seed gains of +0.002 mm.
+The severe test against "you tuned it on your own fixture" is the two corpus
+fixtures never looked at while the knob was found. On both, ten seconds, nine
+seeds, two repetitions, the cap does **nothing**: shapes-17 medians 200.349
+against 200.348, triangle-20 70.254 against 70.251, per-seed gains of +0.002 to
++0.006 mm.
 
-Looking at why turned up something larger:
+**A first draft of this section read that as a failure to transfer and went
+looking for a second defect.** It was wrong, and the correction is the more
+interesting result. `lower_scale_mm` is the request's own certified lower bound
+on achievable depth - `max(total area / usable width, tallest piece's supporting
+width)` plus the two edge clearances - and it is a *bound*, not a target:
 
-| fixture | constructor | after 10 s | explore bites |
+| fixture | certified lower bound | reached in 10 s | headroom left |
 | --- | ---: | ---: | ---: |
-| mixed-61 | 182.976 | ~168.4 with the cap | ~90 |
-| **shapes-17** | 200.651 | **200.347** | **1** |
+| mixed-61 | 115.839 | 164.001 | **48.162 mm** |
+| shapes-17 | 200.347 | 200.347 | **0.001 mm** |
+| triangle-20 | 70.250 | 70.251 | **0.001 mm** |
 
-**On shapes-17 the engine completes one explore bite and stops** - every seed,
-both arms - and gains three tenths of a millimetre in ten seconds. That is not
-restart starvation: the *first* shrink is already infeasible there. It is a
-different and larger failure, on a fixture in the standing corpus, and this is
-the first measurement that looks at it.
+**shapes-17 and triangle-20 are each solved to within one micrometre of a
+certified lower bound.** There is nothing left to win on either, and no knob can
+find it. shapes-17's single explore bite is not a stall - it is the engine
+arriving and stopping. triangle-20 spends 44 bites getting there, both arms,
+and lands on the bound.
 
-So the knob's claim has to be written narrowly: it is a **mixed-61** result,
-large and repeated; it is **neutral** on shapes-17, neither helping nor harming.
+So the corpus offers exactly one fixture with headroom, and that is the fixture
+the knob moves. The honest statement is not "it does not transfer": it is **the
+cap helps where there is something to win and is neutral where there is not**,
+which is the only transfer test this corpus is capable of giving.
 
 ## What this is not, yet
 
