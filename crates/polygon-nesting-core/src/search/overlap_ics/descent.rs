@@ -26,6 +26,10 @@
 
 use super::diagnostics::WorkVector;
 use super::energy::{fold, gls_update, Totals};
+#[cfg(feature = "conflict-cluster-budget")]
+use super::cluster_budget::{
+    AtomicOrderTrace, ClusterField, PartitionArm, PartitionDecision, PartitionTrace,
+};
 use super::relocate::{
     colliding_permutation, relocate, RelocateConfig, RelocateKey, RelocateOutcome, SampleOrigin,
 };
@@ -61,6 +65,9 @@ pub struct DescentConfig {
     pub stalls_before_jump: u32,
     pub rejection_census_samples: usize,
     pub jump_commits_unconditionally: bool,
+    /// Experimental ex-ante component allocator. Absent from default builds.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub partition_arm: PartitionArm,
 }
 
 impl DescentConfig {
@@ -88,6 +95,8 @@ impl DescentConfig {
             stalls_before_jump: 0,
             rejection_census_samples: 0,
             jump_commits_unconditionally: false,
+            #[cfg(feature = "conflict-cluster-budget")]
+            partition_arm: PartitionArm::Off,
         }
     }
 }
@@ -119,6 +128,26 @@ pub struct Descent {
     /// Master iterations completed, part of the sample key.
     iteration: u64,
     census: RejectionCensus,
+}
+
+/// Complete owned continuation state for the signed pool-retry checkpoint.
+///
+/// This is deliberately not a re-derived seed/config tuple. The proposal and
+/// iteration ordinals are part of every downstream counter key, while the
+/// scratch order and census are part of the exact continuation document. A
+/// resumed process restores all of them byte-for-byte before it may install
+/// the selected pool entry.
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[derive(Clone, Debug)]
+pub(crate) struct DescentSnapshotV1 {
+    pub config: DescentConfig,
+    pub order: Vec<usize>,
+    pub allow_rotation: Vec<bool>,
+    pub proposals: u64,
+    pub bite: u64,
+    pub worker: u64,
+    pub iteration: u64,
+    pub census: RejectionCensus,
 }
 
 /// What one sweep did.
@@ -237,6 +266,37 @@ pub struct RejectionRecord {
 }
 
 impl Descent {
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub(crate) fn checkpoint_snapshot(&self) -> DescentSnapshotV1 {
+        DescentSnapshotV1 {
+            config: self.config,
+            order: self.order.clone(),
+            allow_rotation: self.allow_rotation.clone(),
+            proposals: self.proposals,
+            bite: self.bite,
+            worker: self.worker,
+            iteration: self.iteration,
+            census: self.census.clone(),
+        }
+    }
+
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    pub(crate) fn from_checkpoint(snapshot: DescentSnapshotV1) -> Result<Self, String> {
+        if !snapshot.census.records.is_empty() {
+            return Err("pool-retry checkpoint carries retired rejection-rung records".to_owned());
+        }
+        Ok(Self {
+            config: snapshot.config,
+            order: snapshot.order,
+            allow_rotation: snapshot.allow_rotation,
+            proposals: snapshot.proposals,
+            bite: snapshot.bite,
+            worker: snapshot.worker,
+            iteration: snapshot.iteration,
+            census: snapshot.census,
+        })
+    }
+
     pub fn new(config: DescentConfig, allow_rotation: Vec<bool>) -> Self {
         Self {
             config,
@@ -279,6 +339,11 @@ impl Descent {
     /// disagreeing about a frozen piece.
     pub fn allow_rotation(&self) -> &[bool] {
         &self.allow_rotation
+    }
+
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub fn partition_arm(&self) -> PartitionArm {
+        self.config.partition_arm
     }
 
     /// One complete relocate of one piece, with the sweep's own bookkeeping.
@@ -361,7 +426,14 @@ impl Descent {
         contract: &Contract,
         work: &mut WorkVector,
     ) -> SweepOutcome {
-        let pass = self.gauss_seidel(state, sources, contract, work);
+        let pass = self.gauss_seidel(
+            state,
+            sources,
+            contract,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            None,
+            work,
+        );
         let active_rows = gls_update(state);
         work.weight_updates += 1;
         let totals = fold(state);
@@ -387,11 +459,222 @@ impl Descent {
         state: &mut IcsState,
         sources: &[PieceSource],
         contract: &Contract,
+        #[cfg(feature = "minimum-conflict-binary-close")] consumed_order: Option<&mut Vec<usize>>,
         work: &mut WorkVector,
     ) -> SweepOutcome {
-        let pass = self.gauss_seidel(state, sources, contract, work);
+        let pass = self.gauss_seidel(
+            state,
+            sources,
+            contract,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order,
+            work,
+        );
         let totals = fold(state);
         pass.finish(0, totals)
+    }
+
+    /// Armed equivalent of [`Descent::sweep`]. Only the order producer differs.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub fn sweep_partitioned(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        field: &ClusterField,
+        partition: &mut PartitionTrace,
+        work: &mut WorkVector,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel_partitioned(
+            state, sources, contract, field, partition, None, work,
+        );
+        let active_rows = gls_update(state);
+        work.weight_updates += 1;
+        let totals = fold(state);
+        pass.finish(active_rows, totals)
+    }
+
+    /// Armed equivalent of [`Descent::worker_sweep`], with no worker GLS.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub fn worker_sweep_partitioned(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        field: &ClusterField,
+        partition: &mut PartitionTrace,
+        work: &mut WorkVector,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel_partitioned(
+            state, sources, contract, field, partition, None, work,
+        );
+        let totals = fold(state);
+        pass.finish(0, totals)
+    }
+
+    /// Cost-only Off sweep that records the order actually consumed.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub fn worker_sweep_cost_traced(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        order_trace: &mut AtomicOrderTrace,
+        work: &mut WorkVector,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel_cost_traced(state, sources, contract, order_trace, work);
+        let totals = fold(state);
+        pass.finish(0, totals)
+    }
+
+    /// Cost-only ComputeIgnore sweep. It builds the complete partition plan,
+    /// discards it, and records the current Off order actually consumed.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub fn worker_sweep_partitioned_cost_traced(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        field: &ClusterField,
+        partition: &mut PartitionTrace,
+        order_trace: &mut AtomicOrderTrace,
+        work: &mut WorkVector,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel_partitioned(
+            state,
+            sources,
+            contract,
+            field,
+            partition,
+            Some(order_trace),
+            work,
+        );
+        let totals = fold(state);
+        pass.finish(0, totals)
+    }
+
+    /// Freeze graph, allocations and schedule, then consume exactly `Q` slots.
+    #[cfg(feature = "conflict-cluster-budget")]
+    fn gauss_seidel_partitioned(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        field: &ClusterField,
+        partition: &mut PartitionTrace,
+        mut order_trace: Option<&mut AtomicOrderTrace>,
+        work: &mut WorkVector,
+    ) -> GaussSeidelPass {
+        let count = state.poses.len();
+        let entry_proposals = self.proposals;
+        let raw_before = fold(state).raw;
+        let key = self.stream_key();
+        let decision = PartitionDecision::build(state, field, contract, key);
+        let mut order = if let Some(schedule) = decision.schedule_for(self.config.partition_arm) {
+            schedule.to_vec()
+        } else {
+            colliding_permutation(state, key, &mut self.order);
+            std::mem::take(&mut self.order)
+        };
+        debug_assert_eq!(order.len(), decision.q());
+        partition.observe_plan(&decision, self.config.partition_arm, &order);
+        let execution_before = (
+            partition.executed_slots,
+            partition.full_relocate_slots,
+            partition.zero_energy_slots,
+        );
+        if let Some(trace) = order_trace.as_deref_mut() {
+            trace.observe_order(&order);
+        }
+
+        let mut pass = GaussSeidelPass {
+            raw_before,
+            ..GaussSeidelPass::default()
+        };
+        for piece in &order {
+            let outcome = relocate(
+                state,
+                sources,
+                contract,
+                &self.allow_rotation,
+                *piece,
+                &self.config.relocate,
+                key,
+                work,
+            );
+            partition.observe_execution(outcome.ran);
+            if let Some(trace) = order_trace.as_deref_mut() {
+                trace.observe_slot();
+            }
+            self.record(&outcome);
+            if outcome.ran {
+                pass.relocated += 1;
+            }
+            if outcome.moved {
+                pass.accepted += 1;
+                pass.max_displacement_mm = pass.max_displacement_mm.max(outcome.displacement_mm);
+                if outcome.origin == SampleOrigin::Container {
+                    pass.container_commits += 1;
+                }
+            }
+        }
+        self.order = std::mem::take(&mut order);
+        self.proposals = entry_proposals + count as u64;
+        work.piece_proposals += count as u64;
+        self.iteration += 1;
+        partition.finish_execution(decision.q(), execution_before);
+        pass
+    }
+
+    #[cfg(feature = "conflict-cluster-budget")]
+    fn gauss_seidel_cost_traced(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        order_trace: &mut AtomicOrderTrace,
+        work: &mut WorkVector,
+    ) -> GaussSeidelPass {
+        let count = state.poses.len();
+        let entry_proposals = self.proposals;
+        let raw_before = fold(state).raw;
+        let key = self.stream_key();
+        colliding_permutation(state, key, &mut self.order);
+        let order = std::mem::take(&mut self.order);
+        order_trace.observe_order(&order);
+        let mut pass = GaussSeidelPass {
+            raw_before,
+            ..GaussSeidelPass::default()
+        };
+        for piece in &order {
+            let outcome = relocate(
+                state,
+                sources,
+                contract,
+                &self.allow_rotation,
+                *piece,
+                &self.config.relocate,
+                key,
+                work,
+            );
+            order_trace.observe_slot();
+            self.record(&outcome);
+            if outcome.ran {
+                pass.relocated += 1;
+            }
+            if outcome.moved {
+                pass.accepted += 1;
+                pass.max_displacement_mm = pass.max_displacement_mm.max(outcome.displacement_mm);
+                if outcome.origin == SampleOrigin::Container {
+                    pass.container_commits += 1;
+                }
+            }
+        }
+        self.order = order;
+        self.proposals = entry_proposals + count as u64;
+        work.piece_proposals += count as u64;
+        self.iteration += 1;
+        pass
     }
 
     /// The pass itself: collect the colliding set once, permute it from the
@@ -401,6 +684,7 @@ impl Descent {
         state: &mut IcsState,
         sources: &[PieceSource],
         contract: &Contract,
+        #[cfg(feature = "minimum-conflict-binary-close")] consumed_order: Option<&mut Vec<usize>>,
         work: &mut WorkVector,
     ) -> GaussSeidelPass {
         let count = state.poses.len();
@@ -409,6 +693,10 @@ impl Descent {
         let key = self.stream_key();
         colliding_permutation(state, key, &mut self.order);
         let order = std::mem::take(&mut self.order);
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        if let Some(trace) = consumed_order {
+            trace.extend_from_slice(&order);
+        }
         let mut pass = GaussSeidelPass {
             raw_before,
             ..GaussSeidelPass::default()

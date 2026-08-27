@@ -1,0 +1,36 @@
+{
+ "schema": "icscal/v1",
+ "key": {
+  "binaryKey": {
+   "executableSha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+   "features": [
+    "overlap-ics"
+   ]
+  },
+  "currencyVersion": "U0-sample-evaluations",
+  "executor": "ephemeral-scope",
+  "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+  "workers": 8
+ },
+ "phases": [
+  {
+   "derivation": "single-fixture work plan, no transfer claim. trajectory bite 22 (the 179 shelf) alone, 400 master iterations, the driver's probe-only wall and sampleEvaluations charged to that bite; no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3). Safety factor 0.84, pre-derived for factor from Gate 0 before any quality cell.",
+   "measuredUnitsPerSecond": 2759025.975468987,
+   "observedSeconds": 2.394250746,
+   "observedUnits": 6605800,
+   "phase": "explore",
+   "safeUnitsPerSecond": 2317581.819393949,
+   "safetyFactor": 0.84
+  },
+  {
+   "derivation": "single-fixture work plan, no transfer claim. the compress phase of the same wall trajectory: 83 bites, over searchSeconds - exploreSeconds Safety factor 0.84, pre-derived for factor from Gate 0 before any quality cell.",
+   "measuredUnitsPerSecond": 1408465.9444235826,
+   "observedSeconds": 5.530037862,
+   "observedUnits": 7788870,
+   "phase": "compress",
+   "safeUnitsPerSecond": 1183111.3933158093,
+   "safetyFactor": 0.84
+  }
+ ],
+ "provenance": "single-fixture work plan, no transfer claim. deterministic-30s-round/budget.py; explore from the repaired shelf_work_plan writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/shelf-probe.json; compress from the phase writer at /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/cells/compress-calibration.json; factor=0.84, fixed by /var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/experiments/overlap-ics/deterministic-30s-round/evidence/budget/factor-derivation.json before calibration and quality."
+}

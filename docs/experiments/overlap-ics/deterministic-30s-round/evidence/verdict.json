@@ -1,0 +1,233 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "deterministic-30s-round-verdict",
+ "spec": "docs/deterministic-30s-round-spec.md",
+ "gate0": {
+  "PASS": true,
+  "orders4P95Seconds": 2.3279492040500003,
+  "orders1P95Seconds": 0.6213649453,
+  "pairedMedianSavingSeconds": 1.6996618689999998
+ },
+ "budget": {
+  "PASS": true,
+  "f4*": 0.84,
+  "f1*": 1.0,
+  "kappaSeconds": 0.07246569599999964,
+  "shelfWorkPlanWitnessGreen": true,
+  "allPlanHits": true
+ },
+ "primary30Seconds": {
+  "gateOwner": "composed",
+  "clauses": {
+   "1_composedMedianAtMost163.00461": true,
+   "2_composedAtLeast7of9AtMost168.484": true,
+   "3_pairedMedianGainAtLeast1mm": true,
+   "4_zeroInvalidAndRevalidated": true,
+   "5_planAndChargeIdentitiesHold": true
+  },
+  "PASS": true,
+  "composedMedianMm": 162.94240595756042,
+  "composedBestMm": 160.8922949111259,
+  "composedQualifyingSeeds": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "composedQuorum": 7,
+  "pairedMedianGainMm": 1.23246738808038,
+  "floor": {
+   "binaryUnchanged": true,
+   "allCellsValid": true,
+   "zeroInvalidPublications": true,
+   "allPlansAndKeysHold": true,
+   "allLedgersAndKeysHold": true,
+   "allFrozenLiteralsIntact": true
+  },
+  "wallReportOnly": {
+   "control": {
+    "p95Seconds": 32.42032473036088,
+    "maxSeconds": 34.69617077196017
+   },
+   "orders": {
+    "p95Seconds": 27.300284634600395,
+    "maxSeconds": 27.304321111063473
+   },
+   "factor": {
+    "p95Seconds": 30.454150952165946,
+    "maxSeconds": 30.505184717010707
+   },
+   "composed": {
+    "p95Seconds": 34.69271378717385,
+    "maxSeconds": 34.951066677924246
+   }
+  },
+  "no30SecondP95Clause": true
+ },
+ "tenSeconds": {
+  "gateOwner": "composed",
+  "clauses": {
+   "1_composedAtLeast5of9AtMost168.484": false,
+   "2_composedMedianAtMost168.484": false,
+   "3_composedP95AtMost10.000": true,
+   "4_twoProcessBitIdentityEverySeed": true,
+   "5_validityAndPlanChargeFloor": true
+  },
+  "PASS": false,
+  "qualityPass": false,
+  "floorGreen": true,
+  "composedMedianMm": 179.07169841150767,
+  "composedBestMm": 165.4248894620659,
+  "composedQualifyingSeeds": [
+   2,
+   3
+  ],
+  "composedQuorum": 2,
+  "composedP95Seconds": 9.687026569014416,
+  "composedMaxWallSeconds": 9.737432622932829,
+  "allTwoProcessBitIdentical": true,
+  "allFiveBitIdentical": true,
+  "floor": {
+   "binaryUnchanged": true,
+   "allCellsValid": true,
+   "zeroInvalidPublications": true,
+   "allPlansAndKeysHold": true,
+   "allLedgersAndKeysHold": true,
+   "allFrozenLiteralsIntact": true
+  },
+  "permanentRetirementRequired": true,
+  "consequence": "retire the 10-second quality gate permanently; a new mechanism requires a new pre-committed specification"
+ },
+ "threeSeconds": {
+  "gated": false,
+  "arms": {
+   "control": {
+    "bestMm": 179.0129506401795,
+    "medianMm": 179.17081210545416,
+    "qualifyingSeeds": [],
+    "p95WallSeconds": 2.850187694421038,
+    "maxWallSeconds": 2.854885570006445
+   },
+   "orders": {
+    "bestMm": 179.0129506401795,
+    "medianMm": 179.17081210545416,
+    "qualifyingSeeds": [],
+    "p95WallSeconds": 1.1329335311660542,
+    "maxWallSeconds": 1.1344195319106802
+   },
+   "factor": {
+    "bestMm": 179.0191736867113,
+    "medianMm": 179.08122669940144,
+    "qualifyingSeeds": [],
+    "p95WallSeconds": 2.8559528969461097,
+    "maxWallSeconds": 2.863272922928445
+   },
+   "composed": {
+    "bestMm": 179.0314343694556,
+    "medianMm": 179.07957155917717,
+    "qualifyingSeeds": [],
+    "p95WallSeconds": 1.2325598696479574,
+    "maxWallSeconds": 1.2326026080409065
+   }
+  },
+  "floor": {
+   "binaryUnchanged": true,
+   "allCellsValid": true,
+   "zeroInvalidPublications": true,
+   "allPlansAndKeysHold": true,
+   "allLedgersAndKeysHold": true,
+   "allFrozenLiteralsIntact": true
+  }
+ },
+ "sixtySeconds": {
+  "gated": false,
+  "arms": {
+   "control": {
+    "bestMm": 159.75098875462686,
+    "medianMm": 161.13352646489187,
+    "qualifyingSeeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "p95WallSeconds": 60.12462288781535,
+    "maxWallSeconds": 61.16981006099377
+   },
+   "orders": {
+    "bestMm": 159.75098875462686,
+    "medianMm": 161.13352646489187,
+    "qualifyingSeeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "p95WallSeconds": 58.312989130057396,
+    "maxWallSeconds": 59.269541796064004
+   },
+   "factor": {
+    "bestMm": 159.73401722351477,
+    "medianMm": 160.983365585674,
+    "qualifyingSeeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "p95WallSeconds": 63.37771611341741,
+    "maxWallSeconds": 63.852396166999824
+   },
+   "composed": {
+    "bestMm": 159.24630533410428,
+    "medianMm": 159.88476682253,
+    "qualifyingSeeds": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "p95WallSeconds": 74.04362277896143,
+    "maxWallSeconds": 74.62990119494498
+   }
+  },
+  "floor": {
+   "binaryUnchanged": true,
+   "allCellsValid": true,
+   "zeroInvalidPublications": true,
+   "allPlansAndKeysHold": true,
+   "allLedgersAndKeysHold": true,
+   "allFrozenLiteralsIntact": true
+  },
+  "composedMedianWatchMm": 161.0,
+  "watchReached": true,
+  "watchIsNotAClause": true
+ },
+ "sparrowHorizonMm": 150.165,
+ "ROUND_VALID_SO_FAR": true,
+ "PRIMARY_GATE_PASS": true,
+ "TEN_SECOND_GATE_PASS": false
+}

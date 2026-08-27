@@ -1,0 +1,303 @@
+{
+  "buildFeatures": [
+    "overlap-ics"
+  ],
+  "cell": "cutclose",
+  "constructor": {
+    "lowerScaleMm": 200.3468867902419,
+    "placementCount": 17,
+    "placementFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+    "rawSourceDepthMm": 200.34937729570953
+  },
+  "contract": {
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.75,
+    "flatteningSagToleranceMm": 0.25,
+    "pairClearanceMm": 5.5,
+    "physicalEdgeClearanceMm": 5.25,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.25,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5500.0
+  },
+  "executableSha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "5f4f7618152a24eed8fe7d04269ad94ed01a60bfef488223022cd4887dfa5aab",
+  "firstBiteCanary": {
+    "constructorDepthMm": 200.34937729570953,
+    "dualValid": true,
+    "expectedTargetMm": 200.14902791841382,
+    "published": false,
+    "publishedRawDepthMm": null,
+    "strictChild": false,
+    "targetDepthMm": null,
+    "targetMatchesExpected": false,
+    "withinTarget": false
+  },
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 200.3468867902419,
+  "outcome": {
+    "bites": [],
+    "calibrated": null,
+    "census": {
+      "activeEdgeRows": 0,
+      "activePairRows": 0,
+      "maxEdgeViolationMm": 0.0,
+      "maxGuidedPenalty": 1.0,
+      "maxPairViolationMm": 0.0
+    },
+    "compressBites": 0,
+    "contestedIterations": 0,
+    "depthMm": 200.34937729570953,
+    "exactCheckpoints": [],
+    "exploreBites": 0,
+    "finalWidthMm": 200.34937729570953,
+    "fingerprintCount": 0,
+    "fingerprints": [],
+    "funnel": {
+      "bitesStarted": 0,
+      "bitesWithBandEntry": 0,
+      "dualValidPublished": 0,
+      "exactAttempted": 0,
+      "exactBandEntries": 0,
+      "exactCheckpointCalls": 0,
+      "exactCheckpointCallsReconcile": true,
+      "proxyBandReached": 0,
+      "workExactCheckpoints": 0
+    },
+    "incumbent": {
+      "constructorFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "fingerprintDiffersFromConstructor": false,
+      "fromConstructor": true,
+      "placementCount": 17,
+      "placementFingerprint": "931b8c8a71401bdd2bddbd70a4106908ecd91a221734d5659a08a9d9cfcf395c",
+      "placements": [
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-15",
+          "rotationDeg": 231.428044,
+          "translateLongAxis": 234.318,
+          "translateShortAxis": 85.891
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-14",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 5.383,
+          "translateShortAxis": 1994.748
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-6",
+          "rotationDeg": 265.972365,
+          "translateLongAxis": 111.469,
+          "translateShortAxis": 1672.066
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-17",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 59.249,
+          "translateShortAxis": 1563.042
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-2",
+          "rotationDeg": 270.0,
+          "translateLongAxis": 136.714,
+          "translateShortAxis": 1457.538
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-9",
+          "rotationDeg": 270.0,
+          "translateLongAxis": 115.102,
+          "translateShortAxis": 1352.034
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-16",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 37.637,
+          "translateShortAxis": 1246.53
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-3",
+          "rotationDeg": 180.0,
+          "translateLongAxis": 107.261,
+          "translateShortAxis": 306.193
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-5",
+          "rotationDeg": 180.0,
+          "translateLongAxis": 110.222,
+          "translateShortAxis": 404.96
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-10",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 31.834,
+          "translateShortAxis": 410.464
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-11",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 10.222,
+          "translateShortAxis": 615.968
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-13",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 7.42,
+          "translateShortAxis": 1239.043
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-12",
+          "rotationDeg": 255.963757,
+          "translateLongAxis": 104.51,
+          "translateShortAxis": 1000.166
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-1",
+          "rotationDeg": 354.374829,
+          "translateLongAxis": 62.944,
+          "translateShortAxis": 616.571
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-7",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 8.872,
+          "translateShortAxis": 969.635
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-8",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 11.135,
+          "translateShortAxis": 726.494
+        },
+        {
+          "mirrored": false,
+          "pieceId": "shapes-17-4",
+          "rotationDeg": 95.624925,
+          "translateLongAxis": 59.789,
+          "translateShortAxis": 843.847
+        }
+      ],
+      "rawSourceDepthMm": 200.34937729570953
+    },
+    "invalidPublications": 0,
+    "proxy": {
+      "guidedPhi": 0.0,
+      "maxViolationMm": 0.0,
+      "rawPhi": 0.0,
+      "rawSourceDepthMm": 200.34937729570953
+    },
+    "publicationCount": 0,
+    "publications": [],
+    "relocateEconomics": {
+      "acceptedMoves": 0,
+      "containerCommits": 0,
+      "containerSamples": 0,
+      "containerWinners": 0,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 0,
+      "focusedWinners": 0,
+      "relocates": 0,
+      "sampleEvaluations": 0,
+      "sampleEvaluationsPerRelocate": 0.0,
+      "stayPutWinners": 0
+    },
+    "repairMaxDisplacementMm": 0.0,
+    "repairMaxGivebackMm": 0.0,
+    "startDepthMm": 200.34937729570953,
+    "strikeArm": "control-iteration-strikes",
+    "sweeps": 0,
+    "work": {
+      "acceptedMoves": 0,
+      "broadPhaseRejects": 399,
+      "containerCommits": 0,
+      "containerSamples": 0,
+      "containerWinners": 0,
+      "convexCellGapQueries": 9,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "exactCheckpoints": 0,
+      "focusedSamples": 0,
+      "focusedWinners": 0,
+      "jumpProposals": 0,
+      "pairRowProbes": 408,
+      "pieceProposals": 0,
+      "poseTransforms": 51,
+      "relocates": 0,
+      "repairRows": 0,
+      "sampleEvaluations": 0,
+      "stayPutWinners": 0,
+      "weightUpdates": 0
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/tests/fixtures/shapes-17/2000x2700-compact/request.json",
+    "pieceCount": 17,
+    "sha256": "e8748f553554a1eddaebb75323d047dec24596b386c0030791032bc48af3d9d2",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "schedule": {
+    "arm": "control",
+    "armLabel": "control-iteration-strikes",
+    "calibratedAttemptsPerBite": null,
+    "calibratedPlan": null,
+    "compressIterationsWithoutImprovement": 100,
+    "compressStrikes": 5,
+    "exploreIterationsWithoutImprovement": 200,
+    "exploreStrikes": 3,
+    "exploreTimeRatio": 0.8,
+    "fixedWork": {
+      "attemptsPerBite": 1,
+      "compressBites": 0,
+      "exploreBites": 0,
+      "iterationsPerSeparation": 1
+    },
+    "mode": "fixed",
+    "recordFingerprints": false,
+    "strikePolicy": {
+      "compress": {
+        "iterationsWithoutImprovement": 100,
+        "patience": "iterations",
+        "strikes": 5,
+        "workQuantumSampleEvaluations": null
+      },
+      "explore": {
+        "iterationsWithoutImprovement": 200,
+        "patience": "iterations",
+        "strikes": 3,
+        "workQuantumSampleEvaluations": null
+      },
+      "frozenLiteralsIntact": true,
+      "improvingResetRatio": 0.98
+    },
+    "wallBudgetSeconds": null,
+    "workers": 8
+  },
+  "seed": 0,
+  "wall": {
+    "constructorSeconds": 1.560400137,
+    "loopEntrySeconds": 1.560485806,
+    "loopExploreSeconds": null,
+    "loopSearchSeconds": null,
+    "searchSeconds": 0.000020409,
+    "totalSeconds": 1.560535462
+  }
+}

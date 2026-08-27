@@ -1,0 +1,6516 @@
+{
+  "buildFeatures": [
+    "overlap-ics",
+    "conflict-cluster-budget"
+  ],
+  "cell": "cutclose",
+  "constructor": {
+    "lowerScaleMm": 115.83870984650393,
+    "placementCount": 61,
+    "placementFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+    "rawSourceDepthMm": 182.976
+  },
+  "contract": {
+    "depthTopInsetMm": 5.0,
+    "expansionMm": 2.5,
+    "flatteningSagToleranceMm": 0.0,
+    "pairClearanceMm": 5.0,
+    "physicalEdgeClearanceMm": 5.0,
+    "searchOffsetAllowanceMm": 0.002,
+    "sheetEdgeClearanceMm": 5.0,
+    "sheetInsetMm": 2.5,
+    "twoRMicron": 5000.0
+  },
+  "executableSha256": "b8425dfdea6d8a6d84a6d27aa8df51a3308714533f4348d4e482ba90eafe61a5",
+  "experiment": "overlap-ics",
+  "finalPoseDigest": "625745e202615062ee23afb970d2f612d8ee73ccfc2c32fa501221f50fe19f20",
+  "firstBiteCanary": {
+    "constructorDepthMm": 182.976,
+    "dualValid": true,
+    "expectedTargetMm": 182.793024,
+    "published": true,
+    "publishedRawDepthMm": 182.793024,
+    "strictChild": true,
+    "targetDepthMm": 182.793024,
+    "targetMatchesExpected": true,
+    "withinTarget": true
+  },
+  "instrument": "crates/polygon-nesting-core/src/search/overlap_ics/",
+  "lowerScaleMm": 115.83870984650393,
+  "outcome": {
+    "bites": [
+      {
+        "attempts": 0,
+        "deltaMm": -0.18297599999999647,
+        "disruptions": 0,
+        "exactAttempts": 1,
+        "exactBandEntries": 1,
+        "exactCheckpointCalls": 1,
+        "masterIterations": 3,
+        "minRawPhi": 0.0,
+        "movedPieces": 34,
+        "ordinal": 1,
+        "phase": "explore",
+        "profile": {
+          "bandEntries": 1,
+          "bandFoldNs": 0,
+          "barrierToBarrierNs": 0,
+          "dispatchNs": 0,
+          "disruptionMoves": 0,
+          "exactCalls": 1,
+          "exactNs": 0,
+          "iterations": 3,
+          "measured": false,
+          "mergeGlsNs": 0,
+          "prepNs": 0,
+          "prepPlusDispatchNs": 0,
+          "prepPlusDispatchShare": null,
+          "repairRows": 0,
+          "residualNs": 0,
+          "sampleEvaluations": 60636,
+          "snapshotNs": 0,
+          "sweepCriticalNs": 0,
+          "sweepTotalNs": 0
+        },
+        "proxyBandReached": true,
+        "published": true,
+        "splitYMm": 91.488,
+        "step": 0.001,
+        "strikeMeter": {
+          "batches": 4,
+          "chargedWorkSampleEvaluations": 60636,
+          "marginal": 0,
+          "none": 0,
+          "strikeAccumulated": 0,
+          "strikeOvershoot": 0,
+          "substantial": 4
+        },
+        "strikes": 0,
+        "widthAfterMm": 182.793024,
+        "widthBeforeMm": 182.976
+      }
+    ],
+    "calibrated": null,
+    "census": {
+      "activeEdgeRows": 0,
+      "activePairRows": 0,
+      "maxEdgeViolationMm": 0.0,
+      "maxGuidedPenalty": 1.0,
+      "maxPairViolationMm": 0.0
+    },
+    "compressBites": 0,
+    "contestedIterations": 0,
+    "depthMm": 182.793024,
+    "exactCheckpoints": [
+      {
+        "contractValid": true,
+        "kernelExclusiveValid": true,
+        "maxViolationMm": 0.0,
+        "proposalOrdinal": 183,
+        "proxyRawDepthMm": 182.793024,
+        "publishedRawDepthMm": 182.793024,
+        "refusal": null,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "targetDepthMm": 182.793024
+      }
+    ],
+    "exploreBites": 1,
+    "finalWidthMm": 182.793024,
+    "fingerprintCount": 0,
+    "fingerprints": [],
+    "funnel": {
+      "bitesStarted": 1,
+      "bitesWithBandEntry": 1,
+      "dualValidPublished": 1,
+      "exactAttempted": 1,
+      "exactBandEntries": 1,
+      "exactCheckpointCalls": 1,
+      "exactCheckpointCallsReconcile": true,
+      "proxyBandReached": 1,
+      "workExactCheckpoints": 1
+    },
+    "incumbent": {
+      "constructorFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+      "fingerprintDiffersFromConstructor": true,
+      "fromConstructor": false,
+      "placementCount": 61,
+      "placementFingerprint": "fddb27fdf63e709ad049d69a1ea4ca74b3098ed94ba86d8282210dde165bdd4c",
+      "placements": [
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+          "rotationDeg": 180.03125,
+          "translateLongAxis": 65.243038747208,
+          "translateShortAxis": 582.8615591278036
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 5.002,
+          "translateShortAxis": 568.257
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+          "rotationDeg": 180.0,
+          "translateLongAxis": 65.00719882314131,
+          "translateShortAxis": 753.5305659256938
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 5.002,
+          "translateShortAxis": 738.805
+        },
+        {
+          "mirrored": false,
+          "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+          "rotationDeg": 180.0,
+          "translateLongAxis": 65.002,
+          "translateShortAxis": 924.079
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 52.680024,
+          "translateShortAxis": 983.397
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+          "rotationDeg": 0.1875,
+          "translateLongAxis": 70.181312785367,
+          "translateShortAxis": 488.8871072385735
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+          "rotationDeg": 180.0,
+          "translateLongAxis": 110.006,
+          "translateShortAxis": 670.217
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+          "rotationDeg": 0.6875,
+          "translateLongAxis": 70.65221482398915,
+          "translateShortAxis": 659.8242335841071
+        },
+        {
+          "mirrored": false,
+          "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+          "rotationDeg": 179.9375,
+          "translateLongAxis": 111.91316678890762,
+          "translateShortAxis": 840.6885509621802
+        },
+        {
+          "mirrored": true,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 66.931,
+          "translateShortAxis": 1102.595
+        },
+        {
+          "mirrored": true,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 66.931,
+          "translateShortAxis": 1208.745
+        },
+        {
+          "mirrored": true,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 66.931,
+          "translateShortAxis": 1314.895
+        },
+        {
+          "mirrored": false,
+          "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 60.766024,
+          "translateShortAxis": 1399.801
+        },
+        {
+          "mirrored": false,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 12.253,
+          "translateShortAxis": 1595.02
+        },
+        {
+          "mirrored": false,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 9.011,
+          "translateShortAxis": 1490.278
+        },
+        {
+          "mirrored": false,
+          "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 5.769,
+          "translateShortAxis": 1385.536
+        },
+        {
+          "mirrored": false,
+          "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+          "rotationDeg": 315.9998779296875,
+          "translateLongAxis": 100.1428652020793,
+          "translateShortAxis": 844.2481709538653
+        },
+        {
+          "mirrored": false,
+          "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 72.49702400000001,
+          "translateShortAxis": 825.854
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+          "rotationDeg": 90.293046875,
+          "translateLongAxis": 6.419819549944532,
+          "translateShortAxis": 1380.5319208898206
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 6.545,
+          "translateShortAxis": 1274.487
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 6.545,
+          "translateShortAxis": 1168.337
+        },
+        {
+          "mirrored": false,
+          "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 6.545,
+          "translateShortAxis": 1062.187
+        },
+        {
+          "mirrored": false,
+          "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+          "rotationDeg": 340.345876,
+          "translateLongAxis": 28.546,
+          "translateShortAxis": 1837.482
+        },
+        {
+          "mirrored": false,
+          "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 28.034,
+          "translateShortAxis": 1700.44
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 7.341,
+          "translateShortAxis": 1452.81
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 7.341,
+          "translateShortAxis": 1487.814
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 10.583,
+          "translateShortAxis": 1557.552
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 10.583,
+          "translateShortAxis": 1592.556
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 13.825,
+          "translateShortAxis": 1662.294
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 103.998024,
+          "translateShortAxis": 1958.451
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 112.126024,
+          "translateShortAxis": 1277.007
+        },
+        {
+          "mirrored": false,
+          "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 133.01002400000002,
+          "translateShortAxis": 1772.942
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 81.36602400000001,
+          "translateShortAxis": 1324.423
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+          "rotationDeg": 270.9375,
+          "translateLongAxis": 144.43083354652367,
+          "translateShortAxis": 1851.4820052911216
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 112.126024,
+          "translateShortAxis": 1081.995
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 112.126024,
+          "translateShortAxis": 1176.999
+        },
+        {
+          "mirrored": false,
+          "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 112.126024,
+          "translateShortAxis": 1272.003
+        },
+        {
+          "mirrored": false,
+          "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 5.002,
+          "translateShortAxis": 5.002
+        },
+        {
+          "mirrored": false,
+          "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 5.002,
+          "translateShortAxis": 164.006
+        },
+        {
+          "mirrored": false,
+          "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+          "rotationDeg": 0.12399665771484375,
+          "translateLongAxis": 5.105026711018381,
+          "translateShortAxis": 323.7174897923993
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 92.096024,
+          "translateShortAxis": 1400.536
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 116.789024,
+          "translateShortAxis": 368.437
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+          "rotationDeg": 300.334562,
+          "translateLongAxis": 145.57370139741016,
+          "translateShortAxis": 476.32979931494634
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+          "rotationDeg": 302.3736245,
+          "translateLongAxis": 145.59783423251972,
+          "translateShortAxis": 562.0946406830823
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+          "rotationDeg": 301.809171375,
+          "translateLongAxis": 146.05257467118426,
+          "translateShortAxis": 650.3441528175856
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+          "rotationDeg": 301.193937,
+          "translateLongAxis": 146.68983408184627,
+          "translateShortAxis": 730.421548466179
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+          "rotationDeg": 0.0625,
+          "translateLongAxis": 117.64167618501497,
+          "translateShortAxis": 452.92560258550947
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 117.793024,
+          "translateShortAxis": 532.958
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 117.793024,
+          "translateShortAxis": 624.132
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 95.338024,
+          "translateShortAxis": 1505.278
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 98.58002400000001,
+          "translateShortAxis": 1610.02
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+          "rotationDeg": 90.0,
+          "translateLongAxis": 107.505024,
+          "translateShortAxis": 1757.928
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+          "rotationDeg": 300.537687,
+          "translateLongAxis": 146.02784070724425,
+          "translateShortAxis": -7.511635951634328
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+          "rotationDeg": 300.9475927128906,
+          "translateLongAxis": 146.03548640597094,
+          "translateShortAxis": 75.22139181232454
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+          "rotationDeg": 180.0546875,
+          "translateLongAxis": 177.42795708803655,
+          "translateShortAxis": 321.1347199030019
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+          "rotationDeg": 301.240812,
+          "translateLongAxis": 144.2502711627994,
+          "translateShortAxis": 395.71957126155405
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 116.789024,
+          "translateShortAxis": 50.429
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 116.789024,
+          "translateShortAxis": 209.433
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 116.789024,
+          "translateShortAxis": 133.651
+        },
+        {
+          "mirrored": false,
+          "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+          "rotationDeg": 0.0,
+          "translateLongAxis": 116.789024,
+          "translateShortAxis": 292.655
+        }
+      ],
+      "rawSourceDepthMm": 182.793024
+    },
+    "invalidPublications": 0,
+    "partition": {
+      "allocationDigestSha256": "31e37e120ac3f23f40ca6bc999dc1d37fce0448b787fa486c522df0916917936",
+      "componentCount": 128,
+      "decisions": [
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            6,
+            2,
+            4,
+            7,
+            9,
+            33,
+            23,
+            54,
+            55,
+            40,
+            0,
+            8,
+            17,
+            44,
+            46,
+            19,
+            34,
+            53,
+            39,
+            56,
+            38
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            6,
+            2,
+            4,
+            7,
+            9,
+            33,
+            23,
+            54,
+            55,
+            40,
+            0,
+            8,
+            17,
+            44,
+            46,
+            19,
+            34,
+            53,
+            39,
+            56,
+            7
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0
+            ],
+            [
+              2,
+              8
+            ],
+            [
+              4,
+              17
+            ],
+            [
+              7,
+              44
+            ],
+            [
+              9,
+              46
+            ],
+            [
+              33,
+              19
+            ],
+            [
+              23,
+              34
+            ],
+            [
+              54,
+              53,
+              38
+            ],
+            [
+              55,
+              39
+            ],
+            [
+              40,
+              56
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            6,
+            2,
+            4,
+            7,
+            9,
+            33,
+            23,
+            54,
+            55,
+            40,
+            0,
+            8,
+            17,
+            44,
+            46,
+            19,
+            34,
+            53,
+            39,
+            56,
+            38
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 0
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            6,
+            8,
+            17,
+            44,
+            46,
+            33,
+            34,
+            38,
+            55,
+            40,
+            0,
+            2,
+            4,
+            7,
+            9,
+            19,
+            23,
+            54,
+            39,
+            56,
+            53
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            6,
+            8,
+            17,
+            44,
+            46,
+            33,
+            34,
+            38,
+            55,
+            40,
+            0,
+            2,
+            4,
+            7,
+            9,
+            19,
+            23,
+            54,
+            39,
+            56,
+            44
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0
+            ],
+            [
+              8,
+              2
+            ],
+            [
+              17,
+              4
+            ],
+            [
+              44,
+              7
+            ],
+            [
+              46,
+              9
+            ],
+            [
+              33,
+              19
+            ],
+            [
+              34,
+              23
+            ],
+            [
+              38,
+              54,
+              53
+            ],
+            [
+              55,
+              39
+            ],
+            [
+              40,
+              56
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            6,
+            8,
+            17,
+            44,
+            46,
+            33,
+            34,
+            38,
+            55,
+            40,
+            0,
+            2,
+            4,
+            7,
+            9,
+            19,
+            23,
+            54,
+            39,
+            56,
+            53
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 1
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            6,
+            2,
+            17,
+            44,
+            9,
+            33,
+            23,
+            54,
+            55,
+            56,
+            0,
+            8,
+            4,
+            7,
+            46,
+            19,
+            34,
+            53,
+            39,
+            40,
+            38
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            6,
+            2,
+            17,
+            44,
+            9,
+            33,
+            23,
+            54,
+            55,
+            56,
+            0,
+            8,
+            4,
+            7,
+            46,
+            19,
+            34,
+            53,
+            39,
+            40,
+            44
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0
+            ],
+            [
+              2,
+              8
+            ],
+            [
+              17,
+              4
+            ],
+            [
+              44,
+              7
+            ],
+            [
+              9,
+              46
+            ],
+            [
+              33,
+              19
+            ],
+            [
+              23,
+              34
+            ],
+            [
+              54,
+              53,
+              38
+            ],
+            [
+              55,
+              39
+            ],
+            [
+              56,
+              40
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            6,
+            2,
+            17,
+            44,
+            9,
+            33,
+            23,
+            54,
+            55,
+            56,
+            0,
+            8,
+            4,
+            7,
+            46,
+            19,
+            34,
+            53,
+            39,
+            40,
+            38
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 2
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            6,
+            2,
+            4,
+            44,
+            46,
+            19,
+            34,
+            38,
+            39,
+            40,
+            0,
+            8,
+            17,
+            7,
+            9,
+            33,
+            23,
+            54,
+            55,
+            56,
+            53
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            6,
+            2,
+            4,
+            44,
+            46,
+            19,
+            34,
+            38,
+            39,
+            40,
+            0,
+            8,
+            17,
+            7,
+            9,
+            33,
+            23,
+            54,
+            55,
+            56,
+            44
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0
+            ],
+            [
+              2,
+              8
+            ],
+            [
+              4,
+              17
+            ],
+            [
+              44,
+              7
+            ],
+            [
+              46,
+              9
+            ],
+            [
+              19,
+              33
+            ],
+            [
+              34,
+              23
+            ],
+            [
+              38,
+              54,
+              53
+            ],
+            [
+              39,
+              55
+            ],
+            [
+              40,
+              56
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            6,
+            2,
+            4,
+            44,
+            46,
+            19,
+            34,
+            38,
+            39,
+            40,
+            0,
+            8,
+            17,
+            7,
+            9,
+            33,
+            23,
+            54,
+            55,
+            56,
+            53
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 3
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            6,
+            8,
+            17,
+            7,
+            9,
+            19,
+            23,
+            38,
+            55,
+            40,
+            0,
+            2,
+            4,
+            44,
+            46,
+            33,
+            34,
+            54,
+            39,
+            56,
+            53
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            6,
+            8,
+            17,
+            7,
+            9,
+            19,
+            23,
+            38,
+            55,
+            40,
+            0,
+            2,
+            4,
+            44,
+            46,
+            33,
+            34,
+            54,
+            39,
+            56,
+            7
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0
+            ],
+            [
+              8,
+              2
+            ],
+            [
+              17,
+              4
+            ],
+            [
+              7,
+              44
+            ],
+            [
+              9,
+              46
+            ],
+            [
+              19,
+              33
+            ],
+            [
+              23,
+              34
+            ],
+            [
+              38,
+              54,
+              53
+            ],
+            [
+              55,
+              39
+            ],
+            [
+              40,
+              56
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            6,
+            8,
+            17,
+            7,
+            9,
+            19,
+            23,
+            38,
+            55,
+            40,
+            0,
+            2,
+            4,
+            44,
+            46,
+            33,
+            34,
+            54,
+            39,
+            56,
+            53
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 4
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            0,
+            2,
+            17,
+            7,
+            46,
+            19,
+            23,
+            53,
+            39,
+            40,
+            6,
+            8,
+            4,
+            44,
+            9,
+            33,
+            34,
+            54,
+            55,
+            56,
+            38
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            0,
+            2,
+            17,
+            7,
+            46,
+            19,
+            23,
+            53,
+            39,
+            40,
+            6,
+            8,
+            4,
+            44,
+            9,
+            33,
+            34,
+            54,
+            55,
+            56,
+            7
+          ],
+          "memberPermutations": [
+            [
+              0,
+              6
+            ],
+            [
+              2,
+              8
+            ],
+            [
+              17,
+              4
+            ],
+            [
+              7,
+              44
+            ],
+            [
+              46,
+              9
+            ],
+            [
+              19,
+              33
+            ],
+            [
+              23,
+              34
+            ],
+            [
+              53,
+              54,
+              38
+            ],
+            [
+              39,
+              55
+            ],
+            [
+              40,
+              56
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            0,
+            2,
+            17,
+            7,
+            46,
+            19,
+            23,
+            53,
+            39,
+            40,
+            6,
+            8,
+            4,
+            44,
+            9,
+            33,
+            34,
+            54,
+            55,
+            56,
+            38
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 5
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            6,
+            8,
+            4,
+            7,
+            46,
+            33,
+            23,
+            53,
+            39,
+            56,
+            0,
+            2,
+            17,
+            44,
+            9,
+            19,
+            34,
+            38,
+            55,
+            40,
+            54
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            6,
+            8,
+            4,
+            7,
+            46,
+            33,
+            23,
+            53,
+            39,
+            56,
+            0,
+            2,
+            17,
+            44,
+            9,
+            19,
+            34,
+            38,
+            55,
+            40,
+            7
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0
+            ],
+            [
+              8,
+              2
+            ],
+            [
+              4,
+              17
+            ],
+            [
+              7,
+              44
+            ],
+            [
+              46,
+              9
+            ],
+            [
+              33,
+              19
+            ],
+            [
+              23,
+              34
+            ],
+            [
+              53,
+              38,
+              54
+            ],
+            [
+              39,
+              55
+            ],
+            [
+              56,
+              40
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            6,
+            8,
+            4,
+            7,
+            46,
+            33,
+            23,
+            53,
+            39,
+            56,
+            0,
+            2,
+            17,
+            44,
+            9,
+            19,
+            34,
+            38,
+            55,
+            40,
+            54
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 6
+        },
+        {
+          "Q": 21,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                8
+              ]
+            },
+            {
+              "id": 4,
+              "members": [
+                4,
+                17
+              ]
+            },
+            {
+              "id": 7,
+              "members": [
+                7,
+                44
+              ]
+            },
+            {
+              "id": 9,
+              "members": [
+                9,
+                46
+              ]
+            },
+            {
+              "id": 19,
+              "members": [
+                19,
+                33
+              ]
+            },
+            {
+              "id": 23,
+              "members": [
+                23,
+                34
+              ]
+            },
+            {
+              "id": 38,
+              "members": [
+                38,
+                53,
+                54
+              ]
+            },
+            {
+              "id": 39,
+              "members": [
+                39,
+                55
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            4,
+            6,
+            7,
+            8,
+            9,
+            17,
+            19,
+            23,
+            33,
+            34,
+            38,
+            39,
+            40,
+            44,
+            46,
+            53,
+            54,
+            55,
+            56
+          ],
+          "iteration": 0,
+          "massBits": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "zero-signal",
+          "massQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "massSchedule": [
+            0,
+            8,
+            4,
+            7,
+            46,
+            19,
+            23,
+            38,
+            39,
+            56,
+            6,
+            2,
+            17,
+            44,
+            9,
+            33,
+            34,
+            54,
+            55,
+            40,
+            53
+          ],
+          "maxViolationBits": [
+            4595616310265801728,
+            4595616310265801728,
+            4595616310265801216,
+            4595625741885467136,
+            4595625741885467136,
+            4595616310265801216,
+            4595598564084856832,
+            4595625741885466624,
+            4595625741777113600,
+            4595625741777113600
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            2,
+            2,
+            2,
+            3,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2
+          ],
+          "maxViolationSchedule": [
+            0,
+            8,
+            4,
+            7,
+            46,
+            19,
+            23,
+            38,
+            39,
+            56,
+            6,
+            2,
+            17,
+            44,
+            9,
+            33,
+            34,
+            54,
+            55,
+            40,
+            7
+          ],
+          "memberPermutations": [
+            [
+              0,
+              6
+            ],
+            [
+              8,
+              2
+            ],
+            [
+              4,
+              17
+            ],
+            [
+              7,
+              44
+            ],
+            [
+              46,
+              9
+            ],
+            [
+              19,
+              33
+            ],
+            [
+              23,
+              34
+            ],
+            [
+              38,
+              54,
+              53
+            ],
+            [
+              39,
+              55
+            ],
+            [
+              56,
+              40
+            ]
+          ],
+          "pairDiscTerms": 18,
+          "placeboOffset": 0,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 0,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 4,
+              "pairId": 246,
+              "second": 17
+            },
+            {
+              "first": 7,
+              "pairId": 435,
+              "second": 44
+            },
+            {
+              "first": 9,
+              "pairId": 540,
+              "second": 46
+            },
+            {
+              "first": 19,
+              "pairId": 982,
+              "second": 33
+            },
+            {
+              "first": 23,
+              "pairId": 1137,
+              "second": 34
+            },
+            {
+              "first": 38,
+              "pairId": 1591,
+              "second": 53
+            },
+            {
+              "first": 38,
+              "pairId": 1592,
+              "second": 54
+            },
+            {
+              "first": 39,
+              "pairId": 1614,
+              "second": 55
+            },
+            {
+              "first": 40,
+              "pairId": 1635,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "zero-signal",
+          "shuffledQuotas": [
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            2,
+            3,
+            2,
+            2
+          ],
+          "shuffledSchedule": [
+            0,
+            8,
+            4,
+            7,
+            46,
+            19,
+            23,
+            38,
+            39,
+            56,
+            6,
+            2,
+            17,
+            44,
+            9,
+            33,
+            34,
+            54,
+            55,
+            40,
+            53
+          ],
+          "spearmanFieldMassMaxViolation": null,
+          "spearmanQuotaMassMaxViolation": -0.1111111111111111,
+          "worker": 7
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            6,
+            9,
+            40,
+            0,
+            40,
+            43,
+            40,
+            6,
+            40,
+            0,
+            40,
+            43
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            6,
+            9,
+            40,
+            47,
+            0,
+            2,
+            40,
+            56,
+            43,
+            8,
+            40,
+            42
+          ],
+          "memberPermutations": [
+            [
+              6,
+              0,
+              43
+            ],
+            [
+              9,
+              2,
+              8,
+              3,
+              45
+            ],
+            [
+              40
+            ],
+            [
+              47,
+              56,
+              42
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            9,
+            40,
+            47,
+            2,
+            56,
+            8,
+            42,
+            3,
+            47,
+            45,
+            56,
+            9
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 0
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            6,
+            8,
+            40,
+            43,
+            40,
+            0,
+            40,
+            6,
+            40,
+            43,
+            40,
+            0
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            6,
+            8,
+            40,
+            42,
+            43,
+            3,
+            40,
+            47,
+            0,
+            2,
+            40,
+            56
+          ],
+          "memberPermutations": [
+            [
+              6,
+              43,
+              0
+            ],
+            [
+              8,
+              3,
+              2,
+              9,
+              45
+            ],
+            [
+              40
+            ],
+            [
+              42,
+              47,
+              56
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            8,
+            40,
+            42,
+            3,
+            47,
+            2,
+            56,
+            9,
+            42,
+            45,
+            47,
+            8
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 1
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            6,
+            3,
+            40,
+            43,
+            40,
+            0,
+            40,
+            6,
+            40,
+            43,
+            40,
+            0
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            6,
+            3,
+            40,
+            42,
+            43,
+            9,
+            40,
+            56,
+            0,
+            45,
+            40,
+            47
+          ],
+          "memberPermutations": [
+            [
+              6,
+              43,
+              0
+            ],
+            [
+              3,
+              9,
+              45,
+              2,
+              8
+            ],
+            [
+              40
+            ],
+            [
+              42,
+              56,
+              47
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            3,
+            40,
+            42,
+            9,
+            56,
+            45,
+            47,
+            2,
+            42,
+            8,
+            56,
+            3
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 2
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            43,
+            3,
+            40,
+            6,
+            40,
+            0,
+            40,
+            43,
+            40,
+            6,
+            40,
+            0
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            43,
+            3,
+            40,
+            47,
+            6,
+            45,
+            40,
+            56,
+            0,
+            9,
+            40,
+            42
+          ],
+          "memberPermutations": [
+            [
+              43,
+              6,
+              0
+            ],
+            [
+              3,
+              45,
+              9,
+              8,
+              2
+            ],
+            [
+              40
+            ],
+            [
+              47,
+              56,
+              42
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            3,
+            40,
+            47,
+            45,
+            56,
+            9,
+            42,
+            8,
+            47,
+            2,
+            56,
+            3
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 3
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            0,
+            2,
+            40,
+            6,
+            40,
+            43,
+            40,
+            0,
+            40,
+            6,
+            40,
+            43
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            0,
+            2,
+            40,
+            56,
+            6,
+            45,
+            40,
+            47,
+            43,
+            3,
+            40,
+            42
+          ],
+          "memberPermutations": [
+            [
+              0,
+              6,
+              43
+            ],
+            [
+              2,
+              45,
+              3,
+              8,
+              9
+            ],
+            [
+              40
+            ],
+            [
+              56,
+              47,
+              42
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            2,
+            40,
+            56,
+            45,
+            47,
+            3,
+            42,
+            8,
+            56,
+            9,
+            47,
+            2
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 4
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            6,
+            9,
+            40,
+            43,
+            40,
+            0,
+            40,
+            6,
+            40,
+            43,
+            40,
+            0
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            6,
+            9,
+            40,
+            56,
+            43,
+            3,
+            40,
+            47,
+            0,
+            2,
+            40,
+            42
+          ],
+          "memberPermutations": [
+            [
+              6,
+              43,
+              0
+            ],
+            [
+              9,
+              3,
+              2,
+              45,
+              8
+            ],
+            [
+              40
+            ],
+            [
+              56,
+              47,
+              42
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            9,
+            40,
+            56,
+            3,
+            47,
+            2,
+            42,
+            45,
+            56,
+            8,
+            47,
+            9
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 5
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            43,
+            8,
+            40,
+            0,
+            40,
+            6,
+            40,
+            43,
+            40,
+            0,
+            40,
+            6
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            43,
+            8,
+            40,
+            42,
+            0,
+            3,
+            40,
+            56,
+            6,
+            45,
+            40,
+            47
+          ],
+          "memberPermutations": [
+            [
+              43,
+              0,
+              6
+            ],
+            [
+              8,
+              3,
+              45,
+              9,
+              2
+            ],
+            [
+              40
+            ],
+            [
+              42,
+              56,
+              47
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            8,
+            40,
+            42,
+            3,
+            56,
+            45,
+            47,
+            9,
+            42,
+            2,
+            56,
+            8
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 6
+        },
+        {
+          "Q": 12,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0,
+                6,
+                43
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2,
+                3,
+                8,
+                9,
+                45
+              ]
+            },
+            {
+              "id": 40,
+              "members": [
+                40
+              ]
+            },
+            {
+              "id": 42,
+              "members": [
+                42,
+                47,
+                56
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2,
+            3,
+            6,
+            8,
+            9,
+            40,
+            42,
+            43,
+            45,
+            47,
+            56
+          ],
+          "iteration": 1,
+          "massBits": [
+            4575555504081845331,
+            4559092282637742530,
+            4574276324270652240,
+            0
+          ],
+          "massDiffersFromMaxViolation": true,
+          "massFallback": "none",
+          "massQuotas": [
+            6,
+            1,
+            5,
+            0
+          ],
+          "massSchedule": [
+            6,
+            9,
+            40,
+            43,
+            40,
+            0,
+            40,
+            6,
+            40,
+            43,
+            40,
+            0
+          ],
+          "maxViolationBits": [
+            4590997407722462208,
+            4591059555408338944,
+            4590524950619764224,
+            4590099472210625088
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            3,
+            3,
+            3,
+            3
+          ],
+          "maxViolationSchedule": [
+            6,
+            9,
+            40,
+            42,
+            43,
+            2,
+            40,
+            56,
+            0,
+            8,
+            40,
+            47
+          ],
+          "memberPermutations": [
+            [
+              6,
+              43,
+              0
+            ],
+            [
+              9,
+              2,
+              8,
+              45,
+              3
+            ],
+            [
+              40
+            ],
+            [
+              42,
+              56,
+              47
+            ]
+          ],
+          "pairDiscTerms": 9,
+          "placeboOffset": 3,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 3,
+          "positivePairEdges": [
+            {
+              "first": 0,
+              "pairId": 5,
+              "second": 6
+            },
+            {
+              "first": 2,
+              "pairId": 119,
+              "second": 3
+            },
+            {
+              "first": 2,
+              "pairId": 124,
+              "second": 8
+            },
+            {
+              "first": 2,
+              "pairId": 125,
+              "second": 9
+            },
+            {
+              "first": 3,
+              "pairId": 182,
+              "second": 9
+            },
+            {
+              "first": 6,
+              "pairId": 381,
+              "second": 43
+            },
+            {
+              "first": 8,
+              "pairId": 488,
+              "second": 45
+            },
+            {
+              "first": 42,
+              "pairId": 1672,
+              "second": 56
+            },
+            {
+              "first": 47,
+              "pairId": 1747,
+              "second": 56
+            }
+          ],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            0,
+            6,
+            1,
+            5
+          ],
+          "shuffledSchedule": [
+            9,
+            40,
+            42,
+            2,
+            56,
+            8,
+            47,
+            45,
+            42,
+            3,
+            56,
+            9
+          ],
+          "spearmanFieldMassMaxViolation": 0.4,
+          "spearmanQuotaMassMaxViolation": null,
+          "worker": 7
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 0
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 1
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 2
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 3
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 4
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 5
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 6
+        },
+        {
+          "Q": 2,
+          "bite": 1,
+          "components": [
+            {
+              "id": 0,
+              "members": [
+                0
+              ]
+            },
+            {
+              "id": 2,
+              "members": [
+                2
+              ]
+            }
+          ],
+          "entry": [
+            0,
+            2
+          ],
+          "iteration": 2,
+          "massBits": [
+            4550259910393225482,
+            4573743460090782991
+          ],
+          "massDiffersFromMaxViolation": false,
+          "massFallback": "none",
+          "massQuotas": [
+            0,
+            2
+          ],
+          "massSchedule": [
+            2,
+            2
+          ],
+          "maxViolationBits": [
+            4578582961832673280,
+            4590316500320273408
+          ],
+          "maxViolationFallback": "none",
+          "maxViolationQuotas": [
+            0,
+            2
+          ],
+          "maxViolationSchedule": [
+            2,
+            2
+          ],
+          "memberPermutations": [
+            [
+              0
+            ],
+            [
+              2
+            ]
+          ],
+          "pairDiscTerms": 0,
+          "placeboOffset": 1,
+          "planIdentitiesHold": true,
+          "positiveBoundaryRows": 2,
+          "positivePairEdges": [],
+          "seed": 7,
+          "shuffledFallback": "none",
+          "shuffledQuotas": [
+            2,
+            0
+          ],
+          "shuffledSchedule": [
+            0,
+            0
+          ],
+          "spearmanFieldMassMaxViolation": 1.0,
+          "spearmanQuotaMassMaxViolation": 1.0,
+          "worker": 7
+        }
+      ],
+      "eligibleDecisions": 24,
+      "eligibleDisagreementDecisions": 16,
+      "eligibleDisagreementRate": 0.6666666666666666,
+      "entryCollidingPieces": 280,
+      "executedSlots": 280,
+      "executionIdentityFailureDecisions": 0,
+      "fullRelocateSlots": 244,
+      "graphDigestSha256": "4df16c2cc3e12208a4b73ecdcfb0a550ac12f83493d818e8f626b7ef1bfa1d3c",
+      "invalidFallbackDecisions": 0,
+      "pairDiscTerms": 216,
+      "partitionDecisions": 24,
+      "partitionSlots": 280,
+      "planIdentityFailureDecisions": 0,
+      "positiveBoundaryRows": 40,
+      "positivePairEdges": 160,
+      "scheduleDigestSha256": "a44be7fb0a4a07444d00b85cdf945235182ce8ef5fe9a371b6290605b31f8288",
+      "slotIdentitiesHold": true,
+      "zeroEnergySlots": 36,
+      "zeroSignalFallbackDecisions": 8
+    },
+    "proxy": {
+      "guidedPhi": 0.0,
+      "maxViolationMm": 0.0,
+      "rawPhi": 0.0,
+      "rawSourceDepthMm": 182.793024
+    },
+    "publicationCount": 1,
+    "publications": [
+      {
+        "improvedIncumbent": true,
+        "ordinal": {
+          "attempt": 0,
+          "bite": 1,
+          "iteration": 3,
+          "proposals": 183
+        },
+        "parentFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+        "phase": "explore",
+        "placementFingerprint": "fddb27fdf63e709ad049d69a1ea4ca74b3098ed94ba86d8282210dde165bdd4c",
+        "placements": [
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-1",
+            "rotationDeg": 180.03125,
+            "translateLongAxis": 65.243038747208,
+            "translateShortAxis": 582.8615591278036
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.002,
+            "translateShortAxis": 568.257
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 65.00719882314131,
+            "translateShortAxis": 753.5305659256938
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.002,
+            "translateShortAxis": 738.805
+          },
+          {
+            "mirrored": false,
+            "pieceId": "604bc424-469c-4ab8-93f1-80c0fc4090b3-copy-5",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 65.002,
+            "translateShortAxis": 924.079
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-1",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 52.680024,
+            "translateShortAxis": 983.397
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-2",
+            "rotationDeg": 0.1875,
+            "translateLongAxis": 70.181312785367,
+            "translateShortAxis": 488.8871072385735
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-3",
+            "rotationDeg": 180.0,
+            "translateLongAxis": 110.006,
+            "translateShortAxis": 670.217
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-4",
+            "rotationDeg": 0.6875,
+            "translateLongAxis": 70.65221482398915,
+            "translateShortAxis": 659.8242335841071
+          },
+          {
+            "mirrored": false,
+            "pieceId": "54345eb7-a37e-45eb-b0fd-eccffdfa14cc-copy-5",
+            "rotationDeg": 179.9375,
+            "translateLongAxis": 111.91316678890762,
+            "translateShortAxis": 840.6885509621802
+          },
+          {
+            "mirrored": true,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 66.931,
+            "translateShortAxis": 1102.595
+          },
+          {
+            "mirrored": true,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 66.931,
+            "translateShortAxis": 1208.745
+          },
+          {
+            "mirrored": true,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 66.931,
+            "translateShortAxis": 1314.895
+          },
+          {
+            "mirrored": false,
+            "pieceId": "b8721c24-33b9-4244-9ce6-fff728f7e73b-copy-4",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 60.766024,
+            "translateShortAxis": 1399.801
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 12.253,
+            "translateShortAxis": 1595.02
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 9.011,
+            "translateShortAxis": 1490.278
+          },
+          {
+            "mirrored": false,
+            "pieceId": "0aff79d8-47d7-49b2-958b-8f8648eafc07-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.769,
+            "translateShortAxis": 1385.536
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-1",
+            "rotationDeg": 315.9998779296875,
+            "translateLongAxis": 100.1428652020793,
+            "translateShortAxis": 844.2481709538653
+          },
+          {
+            "mirrored": false,
+            "pieceId": "25cc62e4-e3e7-4b00-b8b7-7a2ef22b6846-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 72.49702400000001,
+            "translateShortAxis": 825.854
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-1",
+            "rotationDeg": 90.293046875,
+            "translateLongAxis": 6.419819549944532,
+            "translateShortAxis": 1380.5319208898206
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-2",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 6.545,
+            "translateShortAxis": 1274.487
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-3",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 6.545,
+            "translateShortAxis": 1168.337
+          },
+          {
+            "mirrored": false,
+            "pieceId": "68c5a4cc-cf24-447c-ad54-974a021198a8-copy-4",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 6.545,
+            "translateShortAxis": 1062.187
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-1",
+            "rotationDeg": 340.345876,
+            "translateLongAxis": 28.546,
+            "translateShortAxis": 1837.482
+          },
+          {
+            "mirrored": false,
+            "pieceId": "c5135087-12f0-44f9-bd91-4bcf67affd8b-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 28.034,
+            "translateShortAxis": 1700.44
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 7.341,
+            "translateShortAxis": 1452.81
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 7.341,
+            "translateShortAxis": 1487.814
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-3",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 10.583,
+            "translateShortAxis": 1557.552
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-4",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 10.583,
+            "translateShortAxis": 1592.556
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-5",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 13.825,
+            "translateShortAxis": 1662.294
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-6",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 103.998024,
+            "translateShortAxis": 1958.451
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-7",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 112.126024,
+            "translateShortAxis": 1277.007
+          },
+          {
+            "mirrored": false,
+            "pieceId": "e4b6ebdf-5ca2-4c2d-bcd5-2a963f106dc5-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 133.01002400000002,
+            "translateShortAxis": 1772.942
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 81.36602400000001,
+            "translateShortAxis": 1324.423
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-2",
+            "rotationDeg": 270.9375,
+            "translateLongAxis": 144.43083354652367,
+            "translateShortAxis": 1851.4820052911216
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-3",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 112.126024,
+            "translateShortAxis": 1081.995
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-4",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 112.126024,
+            "translateShortAxis": 1176.999
+          },
+          {
+            "mirrored": false,
+            "pieceId": "3c364de9-07d8-4e8f-8e47-d5ac4961f640-copy-5",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 112.126024,
+            "translateShortAxis": 1272.003
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.002,
+            "translateShortAxis": 5.002
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 5.002,
+            "translateShortAxis": 164.006
+          },
+          {
+            "mirrored": false,
+            "pieceId": "28f5a1d1-afd4-46e4-b2b9-f1841386be28-copy-3",
+            "rotationDeg": 0.12399665771484375,
+            "translateLongAxis": 5.105026711018381,
+            "translateShortAxis": 323.7174897923993
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-1",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 92.096024,
+            "translateShortAxis": 1400.536
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-2",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 116.789024,
+            "translateShortAxis": 368.437
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-3",
+            "rotationDeg": 300.334562,
+            "translateLongAxis": 145.57370139741016,
+            "translateShortAxis": 476.32979931494634
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-4",
+            "rotationDeg": 302.3736245,
+            "translateLongAxis": 145.59783423251972,
+            "translateShortAxis": 562.0946406830823
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-5",
+            "rotationDeg": 301.809171375,
+            "translateLongAxis": 146.05257467118426,
+            "translateShortAxis": 650.3441528175856
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-6",
+            "rotationDeg": 301.193937,
+            "translateLongAxis": 146.68983408184627,
+            "translateShortAxis": 730.421548466179
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-7",
+            "rotationDeg": 0.0625,
+            "translateLongAxis": 117.64167618501497,
+            "translateShortAxis": 452.92560258550947
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-8",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 117.793024,
+            "translateShortAxis": 532.958
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-9",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 117.793024,
+            "translateShortAxis": 624.132
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-10",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 95.338024,
+            "translateShortAxis": 1505.278
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-11",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 98.58002400000001,
+            "translateShortAxis": 1610.02
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-12",
+            "rotationDeg": 90.0,
+            "translateLongAxis": 107.505024,
+            "translateShortAxis": 1757.928
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-13",
+            "rotationDeg": 300.537687,
+            "translateLongAxis": 146.02784070724425,
+            "translateShortAxis": -7.511635951634328
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-14",
+            "rotationDeg": 300.9475927128906,
+            "translateLongAxis": 146.03548640597094,
+            "translateShortAxis": 75.22139181232454
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-15",
+            "rotationDeg": 180.0546875,
+            "translateLongAxis": 177.42795708803655,
+            "translateShortAxis": 321.1347199030019
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-16",
+            "rotationDeg": 301.240812,
+            "translateLongAxis": 144.2502711627994,
+            "translateShortAxis": 395.71957126155405
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-17",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 116.789024,
+            "translateShortAxis": 50.429
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-18",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 116.789024,
+            "translateShortAxis": 209.433
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-19",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 116.789024,
+            "translateShortAxis": 133.651
+          },
+          {
+            "mirrored": false,
+            "pieceId": "d06db288-d2d6-4f40-874e-98287f516d93-copy-20",
+            "rotationDeg": 0.0,
+            "translateLongAxis": 116.789024,
+            "translateShortAxis": 292.655
+          }
+        ],
+        "poses": [
+          {
+            "mirrored": false,
+            "thetaDeg": 180.03125,
+            "txMm": 582.8615591278036,
+            "tyMm": 65.243038747208
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 568.257,
+            "tyMm": 5.002
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 180.0,
+            "txMm": 753.5305659256938,
+            "tyMm": 65.00719882314131
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 738.805,
+            "tyMm": 5.002
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 180.0,
+            "txMm": 924.079,
+            "tyMm": 65.002
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 983.397,
+            "tyMm": 52.680024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.1875,
+            "txMm": 488.8871072385735,
+            "tyMm": 70.181312785367
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 180.0,
+            "txMm": 670.217,
+            "tyMm": 110.006
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.6875,
+            "txMm": 659.8242335841071,
+            "tyMm": 70.65221482398915
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 179.9375,
+            "txMm": 840.6885509621802,
+            "tyMm": 111.91316678890762
+          },
+          {
+            "mirrored": true,
+            "thetaDeg": 0.0,
+            "txMm": 1102.595,
+            "tyMm": 66.931
+          },
+          {
+            "mirrored": true,
+            "thetaDeg": 0.0,
+            "txMm": 1208.745,
+            "tyMm": 66.931
+          },
+          {
+            "mirrored": true,
+            "thetaDeg": 0.0,
+            "txMm": 1314.895,
+            "tyMm": 66.931
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1399.801,
+            "tyMm": 60.766024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1595.02,
+            "tyMm": 12.253
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1490.278,
+            "tyMm": 9.011
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1385.536,
+            "tyMm": 5.769
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 315.9998779296875,
+            "txMm": 844.2481709538653,
+            "tyMm": 100.1428652020793
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 825.854,
+            "tyMm": 72.49702400000001
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.293046875,
+            "txMm": 1380.5319208898206,
+            "tyMm": 6.419819549944532
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1274.487,
+            "tyMm": 6.545
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1168.337,
+            "tyMm": 6.545
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1062.187,
+            "tyMm": 6.545
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 340.345876,
+            "txMm": 1837.482,
+            "tyMm": 28.546
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1700.44,
+            "tyMm": 28.034
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1452.81,
+            "tyMm": 7.341
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1487.814,
+            "tyMm": 7.341
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1557.552,
+            "tyMm": 10.583
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1592.556,
+            "tyMm": 10.583
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1662.294,
+            "tyMm": 13.825
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1958.451,
+            "tyMm": 103.998024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1277.007,
+            "tyMm": 112.126024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1772.942,
+            "tyMm": 133.01002400000002
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1324.423,
+            "tyMm": 81.36602400000001
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 270.9375,
+            "txMm": 1851.4820052911216,
+            "tyMm": 144.43083354652367
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1081.995,
+            "tyMm": 112.126024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1176.999,
+            "tyMm": 112.126024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1272.003,
+            "tyMm": 112.126024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 5.002,
+            "tyMm": 5.002
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 164.006,
+            "tyMm": 5.002
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.12399665771484375,
+            "txMm": 323.7174897923993,
+            "tyMm": 5.105026711018381
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1400.536,
+            "tyMm": 92.096024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 368.437,
+            "tyMm": 116.789024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 300.334562,
+            "txMm": 476.32979931494634,
+            "tyMm": 145.57370139741016
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 302.3736245,
+            "txMm": 562.0946406830823,
+            "tyMm": 145.59783423251972
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 301.809171375,
+            "txMm": 650.3441528175856,
+            "tyMm": 146.05257467118426
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 301.193937,
+            "txMm": 730.421548466179,
+            "tyMm": 146.68983408184627
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0625,
+            "txMm": 452.92560258550947,
+            "tyMm": 117.64167618501497
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 532.958,
+            "tyMm": 117.793024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 624.132,
+            "tyMm": 117.793024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1505.278,
+            "tyMm": 95.338024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 1610.02,
+            "tyMm": 98.58002400000001
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 90.0,
+            "txMm": 1757.928,
+            "tyMm": 107.505024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 300.537687,
+            "txMm": -7.511635951634328,
+            "tyMm": 146.02784070724425
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 300.9475927128906,
+            "txMm": 75.22139181232454,
+            "tyMm": 146.03548640597094
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 180.0546875,
+            "txMm": 321.1347199030019,
+            "tyMm": 177.42795708803655
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 301.240812,
+            "txMm": 395.71957126155405,
+            "tyMm": 144.2502711627994
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 50.429,
+            "tyMm": 116.789024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 209.433,
+            "tyMm": 116.789024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 133.651,
+            "tyMm": 116.789024
+          },
+          {
+            "mirrored": false,
+            "thetaDeg": 0.0,
+            "txMm": 292.655,
+            "tyMm": 116.789024
+          }
+        ],
+        "publishedRawDepthMm": 182.793024,
+        "repairDepthGivebackMm": 0.0,
+        "repairMaxDisplacementMm": 0.0,
+        "repairRows": 0,
+        "revalidation": {
+          "depthMatchesBitwise": true,
+          "fingerprintMatches": true,
+          "recomputedPlacementFingerprint": "fddb27fdf63e709ad049d69a1ea4ca74b3098ed94ba86d8282210dde165bdd4c",
+          "recomputedRawDepthMm": 182.793024
+        },
+        "targetDepthMm": 182.793024,
+        "wallSeconds": null
+      }
+    ],
+    "relocateEconomics": {
+      "acceptedMoves": 238,
+      "containerCommits": 1,
+      "containerSamples": 12200,
+      "containerWinners": 1,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "focusedSamples": 6100,
+      "focusedWinners": 38,
+      "relocates": 244,
+      "sampleEvaluations": 60636,
+      "sampleEvaluationsPerRelocate": 248.50819672131146,
+      "stayPutWinners": 205
+    },
+    "repairMaxDisplacementMm": 0.0,
+    "repairMaxGivebackMm": 0.0,
+    "startDepthMm": 182.976,
+    "strikeArm": "control-iteration-strikes",
+    "sweeps": 3,
+    "work": {
+      "acceptedMoves": 238,
+      "broadPhaseRejects": 3439732,
+      "containerCommits": 1,
+      "containerSamples": 12200,
+      "containerWinners": 1,
+      "convexCellGapQueries": 322009,
+      "disruptionMoves": 0,
+      "disruptions": 0,
+      "exactCheckpoints": 1,
+      "focusedSamples": 6100,
+      "focusedWinners": 38,
+      "jumpProposals": 0,
+      "pairRowProbes": 3661950,
+      "pieceProposals": 1464,
+      "poseTransforms": 61185,
+      "relocates": 244,
+      "repairRows": 0,
+      "sampleEvaluations": 60636,
+      "stayPutWinners": 205,
+      "weightUpdates": 3
+    }
+  },
+  "request": {
+    "normalizeAxes": false,
+    "path": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+    "pieceCount": 61,
+    "sha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+    "sheetLongAxisMm": 2700.0,
+    "sheetShortAxisMm": 2000.0
+  },
+  "rotationFrozen": false,
+  "schedule": {
+    "arm": "control",
+    "armLabel": "control-iteration-strikes",
+    "calibratedAttemptsPerBite": null,
+    "calibratedPlan": null,
+    "compressIterationsWithoutImprovement": 100,
+    "compressStrikes": 5,
+    "exploreIterationsWithoutImprovement": 200,
+    "exploreStrikes": 3,
+    "exploreTimeRatio": 0.8,
+    "fixedWork": {
+      "attemptsPerBite": 1,
+      "compressBites": 0,
+      "exploreBites": 1,
+      "iterationsPerSeparation": 400
+    },
+    "mode": "fixed",
+    "recordFingerprints": false,
+    "strikePolicy": {
+      "compress": {
+        "iterationsWithoutImprovement": 100,
+        "patience": "iterations",
+        "strikes": 5,
+        "workQuantumSampleEvaluations": null
+      },
+      "explore": {
+        "iterationsWithoutImprovement": 200,
+        "patience": "iterations",
+        "strikes": 3,
+        "workQuantumSampleEvaluations": null
+      },
+      "frozenLiteralsIntact": true,
+      "improvingResetRatio": 0.98
+    },
+    "wallBudgetSeconds": null,
+    "workers": 8
+  },
+  "seed": 7,
+  "wall": {
+    "constructorSeconds": 0.620412535,
+    "loopEntrySeconds": 0.62053375,
+    "loopExploreSeconds": null,
+    "loopSearchSeconds": null,
+    "searchSeconds": 0.020267336,
+    "totalSeconds": 0.641217029
+  }
+}

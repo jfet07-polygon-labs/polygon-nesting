@@ -1,0 +1,38 @@
+{
+ "binaryPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark",
+ "binarySha256": "da6b6d50d94d18f9585b55833375bdea4ca49767117b9ccd5b108cf14df578ac",
+ "buildCommand": [
+  "cargo",
+  "build",
+  "--release",
+  "--locked",
+  "-p",
+  "polygon-nesting-core",
+  "--example",
+  "overlap_ics_benchmark",
+  "--features",
+  "overlap-ics,pool-retry-tracker-rebase"
+ ],
+ "cargoVersion": "cargo 1.97.1 (c980f4866 2026-06-30)\nrelease: 1.97.1\ncommit-hash: c980f4866141969fab6254a680546a277789d6f0\ncommit-date: 2026-06-30\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.2 (sys:0.20.4 vendored)\nlibcurl: 8.20.0-DEV (sys:0.4.88+curl-8.20.0 vendored ssl:OpenSSL/3.6.2)\nssl: OpenSSL 3.6.2 7 Apr 2026\nos: NixOS 26.11.0 [64-bit]",
+ "completedUtc": "2026-08-24T22:15:39.473751+00:00",
+ "example": "overlap_ics_benchmark",
+ "features": [
+  "overlap-ics",
+  "pool-retry-tracker-rebase"
+ ],
+ "headAfter": "fb76044424a4d5064e783422c2a2258c83fe4efc",
+ "headBefore": "fb76044424a4d5064e783422c2a2258c83fe4efc",
+ "package": "polygon-nesting-core",
+ "profile": "release",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "reviewedSourceCommit": "fb76044424a4d5064e783422c2a2258c83fe4efc",
+ "rustcVersion": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.1\nLLVM version: 22.1.6",
+ "schema": "pool-retry-tracker-rebase/build-receipt/v1",
+ "sourcePlanSha256": "5d25a310e223e4b99cf8f49a9a45333eec5b51cd290c9a93fb7fcaf565bf53c0",
+ "sourceStatusAfter": "",
+ "sourceStatusBefore": "",
+ "sourceTree": "cd22250af80a46391e68bb161da88e1e9c65c7ae",
+ "specSha256": "b5038979351bf2fc114a1d7a220751f0704e362e2dd62809632dceca9245a3a1",
+ "startedUtc": "2026-08-24T22:14:55.329508+00:00",
+ "targetTriple": "x86_64-unknown-linux-gnu"
+}

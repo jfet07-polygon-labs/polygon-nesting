@@ -1,0 +1,2168 @@
+{
+ "experiment": "overlap-ics",
+ "battery": "conflict-cluster-budget-gate0",
+ "specPath": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/docs/conflict-cluster-budget-spec.md",
+ "specSha256": "0cfdf0e2557967e5aab3a48534e4ff6508c38b3d1054344360aedd61ce284ce9",
+ "expectedSpecSha256": "0cfdf0e2557967e5aab3a48534e4ff6508c38b3d1054344360aedd61ce284ce9",
+ "frozenCommit": "a6e5d1b13b14b3b776d48d7f3298af5980fb762d",
+ "frozenBinary": "/var/lib/t3/tmp/ccbudget-frozen-target/release/examples/overlap_ics_benchmark",
+ "frozenBinarySha256": "fede5ca35a4a0be40f5913289d55c848243597c7335475d42cb78d710ca9e39e",
+ "candidateBinary": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/target/release/examples/overlap_ics_benchmark",
+ "candidateBinarySha256": "b8425dfdea6d8a6d84a6d27aa8df51a3308714533f4348d4e482ba90eafe61a5",
+ "request": "/var/lib/t3/worktrees/polygon-nesting/t3code-b08b4cee/tests/fixtures/mixed-61/mixed61-request-exact-clearance.json",
+ "requestSha256": "ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3",
+ "machine": {
+  "cpus": 16,
+  "loadBefore": [
+   0.79,
+   0.92,
+   0.77
+  ],
+  "loadAfter": [
+   1.22,
+   1.06,
+   0.84
+  ]
+ },
+ "g01OffIdentity": [
+  {
+   "cell": "A",
+   "argv": [
+    "--cell=cutclose",
+    "--mode=fixed",
+    "--bites=8",
+    "--attempts=1",
+    "--iters=400",
+    "--compressbites=0",
+    "--workers=8",
+    "--seed=0"
+   ],
+   "baseExit": 0,
+   "candidateExit": 0,
+   "baseSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-A-base.json",
+   "baseSourceSha256": "75093149c9933b52941404ee84915330ba69aacf3f2e16ebfb95facb26361e84",
+   "candidateSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-A-new-off.json",
+   "candidateSourceSha256": "f6c1c4984ba0ad2b9bc8748d89333195bb6c7a32669489787600b690ad515bb9",
+   "baseDigestStripped": "c056eba339961201e39cc3c4a3633dd60f657d8b13e9d01dfbb4ae1b652b8347",
+   "candidateDigestStripped": "c056eba339961201e39cc3c4a3633dd60f657d8b13e9d01dfbb4ae1b652b8347",
+   "bitIdentical": true,
+   "stderrTail": ""
+  },
+  {
+   "cell": "B",
+   "argv": [
+    "--cell=cutclose",
+    "--mode=fixed",
+    "--bites=21",
+    "--attempts=1",
+    "--iters=400",
+    "--compressbites=0",
+    "--workers=8",
+    "--seed=0"
+   ],
+   "baseExit": 0,
+   "candidateExit": 0,
+   "baseSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-B-base.json",
+   "baseSourceSha256": "02e13f3b0edd7ef872076bec26c1c351dfe803eb2a5d09725d470b1741d66f87",
+   "candidateSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-B-new-off.json",
+   "candidateSourceSha256": "256786739161ad5312a5939054cd64cc4e3f9602ab5eabe744ced6dcd72b1f36",
+   "baseDigestStripped": "18ee62457c623dac1820b073bd53c1aa1af19b1acf1caf5afa1fa66c237f8c9d",
+   "candidateDigestStripped": "18ee62457c623dac1820b073bd53c1aa1af19b1acf1caf5afa1fa66c237f8c9d",
+   "bitIdentical": true,
+   "stderrTail": ""
+  },
+  {
+   "cell": "C",
+   "argv": [
+    "--cell=cutclose",
+    "--mode=fixed",
+    "--bites=21",
+    "--attempts=1",
+    "--iters=400",
+    "--compressbites=0",
+    "--workers=5",
+    "--seed=5"
+   ],
+   "baseExit": 0,
+   "candidateExit": 0,
+   "baseSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-C-base.json",
+   "baseSourceSha256": "c7dbbb33944df0f09ee8568cea490602841c7fe948b041786a82995ca77d9a61",
+   "candidateSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-C-new-off.json",
+   "candidateSourceSha256": "79d1eb90c71be2cef692540e49a70912ffb1ac983b48843e425ebbe8864c192c",
+   "baseDigestStripped": "758f550f34fbe400574d19a7ec20e3c30ad48941ba4f5c1db88734d7a856d778",
+   "candidateDigestStripped": "758f550f34fbe400574d19a7ec20e3c30ad48941ba4f5c1db88734d7a856d778",
+   "bitIdentical": true,
+   "stderrTail": ""
+  },
+  {
+   "cell": "D",
+   "argv": [
+    "--cell=cutclose",
+    "--mode=fixed",
+    "--bites=3",
+    "--attempts=2",
+    "--iters=120",
+    "--compressbites=2",
+    "--workers=8",
+    "--seed=0",
+    "--fingerprints=1"
+   ],
+   "baseExit": 0,
+   "candidateExit": 0,
+   "baseSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-D-base.json",
+   "baseSourceSha256": "7ec9d035bcfd178916543fcd9e2f292667fe3ed3f8ba8ea07899f04012b773f3",
+   "candidateSourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/identity-D-new-off.json",
+   "candidateSourceSha256": "3f100772c6279f5cb7bf3af4959b023c50c00797c7930ca488329c45c5e2fde4",
+   "baseDigestStripped": "8628b2e6d649a54e7cec141499cb102942bb402408bba7d20ccfd13dbb020371",
+   "candidateDigestStripped": "8628b2e6d649a54e7cec141499cb102942bb402408bba7d20ccfd13dbb020371",
+   "bitIdentical": true,
+   "stderrTail": ""
+  }
+ ],
+ "g02ExactVectors": {
+  "exit": 0,
+  "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/exact-vectors.json",
+  "sourceSha256": "5e3e8cf7ce9969a84a821855aa8dcc4b1413b69158d490e965c1351692f4efbe",
+  "clauses": {
+   "unitSquare": true,
+   "transformedDisc": true,
+   "purePairInversion": true,
+   "boundaryV3": true,
+   "largestRemainder": true,
+   "mixedZeros": true,
+   "zeroSignal": true,
+   "placebo": true,
+   "memberPermutation": true,
+   "roundRobin": true,
+   "invalidFallback": true,
+   "fourAccountingIdentities": true
+  },
+  "tests": {
+   "feature": {
+    "command": [
+     "cargo",
+     "test",
+     "-q",
+     "-p",
+     "polygon-nesting-core",
+     "--features",
+     "overlap-ics,conflict-cluster-budget",
+     "--lib"
+    ],
+    "exit": 0,
+    "seconds": 0.9595669819973409,
+    "logPath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/feature-tests.log",
+    "logSha256": "d380eb4f2510706ea54b07c78790cdb51ca0ac91f3e9b48df5a87dec23a4a003"
+   },
+   "default": {
+    "command": [
+     "cargo",
+     "test",
+     "-q",
+     "-p",
+     "polygon-nesting-core",
+     "--features",
+     "overlap-ics",
+     "--lib"
+    ],
+    "exit": 0,
+    "seconds": 1.0068212039768696,
+    "logPath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/default-tests.log",
+    "logSha256": "6c3e0370d569f2de542c2ee2a20c56f4184d0aca2916c3c3efb215a6d44fd052"
+   }
+  }
+ },
+ "g03ShadowEngagement": {
+  "seeds": [
+   {
+    "seed": 0,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed0.json",
+    "sourceSha256": "3bb32c8867bb7e65a67000fb0f937c1ae93d455e193cc96e54e2ba0921c5aee3",
+    "partitionDecisions": 32,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 16,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 16,
+    "reportedDisagreementRate": 0.6666666666666666,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 1,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed1.json",
+    "sourceSha256": "5a17eb6e2a95b6ee907ef421cd1b5e4f438312b0b112ae9e0fbd9bf3fcc15038",
+    "partitionDecisions": 24,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 24,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 24,
+    "reportedDisagreementRate": 1.0,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 2,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed2.json",
+    "sourceSha256": "01534efc17bad209f0741a17c5eaea286ee5f305c7f6434cd94c9e52a8ca8392",
+    "partitionDecisions": 24,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 24,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 24,
+    "reportedDisagreementRate": 1.0,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 3,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed3.json",
+    "sourceSha256": "6b26bc479aa62152eeae41f2b23cad1bd55881dda79d1003a77a43676ce34221",
+    "partitionDecisions": 16,
+    "eligibleDecisions": 16,
+    "eligibleDisagreements": 16,
+    "reportedEligibleDecisions": 16,
+    "reportedEligibleDisagreements": 16,
+    "reportedDisagreementRate": 1.0,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 4,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed4.json",
+    "sourceSha256": "930bf8185b5087a73ffd7d9976aa9518ac84e72550126faa63316893e4d6b5d8",
+    "partitionDecisions": 32,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 16,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 16,
+    "reportedDisagreementRate": 0.6666666666666666,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 5,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed5.json",
+    "sourceSha256": "90d3bf6da5832bfa37eee820986f534357dafb2a694400c20be7bfcaa71bae8a",
+    "partitionDecisions": 24,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 24,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 24,
+    "reportedDisagreementRate": 1.0,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 6,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed6.json",
+    "sourceSha256": "ebd4c522a54e87324abec316650f39f310c4c6195bf5894a4cbc4218a65e6b0e",
+    "partitionDecisions": 24,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 16,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 16,
+    "reportedDisagreementRate": 0.6666666666666666,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 7,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed7.json",
+    "sourceSha256": "64627e73c105593f129a8d0e98078b47ae79df5081943d8cc5b097a4cc8e813c",
+    "partitionDecisions": 24,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 16,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 16,
+    "reportedDisagreementRate": 0.6666666666666666,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   },
+   {
+    "seed": 8,
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/shadow-seed8.json",
+    "sourceSha256": "2ad08cab06a5e14c0183839d15ccead4806e1cb7daa617ab039ca5f2b7337a22",
+    "partitionDecisions": 24,
+    "eligibleDecisions": 24,
+    "eligibleDisagreements": 16,
+    "reportedEligibleDecisions": 24,
+    "reportedEligibleDisagreements": 16,
+    "reportedDisagreementRate": 0.6666666666666666,
+    "completeDecisionRecord": true,
+    "completeMassAllocationBits": true,
+    "partitionFloor": true,
+    "pass": true
+   }
+  ],
+  "eligibleDecisions": 208,
+  "eligibleDisagreementDecisions": 168,
+  "completeDisagreementRate": 0.8076923076923077,
+  "spearmanSeries": [
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 0,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.5,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 1,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 0.8660254037844387
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.7142857142857143,
+    "quota": 0.6859943405700354
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 2,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": -1.0,
+    "quota": -1.0
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 3,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.9,
+    "quota": 0.872081599272381
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.6,
+    "quota": 0.5441071875825088
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 4,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.9,
+    "quota": 0.9486832980505138
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 5,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": -0.5,
+    "quota": null
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 6,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.4,
+    "quota": null
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 7,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 0,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 1,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 2,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 3,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 4,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 5,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 6,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 0,
+    "worker": 7,
+    "field": null,
+    "quota": -0.1111111111111111
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 0,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 1,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 2,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 3,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 4,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 5,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 6,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 1,
+    "worker": 7,
+    "field": 0.8207826816681233,
+    "quota": 0.3042903097250923
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 0,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 1,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 2,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 3,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 4,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 5,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 6,
+    "field": 1.0,
+    "quota": 1.0
+   },
+   {
+    "seed": 8,
+    "bite": 1,
+    "iteration": 2,
+    "worker": 7,
+    "field": 1.0,
+    "quota": 1.0
+   }
+  ],
+  "selectedSeedGate": false,
+  "correlationGate": false
+ },
+ "g04ComputeIgnoreCost": {
+  "pairs": [
+   {
+    "pair": 0,
+    "sequence": "AB",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/cost-p0-AB.json",
+    "sourceSha256": "c73f86db8471e9540342e3457cf964afaa7dfa3a0406dfcd3cf917871e811a62",
+    "ratioComputeIgnoreOverOff": 0.9152228025697704,
+    "identities": {
+     "poseIdentity": true,
+     "orderIdentity": true,
+     "workIdentity": true,
+     "actualSlotsIdentity": true,
+     "offActualMatchesExpected": true,
+     "computeActualMatchesExpected": true,
+     "computePartitionSlotsMatchActual": true,
+     "legacyProposalIdentity": true,
+     "computeSlotIdentitiesHold": true
+    },
+    "computeInvalidFallbacks": 0,
+    "pass": true
+   },
+   {
+    "pair": 1,
+    "sequence": "BA",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/cost-p1-BA.json",
+    "sourceSha256": "95214f53a61c4f881b24b27a4ce8e93a70871400b550e04c4aebf685610bfd65",
+    "ratioComputeIgnoreOverOff": 0.9404693372400017,
+    "identities": {
+     "poseIdentity": true,
+     "orderIdentity": true,
+     "workIdentity": true,
+     "actualSlotsIdentity": true,
+     "offActualMatchesExpected": true,
+     "computeActualMatchesExpected": true,
+     "computePartitionSlotsMatchActual": true,
+     "legacyProposalIdentity": true,
+     "computeSlotIdentitiesHold": true
+    },
+    "computeInvalidFallbacks": 0,
+    "pass": true
+   },
+   {
+    "pair": 2,
+    "sequence": "AB",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/cost-p2-AB.json",
+    "sourceSha256": "a95d0e8888f12b349f4d011dc6c4bc7e88792dcc9e5c099bfb729077a3348627",
+    "ratioComputeIgnoreOverOff": 1.0012261746083466,
+    "identities": {
+     "poseIdentity": true,
+     "orderIdentity": true,
+     "workIdentity": true,
+     "actualSlotsIdentity": true,
+     "offActualMatchesExpected": true,
+     "computeActualMatchesExpected": true,
+     "computePartitionSlotsMatchActual": true,
+     "legacyProposalIdentity": true,
+     "computeSlotIdentitiesHold": true
+    },
+    "computeInvalidFallbacks": 0,
+    "pass": true
+   },
+   {
+    "pair": 3,
+    "sequence": "BA",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/cost-p3-BA.json",
+    "sourceSha256": "fadc9a69d8f8d4cc63d8d5cbfaf105d15afd49e00f862c647061dd2e10ab2b4a",
+    "ratioComputeIgnoreOverOff": 0.9403034413354346,
+    "identities": {
+     "poseIdentity": true,
+     "orderIdentity": true,
+     "workIdentity": true,
+     "actualSlotsIdentity": true,
+     "offActualMatchesExpected": true,
+     "computeActualMatchesExpected": true,
+     "computePartitionSlotsMatchActual": true,
+     "legacyProposalIdentity": true,
+     "computeSlotIdentitiesHold": true
+    },
+    "computeInvalidFallbacks": 0,
+    "pass": true
+   },
+   {
+    "pair": 4,
+    "sequence": "AB",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/cost-p4-AB.json",
+    "sourceSha256": "db166142b69c0baad4a3828fa1fed3e117ebe1d0e88de07a9360c1731aebd674",
+    "ratioComputeIgnoreOverOff": 0.9409010682678118,
+    "identities": {
+     "poseIdentity": true,
+     "orderIdentity": true,
+     "workIdentity": true,
+     "actualSlotsIdentity": true,
+     "offActualMatchesExpected": true,
+     "computeActualMatchesExpected": true,
+     "computePartitionSlotsMatchActual": true,
+     "legacyProposalIdentity": true,
+     "computeSlotIdentitiesHold": true
+    },
+    "computeInvalidFallbacks": 0,
+    "pass": true
+   }
+  ],
+  "ratios": [
+   0.9152228025697704,
+   0.9404693372400017,
+   1.0012261746083466,
+   0.9403034413354346,
+   0.9409010682678118
+  ],
+  "medianRatioComputeIgnoreOverOff": 0.9404693372400017,
+  "threshold": 0.95
+ },
+ "g05AuthorityAccountingDeterminism": {
+  "directArms": [
+   {
+    "arm": "mass",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/direct-mass.json",
+    "sourceSha256": "4f2002eaf02ff734c14ea5a567b11472300f1625e0775ad1b18d37175548f5df",
+    "graphDigestSha256": "d311da0a3a4e3e7b3b3cbefe9ccfbe400e15a15301e34db51cdbbed6bd7cbffe",
+    "allocationDigestSha256": "19c5ed2919153f3e0d90be90045f526db0a7b4270e2e46701a55e996f59e2c86",
+    "scheduleDigestSha256": "cda98afc8ffb0d7becf84f1e04f2a30e05e2887baeafc8da6e4a564b1bfe951f",
+    "partitionFloor": true
+   },
+   {
+    "arm": "shuffled-mass",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/direct-shuffled-mass.json",
+    "sourceSha256": "ed8b1a4c9bfca7f3444167c71ea2b36700477d30b5d16d5b4ae22d8c60d73bda",
+    "graphDigestSha256": "d311da0a3a4e3e7b3b3cbefe9ccfbe400e15a15301e34db51cdbbed6bd7cbffe",
+    "allocationDigestSha256": "19c5ed2919153f3e0d90be90045f526db0a7b4270e2e46701a55e996f59e2c86",
+    "scheduleDigestSha256": "c91675e696ad4e99b53900d06bf01240b4056510eff7d4f008da515eeb51b8e4",
+    "partitionFloor": true
+   },
+   {
+    "arm": "max-violation",
+    "exit": 0,
+    "sourcePath": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/direct-max-violation.json",
+    "sourceSha256": "d62904900c934fbb13530e2d0f122becdb8d47307590fcca631453339c8c6049",
+    "graphDigestSha256": "d311da0a3a4e3e7b3b3cbefe9ccfbe400e15a15301e34db51cdbbed6bd7cbffe",
+    "allocationDigestSha256": "19c5ed2919153f3e0d90be90045f526db0a7b4270e2e46701a55e996f59e2c86",
+    "scheduleDigestSha256": "99abe7a842103e0945bcd2733a9365ab93d893e03fe53d31da547882bc79a2bd",
+    "partitionFloor": true
+   }
+  ],
+  "directAllPass": true,
+  "replay": {
+   "process1Path": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/determinism-mass-p1.json",
+   "process1Sha256": "b222cb2746ec863dfd759b023b5a301ce36198ed57a18d5331fcac46b501791e",
+   "process2Path": "/var/lib/t3/tmp/overlapics/conflict-cluster-budget-gate0-11a1a45/cells/determinism-mass-p2.json",
+   "process2Sha256": "8b45850e45a462cb9468efbe82cc2b58704c310e9dafc159905ce924f1e8d56b",
+   "bitIdenticalAfterRemovingOnlyWall": true
+  },
+  "implementationReview": "docs/conflict-cluster-budget-implementation-review.md"
+ },
+ "candidateBinarySha256After": "b8425dfdea6d8a6d84a6d27aa8df51a3308714533f4348d4e482ba90eafe61a5",
+ "binaryUnchangedDuringGate0": true,
+ "clauses": {
+  "specDigest": true,
+  "quietBoxAtStart": true,
+  "g01OffIdentity": true,
+  "g02ExactVectors": true,
+  "g03ShadowEngagement": true,
+  "g04ComputeIgnoreCost": false,
+  "g05AuthorityAccountingDeterminism": true,
+  "binaryUnchangedDuringGate0": true
+ },
+ "GATE0_PASS": false
+}

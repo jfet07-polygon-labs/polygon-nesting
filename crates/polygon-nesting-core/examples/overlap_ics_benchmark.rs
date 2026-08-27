@@ -24,9 +24,15 @@
 //! parameter source - and no constant in `search::overlap_ics` was chosen by
 //! looking at it.
 
+#![recursion_limit = "256"]
+
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
+#[cfg(feature = "pool-retry-tracker-rebase")]
+use std::fs::OpenOptions;
+#[cfg(feature = "pool-retry-tracker-rebase")]
+use std::io::Write;
 use std::time::Instant;
 
 use polygon_nesting_core::domain::ImportedPiece;
@@ -34,6 +40,16 @@ use polygon_nesting_core::geometry::general_polygon::PolygonSet;
 use polygon_nesting_core::geometry::general_source::polygon_set_from_imported_piece;
 use polygon_nesting_core::search::general_fast::{
     construct_short_side_first, GeneralFastPiece, GeneralFastPlacement, GeneralFastSettings,
+};
+#[cfg(feature = "minimum-conflict-binary-close")]
+use polygon_nesting_core::search::overlap_ics::binary_close::{
+    gate0_vector_report as binary_close_gate0_vector_report, geometry_gate0_vector_report,
+    BinaryCloseArm, BinaryCloseTrace, Gate0VectorReport as BinaryCloseGate0VectorReport,
+};
+#[cfg(feature = "conflict-cluster-budget")]
+use polygon_nesting_core::search::overlap_ics::cluster_budget::{
+    gate0_vector_report as partition_gate0_vector_report, FallbackKind, Gate0VectorReport,
+    PartitionArm, PartitionCostArmSample, PartitionTrace,
 };
 use polygon_nesting_core::search::overlap_ics::contact::convex_cell_gap;
 use polygon_nesting_core::search::overlap_ics::corpus;
@@ -46,6 +62,16 @@ use polygon_nesting_core::search::overlap_ics::icscal::{
     BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase, WorkPlan,
 };
 use polygon_nesting_core::search::overlap_ics::icscal_read::plan_from_bytes;
+#[cfg(feature = "pool-retry-tracker-rebase")]
+use polygon_nesting_core::search::overlap_ics::pool_rebase::{
+    apply_weight_policy, raw_row_digest as pool_raw_row_digest, PoolRebaseArm, PoolRebaseTrace,
+    WeightSnapshot, FIRST_RETRY_ITERATION_CAP,
+};
+#[cfg(feature = "pool-retry-tracker-rebase")]
+use polygon_nesting_core::search::overlap_ics::pool_rebase_checkpoint::{
+    envelope_body as pool_checkpoint_body, envelope_bytes as pool_checkpoint_envelope,
+    immutable_input_sha256 as pool_immutable_input_sha256, CheckpointBindings,
+};
 use polygon_nesting_core::search::overlap_ics::profile::PhaseProfile;
 use polygon_nesting_core::search::overlap_ics::publish;
 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -55,8 +81,8 @@ use polygon_nesting_core::search::overlap_ics::state::{
     piece_sources, Contract, ExactIncumbent, PieceSource, Pose,
 };
 use polygon_nesting_core::search::overlap_ics::{
-    poses_of, Budget, Engine, IcsConfig, IcsOutcome, InitialLayoutProvider, Phase, ScheduleConfig,
-    ScheduleOutcome,
+    poses_of, Budget, CalibratedSummary, Engine, IcsConfig, IcsOutcome, InitialLayoutProvider,
+    Phase, ScheduleConfig, ScheduleOutcome,
 };
 use polygon_nesting_core::search::overlap_ics_meter::currency::{Currency, WorkTerms};
 use polygon_nesting_core::search::overlap_ics_meter::pacer::{
@@ -235,6 +261,496 @@ fn work_json(work: &WorkVector) -> Value {
     Value::Object(object)
 }
 
+#[cfg(feature = "conflict-cluster-budget")]
+fn partition_json(trace: &PartitionTrace) -> Value {
+    let fallback = |kind: FallbackKind| match kind {
+        FallbackKind::None => "none",
+        FallbackKind::ZeroSignal => "zero-signal",
+        FallbackKind::Invalid => "invalid",
+    };
+    json!({
+        "partitionDecisions": trace.partition_decisions,
+        "eligibleDecisions": trace.eligible_decisions,
+        "eligibleDisagreementDecisions": trace.eligible_disagreement_decisions,
+        "eligibleDisagreementRate": trace.eligible_disagreement_rate(),
+        "entryCollidingPieces": trace.entry_colliding_pieces,
+        "componentCount": trace.component_count,
+        "positivePairEdges": trace.positive_pair_edges,
+        "partitionSlots": trace.partition_slots,
+        "executedSlots": trace.executed_slots,
+        "fullRelocateSlots": trace.full_relocate_slots,
+        "zeroEnergySlots": trace.zero_energy_slots,
+        "pairDiscTerms": trace.pair_disc_terms,
+        "positiveBoundaryRows": trace.positive_boundary_rows,
+        "zeroSignalFallbackDecisions": trace.zero_signal_fallback_decisions,
+        "invalidFallbackDecisions": trace.invalid_fallback_decisions,
+        "planIdentityFailureDecisions": trace.plan_identity_failure_decisions,
+        "executionIdentityFailureDecisions": trace.execution_identity_failure_decisions,
+        "slotIdentitiesHold": trace.slot_identities_hold(),
+        "graphDigestSha256": hex_bytes(&trace.graph_digest_sha256),
+        "allocationDigestSha256": hex_bytes(&trace.allocation_digest_sha256),
+        "scheduleDigestSha256": hex_bytes(&trace.schedule_digest_sha256),
+        "decisions": trace.decisions.iter().map(|row| json!({
+            "seed": row.key.seed,
+            "bite": row.key.bite,
+            "iteration": row.key.iteration,
+            "worker": row.key.worker,
+            "Q": row.q(),
+            "entry": row.entry,
+            "components": row.components.iter().map(|component| json!({
+                "id": component.id,
+                "members": component.members,
+            })).collect::<Vec<_>>(),
+            "positivePairEdges": row.positive_pair_edges.iter().map(|edge| json!({
+                "pairId": edge.pair_id,
+                "first": edge.first,
+                "second": edge.second,
+            })).collect::<Vec<_>>(),
+            "pairDiscTerms": row.pair_disc_terms,
+            "positiveBoundaryRows": row.positive_boundary_rows,
+            "massBits": row.mass_bits,
+            "maxViolationBits": row.max_violation_bits,
+            "massQuotas": row.mass_quotas,
+            "shuffledQuotas": row.shuffled_quotas,
+            "maxViolationQuotas": row.max_violation_quotas,
+            "massDiffersFromMaxViolation": row.mass_quotas != row.max_violation_quotas,
+            "memberPermutations": row.member_permutations,
+            "massSchedule": row.mass_schedule,
+            "shuffledSchedule": row.shuffled_schedule,
+            "maxViolationSchedule": row.max_violation_schedule,
+            "massFallback": fallback(row.mass_fallback),
+            "shuffledFallback": fallback(row.shuffled_fallback),
+            "maxViolationFallback": fallback(row.max_violation_fallback),
+            "placeboOffset": row.placebo_offset,
+            "planIdentitiesHold": row.plan_identities_hold(),
+            "spearmanFieldMassMaxViolation": row.spearman_field_mass_max,
+            "spearmanQuotaMassMaxViolation": row.spearman_quota_mass_max,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+fn hex_bytes(bytes: &[u8]) -> String {
+    use std::fmt::Write;
+    let mut out = String::with_capacity(bytes.len() * 2);
+    for byte in bytes {
+        write!(&mut out, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    out
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn binary_close_arm(options: &Options, key: &str) -> Result<BinaryCloseArm, String> {
+    match options.get(key).unwrap_or("centre") {
+        "centre" => Ok(BinaryCloseArm::Centre),
+        "mincut" => Ok(BinaryCloseArm::MinCut),
+        "compute-ignore" => Ok(BinaryCloseArm::ComputeIgnore),
+        other => Err(format!(
+            "--{key} must be centre|mincut|compute-ignore, not `{other}`"
+        )),
+    }
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn pool_rebase_arm(options: &Options) -> Result<PoolRebaseArm, String> {
+    match options.get("poolrebase").unwrap_or("saved") {
+        "saved" => Ok(PoolRebaseArm::Saved),
+        "rebase" => Ok(PoolRebaseArm::Rebase),
+        "compute-ignore" => Ok(PoolRebaseArm::ComputeIgnore),
+        other => Err(format!(
+            "--poolrebase must be saved|rebase|compute-ignore, not `{other}`"
+        )),
+    }
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn pool_checkpoint_bindings(
+    options: &Options,
+    request_sha256: &str,
+    pieces: &[GeneralFastPiece<'_>],
+    sources: &[PieceSource],
+    settings: GeneralFastSettings,
+    contract: Contract,
+    plan_bytes: &[u8],
+) -> Result<CheckpointBindings, String> {
+    Ok(CheckpointBindings {
+        spec_sha256: options.required("specsha")?.to_owned(),
+        request_sha256: request_sha256.to_owned(),
+        plan_sha256: format!("{:x}", Sha256::digest(plan_bytes)),
+        executable_sha256: executable_sha256()
+            .ok_or_else(|| "cannot hash the running executable".to_owned())?,
+        source_commit: options.required("sourcecommit")?.to_owned(),
+        features: build_features(),
+        immutable_input_sha256: pool_immutable_input_sha256(pieces, sources, settings, contract),
+    })
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn weight_snapshot_json(snapshot: &WeightSnapshot) -> Value {
+    json!({
+        "bits": snapshot.bits,
+        "digestSha256": hex_bytes(&snapshot.digest_sha256),
+        "count": snapshot.bits.len(),
+        "countAboveFloor": snapshot.count_above_floor,
+        "minimum": if snapshot.minimum.is_finite() { json!(snapshot.minimum) } else { Value::Null },
+        "maximum": if snapshot.maximum.is_finite() { json!(snapshot.maximum) } else { Value::Null },
+        "allFinite": snapshot.all_finite,
+        "allExactlyOne": snapshot.all_exactly_one,
+    })
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn retry_pacer_json(summary: &CalibratedSummary) -> Value {
+    json!({
+        "exploreAllocationUnits": summary.explore_allocation,
+        "compressAllocationUnits": summary.compress_allocation,
+        "exploreConsumedUnits": summary.explore_consumed,
+        "compressConsumedUnits": summary.compress_consumed,
+        "exploreBatches": summary.explore_batches,
+        "compressBatches": summary.compress_batches,
+        "exploreCrossingBatchUnits": summary.explore_crossing_batch_units,
+        "compressCrossingBatchUnits": summary.compress_crossing_batch_units,
+        "charged": work_terms_json(&summary.charged),
+        "unchargedTail": work_terms_json(&summary.uncharged_tail),
+        "trajectory": work_terms_json(&summary.trajectory),
+        "chargeIdentityHolds": summary.charge_identity_holds,
+        "consumedUnits": summary.consumed_units,
+        "consumedUnitsMatchCharged": summary.consumed_units_match_charged,
+        "currencyVersion": summary.currency_version.as_str(),
+        "budgetSeconds": summary.budget_seconds,
+        "exploreRatio": summary.explore_ratio,
+        "planKey": serde_json::to_value(&summary.plan_key).unwrap_or(Value::Null),
+    })
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn retry_exact_checkpoint_json(
+    row: &polygon_nesting_core::search::overlap_ics::diagnostics::ExactCheckpoint,
+) -> Value {
+    json!({
+        "proposalOrdinal": row.proposal_ordinal,
+        "targetDepthMm": row.target_depth_mm,
+        "targetDepthBits": row.target_depth_mm.to_bits(),
+        "maxViolationMm": row.max_violation_mm,
+        "proxyRawDepthMm": row.proxy_raw_depth_mm,
+        "kernelExclusiveValid": row.kernel_exclusive_valid,
+        "contractValid": row.contract_valid,
+        "repairRows": row.repair_rows,
+        "repairMaxDisplacementMm": row.repair_max_displacement_mm,
+        "repairDepthGivebackMm": row.repair_depth_giveback_mm,
+        "publishedRawDepthMm": row.published_raw_depth_mm,
+        "refusal": row.refusal,
+    })
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+fn pool_rebase_json(
+    trace: &PoolRebaseTrace,
+    fingerprints: &[polygon_nesting_core::search::overlap_ics::IterationFingerprint],
+) -> Value {
+    json!({
+        "arm": trace.arm.as_str(),
+        "invalidRetries": trace.invalid_retries,
+        "decisions": trace.decisions.iter().map(|row| json!({
+            "key": {
+                "requestSeed": row.request_seed,
+                "exploreBiteOrdinal": row.explore_bite_ordinal,
+                "attemptOrdinal": row.attempt_ordinal,
+            },
+            "widthMm": row.width_mm,
+            "widthBits": row.width_mm.to_bits(),
+            "poolLength": row.pool_length,
+            "selectedRank": row.selected_rank,
+            "poolEntryRawPhi": row.pool_entry_raw_phi,
+            "poolEntryRawPhiBits": row.pool_entry_raw_phi.to_bits(),
+            "selectedPoseDigestSha256": hex_bytes(&row.selected_pose_digest_sha256),
+            "savedWeights": weight_snapshot_json(&row.saved_weights),
+            "postInstallPoseDigestSha256": hex_bytes(&row.post_install_pose_digest_sha256),
+            "postInstallRawRowDigestSha256": hex_bytes(&row.post_install_raw_row_digest_sha256),
+            "resetWeights": row.reset_weights.as_ref().map(weight_snapshot_json),
+            "postPolicyWeights": weight_snapshot_json(&row.post_policy_weights),
+            "disruption": {
+                "fired": row.disruption.fired,
+                "swapped": row.disruption.swapped,
+                "distinct": row.disruption.distinct,
+                "followers": row.disruption.followers,
+                "followersCapped": row.disruption.followers_capped,
+                "work": work_json(&row.disruption_work_delta),
+                "poseTransformDigestSha256":
+                    hex_bytes(&row.disruption_pose_transform_digest_sha256),
+            },
+            "postDisruptionPoseDigestSha256": hex_bytes(&row.post_disruption_pose_digest_sha256),
+            "postDisruptionRawRowDigestSha256": hex_bytes(&row.post_disruption_raw_row_digest_sha256),
+            "coldPostDisruptionRawRowDigestSha256":
+                hex_bytes(&row.cold_post_disruption_raw_row_digest_sha256),
+            "incrementalColdRawRowsIdentical": row.post_disruption_raw_row_digest_sha256
+                == row.cold_post_disruption_raw_row_digest_sha256,
+            "postDisruptionWeights": weight_snapshot_json(&row.post_disruption_weights),
+            "fingerprintStart": row.fingerprint_start,
+            "fingerprintEnd": row.fingerprint_end,
+            "downstreamFingerprints": fingerprints[row.fingerprint_start..row.fingerprint_end]
+                .iter().map(|fingerprint| json!({
+                    "bite": fingerprint.bite,
+                    "attempt": fingerprint.attempt,
+                    "iteration": fingerprint.iteration,
+                    "winner": fingerprint.winner,
+                    "winnerGuided": fingerprint.winner_guided,
+                    "contested": fingerprint.contested,
+                    "state": fingerprint.state,
+                    "committedPoseDigestSha256": fingerprint
+                        .committed_pose_digest_sha256
+                        .as_ref()
+                        .map(|digest| hex_bytes(digest)),
+                })).collect::<Vec<_>>(),
+            "retryIterations": row.retry_iterations,
+            "retryStop": row.retry_stop,
+            "retryPublished": row.retry_published,
+            "retryWorkBefore": work_json(&row.retry_work_before),
+            "retryWorkAfter": work_json(&row.retry_work_after),
+            "pathWork": work_json(&row.path_work_delta),
+            "retryStrike": {
+                "strikes": row.retry_strikes,
+                "batches": row.retry_strike_shadow.batches,
+                "chargedWorkSampleEvaluations": row.retry_strike_shadow.charged_work,
+                "substantial": row.retry_strike_shadow.substantial,
+                "marginal": row.retry_strike_shadow.marginal,
+                "none": row.retry_strike_shadow.none,
+                "strikeAccumulated": row.retry_strike_accumulated,
+                "strikeOvershoot": row.retry_strike_overshoot,
+            },
+            "retryBand": {
+                "minimumRawPhi": if row.retry_min_raw_phi.is_finite() {
+                    json!(row.retry_min_raw_phi)
+                } else {
+                    Value::Null
+                },
+                "reached": row.retry_band_reached,
+                "entries": row.retry_exact_band_entries,
+                "exactCheckpointCalls": row.retry_exact_checkpoint_calls,
+            },
+            "retryExactCheckpoints": row.retry_exact_checkpoints
+                .iter().map(retry_exact_checkpoint_json).collect::<Vec<_>>(),
+            "retryPublication": row.retry_publication.as_ref().map(|publication| json!({
+                "ordinal": {
+                    "bite": publication.ordinal.bite,
+                    "attempt": publication.ordinal.attempt,
+                    "iteration": publication.ordinal.iteration,
+                    "proposals": publication.ordinal.proposals,
+                },
+                "phase": publication.phase.label(),
+                "targetDepthMm": publication.target_depth_mm,
+                "publishedRawDepthMm": publication.published_raw_depth_mm,
+                "repairRows": publication.repair_rows,
+                "repairMaxDisplacementMm": publication.repair_max_displacement_mm,
+                "repairDepthGivebackMm": publication.repair_depth_giveback_mm,
+                "parentFingerprint": publication.parent_fingerprint,
+                "placementFingerprint": publication.placement_fingerprint,
+                "improvedIncumbent": publication.improved_incumbent,
+                "poses": poses_json(&publication.poses),
+            })),
+            "authorityParentFingerprint": row.authority_parent_fingerprint,
+            "pacerBefore": row.pacer_before.as_ref().map(retry_pacer_json),
+            "pacerAfter": row.pacer_after.as_ref().map(retry_pacer_json),
+            "pathSeconds": row.path_seconds,
+            "failureReasons": row.failure_reasons,
+            "valid": row.valid,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn binary_close_json(trace: &BinaryCloseTrace) -> Value {
+    json!({
+        "arm": trace.arm.as_str(),
+        "invalidDecisions": trace.invalid_decisions,
+        "decisions": trace.decisions.iter().map(|decision| json!({
+            "key": {
+                "requestSeed": decision.request_seed,
+                "exploreBiteOrdinal": decision.explore_bite_ordinal,
+            },
+            "depthBeforeMm": decision.depth_before_mm,
+            "depthBeforeBits": decision.depth_before_mm.to_bits(),
+            "targetDepthMm": decision.target_depth_mm,
+            "targetDepthBits": decision.target_depth_mm.to_bits(),
+            "deltaMm": decision.delta_mm,
+            "deltaBits": decision.delta_mm.to_bits(),
+            "poseStateBitsValid": decision.pose_state_bits_valid,
+            "parentProxyPairLegal": decision.parent_proxy_pair_legal,
+            "parentPoseDigestSha256": hex_bytes(&decision.parent_pose_digest_sha256),
+            "pairs": decision.pair_terms.iter().map(|term| json!({
+                "pairId": term.pair_id,
+                "first": term.first,
+                "second": term.second,
+                "violationBits": term.violations_mm.map(|row| row.map(f64::to_bits)),
+                "costBits": term.costs.map(|row| row.map(f64::to_bits)),
+                "rowBits": term.row_bits.map(|states| states.map(|row| json!({
+                    "violation": row.violation_mm,
+                    "weight": row.weight,
+                    "signedGap": row.signed_gap_mm,
+                    "normal": row.normal,
+                    "witnessA": row.witness_a,
+                    "witnessB": row.witness_b,
+                }))),
+                "finiteNonnegative": term.finite_nonnegative,
+                "zeroDiagonal": term.zero_diagonal,
+                "submodular": term.submodular,
+            })).collect::<Vec<_>>(),
+            "unaries": decision.unary_terms.iter().map(|term| json!({
+                "piece": term.piece,
+                "violationBits": term.violations_mm.map(|row| row.map(f64::to_bits)),
+                "rowCostBits": term.row_costs.map(|row| row.map(f64::to_bits)),
+                "rowBits": term.row_bits.map(|states| states.map(|row| json!({
+                    "violation": row.violation_mm,
+                    "weight": row.weight,
+                    "witness": row.witness,
+                }))),
+                "sumBits": term.sums.map(f64::to_bits),
+                "finiteNonnegative": term.finite_nonnegative,
+            })).collect::<Vec<_>>(),
+            "allFiniteNonnegative": decision.all_finite_nonnegative,
+            "allZeroDiagonal": decision.all_zero_diagonal,
+            "allSubmodular": decision.all_submodular,
+            "graphEdges": decision.graph_edges.iter().map(|edge| json!({
+                "from": edge.from,
+                "to": edge.to,
+                "capacityBits": edge.capacity.to_bits(),
+            })).collect::<Vec<_>>(),
+            "residualSourceReachable": decision.residual_source_reachable,
+            "labels": decision.labels,
+            "centreLabels": decision.centre_labels,
+            "hammingDisagreement": decision.hamming_disagreement,
+            "movedPieces": decision.moved_pieces,
+            "centreMovedPieces": decision.centre_moved_pieces,
+            "digests": {
+                "termTableSha256": hex_bytes(&decision.term_table_digest_sha256),
+                "graphSha256": hex_bytes(&decision.graph_digest_sha256),
+                "residualSha256": hex_bytes(&decision.residual_digest_sha256),
+                "labelsSha256": hex_bytes(&decision.label_digest_sha256),
+                "installedPosesSha256": hex_bytes(&decision.installed_pose_digest_sha256),
+                "installedRowsSha256": hex_bytes(&decision.installed_row_digest_sha256),
+            },
+            "selectedCutCapacity": decision.selected_cut_capacity.is_finite()
+                .then_some(decision.selected_cut_capacity),
+            "selectedCutCapacityBits": decision.selected_cut_capacity.to_bits(),
+            "selectedTableEnergy": decision.selected_table_energy.is_finite()
+                .then_some(decision.selected_table_energy),
+            "selectedTableEnergyBits": decision.selected_table_energy.to_bits(),
+            "coldRawPhi": decision.cold_raw_phi.is_finite().then_some(decision.cold_raw_phi),
+            "coldRawPhiBits": decision.cold_raw_phi.to_bits(),
+            "cutTableBitsEqual": decision.cut_table_bits_equal,
+            "tableColdBitsEqual": decision.table_cold_bits_equal,
+            "installedRowsMatchTable": decision.installed_rows_match_table,
+            "selectedTotalsFiniteNonnegative": decision.selected_totals_finite_nonnegative,
+            "fieldWork": work_json(&decision.field_work),
+            "valid": decision.valid,
+            "invalidReason": decision.invalid_reason,
+        })).collect::<Vec<_>>(),
+    })
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+fn binary_close_vectors_json(report: &BinaryCloseGate0VectorReport) -> Value {
+    json!({
+        "expectedLabels": report.expected_labels,
+        "solverLabels": report.solver_labels,
+        "exhaustiveEnergyBits": report.exhaustive_energies.iter()
+            .map(|value| value.to_bits()).collect::<Vec<_>>(),
+        "uniqueNontrivialMinimum": report.unique_nontrivial_minimum,
+        "everyLabelCutEnergyIdentity": report.every_label_cut_energy_identity,
+        "acceptsZeroDiagonalSubmodular": report.accepts_zero_diagonal_submodular,
+        "rejectsNonfinite": report.rejects_nonfinite,
+        "rejectsNegative": report.rejects_negative,
+        "rejectsNonzeroDiagonal": report.rejects_nonzero_diagonal,
+        "rejectsNonsubmodular": report.rejects_nonsubmodular,
+        "rejectsAggregateOverflow": report.rejects_aggregate_overflow,
+        "rejectsNonnegativeDelta": report.rejects_nonnegative_delta,
+        "allZeroLabels": report.all_zero_labels,
+        "allOneLabels": report.all_one_labels,
+        "tieLabelsFirst": report.tie_labels_first,
+        "tieLabelsSecond": report.tie_labels_second,
+        "tieStable": report.tie_labels_first == report.tie_labels_second,
+        "graphDigestSha256": hex_bytes(&report.graph_digest_sha256),
+    })
+}
+
+#[cfg(feature = "conflict-cluster-budget")]
+fn partition_cost_json(sample: &PartitionCostArmSample) -> Value {
+    json!({
+        "arm": sample.arm.as_str(),
+        "warmupSweeps": sample.warmup_sweeps,
+        "measuredSweeps": sample.measured_sweeps,
+        "pieceCount": sample.piece_count,
+        "entryCollidingPieces": sample.entry_colliding_pieces,
+        "expectedAtomicSlots": sample.expected_atomic_slots,
+        "completedAtomicSlots": sample.completed_atomic_slots,
+        "legacyProposals": sample.legacy_proposals,
+        "elapsedSeconds": sample.elapsed_seconds,
+        "slotsPerSecond": sample.slots_per_second,
+        "poseSequenceDigestSha256": sample.pose_sequence_digest_sha256,
+        "consumedOrderDigestSha256": sample.consumed_order_digest_sha256,
+        "work": work_json(&sample.work),
+        "partition": partition_json(&sample.partition),
+    })
+}
+
+#[cfg(feature = "conflict-cluster-budget")]
+fn partition_vectors_json(report: &Gate0VectorReport) -> Value {
+    let fallback = |kind: FallbackKind| match kind {
+        FallbackKind::None => "none",
+        FallbackKind::ZeroSignal => "zero-signal",
+        FallbackKind::Invalid => "invalid",
+    };
+    json!({
+        "unitSquare": {
+            "center": report.unit_square_center,
+            "radius": report.unit_square_radius,
+        },
+        "transformedDisc": {
+            "mirror": true,
+            "sin": 1.0,
+            "cos": 0.0,
+            "translation": [10.0, 5.0],
+            "center": report.transformed_center,
+            "radius": report.transformed_radius,
+        },
+        "pairInversion": {
+            "kind": "pure-frozen-row-field-vector",
+            "callsMeasurePair": !report.inversion_is_pure_frozen_row_field_vector,
+            "massTermsMm2": report.pair_mass_terms,
+            "massQuotas": report.mass_inversion_quotas,
+            "maxViolationWeightsMm": [2.0, 1.0],
+            "maxViolationQuotas": report.max_violation_inversion_quotas,
+        },
+        "boundaryV3TermMm2": report.boundary_term,
+        "largestRemainder": {
+            "componentIds": report.largest_remainder_component_ids,
+            "quotas": report.largest_remainder_quotas,
+        },
+        "mixedZeroQuotas": report.mixed_zero_quotas,
+        "zeroSignalQuotas": report.zero_signal_quotas,
+        "zeroSignalFallback": fallback(report.zero_signal_fallback),
+        "placebo": {
+            "offset": report.placebo_offset,
+            "input": report.placebo_input,
+            "rotated": report.placebo_rotated,
+            "quotas": report.placebo_quotas,
+            "multisetPreserved": report.placebo_multiset_preserved,
+            "nonIdentity": report.placebo_non_identity,
+        },
+        "memberPermutation": report.member_permutation,
+        "roundRobinSchedule": report.round_robin_schedule,
+        "invalidQuotas": report.invalid_quotas,
+        "invalidFallback": fallback(report.invalid_fallback),
+        "nonfiniteSourceRejected": report.nonfinite_source_rejected,
+        "nonfinitePairRejected": report.nonfinite_pair_rejected,
+        "accountingIdentities": {
+            "quotaSumEqualsQ": report.quota_sum_identity,
+            "scheduleLengthEqualsQ": report.schedule_length_identity,
+            "executedSlotsEqualsQ": report.executed_slots_identity,
+            "fullPlusZeroEqualsQ": report.full_plus_zero_identity,
+        },
+    })
+}
+
 /// The rejection census both reviews require before any statement about the
 /// move set: the whole population's accept/reject split by direction class, and
 /// a bounded rung-by-rung decomposition of the rejections **at the stall**.
@@ -288,6 +804,7 @@ fn rejection_census_json(census: &RejectionCensus) -> Value {
 struct LayoutContext<'a> {
     sources: &'a [PieceSource],
     pieces: &'a [GeneralFastPiece<'a>],
+    settings: GeneralFastSettings,
     contract: &'a Contract,
     revalidate: bool,
 }
@@ -461,6 +978,15 @@ fn executable_sha256() -> Option<String> {
 /// The features this binary was built with, in a fixed order, for the same key.
 fn build_features() -> Vec<String> {
     let mut features = vec!["overlap-ics".to_owned()];
+    if cfg!(feature = "conflict-cluster-budget") {
+        features.push("conflict-cluster-budget".to_owned());
+    }
+    if cfg!(feature = "minimum-conflict-binary-close") {
+        features.push("minimum-conflict-binary-close".to_owned());
+    }
+    if cfg!(feature = "pool-retry-tracker-rebase") {
+        features.push("pool-retry-tracker-rebase".to_owned());
+    }
     if cfg!(feature = "ics-profile") {
         features.push("ics-profile".to_owned());
     }
@@ -471,10 +997,10 @@ fn build_features() -> Vec<String> {
 ///
 /// The rate is `sampleEvaluations / seconds` measured on bite 22, never on the
 /// cheap prefix: pre-named defect (3). The seconds are the shelf's own
-/// barrier-to-barrier wall when the profile measured one, and the whole
-/// search's wall otherwise - the latter is a *slower* rate because it includes
-/// the prefix, so a plan built without `ics-profile` under-promises rather
-/// than over-promising, and `derivation` says which of the two it was.
+/// barrier-to-barrier wall when the profile measured one, and the driver's
+/// bracket around the shelf probe otherwise. In both cases the numerator is
+/// the shelf bite's own counter. Mixing the cumulative trajectory numerator
+/// with the probe-only denominator over-promises the non-profile rate.
 ///
 /// `compress` is Wave 3's addition and it is **additive**: passing `None`
 /// produces exactly the bytes Wave 1 wrote, which is why the census's
@@ -514,11 +1040,16 @@ fn shelf_work_plan(
     } else {
         (
             search_seconds,
-            outcome.trace.work.sample_evaluations,
+            // `search_seconds` brackets this probe, not the prefix that built
+            // its parent. Its numerator must therefore be this bite's own
+            // counter too. The former cumulative numerator made the plain
+            // writer about 16% fast while its provenance claimed the opposite.
+            shelf.profile.sample_evaluations,
             format!(
-                "whole {}-bite fixed-work trajectory wall; no ics-profile timers, so this \
-                 rate includes the cheap prefix and is deliberately slower than the shelf's",
-                outcome.bites.len()
+                "trajectory bite {shelf_ordinal} (the 179 shelf) alone, {} master iterations, \
+                 the driver's probe-only wall and sampleEvaluations charged to that bite; \
+                 no ics-profile phase timer. NOT the cheap 0.1 % prefix: spec defect (3).",
+                shelf.master_iterations
             ),
         )
     };
@@ -635,7 +1166,7 @@ fn calibration_plan(
 }
 
 fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
-    json!({
+    let mut document = json!({
         "incumbent": {
             "rawSourceDepthMm": outcome.incumbent.raw_source_depth_mm,
             "fromConstructor": outcome.incumbent.from_constructor,
@@ -736,7 +1267,12 @@ fn outcome_json(outcome: &IcsOutcome, constructor_fingerprint: &str) -> Value {
         "repairMaxGivebackMm": outcome.trace.checkpoints.iter()
             .filter(|row| row.published_raw_depth_mm.is_some())
             .map(|row| row.repair_depth_giveback_mm).fold(0.0f64, f64::max),
-    })
+    });
+    #[cfg(feature = "conflict-cluster-budget")]
+    if outcome.trace.partition.partition_decisions > 0 {
+        document["partition"] = partition_json(&outcome.trace.partition);
+    }
+    document
 }
 
 /// **The `CutCloseRelocate` trajectory, as a document.**
@@ -769,10 +1305,31 @@ fn schedule_json(
     constructor_fingerprint: &str,
     layouts: &LayoutContext<'_>,
 ) -> Value {
+    let independent_revalidations = layouts.revalidate.then(|| {
+        outcome
+            .publications
+            .iter()
+            .map(|row| {
+                let placements = publish::placements_of(layouts.sources, &row.poses);
+                publish::independently_revalidate(
+                    layouts.pieces,
+                    &placements,
+                    layouts.settings,
+                    layouts.contract,
+                )
+            })
+            .collect::<Vec<_>>()
+    });
+    let independent_invalid_publications = independent_revalidations.as_ref().map(|rows| {
+        rows.iter()
+            .filter(|row| !(row.kernel_exclusive_valid && row.contract_valid))
+            .count()
+    });
     let publications = outcome
         .publications
         .iter()
-        .map(|row| {
+        .enumerate()
+        .map(|(index, row)| {
             let placements = publish::placements_of(layouts.sources, &row.poses);
             let mut value = json!({
                 "ordinal": {
@@ -797,6 +1354,9 @@ fn schedule_json(
             });
             if layouts.revalidate {
                 let depth = raw_depth_of(layouts.pieces, &placements, layouts.contract);
+                let independent = &independent_revalidations
+                    .as_ref()
+                    .expect("revalidation rows exist when requested")[index];
                 value["revalidation"] = json!({
                     "recomputedPlacementFingerprint": placement_fingerprint(&placements),
                     "fingerprintMatches":
@@ -804,6 +1364,20 @@ fn schedule_json(
                     "recomputedRawDepthMm": depth,
                     "depthMatchesBitwise": depth.to_bits()
                         == row.published_raw_depth_mm.to_bits(),
+                    "exclusiveKernel": {
+                        "mode": independent.kernel_mode,
+                        "radiusMm": independent.radius_mm,
+                        "twoRMicron": independent.two_r_micron,
+                        "searchOffsetAllowanceMm": independent.search_offset_allowance_mm,
+                        "valid": independent.kernel_exclusive_valid,
+                        "error": independent.kernel_error,
+                    },
+                    "contract": {
+                        "valid": independent.contract_valid,
+                        "error": independent.contract_error,
+                    },
+                    "allAuthoritiesValid": independent.kernel_exclusive_valid
+                        && independent.contract_valid,
                 });
             }
             value
@@ -861,7 +1435,11 @@ fn schedule_json(
         })
         .collect::<Vec<_>>();
     // The funnel, summed. The failure license asks for exactly this row.
-    let band_reached = outcome.bites.iter().filter(|row| row.proxy_band_reached).count();
+    let band_reached = outcome
+        .bites
+        .iter()
+        .filter(|row| row.proxy_band_reached)
+        .count();
     let exact_attempted = outcome
         .bites
         .iter()
@@ -873,7 +1451,7 @@ fn schedule_json(
         .iter()
         .map(|row| row.exact_checkpoint_calls)
         .sum();
-    json!({
+    let mut document = json!({
         "startDepthMm": outcome.start_depth_mm,
         "depthMm": outcome.depth_mm,
         "finalWidthMm": outcome.final_width_mm,
@@ -1004,7 +1582,32 @@ fn schedule_json(
         "repairMaxGivebackMm": outcome.trace.checkpoints.iter()
             .filter(|row| row.published_raw_depth_mm.is_some())
             .map(|row| row.repair_depth_giveback_mm).fold(0.0f64, f64::max),
-    })
+    });
+    if let Some(count) = independent_invalid_publications {
+        document["independentInvalidPublications"] = json!(count);
+    }
+    #[cfg(feature = "conflict-cluster-budget")]
+    if outcome.trace.partition.partition_decisions > 0 {
+        document["partition"] = partition_json(&outcome.trace.partition);
+    }
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    if let Some(digest) = &outcome.consumed_order_digest_sha256 {
+        document["consumedWorkerOrders"] = json!({
+            "digestSha256": digest,
+            "sweeps": outcome.consumed_order_sweeps,
+            "slots": outcome.consumed_order_slots,
+            "completeStateDigestSha256": outcome.complete_state_digest_sha256,
+        });
+    }
+    #[cfg(feature = "minimum-conflict-binary-close")]
+    if !outcome.binary_close.decisions.is_empty() {
+        document["binaryClose"] = binary_close_json(&outcome.binary_close);
+    }
+    #[cfg(feature = "pool-retry-tracker-rebase")]
+    if !outcome.pool_rebase.decisions.is_empty() {
+        document["poolRetryRebase"] = pool_rebase_json(&outcome.pool_rebase, &outcome.fingerprints);
+    }
+    document
 }
 
 /// **The relocate metric version**, arbitration 4 / Sol review 17 Round 2 §2.
@@ -1228,6 +1831,249 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     match cell.as_str() {
+        "pool-rebase-vectors" => {
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            {
+                let placements = ShortSideFirst.layout(&pieces, settings)?;
+                let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+                let config = IcsConfig {
+                    target_depth_mm: constructor_depth,
+                    proposal_budget: 0,
+                    relocate_eval_budget: u64::MAX,
+                    checkpoint_every_sweeps: u64::MAX,
+                    descent: descent_config(&options, &contract, &sources, seed)?,
+                    limits: publication_limits(&options)?,
+                };
+                let mut engine = Engine::from_constructor_at_depth(
+                    &pieces,
+                    settings,
+                    &placements,
+                    constructor_depth,
+                    config,
+                )?;
+                if let Some(row) = engine.state.pair_rows.first_mut() {
+                    row.weight = 2.0;
+                }
+                if let Some(row) = engine.state.pair_rows.last_mut() {
+                    row.weight = 17.0;
+                }
+                if let Some(rows) = engine.state.edge_rows.first_mut() {
+                    rows[3].weight = 1_024.0;
+                }
+                let saved_pair = engine
+                    .state
+                    .pair_rows
+                    .iter()
+                    .map(|row| row.weight)
+                    .collect::<Vec<_>>();
+                let saved_edges = engine
+                    .state
+                    .edge_rows
+                    .iter()
+                    .map(|rows| rows.map(|row| row.weight))
+                    .collect::<Vec<_>>();
+                let saved = WeightSnapshot::of_saved(&saved_pair, &saved_edges);
+                let raw_before = pool_raw_row_digest(&engine.state);
+
+                let lifecycle = |arm: PoolRebaseArm, nonfinite: bool| {
+                    let mut vector_engine = Engine::from_constructor_at_depth(
+                        &pieces,
+                        settings,
+                        &placements,
+                        constructor_depth,
+                        config,
+                    )?;
+                    if let Some(row) = vector_engine.state.pair_rows.first_mut() {
+                        row.weight = if nonfinite { f64::NAN } else { 2.0 };
+                    }
+                    if let Some(row) = vector_engine.state.pair_rows.last_mut() {
+                        row.weight = 17.0;
+                    }
+                    if let Some(rows) = vector_engine.state.edge_rows.first_mut() {
+                        rows[3].weight = 1_024.0;
+                    }
+                    Ok::<_, String>(vector_engine.pool_rebase_lifecycle_vector(arm, seed))
+                };
+                let lifecycle_saved = lifecycle(PoolRebaseArm::Saved, false)?;
+                let lifecycle_rebase = lifecycle(PoolRebaseArm::Rebase, false)?;
+                let lifecycle_compute = lifecycle(PoolRebaseArm::ComputeIgnore, false)?;
+                let lifecycle_nonfinite = lifecycle(PoolRebaseArm::Rebase, true)?;
+                let rollback = engine.pool_rebase_rollback_weight_vector();
+                let mut saved_state = engine.state.clone();
+                let saved_reset = apply_weight_policy(
+                    &mut saved_state,
+                    PoolRebaseArm::Saved,
+                    &saved_pair,
+                    &saved_edges,
+                );
+                let mut rebase_state = engine.state.clone();
+                let rebase_reset = apply_weight_policy(
+                    &mut rebase_state,
+                    PoolRebaseArm::Rebase,
+                    &saved_pair,
+                    &saved_edges,
+                );
+                let mut compute_state = engine.state.clone();
+                let compute_reset = apply_weight_policy(
+                    &mut compute_state,
+                    PoolRebaseArm::ComputeIgnore,
+                    &saved_pair,
+                    &saved_edges,
+                );
+                let new_width =
+                    engine.pool_rebase_new_width_reset_vector(constructor_depth * 0.999);
+                let nonfinite = WeightSnapshot::of_saved(&[f64::NAN], &[[1.0; 4], [1.0; 4]]);
+                let disruption_identity = |row: &polygon_nesting_core::search::overlap_ics::pool_rebase::PoolRetryRecord| {
+                    (
+                        row.disruption.clone(),
+                        row.disruption_work_delta,
+                        row.disruption_pose_transform_digest_sha256,
+                        row.post_disruption_pose_digest_sha256,
+                        row.post_disruption_raw_row_digest_sha256,
+                    )
+                };
+                document["poolRetryRebaseVectors"] = json!({
+                    "savedInput": weight_snapshot_json(&saved),
+                    "saved": {
+                        "reset": saved_reset.as_ref().map(weight_snapshot_json),
+                        "post": weight_snapshot_json(&WeightSnapshot::of(&saved_state)),
+                        "rawRowDigestSha256": hex_bytes(&pool_raw_row_digest(&saved_state)),
+                    },
+                    "rebase": {
+                        "reset": rebase_reset.as_ref().map(weight_snapshot_json),
+                        "post": weight_snapshot_json(&WeightSnapshot::of(&rebase_state)),
+                        "rawRowDigestSha256": hex_bytes(&pool_raw_row_digest(&rebase_state)),
+                    },
+                    "computeIgnore": {
+                        "reset": compute_reset.as_ref().map(weight_snapshot_json),
+                        "post": weight_snapshot_json(&WeightSnapshot::of(&compute_state)),
+                        "rawRowDigestSha256": hex_bytes(&pool_raw_row_digest(&compute_state)),
+                    },
+                    "nonfiniteSavedVisible": !nonfinite.all_finite,
+                    "nonfiniteLifecycleInvalid": !lifecycle_nonfinite.valid
+                        && !lifecycle_nonfinite.saved_weights.all_finite,
+                    "rawRowDigestSha256": hex_bytes(&raw_before),
+                    "rawRowsUnchanged": raw_before == pool_raw_row_digest(&saved_state)
+                        && raw_before == pool_raw_row_digest(&rebase_state)
+                        && raw_before == pool_raw_row_digest(&compute_state),
+                    "savedRestoredExactly": WeightSnapshot::of(&saved_state).bits == saved.bits,
+                    "rebaseAllExactlyOne": WeightSnapshot::of(&rebase_state).all_exactly_one,
+                    "computeIgnoreRestoredExactly":
+                        WeightSnapshot::of(&compute_state).bits == saved.bits,
+                    "lifecycle": {
+                        "savedValid": lifecycle_saved.valid,
+                        "rebaseValid": lifecycle_rebase.valid,
+                        "computeIgnoreValid": lifecycle_compute.valid,
+                        "savedPostPolicy": weight_snapshot_json(
+                            &lifecycle_saved.post_policy_weights),
+                        "rebasePostPolicy": weight_snapshot_json(
+                            &lifecycle_rebase.post_policy_weights),
+                        "computeIgnorePostPolicy": weight_snapshot_json(
+                            &lifecycle_compute.post_policy_weights),
+                        "savedRawRows": hex_bytes(
+                            &lifecycle_saved.post_disruption_raw_row_digest_sha256),
+                        "rebaseRawRows": hex_bytes(
+                            &lifecycle_rebase.post_disruption_raw_row_digest_sha256),
+                        "computeIgnoreRawRows": hex_bytes(
+                            &lifecycle_compute.post_disruption_raw_row_digest_sha256),
+                    },
+                    "lifecycleDisruptionIdentical":
+                        disruption_identity(&lifecycle_saved)
+                            == disruption_identity(&lifecycle_rebase)
+                        && disruption_identity(&lifecycle_saved)
+                            == disruption_identity(&lifecycle_compute),
+                    "inSeparationRollback": {
+                        "snapshotWeights": weight_snapshot_json(&rollback.snapshot_weights),
+                        "evolvedWeights": weight_snapshot_json(&rollback.evolved_weights),
+                        "restoredWeights": weight_snapshot_json(&rollback.restored_weights),
+                        "snapshotRawRowDigestSha256":
+                            hex_bytes(&rollback.snapshot_raw_row_digest_sha256),
+                        "preRollbackRawRowDigestSha256":
+                            hex_bytes(&rollback.pre_rollback_raw_row_digest_sha256),
+                        "postRollbackRawRowDigestSha256":
+                            hex_bytes(&rollback.post_rollback_raw_row_digest_sha256),
+                        "posesRestored": rollback.poses_restored,
+                        "valid": rollback.valid,
+                    },
+                    "newWidthReset": {
+                        "widthMm": new_width.width_mm,
+                        "weights": weight_snapshot_json(&new_width.weights),
+                        "coldWeights": weight_snapshot_json(&new_width.cold_weights),
+                        "liveRawRowDigestSha256":
+                            hex_bytes(&new_width.live_raw_row_digest_sha256),
+                        "coldRawRowDigestSha256":
+                            hex_bytes(&new_width.cold_raw_row_digest_sha256),
+                        "valid": new_width.valid,
+                    },
+                });
+            }
+            #[cfg(not(feature = "pool-retry-tracker-rebase"))]
+            return Err("pool-rebase-vectors requires pool-retry-tracker-rebase".into());
+        }
+        "partition-vectors" => {
+            #[cfg(feature = "conflict-cluster-budget")]
+            {
+                document["partitionVectors"] =
+                    partition_vectors_json(&partition_gate0_vector_report());
+            }
+            #[cfg(not(feature = "conflict-cluster-budget"))]
+            return Err("partition-vectors requires conflict-cluster-budget".into());
+        }
+        "binary-close-vectors" => {
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            {
+                let placements = ShortSideFirst.layout(&pieces, settings)?;
+                let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+                let config = IcsConfig {
+                    target_depth_mm: constructor_depth,
+                    proposal_budget: 0,
+                    relocate_eval_budget: u64::MAX,
+                    checkpoint_every_sweeps: u64::MAX,
+                    descent: descent_config(&options, &contract, &sources, seed)?,
+                    limits: publication_limits(&options)?,
+                };
+                let engine = Engine::from_constructor_at_depth(
+                    &pieces,
+                    settings,
+                    &placements,
+                    constructor_depth,
+                    config,
+                )?;
+                let decision = engine.binary_close_vector(1);
+                let real_trace = BinaryCloseTrace {
+                    arm: BinaryCloseArm::MinCut,
+                    invalid_decisions: u64::from(!decision.valid),
+                    decisions: vec![decision],
+                };
+                let geometry_vector = geometry_gate0_vector_report();
+                let synthetic_geometry_trace = BinaryCloseTrace {
+                    arm: BinaryCloseArm::MinCut,
+                    invalid_decisions: u64::from(!geometry_vector.decision.valid),
+                    decisions: vec![geometry_vector.decision],
+                };
+                document["binaryCloseVectors"] = json!({
+                    "synthetic": binary_close_vectors_json(&binary_close_gate0_vector_report()),
+                    "syntheticGeometry": {
+                        "poseStates": geometry_vector.pose_states.iter().map(|state| json!({
+                            "piece": state.piece,
+                            "zeroBits": state.zero,
+                            "oneBits": state.one,
+                            "mirrored": state.mirrored,
+                        })).collect::<Vec<_>>(),
+                        "incrementalPoseDigestSha256":
+                            hex_bytes(&geometry_vector.incremental_pose_digest_sha256),
+                        "incrementalRowDigestSha256":
+                            hex_bytes(&geometry_vector.incremental_row_digest_sha256),
+                        "incrementalRawPhiBits": geometry_vector.incremental_raw_phi.to_bits(),
+                        "incrementalMatchesCold": geometry_vector.incremental_matches_cold,
+                        "decision": binary_close_json(&synthetic_geometry_trace),
+                    },
+                    "realGeometry": binary_close_json(&real_trace),
+                });
+            }
+            #[cfg(not(feature = "minimum-conflict-binary-close"))]
+            return Err("binary-close-vectors requires minimum-conflict-binary-close".into());
+        }
         "s0" | "s1" | "s2" => {
             let poses_path = options.required("poses")?.to_owned();
             let poses_bytes = fs::read(&poses_path)?;
@@ -1311,7 +2157,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             document["outcome"] = outcome_json(&outcome, &placement_fingerprint(&placements));
             document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
         }
-        "constructor" | "c175" | "c168" | "triangle" | "run" => {
+        "constructor" | "c175" | "c168" | "triangle" | "run" | "partition-cost" => {
             let constructor_started = Instant::now();
             let placements = ShortSideFirst.layout(&pieces, settings)?;
             wall.insert(
@@ -1322,7 +2168,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let constructor_fingerprint = placement_fingerprint(&placements);
             let parent = poses_of(&pieces, &sources, &placements)?;
             let target = match cell.as_str() {
-                "c175" => constructor_depth - 0.10 * (constructor_depth - lower_scale_mm),
+                "c175" | "partition-cost" => {
+                    constructor_depth - 0.10 * (constructor_depth - lower_scale_mm)
+                }
                 _ => options.number("target", constructor_depth)?,
             };
             document["constructor"] = json!({
@@ -1413,30 +2261,219 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     )
                     .into());
                 }
-                let outcome = engine.run();
-                wall.insert(
-                    "solverSeconds".to_owned(),
-                    json!(solver_started.elapsed().as_secs_f64()),
-                );
-                document["shock"] = json!({
-                    "affineFactor": factor,
-                    "entryDepthWithinTarget": entry_depth <= target + 1e-9,
-                    "entryDepthSlackMm": target - entry_depth,
-                    "shockMm": options.number("shockmm", 0.25)?,
-                    "shockDeg": options.number("shockdeg", 1.0)?,
-                    "shockedPoseDigest": pose_digest(&shocked),
-                });
-                document["entry"] = json!({
-                    "rawPhi": entry_totals.raw,
-                    "guidedPhi": entry_totals.guided,
-                    "maxViolationMm": entry_totals.max_violation_mm,
-                    "rawSourceDepthMm": entry_depth,
-                    "lockedTargetMm": target,
-                });
-                document["outcome"] = outcome_json(&outcome, &constructor_fingerprint);
-                document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
-                document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+                #[cfg(feature = "conflict-cluster-budget")]
+                if cell == "partition-cost" {
+                    let sequence = options.get("sequence").unwrap_or("AB");
+                    if sequence != "AB" && sequence != "BA" {
+                        return Err("--sequence must be AB|BA".into());
+                    }
+                    let warmups = options.integer("warmups", 32)? as usize;
+                    let measured = options.integer("measured", 256)? as usize;
+                    let samples = sequence
+                        .chars()
+                        .map(|label| {
+                            let arm = match label {
+                                'A' => PartitionArm::Off,
+                                'B' => PartitionArm::ComputeIgnore,
+                                _ => unreachable!(),
+                            };
+                            engine.partition_cost_arm(arm, warmups, measured)
+                        })
+                        .collect::<Vec<_>>();
+                    let by_arm = |arm: PartitionArm| {
+                        samples
+                            .iter()
+                            .find(|sample| sample.arm == arm)
+                            .expect("both cost arms ran")
+                    };
+                    let off = by_arm(PartitionArm::Off);
+                    let compute = by_arm(PartitionArm::ComputeIgnore);
+                    document["partitionCost"] = json!({
+                        "sequence": sequence,
+                        "warmups": warmups,
+                        "measured": measured,
+                        "samples": samples.iter().map(partition_cost_json).collect::<Vec<_>>(),
+                        "ratioComputeIgnoreOverOff":
+                            compute.slots_per_second / off.slots_per_second,
+                        "poseIdentity": compute.pose_sequence_digest_sha256
+                            == off.pose_sequence_digest_sha256,
+                        "orderIdentity": compute.consumed_order_digest_sha256
+                            == off.consumed_order_digest_sha256,
+                        "workIdentity": compute.work == off.work,
+                        "actualSlotsIdentity": compute.completed_atomic_slots
+                            == off.completed_atomic_slots,
+                        "offActualMatchesExpected": off.completed_atomic_slots
+                            == off.expected_atomic_slots,
+                        "computeActualMatchesExpected": compute.completed_atomic_slots
+                            == compute.expected_atomic_slots,
+                        "computePartitionSlotsMatchActual": compute.partition.partition_slots
+                            == compute.completed_atomic_slots,
+                        "legacyProposalIdentity": compute.legacy_proposals
+                            == off.legacy_proposals,
+                        "computeSlotIdentitiesHold": compute.partition.slot_identities_hold(),
+                        "computeInvalidFallbacks":
+                            compute.partition.invalid_fallback_decisions,
+                    });
+                    wall.insert(
+                        "solverSeconds".to_owned(),
+                        json!(solver_started.elapsed().as_secs_f64()),
+                    );
+                    document["shock"] = json!({
+                        "affineFactor": factor,
+                        "entryDepthWithinTarget": entry_depth <= target + 1e-9,
+                        "entryDepthSlackMm": target - entry_depth,
+                        "shockMm": options.number("shockmm", 0.25)?,
+                        "shockDeg": options.number("shockdeg", 1.0)?,
+                        "shockedPoseDigest": pose_digest(&shocked),
+                    });
+                    document["entry"] = json!({
+                        "rawPhi": entry_totals.raw,
+                        "guidedPhi": entry_totals.guided,
+                        "maxViolationMm": entry_totals.max_violation_mm,
+                        "rawSourceDepthMm": entry_depth,
+                        "lockedTargetMm": target,
+                    });
+                    document["finalPoseDigest"] = json!(pose_digest(engine.state().poses.as_slice()));
+                }
+                #[cfg(not(feature = "conflict-cluster-budget"))]
+                if cell == "partition-cost" {
+                    return Err("partition-cost requires conflict-cluster-budget".into());
+                }
+                if cell != "partition-cost" {
+                    let outcome = engine.run();
+                    wall.insert(
+                        "solverSeconds".to_owned(),
+                        json!(solver_started.elapsed().as_secs_f64()),
+                    );
+                    document["shock"] = json!({
+                        "affineFactor": factor,
+                        "entryDepthWithinTarget": entry_depth <= target + 1e-9,
+                        "entryDepthSlackMm": target - entry_depth,
+                        "shockMm": options.number("shockmm", 0.25)?,
+                        "shockDeg": options.number("shockdeg", 1.0)?,
+                        "shockedPoseDigest": pose_digest(&shocked),
+                    });
+                    document["entry"] = json!({
+                        "rawPhi": entry_totals.raw,
+                        "guidedPhi": entry_totals.guided,
+                        "maxViolationMm": entry_totals.max_violation_mm,
+                        "rawSourceDepthMm": entry_depth,
+                        "lockedTargetMm": target,
+                    });
+                    document["outcome"] = outcome_json(&outcome, &constructor_fingerprint);
+                    document["quota"] = quota_json(&config, &outcome.trace.work, pieces.len());
+                    document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+                }
             }
+        }
+        #[cfg(feature = "pool-retry-tracker-rebase")]
+        "pool-rebase-resume" => {
+            let checkpoint_path = options.required("checkpointin")?;
+            let plan_path = options.required("plan")?;
+            let checkpoint_bytes = fs::read(checkpoint_path)
+                .map_err(|error| format!("reading checkpoint `{checkpoint_path}`: {error}"))?;
+            let plan_bytes = fs::read(plan_path)
+                .map_err(|error| format!("reading plan `{plan_path}`: {error}"))?;
+            let plan = plan_from_bytes(&plan_bytes)?;
+            let bindings = pool_checkpoint_bindings(
+                &options,
+                &request_sha256,
+                &pieces,
+                &sources,
+                settings,
+                contract,
+                &plan_bytes,
+            )?;
+            let wanted = PlanKey {
+                request_sha256: request_sha256.clone(),
+                currency_version: CurrencyVersion::U0Samples,
+                binary_key: BinaryKey {
+                    executable_sha256: bindings.executable_sha256.clone(),
+                    features: bindings.features.clone(),
+                },
+                workers: 8,
+                executor: Executor::EphemeralScope,
+            };
+            if let PlanMatch::Miss(reason) = match_plan(&wanted, &plan.key) {
+                return Err(format!("checkpoint resume plan mismatch: {reason}").into());
+            }
+            let body = pool_checkpoint_body(&checkpoint_bytes, &bindings)?;
+            let arm = pool_rebase_arm(&options)?;
+            if arm == PoolRebaseArm::ComputeIgnore && options.integer("poolrebasetiming", 0)? == 0 {
+                return Err("compute-ignore resume is reserved for timed G0.3 cells".into());
+            }
+            let solver_started = Instant::now();
+            let outcome = Engine::resume_first_pool_retry_from_checkpoint(
+                &pieces,
+                sources.clone(),
+                settings,
+                contract,
+                &body,
+                arm,
+                options.integer("poolrebasetiming", 0)? != 0,
+            )?;
+            wall.insert(
+                "searchSeconds".to_owned(),
+                json!(solver_started.elapsed().as_secs_f64()),
+            );
+            let checkpoint_sha256 = format!("{:x}", Sha256::digest(&checkpoint_bytes));
+            document["checkpoint"] = json!({
+                "schema": "pool-retry-tracker-rebase/checkpoint-envelope/v2",
+                "inputSha256": checkpoint_sha256,
+                "byteLength": checkpoint_bytes.len(),
+                "canonicalReencodeIdentical":
+                    pool_checkpoint_envelope(&bindings, &body) == checkpoint_bytes,
+                "bodySha256": format!("{:x}", Sha256::digest(&body)),
+                "bindings": {
+                    "specSha256": bindings.spec_sha256,
+                    "requestSha256": bindings.request_sha256,
+                    "planSha256": bindings.plan_sha256,
+                    "executableSha256": bindings.executable_sha256,
+                    "sourceCommit": bindings.source_commit,
+                    "features": bindings.features,
+                    "immutableInputSha256": bindings.immutable_input_sha256,
+                },
+            });
+            document["schedule"] = json!({
+                "mode": "checkpoint-resume",
+                "workers": 8,
+                "arm": "control",
+                "armLabel": StrikeConfig::CONTROL.arm(),
+                "poolRetryArm": arm.as_str(),
+                "recordPoolRetryRebase": true,
+                "stopAfterFirstPoolRetry": true,
+                "firstPoolRetryIterationCap": FIRST_RETRY_ITERATION_CAP,
+                "recordFingerprints": true,
+                "recordPoolRetryTiming": options.integer("poolrebasetiming", 0)? != 0,
+                "calibratedPlan": {
+                    "path": plan_path,
+                    "sourceSha256": format!("{:x}", Sha256::digest(&plan_bytes)),
+                    "match": "hit",
+                    "wantedKey": serde_json::to_value(&wanted)?,
+                },
+            });
+            let authority_parent = outcome
+                .bites
+                .first()
+                .and_then(|row| row.published.as_ref())
+                .map(|row| row.parent_fingerprint.clone())
+                .unwrap_or_else(|| outcome.incumbent.placement_fingerprint.clone());
+            document["outcome"] = schedule_json(
+                &outcome,
+                &authority_parent,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    settings,
+                    contract: &contract,
+                    revalidate: true,
+                },
+            );
+            document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+        }
+        #[cfg(not(feature = "pool-retry-tracker-rebase"))]
+        "pool-rebase-resume" => {
+            return Err("pool-rebase-resume requires pool-retry-tracker-rebase".into());
         }
         // ---------------------------------------------------- CutCloseRelocate --
         //
@@ -1507,17 +2544,63 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     return Err(format!("--arm must be control|treatment, not `{other}`").into())
                 }
             };
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let binary_close_arm = binary_close_arm(&options, "binaryclose")?;
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            let pool_rebase_arm = pool_rebase_arm(&options)?;
             let schedule = ScheduleConfig {
                 workers,
                 strikes,
                 record_fingerprints: options.integer("fingerprints", 0)? != 0,
+                #[cfg(feature = "minimum-conflict-binary-close")]
+                binary_close_arm,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                pool_rebase_arm,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                record_pool_rebase: options.integer("poolrebasetrace", 0)? != 0,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                stop_after_first_pool_retry: options.integer("firstretry", 0)? != 0,
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                capture_first_pool_retry_checkpoint: options.get("checkpointout").is_some(),
+                #[cfg(feature = "pool-retry-tracker-rebase")]
+                record_pool_rebase_timing: options.integer("poolrebasetiming", 0)? != 0,
                 ..ScheduleConfig::default()
             };
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if schedule.stop_after_first_pool_retry
+                && (!schedule.record_pool_rebase || !schedule.record_fingerprints)
+            {
+                return Err(
+                    "--firstretry=1 requires --poolrebasetrace=1 and --fingerprints=1".into(),
+                );
+            }
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if schedule.stop_after_first_pool_retry && mode == "wall" {
+                return Err("--firstretry=1 requires fixed or calibrated work, not wall".into());
+            }
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if schedule.capture_first_pool_retry_checkpoint {
+                if mode != "calibrated"
+                    || options.get("poolrebase").is_some()
+                    || schedule.stop_after_first_pool_retry
+                    || !schedule.record_fingerprints
+                    || schedule.record_pool_rebase
+                    || schedule.record_pool_rebase_timing
+                {
+                    return Err(
+                        "--checkpointout requires calibrated mode and --fingerprints=1, with no \
+                         --poolrebase, --poolrebasetrace, --poolrebasetiming or --firstretry"
+                            .into(),
+                    );
+                }
+            }
             let wall_budget_s = options.number("wall", 10.0)?;
             // Built before the budget, because a calibrated budget moves into
             // `run_cutclose` and a plan is worth printing whether or not the
             // trajectory that spends it succeeds.
             let mut plan_document = Value::Null;
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            let mut plan_source_bytes: Option<Vec<u8>> = None;
             let budget = match mode.as_str() {
                 "wall" => {
                     // The clock started at the decoded request, not here.
@@ -1548,6 +2631,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .map_err(|_| "--mode=calibrated needs --plan=<icscal/v1 file>")?;
                     let bytes = fs::read(path)
                         .map_err(|error| format!("reading the plan `{path}`: {error}"))?;
+                    #[cfg(feature = "pool-retry-tracker-rebase")]
+                    {
+                        plan_source_bytes = Some(bytes.clone());
+                    }
                     let plan = plan_from_bytes(&bytes)?;
                     let wanted_currency = match options.get("currency").unwrap_or("U0") {
                         "U0" => CurrencyVersion::U0Samples,
@@ -1682,6 +2769,56 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "loopExploreSeconds".to_owned(),
                 json!(outcome.explore_seconds),
             );
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if let Some(path) = options.get("checkpointout") {
+                if let Some(error) = &outcome.pool_rebase.checkpoint_error {
+                    return Err(format!("capturing pool-retry checkpoint: {error}").into());
+                }
+                let body = outcome
+                    .pool_rebase
+                    .checkpoint_bytes
+                    .as_ref()
+                    .ok_or("trajectory ended before the first pool-rank checkpoint")?;
+                let plan_bytes = plan_source_bytes
+                    .as_deref()
+                    .ok_or("checkpoint capture has no calibrated plan bytes")?;
+                let bindings = pool_checkpoint_bindings(
+                    &options,
+                    &request_sha256,
+                    &pieces,
+                    &sources,
+                    settings,
+                    contract,
+                    plan_bytes,
+                )?;
+                let artifact = pool_checkpoint_envelope(&bindings, body);
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(path)
+                    .map_err(|error| {
+                        format!("creating checkpoint `{path}` exclusively: {error}")
+                    })?;
+                file.write_all(&artifact)?;
+                file.sync_all()?;
+                document["checkpoint"] = json!({
+                    "schema": "pool-retry-tracker-rebase/checkpoint-envelope/v2",
+                    "outputSha256": format!("{:x}", Sha256::digest(&artifact)),
+                    "byteLength": artifact.len(),
+                    "bodySha256": format!("{:x}", Sha256::digest(body)),
+                    "captureSeam": "explore-after-first-pool-rank-before-install",
+                    "armNeutral": true,
+                    "bindings": {
+                        "specSha256": bindings.spec_sha256,
+                        "requestSha256": bindings.request_sha256,
+                        "planSha256": bindings.plan_sha256,
+                        "executableSha256": bindings.executable_sha256,
+                        "sourceCommit": bindings.source_commit,
+                        "features": bindings.features,
+                        "immutableInputSha256": bindings.immutable_input_sha256,
+                    },
+                });
+            }
             document["constructor"] = json!({
                 "rawSourceDepthMm": constructor_depth,
                 "placementFingerprint": constructor_fingerprint,
@@ -1748,12 +2885,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "calibratedPlan": plan_document,
                 "calibratedAttemptsPerBite": calibrated_attempts_per_bite,
             });
+            #[cfg(feature = "pool-retry-tracker-rebase")]
+            if schedule.pool_rebase_arm != PoolRebaseArm::Saved
+                || schedule.record_pool_rebase
+                || schedule.stop_after_first_pool_retry
+                || schedule.capture_first_pool_retry_checkpoint
+                || schedule.record_pool_rebase_timing
+            {
+                document["schedule"]["poolRetryArm"] = json!(schedule.pool_rebase_arm.as_str());
+                document["schedule"]["recordPoolRetryRebase"] = json!(schedule.record_pool_rebase);
+                document["schedule"]["stopAfterFirstPoolRetry"] =
+                    json!(schedule.stop_after_first_pool_retry);
+                document["schedule"]["firstPoolRetryIterationCap"] = schedule
+                    .stop_after_first_pool_retry
+                    .then_some(FIRST_RETRY_ITERATION_CAP)
+                    .into();
+                document["schedule"]["captureFirstPoolRetryCheckpoint"] =
+                    json!(schedule.capture_first_pool_retry_checkpoint);
+                document["schedule"]["recordPoolRetryTiming"] =
+                    json!(schedule.record_pool_rebase_timing);
+            }
             document["outcome"] = schedule_json(
                 &outcome,
                 &constructor_fingerprint,
                 &LayoutContext {
                     sources: &sources,
                     pieces: &pieces,
+                    settings,
                     contract: &contract,
                     revalidate: options.integer("revalidate", 0)? != 0,
                 },
@@ -2053,6 +3211,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let prefix_iterations = options.integer("prefixiters", 400)?;
             let probe_iterations = options.integer("probeiters", 200)?;
             let record_fingerprints = options.integer("fingerprints", 0)? != 0;
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let record_consumed_orders = options.integer("consumedorders", 0)? != 0;
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let prefix_binary_close_arm = binary_close_arm(&options, "prefixbinaryclose")?;
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            let probe_binary_close_arm = binary_close_arm(&options, "binaryclose")?;
             let config = IcsConfig {
                 target_depth_mm: constructor_depth,
                 proposal_budget: 0,
@@ -2073,6 +3237,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ScheduleConfig {
                     workers: prefix_workers,
                     record_fingerprints,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    record_consumed_orders,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    binary_close_arm: prefix_binary_close_arm,
                     ..ScheduleConfig::default()
                 },
                 Budget::FixedWork {
@@ -2083,12 +3251,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
             );
             let prefix_seconds = prefix_started.elapsed().as_secs_f64();
+            let prefix_legacy_proposals = engine.proposals();
             wall.insert("prefixSeconds".to_owned(), json!(prefix_seconds));
             let search_started = Instant::now();
             let outcome = engine.run_cutclose(
                 ScheduleConfig {
                     workers,
                     record_fingerprints,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    record_consumed_orders,
+                    #[cfg(feature = "minimum-conflict-binary-close")]
+                    binary_close_arm: probe_binary_close_arm,
                     ..ScheduleConfig::default()
                 },
                 Budget::FixedWork {
@@ -2099,7 +3272,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
             );
             let search_seconds = search_started.elapsed().as_secs_f64();
+            let total_legacy_proposals = engine.proposals();
             wall.insert("searchSeconds".to_owned(), json!(search_seconds));
+            wall.insert(
+                "totalSearchSeconds".to_owned(),
+                json!(prefix_seconds + search_seconds),
+            );
 
             let shelf_index = 0usize;
             let prefix: Vec<&_> = prefix_outcome.bites.iter().collect();
@@ -2115,7 +3293,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "placementFingerprint": constructor_fingerprint,
                 "placementCount": placements.len(),
                 "lowerScaleMm": lower_scale_mm,
-                "seconds": constructor_seconds,
             });
             document["spawnTax"] = json!({
                 "workers": workers,
@@ -2133,6 +3310,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     && prefix.len() == shelf_bites as usize,
                 "prefixDepthMm": prefix_outcome.depth_mm,
                 "prefixFingerprint": prefix_outcome.incumbent.placement_fingerprint,
+                "prefixPoseDigestSha256": pose_digest(&prefix_outcome.final_poses),
+                "prefixPoses": poses_json(&prefix_outcome.final_poses),
+                "prefixLegacyProposals": prefix_legacy_proposals,
+                "probeLegacyProposals": total_legacy_proposals - prefix_legacy_proposals,
+                "totalLegacyProposals": total_legacy_proposals,
                 "shelfDepthMm": outcome.depth_mm,
                 "shelfEntryWidthMm": shelf.map(|row| row.bite.width_after_mm),
                 "shelfPublished": shelf.map(|row| row.published.is_some()),
@@ -2161,16 +3343,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "work": work_json(&outcome.trace.work),
                 "prefixWork": work_json(&prefix_outcome.trace.work),
             });
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            if record_consumed_orders {
+                document["spawnTax"]["prefixCompleteStateDigestSha256"] =
+                    json!(prefix_outcome.complete_state_digest_sha256);
+                document["spawnTax"]["prefixConsumedOrderDigestSha256"] =
+                    json!(prefix_outcome.consumed_order_digest_sha256);
+                document["spawnTax"]["prefixConsumedOrderSweeps"] =
+                    json!(prefix_outcome.consumed_order_sweeps);
+                document["spawnTax"]["prefixConsumedOrderSlots"] =
+                    json!(prefix_outcome.consumed_order_slots);
+            }
             document["outcome"] = schedule_json(
                 &outcome,
                 &constructor_fingerprint,
                 &LayoutContext {
                     sources: &sources,
                     pieces: &pieces,
+                    settings,
                     contract: &contract,
                     revalidate: options.integer("revalidate", 0)? != 0,
                 },
             );
+            document["prefixOutcome"] = schedule_json(
+                &prefix_outcome,
+                &constructor_fingerprint,
+                &LayoutContext {
+                    sources: &sources,
+                    pieces: &pieces,
+                    settings,
+                    contract: &contract,
+                    revalidate: options.integer("revalidate", 0)? != 0,
+                },
+            );
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            if !prefix_outcome.binary_close.decisions.is_empty() {
+                document["binaryClosePrefix"] = binary_close_json(&prefix_outcome.binary_close);
+            }
             document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
 
             // **The icscal write path, exercised on a real measurement.**
@@ -2288,6 +3497,28 @@ fn descent_config(
         Some("always") => true,
         Some(other) => return Err(format!("--jumpcommit must be always|guided, not `{other}`")),
     };
+    #[cfg(feature = "conflict-cluster-budget")]
+    {
+        config.partition_arm = match options.get("partition").unwrap_or("off") {
+            "off" => PartitionArm::Off,
+            "mass" => PartitionArm::Mass,
+            "shuffled-mass" => PartitionArm::ShuffledMass,
+            "max-violation" => PartitionArm::MaxViolation,
+            "shadow" => PartitionArm::Shadow,
+            "compute-ignore" => PartitionArm::ComputeIgnore,
+            other => {
+                return Err(format!(
+                    "--partition must be off|mass|shuffled-mass|max-violation|shadow|compute-ignore, not `{other}`"
+                ));
+            }
+        };
+    }
+    #[cfg(not(feature = "conflict-cluster-budget"))]
+    if let Some(partition) = options.get("partition") {
+        if partition != "off" {
+            return Err("--partition requires --features conflict-cluster-budget".to_owned());
+        }
+    }
     Ok(config)
 }
 

@@ -546,6 +546,18 @@ skip-pile-dump = ["compression-schedule"]
 # `ExplorationKernel`, no `GeneralRelaxedOutcome.result` - and none of those
 # until the Round-2 gate in the converged spec passes.
 overlap-ics = ["round-envelope-kernel", "fast-contract-validator"]
+# The independently-authored conflict-cluster budget experiment. Off by
+# default; it changes only the frozen order producer in overlap-ICS and has no
+# route outside that engine. See docs/conflict-cluster-budget-spec.md.
+conflict-cluster-budget = []
+# The independently-authored minimum-conflict binary close experiment. Off by
+# default; it changes only the explore-bite injection in overlap-ICS and has no
+# route outside that engine. See docs/minimum-conflict-binary-close-spec.md.
+minimum-conflict-binary-close = []
+# Resets GLS weights only when an exploration-pool pose is restored before a
+# topological disruption. Off by default; the unchanged Saved arm remains the
+# control. See docs/pool-retry-tracker-rebase-spec.md.
+pool-retry-tracker-rebase = []
 # The overlap-ICS master-iteration phase census: nanosecond accumulators around
 # slot preparation, thread dispatch/join, the worker sweeps, the ordinal merge
 # and Algorithm-8 pass, and the exact attempt. **Measurement only, and off in

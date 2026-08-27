@@ -1510,6 +1510,169 @@ fn the_gls_schedule_is_the_published_one_and_the_only_one() {
     }
 }
 
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn pool_retry_policy_resets_only_the_rebase_arm_and_compute_ignore_restores() {
+    use super::pool_rebase::{PoolRebaseArm, WeightSnapshot};
+
+    let fixture = Fixture::squares(3, 20.0);
+    let (_, _, mut state) = state_of_poses(
+        &fixture,
+        vec![
+            pose_at(10.0, 10.0),
+            pose_at(40.0, 40.0),
+            pose_at(70.0, 70.0),
+        ],
+        300.0,
+    );
+    state.pair_rows[0].weight = 2.0;
+    state.pair_rows[1].weight = 17.0;
+    state.edge_rows[1][3].weight = 1_024.0;
+    let entry = super::PoolEntry::of(&state, fold(&state).raw);
+    let saved = WeightSnapshot::of(&state);
+    assert_eq!(saved.count_above_floor, 3);
+    assert!(saved.all_finite);
+    assert!(!saved.all_exactly_one);
+
+    super::energy::reset_weights(&mut state);
+    let saved_report = entry.apply_rebase_policy(&mut state, PoolRebaseArm::Saved);
+    assert!(saved_report.is_none());
+    assert_eq!(WeightSnapshot::of(&state).bits, saved.bits);
+
+    let reset_report = entry
+        .apply_rebase_policy(&mut state, PoolRebaseArm::Rebase)
+        .expect("the treatment emits its exact reset vector");
+    assert!(reset_report.all_finite);
+    assert!(reset_report.all_exactly_one);
+    assert_eq!(WeightSnapshot::of(&state), reset_report);
+
+    let compute_report = entry
+        .apply_rebase_policy(&mut state, PoolRebaseArm::ComputeIgnore)
+        .expect("compute-ignore emits the reset it discarded");
+    assert!(compute_report.all_exactly_one);
+    assert_eq!(WeightSnapshot::of(&state).bits, saved.bits);
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn pool_retry_digests_separate_raw_rows_from_weights_and_rollback_keeps_weights() {
+    use super::pool_rebase::{raw_row_digest, WeightSnapshot};
+
+    let fixture = Fixture::squares(3, 20.0);
+    let (_, _, mut state) = state_of_poses(
+        &fixture,
+        vec![
+            pose_at(10.0, 10.0),
+            pose_at(10.0, 10.0),
+            pose_at(80.0, 80.0),
+        ],
+        300.0,
+    );
+    let snapshot = state.clone();
+    let raw_before = raw_row_digest(&state);
+    state.pair_rows[0].weight = 64.0;
+    state.edge_rows[0][0].weight = 8.0;
+    assert_eq!(raw_before, raw_row_digest(&state));
+    let weights_before = WeightSnapshot::of(&state);
+
+    // This is the rollback used *inside* a separation. Poses/raw rows come
+    // from the snapshot, while the evolved live weights remain untouched.
+    super::restore_keeping_weights(&mut state, &snapshot);
+    assert_eq!(WeightSnapshot::of(&state).bits, weights_before.bits);
+    assert_eq!(raw_row_digest(&state), raw_row_digest(&snapshot));
+
+    state.pair_rows[0].violation_mm += 0.125;
+    assert_ne!(raw_row_digest(&state), raw_row_digest(&snapshot));
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn a_nonfinite_saved_weight_is_visible_even_if_treatment_would_reset_it() {
+    use super::pool_rebase::WeightSnapshot;
+
+    let pair = [f64::NAN];
+    let edge = [[1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 2.0]];
+    let saved = WeightSnapshot::of_saved(&pair, &edge);
+    assert!(!saved.all_finite);
+    assert!(!saved.all_exactly_one);
+}
+
+#[cfg(feature = "pool-retry-tracker-rebase")]
+#[test]
+fn pool_retry_shared_lifecycle_and_existing_new_width_reset_are_exact() {
+    use super::pool_rebase::PoolRebaseArm;
+
+    let fixture = two_squares();
+    let pieces = fixture.pieces();
+    let run = |arm, nonfinite| {
+        let mut engine = banded_deficit_engine(&pieces, 200.0);
+        engine.state.pair_rows[0].weight = if nonfinite { f64::NAN } else { 17.0 };
+        engine.state.edge_rows[0][3].weight = 1_024.0;
+        engine.pool_rebase_lifecycle_vector(arm, 7)
+    };
+    let saved = run(PoolRebaseArm::Saved, false);
+    let rebase = run(PoolRebaseArm::Rebase, false);
+    let compute = run(PoolRebaseArm::ComputeIgnore, false);
+    for row in [&saved, &rebase, &compute] {
+        assert!(row.valid, "the shared lifecycle vector failed: {row:?}");
+        assert_eq!(
+            row.post_disruption_raw_row_digest_sha256,
+            row.cold_post_disruption_raw_row_digest_sha256
+        );
+    }
+    assert_eq!(saved.disruption, rebase.disruption);
+    assert_eq!(saved.disruption, compute.disruption);
+    assert_eq!(
+        saved.disruption_pose_transform_digest_sha256,
+        rebase.disruption_pose_transform_digest_sha256
+    );
+    assert_eq!(
+        saved.post_disruption_pose_digest_sha256,
+        rebase.post_disruption_pose_digest_sha256
+    );
+    assert!(rebase.post_policy_weights.all_exactly_one);
+    assert_eq!(
+        saved.post_policy_weights.bits,
+        compute.post_policy_weights.bits
+    );
+
+    let nonfinite = run(PoolRebaseArm::Rebase, true);
+    assert!(!nonfinite.saved_weights.all_finite);
+    assert!(
+        !nonfinite.valid,
+        "the reset must not mask corrupt saved input"
+    );
+
+    let mut width_engine = banded_deficit_engine(&pieces, 200.0);
+    width_engine.state.pair_rows[0].weight = 17.0;
+    let width = width_engine.pool_rebase_new_width_reset_vector(199.0);
+    assert!(
+        width.valid,
+        "new-width reset/cold rebuild failed: {width:?}"
+    );
+    assert!(width.weights.all_exactly_one);
+
+    let rollback_engine = banded_deficit_engine(&pieces, 200.0);
+    let rollback = rollback_engine.pool_rebase_rollback_weight_vector();
+    assert!(
+        rollback.valid,
+        "printed rollback vector failed: {rollback:?}"
+    );
+    assert!(rollback.evolved_weights.count_above_floor >= 2);
+    assert_eq!(
+        rollback.restored_weights.bits,
+        rollback.evolved_weights.bits
+    );
+    assert_ne!(
+        rollback.pre_rollback_raw_row_digest_sha256,
+        rollback.snapshot_raw_row_digest_sha256
+    );
+    assert_eq!(
+        rollback.post_rollback_raw_row_digest_sha256,
+        rollback.snapshot_raw_row_digest_sha256
+    );
+}
+
 /// A sweep runs the Algorithm-8 pass exactly once, over every row, whether or
 /// not it improved anything - and **a worker sweep runs none at all.**
 ///
@@ -1535,7 +1698,14 @@ fn every_sweep_runs_exactly_one_weight_pass_and_a_worker_sweep_runs_none() {
     assert_eq!(work.weight_updates, 2);
 
     let before: Vec<u64> = state.pair_rows.iter().map(|row| row.weight.to_bits()).collect();
-    let outcome = descent.worker_sweep(&mut state, &sources, &contract, &mut work);
+    let outcome = descent.worker_sweep(
+        &mut state,
+        &sources,
+        &contract,
+        #[cfg(feature = "minimum-conflict-binary-close")]
+        None,
+        &mut work,
+    );
     assert_eq!(
         work.weight_updates, 2,
         "a worker sweep charges no weight pass"
@@ -1543,6 +1713,24 @@ fn every_sweep_runs_exactly_one_weight_pass_and_a_worker_sweep_runs_none() {
     assert_eq!(outcome.active_rows, 0, "and reports none");
     let after: Vec<u64> = state.pair_rows.iter().map(|row| row.weight.to_bits()).collect();
     assert_eq!(before, after, "every weight is untouched, to the bit");
+}
+
+#[cfg(feature = "minimum-conflict-binary-close")]
+#[test]
+fn consumed_worker_order_digest_is_stable_and_order_sensitive() {
+    let mut first = super::ConsumedOrderTrace::default();
+    first.observe(22, 0, &[4, 1, 7]);
+    first.observe(22, 1, &[1, 4]);
+    let mut replay = super::ConsumedOrderTrace::default();
+    replay.observe(22, 0, &[4, 1, 7]);
+    replay.observe(22, 1, &[1, 4]);
+    let mut reordered = super::ConsumedOrderTrace::default();
+    reordered.observe(22, 0, &[1, 4, 7]);
+    reordered.observe(22, 1, &[1, 4]);
+
+    assert_eq!(first.digest_hex(), replay.digest_hex());
+    assert_ne!(first.digest_hex(), reordered.digest_hex());
+    assert_eq!((first.sweeps, first.slots), (2, 5));
 }
 
 /// A sweep advances the work quota by one per piece however small the colliding

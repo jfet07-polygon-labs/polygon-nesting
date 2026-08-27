@@ -99,6 +99,49 @@ pub struct WorkVector {
 }
 
 impl WorkVector {
+    pub fn saturating_sub(self, earlier: Self) -> Self {
+        Self {
+            pair_row_probes: self.pair_row_probes.saturating_sub(earlier.pair_row_probes),
+            convex_cell_gap_queries: self
+                .convex_cell_gap_queries
+                .saturating_sub(earlier.convex_cell_gap_queries),
+            pose_transforms: self.pose_transforms.saturating_sub(earlier.pose_transforms),
+            jump_proposals: self.jump_proposals.saturating_sub(earlier.jump_proposals),
+            exact_checkpoints: self
+                .exact_checkpoints
+                .saturating_sub(earlier.exact_checkpoints),
+            repair_rows: self.repair_rows.saturating_sub(earlier.repair_rows),
+            piece_proposals: self.piece_proposals.saturating_sub(earlier.piece_proposals),
+            accepted_moves: self.accepted_moves.saturating_sub(earlier.accepted_moves),
+            weight_updates: self.weight_updates.saturating_sub(earlier.weight_updates),
+            broad_phase_rejects: self
+                .broad_phase_rejects
+                .saturating_sub(earlier.broad_phase_rejects),
+            sample_evaluations: self
+                .sample_evaluations
+                .saturating_sub(earlier.sample_evaluations),
+            relocates: self.relocates.saturating_sub(earlier.relocates),
+            focused_samples: self.focused_samples.saturating_sub(earlier.focused_samples),
+            container_samples: self
+                .container_samples
+                .saturating_sub(earlier.container_samples),
+            container_winners: self
+                .container_winners
+                .saturating_sub(earlier.container_winners),
+            focused_winners: self.focused_winners.saturating_sub(earlier.focused_winners),
+            stay_put_winners: self
+                .stay_put_winners
+                .saturating_sub(earlier.stay_put_winners),
+            container_commits: self
+                .container_commits
+                .saturating_sub(earlier.container_commits),
+            disruptions: self.disruptions.saturating_sub(earlier.disruptions),
+            disruption_moves: self
+                .disruption_moves
+                .saturating_sub(earlier.disruption_moves),
+        }
+    }
+
     pub fn saturating_add(&mut self, other: &Self) {
         self.pair_row_probes += other.pair_row_probes;
         self.convex_cell_gap_queries += other.convex_cell_gap_queries;
@@ -206,6 +249,10 @@ pub struct Trace {
     pub work: WorkVector,
     pub checkpoints: Vec<ExactCheckpoint>,
     pub quality: Vec<QualityPoint>,
+    /// Present only in the conflict-cluster experiment build and never emitted
+    /// by runtime Off.
+    #[cfg(feature = "conflict-cluster-budget")]
+    pub partition: super::cluster_budget::PartitionTrace,
     /// Raw/guided Φ and `max_g` at epoch boundaries. Diagnostics, never quality.
     pub proxy_samples: Vec<ProxySample>,
     pub sweeps: u64,

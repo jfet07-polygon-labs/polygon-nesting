@@ -1,0 +1,94 @@
+warning: unused imports: `KernelPose` and `LEGACY`
+  --> crates/polygon-nesting-core/src/search/general_relaxed.rs:48:24
+   |
+48 |     ExplorationKernel, KernelPose, KernelProbes, LegacyKernel, PairRow, PosedShape, LEGACY,
+   |                        ^^^^^^^^^^                                                   ^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused macro definition: `ladder_time`
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:5969:14
+     |
+5969 | macro_rules! ladder_time {
+     |              ^^^^^^^^^^^
+     |
+     = note: `#[warn(unused_macros)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `transformed_witness`
+   --> crates/polygon-nesting-core/src/search/overlap_ics/tests.rs:940:5
+    |
+940 |     transformed_witness,
+    |     ^^^^^^^^^^^^^^^^^^^
+
+warning: method `pair_components` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:443:19
+    |
+412 | impl LayoutViolations {
+    | --------------------- method in this implementation
+...
+443 |     pub(crate) fn pair_components(&self) -> Vec<Vec<usize>> {
+    |                   ^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `separating_translation` is never used
+   --> crates/polygon-nesting-core/src/search/general_micro_legalization.rs:565:15
+    |
+565 | pub(crate) fn separating_translation(
+    |               ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: variant `ToleratesPoleRounding` is never constructed
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3621:5
+     |
+3607 | pub(crate) enum CoupledRollbackComparison {
+     |                 ------------------------- variant in this enum
+...
+3621 |     ToleratesPoleRounding,
+     |     ^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: `CoupledRollbackComparison` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+
+warning: method `label` is never used
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3628:8
+     |
+3624 | impl CoupledRollbackComparison {
+     | ------------------------------ method in this implementation
+...
+3628 |     fn label(self) -> Option<&'static str> {
+     |        ^^^^^
+
+warning: function `continuous_rotation_report_armed` is never used
+    --> crates/polygon-nesting-core/src/search/general_relaxed.rs:3862:4
+     |
+3862 | fn continuous_rotation_report_armed(relaxed_settings: GeneralRelaxedSettings) -> bool {
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: method `resolved_pair_collides` is never used
+     --> crates/polygon-nesting-core/src/search/general_relaxed.rs:17298:8
+      |
+13192 | impl<'a, K: ExplorationKernel<Shape = OrientedSurrogate> + Default> LaneSearch<'a, K> {
+      | ------------------------------------------------------------------------------------- method in this implementation
+...
+17298 |     fn resolved_pair_collides(
+      |        ^^^^^^^^^^^^^^^^^^^^^^
+
+warning: function `two_piece_recombination_fixture` is never used
+     --> crates/polygon-nesting-core/src/search/general_relaxed.rs:24795:8
+      |
+24795 |     fn two_piece_recombination_fixture() -> (
+      |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+running 839 tests
+....................................................................................... 87/839
+....................................................................................... 174/839
+....................................................................................... 261/839
+....................................................................................... 348/839
+....................................................................................... 435/839
+....................................................................................... 522/839
+....................................................................................... 609/839
+....................................................................................... 696/839
+....................................................................................... 783/839
+........................................................
+test result: ok. 839 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.96s
+
