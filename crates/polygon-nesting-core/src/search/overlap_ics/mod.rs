@@ -595,6 +595,28 @@ impl<'a> Engine<'a> {
         if self.last_attempt_pose_digest == Some(digest) {
             return CheckpointOutcome::none();
         }
+        // **The `ComputeIgnore` arm.** Pay the T-row repair's cost in full on a
+        // detached scratch work vector, throw the result away, and then take
+        // the ordinary closed-member path. The trajectory is `Control`'s to the
+        // bit; only the wall differs, which is exactly what the specification's
+        // isolation and cost clauses are measured against.
+        #[cfg(feature = "t-row-repair")]
+        if publish::t_row_arm() == publish::TRowArm::ComputeIgnore {
+            let mut scratch = self.trace.work;
+            let _ = publish::attempt(
+                &self.state,
+                &self.sources,
+                self.pieces,
+                self.settings,
+                &self.contract,
+                self.config.limits,
+                totals.max_violation_mm,
+                self.incumbent.raw_source_depth_mm,
+                self.descent.proposals,
+                &mut scratch,
+                publish::TRowArm::Repair,
+            );
+        }
         let Some(attempt) = publish::attempt(
             &self.state,
             &self.sources,
@@ -606,6 +628,12 @@ impl<'a> Engine<'a> {
             self.incumbent.raw_source_depth_mm,
             self.descent.proposals,
             &mut self.trace.work,
+            #[cfg(feature = "t-row-repair")]
+            match publish::t_row_arm() {
+                // `ComputeIgnore` already paid above and must not publish.
+                publish::TRowArm::ComputeIgnore => publish::TRowArm::Off,
+                other => other,
+            },
         ) else {
             return CheckpointOutcome::none();
         };

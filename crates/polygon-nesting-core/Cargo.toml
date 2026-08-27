@@ -28,6 +28,17 @@ profiling-allocator = []
 # by the improvement gate, and those have different causes. Counters only, no
 # trajectory effect, off by default so no gate binary carries it.
 ics-publish-census = []
+# **The T-row repair** (`docs/t-row-repair-spec.md`, sha256
+# `bce5c8bd...`). When a state is inside the 4 um band and 0 to 4 um proud of
+# the locked strip's top, the existing frozen-theta repair is run with the strip
+# top injected as a tightened far-y boundary row, and the layout may publish
+# only if the repaired depth is at or below `T` and dual-valid. Off by default:
+# the shipped build and every pinned gate carry none of it, and the arm is
+# selected at runtime so a census build can hold Control, TRepair and
+# ComputeIgnore side by side. Implies nothing; the 4 um band, the 16 um
+# displacement cap, the 4n row cap, the Exclusive kernel at r = 2.500 and the
+# contract validator are all unchanged.
+t-row-repair = []
 # Compiles the deep-operator (`general_persistent_vacancy`) phase spans in.
 # Off by default: those sites sit inside a generated function whose inlining
 # they perturb, which costs about 4.5% of a mode-20 stream even with recording

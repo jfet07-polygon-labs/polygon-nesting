@@ -2537,6 +2537,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // committed cell and every existing driver invocation runs the
             // trajectory it always ran.
             let arm = options.get("arm").unwrap_or("control").to_owned();
+            #[cfg(feature = "t-row-repair")]
+            {
+                use polygon_nesting_core::search::overlap_ics::publish::{
+                    set_t_row_arm, TRowArm,
+                };
+                set_t_row_arm(match options.get("trow").unwrap_or("off") {
+                    "off" => TRowArm::Off,
+                    "repair" => TRowArm::Repair,
+                    "computeignore" => TRowArm::ComputeIgnore,
+                    other => {
+                        return Err(format!(
+                            "--trow must be off|repair|computeignore, not `{other}`"
+                        )
+                        .into())
+                    }
+                });
+            }
             let strikes = match arm.as_str() {
                 "control" => StrikeConfig::CONTROL,
                 "treatment" => StrikeConfig::TREATMENT,
@@ -3450,6 +3467,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     document["buildFeatures"] = json!(build_features());
     // Instrument only, and present only on a census build: which publication
     // gate refused, counted at the band entry.
+    #[cfg(feature = "t-row-repair")]
+    {
+        let census =
+            polygon_nesting_core::search::overlap_ics::publish::t_row_census::snapshot();
+        document["tRowCensus"] = json!({
+            "arm": match polygon_nesting_core::search::overlap_ics::publish::t_row_arm() {
+                polygon_nesting_core::search::overlap_ics::publish::TRowArm::Off => "off",
+                polygon_nesting_core::search::overlap_ics::publish::TRowArm::Repair => "repair",
+                polygon_nesting_core::search::overlap_ics::publish::TRowArm::ComputeIgnore =>
+                    "compute-ignore",
+            },
+            "eligible": census.eligible,
+            "eligibleWithTRow": census.eligible_with_t_row,
+            "firstScanBoundaryRows": census.first_scan_boundary_rows,
+            "published": census.published,
+            "refused": census.refused,
+            "publishedMaxExcessMm": census.published_max_excess_mm,
+            "publishedMaxDisplacementMm": census.published_max_displacement_mm,
+            "blockedOnBoundary": census.blocked_on_boundary,
+            "blockedOnPair": census.blocked_on_pair,
+            "blockedNoNormal": census.blocked_no_normal,
+            "blockedSaturated": census.blocked_saturated,
+            "blockedDisplacementCap": census.blocked_displacement_cap,
+            "blockedRowBudget": census.blocked_row_budget,
+            "blockingShortfallMicrometreBuckets": census.blocking_shortfall_um,
+        });
+    }
     #[cfg(feature = "ics-publish-census")]
     {
         let census = polygon_nesting_core::search::overlap_ics::publish_census::snapshot();

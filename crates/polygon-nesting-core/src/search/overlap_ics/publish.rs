@@ -166,6 +166,147 @@ fn transformed(
         .map_err(|error| error.message().to_owned())
 }
 
+/// **The T-row's causal witness** (`docs/t-row-repair-spec.md` §3 clause 4).
+///
+/// The specification refuses to count a conversion that could have gone
+/// through today's `proxy_depth <= T` path, so eligibility, the boundary rows
+/// the tightened box actually produced, and the publication have to be
+/// recorded rather than inferred. Counters only; a build without
+/// `t-row-repair` has none of this.
+#[cfg(feature = "t-row-repair")]
+pub mod t_row_census {
+    use std::cell::RefCell;
+
+    #[derive(Default, Clone, Copy, Debug)]
+    pub struct Census {
+        /// States that reached the repair only because of the relaxation:
+        /// in band, improving, and `0 < proxy_depth - T <= band`.
+        pub eligible: u64,
+        /// Of those, how many had at least one failing far-`y` boundary under
+        /// the tightened box on the first scan. An eligible state with zero is
+        /// a wiring failure and the driver must treat it as one.
+        pub eligible_with_t_row: u64,
+        /// Failing boundary rows on the first scan of an eligible state,
+        /// summed. The repair has to clear these before anything publishes.
+        pub first_scan_boundary_rows: u64,
+        /// Eligible states that went on to publish - the conversions.
+        pub published: u64,
+        /// Eligible states the repair could not pull under `T`.
+        pub refused: u64,
+        /// The largest `proxy_depth - T` that still converted, in mm.
+        pub published_max_excess_mm: f64,
+        /// The largest per-piece displacement any conversion spent, in mm.
+        pub published_max_displacement_mm: f64,
+        /// **The autopsy.** When the repair gives up on an eligible state,
+        /// which row type refused and by how much. A miss whose blocking row
+        /// needs 4.1 um is a different verdict from one that needs 40 um, and
+        /// the specification's frozen guard is 4 um, so this is the number that
+        /// separates "the mechanism is dead" from "the mechanism is dead *at
+        /// this guard*" - which is itself a finding and not a licence.
+        pub blocked_on_boundary: u64,
+        pub blocked_on_pair: u64,
+        pub blocked_no_normal: u64,
+        pub blocked_saturated: u64,
+        pub blocked_displacement_cap: u64,
+        pub blocked_row_budget: u64,
+        /// Shortfall of the blocking row, in micrometres, bucketed:
+        /// `[<=4, <=8, <=16, <=32, <=64, >64]`.
+        pub blocking_shortfall_um: [u64; 6],
+    }
+
+    thread_local! {
+        static CENSUS: RefCell<Census> = const { RefCell::new(Census {
+            eligible: 0,
+            eligible_with_t_row: 0,
+            first_scan_boundary_rows: 0,
+            published: 0,
+            refused: 0,
+            published_max_excess_mm: 0.0,
+            published_max_displacement_mm: 0.0,
+            blocked_on_boundary: 0,
+            blocked_on_pair: 0,
+            blocked_no_normal: 0,
+            blocked_saturated: 0,
+            blocked_displacement_cap: 0,
+            blocked_row_budget: 0,
+            blocking_shortfall_um: [0; 6],
+        }) };
+    }
+
+    pub fn record(update: impl FnOnce(&mut Census)) {
+        CENSUS.with(|cell| update(&mut cell.borrow_mut()));
+    }
+
+    pub fn snapshot() -> Census {
+        CENSUS.with(|cell| *cell.borrow())
+    }
+}
+
+/// **The T-row repair's arm** (`docs/t-row-repair-spec.md` §1, §3).
+///
+/// `Off` is the closed member: `attempt` refuses any `proxy_depth > T` before
+/// the exact authority is ever called, which is the refusal the bite-22
+/// microscope measured thousands of times per frozen seed. `Repair` lets a
+/// state that is inside the 4 um band *and* no more than 4 um proud of the
+/// strip top reach the existing repair, with the strip top injected as a
+/// tightened far-y boundary row; the final `published_depth <= T` check is
+/// untouched, so nothing above the target can publish. `ComputeIgnore` pays
+/// the identical cost on a detached clone and throws the result away, which is
+/// what the specification's isolation clause is measured against.
+#[cfg(feature = "t-row-repair")]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum TRowArm {
+    #[default]
+    Off,
+    Repair,
+    ComputeIgnore,
+}
+
+/// **The arm is process-level, and deliberately so.** Gate 0 runs one fresh
+/// process per arm and per seed - the campaign's standing practice - so a
+/// switch that lives beside the code it switches is simpler and less
+/// error-prone than a field threaded through `IcsConfig`, every test literal
+/// and the checkpoint reconstructor. It defaults to `Off`, which is the closed
+/// member, and a build without `t-row-repair` has neither the switch nor the
+/// code it selects.
+#[cfg(feature = "t-row-repair")]
+static T_ROW_ARM: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+#[cfg(feature = "t-row-repair")]
+pub fn set_t_row_arm(arm: TRowArm) {
+    let value = match arm {
+        TRowArm::Off => 0,
+        TRowArm::Repair => 1,
+        TRowArm::ComputeIgnore => 2,
+    };
+    T_ROW_ARM.store(value, std::sync::atomic::Ordering::Relaxed);
+}
+
+#[cfg(feature = "t-row-repair")]
+pub fn t_row_arm() -> TRowArm {
+    match T_ROW_ARM.load(std::sync::atomic::Ordering::Relaxed) {
+        1 => TRowArm::Repair,
+        2 => TRowArm::ComputeIgnore,
+        _ => TRowArm::Off,
+    }
+}
+
+/// The kernel-box far-`y` that expresses "the layout's raw depth is at most
+/// `T`", in the same convention `inset_box` uses.
+///
+/// `boundary_admissible` asks for every canonical grid point to sit at least
+/// `radius` inside the box, and `raw_source_depth_mm` is
+/// `max source y + sheet_edge_clearance_mm`, so `raw_depth <= T` is exactly
+/// `max source y <= T - depth_top_inset_mm()`. Adding the radius back gives the
+/// box coordinate that states it. This is the whole of the "T-row": it is not a
+/// new predicate, a new cap or a new authority - it is `inset[3]`, tightened to
+/// the strip the bite already chose.
+#[cfg(feature = "t-row-repair")]
+fn t_row_far_y(contract: &Contract, target_depth_mm: f64) -> Option<i64> {
+    let far = target_depth_mm - contract.depth_top_inset_mm() + contract.expansion_mm();
+    Some(to_grid_mm(far)? as i64)
+}
+
 fn inset_box(contract: &Contract) -> Option<[i64; 4]> {
     let inset = contract.sheet_inset_mm();
     let values = [
@@ -356,12 +497,25 @@ pub fn attempt(
     incumbent_depth_mm: f64,
     proposal_ordinal: u64,
     work: &mut WorkVector,
+    #[cfg(feature = "t-row-repair")] t_row_arm: TRowArm,
 ) -> Option<Attempt> {
     let proxy_depth = super::state::raw_source_depth_mm(&state.geometry, contract);
     if !(max_violation_mm <= limits.band_mm) {
         return None;
     }
-    if proxy_depth > state.target_depth_mm {
+    // **The T-row's only relaxation of an entry gate, and it is bounded by the
+    // same 4 um the band already admitted.** `Off` keeps the closed member's
+    // refusal exactly. Under `Repair` a state that is at most `band_mm` proud
+    // of the strip top is allowed to reach the repair; the final
+    // `published_depth > target` refusal below is untouched, so a layout that
+    // the repair cannot pull under `T` still cannot publish.
+    #[cfg(feature = "t-row-repair")]
+    let t_row_eligible = proxy_depth > state.target_depth_mm
+        && t_row_arm != TRowArm::Off
+        && proxy_depth - state.target_depth_mm <= limits.band_mm;
+    #[cfg(not(feature = "t-row-repair"))]
+    let t_row_eligible = false;
+    if proxy_depth > state.target_depth_mm && !t_row_eligible {
         return None;
     }
     if proxy_depth > incumbent_depth_mm - limits.minimum_improvement_mm {
@@ -407,7 +561,7 @@ pub fn attempt(
             publication: None,
         });
     }
-    let inset = match inset_box(contract) {
+    let mut inset = match inset_box(contract) {
         Some(value) => value,
         None => {
             checkpoint.refusal = Some("the inset rectangle is outside the canonical grid".to_owned());
@@ -417,6 +571,27 @@ pub fn attempt(
             });
         }
     };
+    // **The T-row.** Tighten the far-`y` boundary to the locked strip's top,
+    // keeping the sheet top whenever it is the stricter of the two. Everything
+    // downstream - `scan`, `boundary_admissible`, `critical_boundary_radius_micron`
+    // and `repair_one_row`'s binding-side rule - then treats a piece proud of
+    // the strip as an ordinary failing boundary row and pushes it inward, under
+    // the same 4 um guard, the same 16 um per-piece cap and the same `4n` row
+    // budget as every other row. No new predicate, no new cap, no new authority.
+    #[cfg(feature = "t-row-repair")]
+    if t_row_eligible {
+        match t_row_far_y(contract, state.target_depth_mm) {
+            Some(strip_top) => inset[3] = inset[3].min(strip_top),
+            None => {
+                checkpoint.refusal =
+                    Some("the strip top is not an integer micrometre".to_owned());
+                return Some(Attempt {
+                    checkpoint,
+                    publication: None,
+                });
+            }
+        }
+    }
 
     let mut sets = Vec::with_capacity(placements.len());
     for (piece, placement) in pieces.iter().zip(&placements) {
@@ -444,6 +619,20 @@ pub fn attempt(
     }
 
     let mut result = scan(&sets, two_r, radius, inset);
+    // The witness, taken on the first scan: an eligible state must actually
+    // produce a failing far-`y` row under the tightened box, or the T-row was
+    // never wired to anything.
+    #[cfg(feature = "t-row-repair")]
+    if t_row_eligible {
+        let rows = result.failing_boundaries.len() as u64;
+        t_row_census::record(|census| {
+            census.eligible += 1;
+            census.first_scan_boundary_rows += rows;
+            if rows > 0 {
+                census.eligible_with_t_row += 1;
+            }
+        });
+    }
     let mut displacement = vec![0.0f64; placements.len()];
     // The *vector* each piece has already been moved by inside this repair
     // pass. `displacement` is the scalar cap; this is what the next row's slack
@@ -455,6 +644,10 @@ pub fn attempt(
     let row_budget = limits.repair_rows_per_piece * placements.len();
     while !result.admissible {
         if rows as usize >= row_budget {
+            #[cfg(feature = "t-row-repair")]
+            if t_row_eligible {
+                t_row_census::record(|census| census.blocked_row_budget += 1);
+            }
             checkpoint.refusal = Some(format!(
                 "repair exceeded its {row_budget}-row budget with {} pair and {} boundary rows still failing",
                 result.failing_pairs.len(),
@@ -476,6 +669,42 @@ pub fn attempt(
             inset,
         );
         let Some(touched) = corrected else {
+            // **Autopsy, instrument only.** Re-derive which row refused and by
+            // how much, using the same predicates `repair_one_row` just used.
+            // It changes nothing: the refusal below is the one the closed
+            // member has always produced.
+            #[cfg(feature = "t-row-repair")]
+            if t_row_eligible {
+                let guard_micron = (limits.epsilon_grid_mm * 1000.0).round() as i64;
+                let diagnosis = blocking_row(
+                    &result, &sets, state, &displacement, &limits, two_r, radius, inset,
+                );
+                t_row_census::record(|census| {
+                    match diagnosis.0 {
+                        BlockedOn::Boundary => census.blocked_on_boundary += 1,
+                        BlockedOn::Pair => census.blocked_on_pair += 1,
+                        BlockedOn::NoNormal => census.blocked_no_normal += 1,
+                        BlockedOn::Saturated => census.blocked_saturated += 1,
+                        BlockedOn::DisplacementCap => census.blocked_displacement_cap += 1,
+                    }
+                    if let Some(shortfall) = diagnosis.1 {
+                        let bucket = if shortfall <= guard_micron {
+                            0
+                        } else if shortfall <= 2 * guard_micron {
+                            1
+                        } else if shortfall <= 4 * guard_micron {
+                            2
+                        } else if shortfall <= 8 * guard_micron {
+                            3
+                        } else if shortfall <= 16 * guard_micron {
+                            4
+                        } else {
+                            5
+                        };
+                        census.blocking_shortfall_um[bucket] += 1;
+                    }
+                });
+            }
             checkpoint.refusal = Some(
                 "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint"
                     .to_owned(),
@@ -518,12 +747,20 @@ pub fn attempt(
     let published_depth = raw_depth_of(pieces, &placements, contract);
     checkpoint.repair_depth_giveback_mm = published_depth - proxy_depth;
     if !result.admissible {
+        #[cfg(feature = "t-row-repair")]
+        if t_row_eligible {
+            t_row_census::record(|census| census.refused += 1);
+        }
         return Some(Attempt {
             checkpoint,
             publication: None,
         });
     }
     if published_depth > state.target_depth_mm {
+        #[cfg(feature = "t-row-repair")]
+        if t_row_eligible {
+            t_row_census::record(|census| census.refused += 1);
+        }
         checkpoint.refusal = Some(
             "repair would have enlarged the locked strip; the target is immutable".to_owned(),
         );
@@ -543,6 +780,21 @@ pub fn attempt(
         }
     }
     checkpoint.published_raw_depth_mm = Some(published_depth);
+    // **The conversion, recorded at the only place it can be true.** This state
+    // reached the repair solely through the T-row relaxation, the repair pulled
+    // it under `T`, the Exclusive kernel certified it and the untouched
+    // contract validator accepted it.
+    #[cfg(feature = "t-row-repair")]
+    if t_row_eligible {
+        let excess = proxy_depth - state.target_depth_mm;
+        let spent = checkpoint.repair_max_displacement_mm;
+        t_row_census::record(|census| {
+            census.published += 1;
+            census.published_max_excess_mm = census.published_max_excess_mm.max(excess);
+            census.published_max_displacement_mm =
+                census.published_max_displacement_mm.max(spent);
+        });
+    }
     let publication = Publication {
         placement_fingerprint: placement_fingerprint(&placements),
         placements,
@@ -565,6 +817,83 @@ pub fn attempt(
 /// Rotations are frozen throughout - a repair that turned a piece would be a
 /// second optimizer, and its displacement could not be capped per piece.
 #[allow(clippy::too_many_arguments)]
+/// **Why `repair_one_row` gave up, re-derived with its own predicates.**
+///
+/// Instrument only, compiled with `t-row-repair` and called only after that
+/// function has already returned `None`. It reproduces the same first-failing-
+/// row choice and the same closed-form criticals, and returns the row type plus
+/// the shortfall in micrometres where one exists. Nothing here can change a
+/// trajectory: it is called on the give-up path and its result reaches a
+/// counter and nothing else.
+#[cfg(feature = "t-row-repair")]
+#[derive(Clone, Copy, Debug)]
+enum BlockedOn {
+    Boundary,
+    Pair,
+    NoNormal,
+    Saturated,
+    DisplacementCap,
+}
+
+#[cfg(feature = "t-row-repair")]
+#[allow(clippy::too_many_arguments)]
+fn blocking_row(
+    scan_result: &KernelScan,
+    sets: &[GridSet],
+    state: &IcsState,
+    displacement: &[f64],
+    limits: &PublicationLimits,
+    two_r: i64,
+    radius: i64,
+    inset: [i64; 4],
+) -> (BlockedOn, Option<i64>) {
+    let guard_micron = (limits.epsilon_grid_mm * 1000.0).round() as i64;
+    if let Some(index) = scan_result.failing_boundaries.first().copied() {
+        let Some(critical) = critical_boundary_radius_micron(
+            &sets[index],
+            inset[0],
+            inset[1],
+            inset[2],
+            inset[3],
+        ) else {
+            return (BlockedOn::Boundary, None);
+        };
+        let shortfall = radius - critical;
+        if shortfall > 0 && shortfall <= guard_micron {
+            // The row itself was affordable, so the cap is what refused.
+            let correction = (shortfall + guard_micron) as f64 / 1000.0;
+            if displacement[index] + correction > limits.max_piece_displacement_mm {
+                return (BlockedOn::DisplacementCap, Some(shortfall));
+            }
+        }
+        return (BlockedOn::Boundary, Some(shortfall));
+    }
+    let Some((first, second)) = scan_result.failing_pairs.first().copied() else {
+        return (BlockedOn::Pair, None);
+    };
+    let ceiling = 8 * two_r.max(1);
+    let Some((critical, saturated)) =
+        critical_two_r_micron(&sets[first], &sets[second], ceiling)
+    else {
+        return (BlockedOn::Pair, None);
+    };
+    if saturated {
+        return (BlockedOn::Saturated, None);
+    }
+    let shortfall = two_r - critical;
+    let row = super::energy::pair_row(state, first, second);
+    if !(libm::hypot(row.contact.normal[0], row.contact.normal[1]) > 0.0) {
+        let delta = [
+            state.geometry.centroids[first][0] - state.geometry.centroids[second][0],
+            state.geometry.centroids[first][1] - state.geometry.centroids[second][1],
+        ];
+        if !(libm::hypot(delta[0], delta[1]) > 0.0) {
+            return (BlockedOn::NoNormal, Some(shortfall));
+        }
+    }
+    (BlockedOn::Pair, Some(shortfall))
+}
+
 fn repair_one_row(
     scan_result: &KernelScan,
     sets: &[GridSet],
