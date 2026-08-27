@@ -36,10 +36,32 @@ depth to four decimals while consuming 28.15 s and 27.10 s of search, 23 and
 19 strikes, 7 and 6 disruptions. Seed 3 at 10 s, for contrast: 99 bites, **0
 strikes**.
 
-The constructor is one layout for every seed (`182.976 mm`, fingerprint
+The *constructor* is one layout for every seed (`182.976 mm`, fingerprint
 `a791c397...`; Round 4 Gate 0 fixed `orders=1` as bit-identical to `orders=4`),
-so the first 21 bites are cheap seed-independent squeezing and bite 22 is the
-first real problem. Whether a run clears it decides the whole ten seconds.
+and the first bites are cheap. Bite 22 is the first real problem, and whether a
+run clears it decides most of the ten seconds.
+
+**Four corrections both reviewers made to the first write-up of this
+directory, kept here because they change what may be claimed** (`sol-review-21`
+§1, `grok-review-16` §1):
+
+1. **The 21-bite parents are not one layout.** Their nine `placementFingerprint`
+   values are distinct; seed 7 (`cca8...`) and seed 8 (`32c9...`) share a depth
+   and not a geometry. The prefix is *cheap*, not seed-identical, and two seeds
+   already spend a disruption inside it. This is a common barrier by ordinal and
+   depth on already-divergent basins, not one wall in front of one layout.
+2. **Not every seed reaches 21 bites.** Seed 1 is at **19** at 3 s. It finishes
+   the prefix somewhere between 3 s and 10 s and freezes at 21 there.
+3. **The escape-time span is about 30.5x, not three orders of magnitude.** The
+   measured work on bite 22 runs from 2.278 M evaluations (seed 3, closes it) to
+   69.56 M (seed 8 at 60 s). The "under 0.1 s" in the first draft was not
+   derived from any cell.
+4. **Clearing bite 22 is necessary, not sufficient.** 168.484/182.976 at 0.1 %
+   is about **83** successful explore bites. Seeds 0 and 6 won the 22-lottery at
+   10 s - 46 and 74 bites - and still finished at 170.44 and 169.35. If all five
+   frozen seeds escaped exactly as seed 0 did, the 10 s 5/9 clause would still
+   fail. The 30 s pass is "seven of nine won the lottery inside 30 s"; that
+   sentence may not be imported back onto 10 s.
 
 ## 2. Where the iterations go
 
@@ -95,8 +117,9 @@ failing to recover those micrometres. When it gives up, `mod.rs`'s
 `None => break` ends the entire explore phase and the run is over at 179.
 
 Whether a descent lands a micrometre under the target or a micrometre over it
-is the coin flip that decides a ten-second run. That is why the same binary,
-on the same layout, produces 160.89 on seed 0 and 179.08 on seed 7.
+is one of the coin flips that decide a ten-second run - and per correction 4
+above, not the only one. That is part of why the same binary, from the same
+constructor, produces 160.89 on seed 0 and 179.08 on seed 7.
 
 The success path already adopts the **achieved** depth rather than the
 targeted one (`depth_mm = publication.raw_source_depth_mm`), so the machinery
@@ -106,6 +129,16 @@ This directory states the measurement and stops there. Whether the target
 pre-gate should be relaxed, and under what pre-committed gate, is a quorum
 question and a new specification's business - the ten-second gate was retired
 under a rule that only a genuinely new mechanism may reopen.
+
+Both reviewers also refuse the first draft's suggestion that `mod.rs:2002`'s
+`None => break` is the defect, on the same isomorphism: the analogue of
+Sparrow's `while !term.kill()` is our **per-width inner loop**, which pools,
+restores, disrupts and re-separates at the same `W`, with
+`attempts_per_bite = 0` meaning unlimited under the Calibrated pacer. The outer
+`None` is reached only after the deadline or phase exhaustion. The real and
+deliberate difference is that Sparrow advances on proxy loss zero while this
+member advances only on a dual-valid publication. Line 2002 is not why five
+seeds sit at 21 bites.
 
 ## Reproducing
 
