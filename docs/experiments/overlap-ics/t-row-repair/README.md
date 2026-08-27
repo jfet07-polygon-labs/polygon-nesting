@@ -114,3 +114,38 @@ target/release/examples/overlap_ics_benchmark --cell=cutclose \
     --edge=5 --pair=5 --mode=wall --wall=30.0 --orders=1 --workers=8 \
     --arm=control --trow=repair --seed=7
 ```
+
+## How deep is the cascade — a pure observation
+
+The autopsy above says the repair quits on a pair row it cannot afford. It does
+not say whether that row is one bolt or a wall. This adds the count, observed at
+the give-up point and acted on by nothing: how many pair rows are still failing,
+and what their outstanding shortfall totals (`evidence/casc-*.json`, 30 s wall).
+
+| seed | conversions | failing pairs = 1 | = 2 | 3-4 | 5-8 | 9-16 | >16 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | 0 | **1171** | **1864** | 600 | 6 | 8 | **0** |
+| 8 | 0 | 110 | 150 | 521 | 435 | 16 | **0** |
+| 4 | 7 | 500 | 127 | 143 | 114 | 31 | **0** |
+
+Outstanding total pair shortfall at the same moment, in micrometres:
+
+| seed | <=16 | <=32 | <=64 | <=128 | <=256 | >256 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 7 | **1968** | 814 | 853 | 14 | 0 | 0 |
+| 8 | 113 | 584 | 91 | 444 | 0 | 0 |
+| 4 | **620** | 259 | 36 | 0 | 0 | 0 |
+
+Failing *boundary* rows at give-up are in the lowest bucket - at most one - on
+every seed, which is the same fact section above records from the other side:
+the T-row clears.
+
+**The obstacle is bounded and small.** On seed 7, 3,035 of 3,649 give-ups have
+**one or two** failing pair rows, and 1,968 of them have a total outstanding
+shortfall of sixteen micrometres or less. None of the three seeds ever gives up
+with more than sixteen failing pairs. The repair stops one or two rows short,
+with all `4n = 244` of its rows unspent.
+
+This directory records that and stops. Whether "one or two rows short with the
+budget untouched" makes the 4 um per-row guard a declared competence or an
+inconsistency is the charge put to both reviewers, and it is theirs to answer.

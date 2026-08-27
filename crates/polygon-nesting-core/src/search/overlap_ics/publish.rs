@@ -212,6 +212,18 @@ pub mod t_row_census {
         /// Shortfall of the blocking row, in micrometres, bucketed:
         /// `[<=4, <=8, <=16, <=32, <=64, >64]`.
         pub blocking_shortfall_um: [u64; 6],
+        /// **How deep the cascade is at the give-up point.** A pure
+        /// observation: the number of pair rows still failing when
+        /// `repair_one_row` refuses, bucketed `[1, 2, 3-4, 5-8, 9-16, >16]`.
+        /// One stubborn row is a bounded obstacle a successor mechanism could
+        /// be written against; a front of sixteen is the terminal-repair family
+        /// telling us it is the wrong family. Nothing here changes a decision.
+        pub give_up_failing_pairs: [u64; 6],
+        pub give_up_failing_boundaries: [u64; 6],
+        /// The total pair shortfall still outstanding at the give-up point, in
+        /// micrometres, summed over failing pairs and bucketed
+        /// `[<=16, <=32, <=64, <=128, <=256, >256]`.
+        pub give_up_total_shortfall_um: [u64; 6],
     }
 
     thread_local! {
@@ -230,6 +242,9 @@ pub mod t_row_census {
             blocked_displacement_cap: 0,
             blocked_row_budget: 0,
             blocking_shortfall_um: [0; 6],
+            give_up_failing_pairs: [0; 6],
+            give_up_failing_boundaries: [0; 6],
+            give_up_total_shortfall_um: [0; 6],
         }) };
     }
 
@@ -679,6 +694,40 @@ pub fn attempt(
                 let diagnosis = blocking_row(
                     &result, &sets, state, &displacement, &limits, two_r, radius, inset,
                 );
+                // Cascade depth, observed and not acted on.
+                let pair_count = result.failing_pairs.len();
+                let boundary_count = result.failing_boundaries.len();
+                let ceiling = 8 * two_r.max(1);
+                let outstanding: i64 = result
+                    .failing_pairs
+                    .iter()
+                    .filter_map(|(first, second)| {
+                        critical_two_r_micron(&sets[*first], &sets[*second], ceiling)
+                            .filter(|(_, saturated)| !saturated)
+                            .map(|(critical, _)| (two_r - critical).max(0))
+                    })
+                    .sum();
+                let count_bucket = |value: usize| match value {
+                    0 | 1 => 0usize,
+                    2 => 1,
+                    3..=4 => 2,
+                    5..=8 => 3,
+                    9..=16 => 4,
+                    _ => 5,
+                };
+                let sum_bucket = if outstanding <= 16 {
+                    0usize
+                } else if outstanding <= 32 {
+                    1
+                } else if outstanding <= 64 {
+                    2
+                } else if outstanding <= 128 {
+                    3
+                } else if outstanding <= 256 {
+                    4
+                } else {
+                    5
+                };
                 t_row_census::record(|census| {
                     match diagnosis.0 {
                         BlockedOn::Boundary => census.blocked_on_boundary += 1,
@@ -703,6 +752,9 @@ pub fn attempt(
                         };
                         census.blocking_shortfall_um[bucket] += 1;
                     }
+                    census.give_up_failing_pairs[count_bucket(pair_count)] += 1;
+                    census.give_up_failing_boundaries[count_bucket(boundary_count)] += 1;
+                    census.give_up_total_shortfall_um[sum_bucket] += 1;
                 });
             }
             checkpoint.refusal = Some(

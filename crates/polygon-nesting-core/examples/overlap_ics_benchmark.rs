@@ -3492,6 +3492,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "blockedDisplacementCap": census.blocked_displacement_cap,
             "blockedRowBudget": census.blocked_row_budget,
             "blockingShortfallMicrometreBuckets": census.blocking_shortfall_um,
+            "giveUpFailingPairs": census.give_up_failing_pairs,
+            "giveUpFailingBoundaries": census.give_up_failing_boundaries,
+            "giveUpTotalShortfallMicrometre": census.give_up_total_shortfall_um,
         });
     }
     #[cfg(feature = "ics-publish-census")]
