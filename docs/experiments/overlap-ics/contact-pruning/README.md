@@ -128,6 +128,21 @@ Nine seeds, three repetitions, twenty-seven bare ten-second requests per arm,
 | `c42ed22`, axis cache | 15,123 | 166.781 | 162.690 | 3 / 27 |
 | **plus contact pruning** | **19,557** | **166.173** | **161.441** | **12 / 27** |
 
+Scored against the campaign's own ten-second bar - **median at or below
+168.484 mm and at least 5 of 9 under it**, the two clauses of the retired
+ten-second gate:
+
+| | median of medians | under-bar per rep | best |
+| --- | ---: | --- | ---: |
+| `c42ed22`, axis cache | 166.781 | 7, 7, 7 | 162.690 |
+| **plus contact pruning** | **166.194** | **9, 9, 9** | **161.441** |
+
+**Nine of nine, at ten seconds, on every repetition.** That clause was the
+thirty-second result. The wall-cap round reached it at thirty seconds and called
+it "the clause Round 4 could not reach and the clause the T-row specification
+was written for and failed to move". It is now a ten-second reading, and nothing
+about the search changed to get there - only how much of it fits in the budget.
+
 **1.293x the iterations, and the depth moved on all nine seeds** - not a median
 that improved while some seeds got worse, but nine of nine, paired, mean
 **-1.718 mm**:
