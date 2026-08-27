@@ -110,6 +110,46 @@ Gate 0 died on those two seeds without converting either of them. This reaches
 the clause the specification was written for, without the mechanism the
 specification was written about.
 
+## Thirty seconds, per seed: the two that never moved
+
+The two repetitions above are medians. The per-seed numbers are where the result
+actually lives:
+
+| seed | none | cap 50 | |
+| ---: | ---: | ---: | ---: |
+| 7 | 173.583 | **164.000** | **-9.583** |
+| 8 | **179.013** | **164.001** | **-15.012** |
+
+Seed 8 is still at 179 after **thirty** seconds under the closed member -
+exactly where it sits after three. Under the cap it lands at 164.001. These are
+the two seeds that held Round 4 at 7 of 9, that the T-row specification named as
+the one clause it claimed to move, that the T-row's Gate 0 died on without
+converting either, and that nothing tried in this campaign had shifted by a
+micrometre.
+
+## It does not transfer to shapes-17, and shapes-17 has a worse problem
+
+The severe test against "you tuned it on your own fixture" is the two fixtures
+that were never looked at while the knob was found. On `shapes-17`, ten seconds,
+nine seeds, two repetitions, the cap does **nothing**: medians 200.349 against
+200.348, per-seed gains of +0.002 mm.
+
+Looking at why turned up something larger:
+
+| fixture | constructor | after 10 s | explore bites |
+| --- | ---: | ---: | ---: |
+| mixed-61 | 182.976 | ~168.4 with the cap | ~90 |
+| **shapes-17** | 200.651 | **200.347** | **1** |
+
+**On shapes-17 the engine completes one explore bite and stops** - every seed,
+both arms - and gains three tenths of a millimetre in ten seconds. That is not
+restart starvation: the *first* shrink is already infeasible there. It is a
+different and larger failure, on a fixture in the standing corpus, and this is
+the first measurement that looks at it.
+
+So the knob's claim has to be written narrowly: it is a **mixed-61** result,
+large and repeated; it is **neutral** on shapes-17, neither helping nor harming.
+
 ## What this is not, yet
 
 These are wall runs, which is the right instrument for a claim about a bare
