@@ -2537,6 +2537,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // committed cell and every existing driver invocation runs the
             // trajectory it always ran.
             let arm = options.get("arm").unwrap_or("control").to_owned();
+            polygon_nesting_core::search::overlap_ics::set_wall_iteration_cap(
+                options.integer("itercap", 0)? as u64,
+            );
             #[cfg(feature = "t-row-repair")]
             {
                 use polygon_nesting_core::search::overlap_ics::publish::{
@@ -3463,6 +3466,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json!(started.elapsed().as_secs_f64()),
     );
     document["wall"] = Value::Object(wall);
+    document["wallIterationCap"] =
+        json!(polygon_nesting_core::search::overlap_ics::wall_iteration_cap());
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());
     // Instrument only, and present only on a census build: which publication

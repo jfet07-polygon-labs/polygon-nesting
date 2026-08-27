@@ -3410,6 +3410,14 @@ enum Pacer {
         start: std::time::Instant,
         explore_deadline_s: f64,
         total_s: f64,
+        /// **The restart lever.** Wall mode has never had an iteration cap, so
+        /// one `separate` call runs until its own strike policy ends it -
+        /// 800-1,400 master iterations on a hard bite - and a ten-second budget
+        /// therefore buys about one attempt at that bite. The pool restore and
+        /// the Algorithm-12 disruption only happen *between* attempts, so with
+        /// one attempt they never happen at all. `0` is the historical
+        /// behaviour, unbounded, and is the default everywhere.
+        iteration_cap: u64,
     },
     /// **The calibrated plan.** Units in at every barrier, a verdict out, and
     /// no clock anywhere - `elapsed_s` and `deadline_s` are `None` here for
@@ -3458,6 +3466,7 @@ impl Pacer {
                     start: std::time::Instant::now(),
                     explore_deadline_s: total_s * explore_time_ratio.clamp(0.0, 1.0),
                     total_s,
+                    iteration_cap: wall_iteration_cap(),
                 }
             }
             Budget::CalibratedWork {
@@ -3671,7 +3680,10 @@ impl Pacer {
             // The unit allocation is the cap. A second one denominated in
             // iterations would be the probe-on-cheap-bites defect wearing the
             // calibrated plan's clothes.
-            Pacer::Wall { .. } | Pacer::Calibrated { .. } => None,
+            Pacer::Wall { iteration_cap, .. } => {
+                (*iteration_cap > 0).then_some(*iteration_cap)
+            }
+            Pacer::Calibrated { .. } => None,
         }
     }
 
@@ -3829,6 +3841,21 @@ pub mod publish_census {
     pub fn snapshot() -> Census {
         CENSUS.with(|cell| *cell.borrow())
     }
+}
+
+/// **The wall iteration cap, process-level.** `0` is unbounded, which is what
+/// wall mode has always been. One cell per process, so a switch beside the code
+/// it switches is simpler than a field through `IcsConfig`, every test literal
+/// and the checkpoint reconstructor.
+static WALL_ITERATION_CAP: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_wall_iteration_cap(cap: u64) {
+    WALL_ITERATION_CAP.store(cap, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn wall_iteration_cap() -> u64 {
+    WALL_ITERATION_CAP.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 pub fn pose_bits_digest(poses: &[Pose]) -> [u8; 32] {
