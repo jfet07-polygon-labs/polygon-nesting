@@ -1,0 +1,31 @@
+{
+ "buildFeatures": [
+  "overlap-ics"
+ ],
+ "cell": "evalcost",
+ "constructor": null,
+ "evalCost": {
+  "foldNs": 74.66486000000009,
+  "foldShare": 0.04173048076040802,
+  "fullEvaluateNs": 1789.2163866666667,
+  "piece": 20,
+  "rounds": 300000,
+  "rowsNs": 1681.3430133333334,
+  "rowsShare": 0.9397091519297435,
+  "scanFloorNs": 387.75238,
+  "scanFloorShare": 0.21671631385088513,
+  "sink": 0.0,
+  "transformNs": 33.208513333333336,
+  "transformPlusRowsNs": 1714.5515266666666,
+  "transformShare": 0.018560367309848544
+ },
+ "executableSha256": "2e7bdaeb8dd7a8926fc1f018de657a1def4dc9df2b48d05aa8b850728d9de8d9",
+ "outcome": {},
+ "profileTotals": null,
+ "schedule": null,
+ "seed": 0,
+ "wall": {
+  "totalSeconds": 1.8025024429999998
+ },
+ "wallIterationCap": 0
+}

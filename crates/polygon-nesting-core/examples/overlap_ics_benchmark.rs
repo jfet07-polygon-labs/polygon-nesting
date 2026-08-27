@@ -3473,6 +3473,111 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 throughput(&mut engine, repeats, options.integer("proposals", 2_000)?);
             document["throughput"]["lockedTargetMm"] = json!(target);
         }
+        // **The evaluation-cost bench.** `ics-profile` says 95.6 % of the
+        // engine is one worker sweep and the counters say a sweep costs 2.7 us
+        // per candidate evaluation. This times the three parts of one
+        // evaluation with the clock *outside* the loop, so the measurement does
+        // not pay for itself: the transform of the whole decomposition, the
+        // rebuild of the piece's rows against every other piece, and the fold.
+        "evalcost" => {
+            use polygon_nesting_core::search::overlap_ics::energy::{
+                incident_totals, rebuild_piece_rows,
+            };
+            use polygon_nesting_core::search::overlap_ics::state::transform_piece;
+            let placements = ShortSideFirst.layout(&pieces, settings)?;
+            let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
+            let mut engine = Engine::from_constructor_at_depth(
+                &pieces,
+                settings,
+                &placements,
+                constructor_depth,
+                IcsConfig {
+                    target_depth_mm: constructor_depth,
+                    proposal_budget: 0,
+                    relocate_eval_budget: u64::MAX,
+                    checkpoint_every_sweeps: u64::MAX,
+                    descent: descent_config(&options, &contract, &sources, seed)?,
+                    limits: publication_limits(&options)?,
+                },
+            )?;
+            let rounds: u64 = options.integer("rounds", 200_000)? as u64;
+            let piece = options.integer("piece", 0)? as usize;
+            let mut work = WorkVector::default();
+            let contract = engine.contract;
+            let base = engine.state.poses[piece];
+
+            // Warm the caches with the same access pattern the timed loops use.
+            for _ in 0..1_000 {
+                transform_piece(&engine.sources, &mut engine.state.geometry,
+                                &engine.state.poses, piece);
+            }
+
+            let started = std::time::Instant::now();
+            for step in 0..rounds {
+                engine.state.poses[piece].tx_mm = base.tx_mm + (step % 7) as f64 * 1e-6;
+                transform_piece(&engine.sources, &mut engine.state.geometry,
+                                &engine.state.poses, piece);
+            }
+            let transform_ns = started.elapsed().as_nanos() as f64 / rounds as f64;
+
+            let started = std::time::Instant::now();
+            for step in 0..rounds {
+                engine.state.poses[piece].tx_mm = base.tx_mm + (step % 7) as f64 * 1e-6;
+                transform_piece(&engine.sources, &mut engine.state.geometry,
+                                &engine.state.poses, piece);
+                rebuild_piece_rows(&mut engine.state, &contract, piece, &mut work);
+            }
+            let plus_rows_ns = started.elapsed().as_nanos() as f64 / rounds as f64;
+
+            let started = std::time::Instant::now();
+            let mut sink = 0.0f64;
+            for step in 0..rounds {
+                engine.state.poses[piece].tx_mm = base.tx_mm + (step % 7) as f64 * 1e-6;
+                transform_piece(&engine.sources, &mut engine.state.geometry,
+                                &engine.state.poses, piece);
+                rebuild_piece_rows(&mut engine.state, &contract, piece, &mut work);
+                let (raw, weighted) = incident_totals(&engine.state, piece);
+                sink += raw + weighted;
+            }
+            let full_ns = started.elapsed().as_nanos() as f64 / rounds as f64;
+
+            // **The fixed floor.** Move the piece far outside the sheet so every
+            // one of the `n-1` box tests rejects and no pair survives. What is
+            // left is the `O(n)` scan itself, which a maintained near-set would
+            // remove and which no amount of geometry pruning can.
+            engine.state.poses[piece].tx_mm = base.tx_mm + 100_000.0;
+            engine.state.poses[piece].ty_mm = base.ty_mm + 100_000.0;
+            transform_piece(&engine.sources, &mut engine.state.geometry,
+                            &engine.state.poses, piece);
+            let far = engine.state.poses[piece];
+            let started = std::time::Instant::now();
+            for step in 0..rounds {
+                engine.state.poses[piece].tx_mm = far.tx_mm + (step % 7) as f64 * 1e-6;
+                transform_piece(&engine.sources, &mut engine.state.geometry,
+                                &engine.state.poses, piece);
+                rebuild_piece_rows(&mut engine.state, &contract, piece, &mut work);
+            }
+            let floor_ns = started.elapsed().as_nanos() as f64 / rounds as f64;
+            engine.state.poses[piece] = base;
+            transform_piece(&engine.sources, &mut engine.state.geometry,
+                            &engine.state.poses, piece);
+
+            document["evalCost"] = json!({
+                "rounds": rounds,
+                "piece": piece,
+                "transformNs": transform_ns,
+                "transformPlusRowsNs": plus_rows_ns,
+                "fullEvaluateNs": full_ns,
+                "rowsNs": plus_rows_ns - transform_ns,
+                "foldNs": full_ns - plus_rows_ns,
+                "transformShare": transform_ns / full_ns,
+                "rowsShare": (plus_rows_ns - transform_ns) / full_ns,
+                "foldShare": (full_ns - plus_rows_ns) / full_ns,
+                "sink": sink,
+                "scanFloorNs": floor_ns,
+                "scanFloorShare": floor_ns / full_ns,
+            });
+        }
         other => return Err(format!("unknown cell `{other}`").into()),
     }
 

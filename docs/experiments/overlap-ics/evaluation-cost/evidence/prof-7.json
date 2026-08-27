@@ -1,0 +1,104 @@
+{
+ "buildFeatures": [
+  "overlap-ics",
+  "ics-profile"
+ ],
+ "cell": "cutclose",
+ "constructor": {
+  "lowerScaleMm": 115.83870984650393,
+  "placementCount": 61,
+  "placementFingerprint": "a791c397f350b617cdbdb2b181af3eab93a5fc8c8c13b24d0c45b6255de68d2d",
+  "rawSourceDepthMm": 182.976
+ },
+ "evalCost": null,
+ "executableSha256": "82efb42c10941abf9bad72f13817c8504a9247bd32550c84c8ac3da2036e7c4c",
+ "outcome": {
+  "depthMm": 170.16783016494978,
+  "exploreBites": 70,
+  "work": {
+   "acceptedMoves": 45822,
+   "broadPhaseRejects": 1150218149,
+   "containerCommits": 461,
+   "containerSamples": 4056450,
+   "containerWinners": 461,
+   "convexCellGapQueries": 178250739,
+   "disruptionMoves": 41,
+   "disruptions": 16,
+   "exactCheckpoints": 127,
+   "focusedSamples": 2028225,
+   "focusedWinners": 3212,
+   "jumpProposals": 0,
+   "pairRowProbes": 1234964160,
+   "pieceProposals": 632936,
+   "poseTransforms": 20588145,
+   "relocates": 81129,
+   "repairRows": 101,
+   "sampleEvaluations": 20495263,
+   "stayPutWinners": 77456,
+   "weightUpdates": 1297
+  }
+ },
+ "profileTotals": {
+  "bandEntries": 347,
+  "bandFoldNs": 1184796,
+  "barrierToBarrierNs": 9360856908,
+  "dispatchNs": 242561499,
+  "disruptionMoves": 41,
+  "exactCalls": 127,
+  "exactNs": 48774481,
+  "iterations": 1297,
+  "measured": 82,
+  "mergeGlsNs": 24542923,
+  "prepNs": 104716890,
+  "prepPlusDispatchNs": 347278389,
+  "prepPlusDispatchShare": 3.8173569189782763,
+  "repairRows": 101,
+  "residualNs": 8290833,
+  "sampleEvaluations": 20495263,
+  "snapshotNs": 9050039,
+  "sweepCriticalNs": 8921735447,
+  "sweepTotalNs": 57490722750
+ },
+ "schedule": {
+  "arm": "control",
+  "armLabel": "control-iteration-strikes",
+  "calibratedAttemptsPerBite": null,
+  "calibratedPlan": null,
+  "compressIterationsWithoutImprovement": 100,
+  "compressStrikes": 5,
+  "exploreIterationsWithoutImprovement": 200,
+  "exploreStrikes": 3,
+  "exploreTimeRatio": 0.95,
+  "fixedWork": null,
+  "mode": "wall",
+  "recordFingerprints": false,
+  "strikePolicy": {
+   "compress": {
+    "iterationsWithoutImprovement": 100,
+    "patience": "iterations",
+    "strikes": 5,
+    "workQuantumSampleEvaluations": null
+   },
+   "explore": {
+    "iterationsWithoutImprovement": 200,
+    "patience": "iterations",
+    "strikes": 3,
+    "workQuantumSampleEvaluations": null
+   },
+   "frozenLiteralsIntact": true,
+   "improvingResetRatio": 0.98
+  },
+  "wallBudgetSeconds": 10.0,
+  "workers": 8
+ },
+ "seed": 7,
+ "wall": {
+  "constructorSeconds": 0.625591144,
+  "loopEntrySeconds": 0.62571239,
+  "loopExploreSeconds": 8.908881722,
+  "loopSearchSeconds": 9.378079954,
+  "searchSeconds": 9.378080358,
+  "totalSeconds": 10.014745119
+ },
+ "wallIterationCap": 50
+}
