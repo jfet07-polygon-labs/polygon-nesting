@@ -24,11 +24,15 @@ The two clauses are the ones the retired ten-second gate was written with:
 **at least 5 of 9 at or below 168.484 mm**, and **median at or below
 168.484 mm**.
 
-| cap | complete reps | median of medians | worst rep median | under-bar per rep | **both clauses met** |
+| cap | reps | median of medians | worst rep median | under-bar per rep | **both clauses met** |
 | --- | ---: | ---: | ---: | --- | :---: |
-| **none (today)** | 4 | 169.597 | 175.023 | 2, 2, 2, 2 | **0 of 4** |
-| **50** | 3 | **168.382** | **168.450** | **5, 6, 5** | **3 of 3** |
-| 150 | 3 | 168.678 | 169.586 | 5, 4, 4 | 1 of 3 |
+| **none (today)** | 5 | 169.672 | 179.072 | 2, 2, 2, 2, 2 | **0 of 5** |
+| **50** | 5 | **168.382** | 168.580 | **5, 6, 5, 6, 4** | **4 of 5** |
+| 150 | 5 | 168.678 | 169.598 | 5, 4, 4, 5, 4 | 2 of 5 |
+
+The unbounded arm returns **2 of 9, five times out of five**. That is a floor,
+not variance. `cap = 50` meets both clauses on four of five repetitions; its one
+miss is 4/9 at a median of 168.580, so it is a good knob and not a certainty.
 
 Per-seed medians across repetitions:
 
@@ -82,14 +86,38 @@ the other side: given twelve retry attempts the **closed member** closes explore
 bite 22 on eight of nine seeds. Bite 22 was never impossible. At ten seconds it
 simply never got the attempts.
 
+## Thirty seconds: it does not cost the asset, it completes it
+
+The campaign's current asset is Round 4's thirty-second result - median
+162.94241 mm, **7 of 9** at or below 168.484, with seeds 7 and 8 the two that
+hold it there. The obvious risk of a cap tuned at ten seconds is that it wrecks
+that. Measured on the same instrument, nine seeds, bare thirty-second requests:
+
+| cap | median | best | under 168.484 |
+| --- | ---: | ---: | ---: |
+| none | 164.001 | 160.538 | **7/9** |
+| **50** | 164.001 | **160.047** | **9/9** |
+
+The cap does not cost the thirty-second result. It **finishes** it: seeds 7 and
+8 clear the bar and the arm goes 9 of 9, at an unchanged median and a better
+best.
+
+That is worth naming precisely, because it is the same clause by a different
+road. The T-row specification signed earlier the same day added exactly one
+tightening to the thirty-second battery - *"seeds 7 and 8 individually at or
+below 168.484 mm"* - as the clause the mechanism claimed to move. The T-row's
+Gate 0 died on those two seeds without converting either of them. This reaches
+the clause the specification was written for, without the mechanism the
+specification was written about.
+
 ## What this is not, yet
 
 These are wall runs, which is the right instrument for a claim about a bare
 ten-second request, and they are repeated rather than single. They are **not** a
 signed gate: no specification was pre-committed for this, no quorum has ruled on
-it, `50` is a constant found by sweeping and not derived from the budget, and
-the thirty-second result - the campaign's current asset at median 162.94 and
-7/9 - has still to be checked for regression.
+it, `50` is a constant found by sweeping and not derived from the budget, the
+ten-second arm misses on one repetition in five, and the thirty-second reading
+is one repetition so far.
 
 The honest form of the knob is almost certainly budget-derived rather than
 constant, precisely because the defect it repairs is a constant that did not

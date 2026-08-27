@@ -22,11 +22,11 @@
  "executableSha256": "72b5900b2b239274743692e198761823cb0668bd7b81bfbcae1334436c6dba33",
  "outcome": {
   "compressBites": 11,
-  "depthMm": 165.91309568654864,
-  "exploreBites": 97,
+  "depthMm": 171.6976000094471,
+  "exploreBites": 62,
   "invalidPublications": 0,
-  "publicationCount": 99,
-  "repairMaxDisplacementMm": 0.012,
+  "publicationCount": 67,
+  "repairMaxDisplacementMm": 0.015913648709833996,
   "startDepthMm": 182.976,
   "strikeArm": "control-iteration-strikes"
  },
@@ -62,14 +62,14 @@
   "wallBudgetSeconds": 10.0,
   "workers": 8
  },
- "seed": 6,
+ "seed": 5,
  "wall": {
-  "constructorSeconds": 0.612600841,
-  "loopEntrySeconds": 0.612709481,
-  "loopExploreSeconds": 7.512019007,
-  "loopSearchSeconds": 9.391431874,
-  "searchSeconds": 9.391432433,
-  "totalSeconds": 10.017899161
+  "constructorSeconds": 0.612582676,
+  "loopEntrySeconds": 0.61268945,
+  "loopExploreSeconds": 7.526762708,
+  "loopSearchSeconds": 9.390339253,
+  "searchSeconds": 9.390339731,
+  "totalSeconds": 10.014654703
  },
- "wallIterationCap": 50
+ "wallIterationCap": 150
 }

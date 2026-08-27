@@ -21,12 +21,12 @@
  },
  "executableSha256": "72b5900b2b239274743692e198761823cb0668bd7b81bfbcae1334436c6dba33",
  "outcome": {
-  "compressBites": 11,
-  "depthMm": 165.91309568654864,
-  "exploreBites": 97,
+  "compressBites": 54,
+  "depthMm": 160.60304609503694,
+  "exploreBites": 125,
   "invalidPublications": 0,
-  "publicationCount": 99,
-  "repairMaxDisplacementMm": 0.012,
+  "publicationCount": 157,
+  "repairMaxDisplacementMm": 0.016,
   "startDepthMm": 182.976,
   "strikeArm": "control-iteration-strikes"
  },
@@ -59,17 +59,17 @@
    "frozenLiteralsIntact": true,
    "improvingResetRatio": 0.98
   },
-  "wallBudgetSeconds": 10.0,
+  "wallBudgetSeconds": 30.0,
   "workers": 8
  },
- "seed": 6,
+ "seed": 0,
  "wall": {
-  "constructorSeconds": 0.612600841,
-  "loopEntrySeconds": 0.612709481,
-  "loopExploreSeconds": 7.512019007,
-  "loopSearchSeconds": 9.391431874,
-  "searchSeconds": 9.391432433,
-  "totalSeconds": 10.017899161
+  "constructorSeconds": 0.615271215,
+  "loopEntrySeconds": 0.615385038,
+  "loopExploreSeconds": 23.534214901,
+  "loopSearchSeconds": 29.386456688,
+  "searchSeconds": 29.386457026,
+  "totalSeconds": 30.025374616
  },
  "wallIterationCap": 50
 }
