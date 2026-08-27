@@ -1773,18 +1773,29 @@ impl<'a> Engine<'a> {
         // ---------------------------------------------------------- explore --
         let mut bite_ordinal = 0u64;
         let mut explore_bites = 0u64;
+        // The explore step, which is a constant unless the adaptive ceiling is
+        // named. See `homotopy::adapt_explore_step`.
+        let explore_step_base = homotopy::explore_shrink_step();
+        let explore_step_ceiling = homotopy::adaptive_step_ceiling();
+        let mut explore_step = explore_step_base;
         while !pacer.phase_done(Phase::Explore, explore_bites) {
             bite_ordinal += 1;
             #[cfg(not(feature = "minimum-conflict-binary-close"))]
-            let bite = homotopy::explore_bite(&self.sources, &mut self.state.poses, width_mm);
+            let bite = homotopy::explore_bite_at(
+                &self.sources,
+                &mut self.state.poses,
+                width_mm,
+                explore_step,
+            );
             #[cfg(feature = "minimum-conflict-binary-close")]
             let bite = {
                 self.explore_bite_ordinal += 1;
                 let maybe_bite = match schedule.binary_close_arm {
-                    BinaryCloseArm::Centre => Some(homotopy::explore_bite(
+                    BinaryCloseArm::Centre => Some(homotopy::explore_bite_at(
                         &self.sources,
                         &mut self.state.poses,
                         width_mm,
+                        explore_step,
                     )),
                     arm @ (BinaryCloseArm::MinCut | BinaryCloseArm::ComputeIgnore) => {
                         let decision = BinaryCloseDecision::build(
@@ -2069,6 +2080,12 @@ impl<'a> Engine<'a> {
                 }
             }
 
+            explore_step = homotopy::adapt_explore_step(
+                explore_step,
+                explore_step_base,
+                explore_step_ceiling,
+                record.attempts == 0,
+            );
             match published {
                 Some(publication) => {
                     let row = self.commit_publication(

@@ -195,10 +195,71 @@ pub fn split_and_close(
     moved
 }
 
+/// **The adaptive-step ceiling, `0` for off.**
+///
+/// The explore step is a constant: every bite is the same fraction of the
+/// current width, whether the last one was absorbed without a single retry or
+/// only after three pool restarts. That is a *schedule*, and it is the one
+/// place in the engine where a difficulty signal is measured and then thrown
+/// away - the coordinate descent has grown and shrunk its own step on exactly
+/// this signal since the first round.
+///
+/// When this is non-zero the explore step grows by [`ADAPTIVE_STEP_GROW`] after
+/// a bite that published on its first separation and halves after one that
+/// needed a retry, clamped to `[base, ceiling]`. `0` restores the constant, so
+/// a run that does not name it takes exactly the path it always took.
+static ADAPTIVE_STEP_CEILING: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+/// The multiplier on a bite that published on its first separation.
+pub const ADAPTIVE_STEP_GROW: f64 = 1.2;
+
+/// The multiplier on a bite that needed a retry. Deliberately steeper than the
+/// growth, and for the same reason `CD_STEP_FAIL` is: an over-large step is
+/// paid for immediately and repeatedly, an under-large one only in lost ground.
+pub const ADAPTIVE_STEP_FAIL: f64 = 0.5;
+
+pub fn set_adaptive_step_ceiling(ceiling: f64) {
+    ADAPTIVE_STEP_CEILING.store(ceiling.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn adaptive_step_ceiling() -> f64 {
+    let value = f64::from_bits(ADAPTIVE_STEP_CEILING.load(std::sync::atomic::Ordering::Relaxed));
+    if value > 0.0 && value < 1.0 {
+        value
+    } else {
+        0.0
+    }
+}
+
+/// The explore step after a bite, given whether it published on its first
+/// separation. `ceiling <= 0` returns `step` unchanged.
+#[inline]
+pub fn adapt_explore_step(step: f64, base: f64, ceiling: f64, first_attempt: bool) -> f64 {
+    if !(ceiling > 0.0) {
+        return step;
+    }
+    if first_attempt {
+        (step * ADAPTIVE_STEP_GROW).min(ceiling)
+    } else {
+        (step * ADAPTIVE_STEP_FAIL).max(base)
+    }
+}
+
 /// The whole explore bite, as one value: shrink the width, cut at the centre,
 /// close the far side.
 pub fn explore_bite(sources: &[PieceSource], poses: &mut [Pose], width_mm: f64) -> Bite {
-    let width_after_mm = explore_width_mm(width_mm);
+    explore_bite_at(sources, poses, width_mm, explore_shrink_step())
+}
+
+/// [`explore_bite`] at a step the caller chose rather than the process knob.
+pub fn explore_bite_at(
+    sources: &[PieceSource],
+    poses: &mut [Pose],
+    width_mm: f64,
+    step: f64,
+) -> Bite {
+    let width_after_mm = width_mm * (1.0 - step);
     let delta_mm = width_after_mm - width_mm;
     let split_y_mm = centre_cut_mm(width_mm);
     let moved_pieces = split_and_close(sources, poses, delta_mm, split_y_mm);
@@ -208,7 +269,7 @@ pub fn explore_bite(sources: &[PieceSource], poses: &mut [Pose], width_mm: f64) 
         delta_mm,
         split_y_mm,
         moved_pieces,
-        step: explore_shrink_step(),
+        step,
     }
 }
 

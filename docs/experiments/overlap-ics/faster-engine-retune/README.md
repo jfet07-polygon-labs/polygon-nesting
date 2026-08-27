@@ -33,3 +33,34 @@ with the operating system; it is the count that fits on the fast cores.
 
 This closes the question rather than opening it: the 76 % is not idle silicon
 waiting to be claimed.
+
+## Thirty seconds: the cap's optimum moved with the clock
+
+Nine seeds, two repetitions, bare thirty-second requests
+(`evidence/wall-30s.json`). The wall-cap round's own thirty-second reading, on
+the engine as it was then, was **median 164.000, best 161.017, 9/9**.
+
+| arm | median of 18 | mean | best | cells under 162 | cells under 160 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `c42ed22`, cap 50 | 161.926 | 162.755 | 159.704 | 9/18 | 1/18 |
+| contact pruning, cap 50 | 160.491 | 161.096 | **158.703** | 12/18 | 6/18 |
+| **contact pruning, cap 100** | **159.819** | **160.877** | 158.921 | 11/18 | **10/18** |
+
+Both arms are 9 of 9 on every repetition; the bar stopped discriminating some
+time ago and the median is what to read.
+
+**`cap = 100` beats `cap = 50` at thirty seconds, and that is the point.** At
+ten seconds on the slow engine the sweep found a clean optimum at 50 and called
+150 flat-to-worse. Give the same search half again as many iterations per
+second and three times the wall, and the optimum moves up. The cap is not a
+property of the instance; it is a property of *how many separations the budget
+can pay for*, which is exactly what the wall-cap round predicted when it wrote
+that the honest form of the knob is budget-derived rather than constant.
+
+Per seed, best of the two repetitions:
+
+| seed | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `c42ed22` cap 50 | 160.815 | 166.089 | 161.223 | 160.622 | 165.530 | 164.001 | 164.016 | 161.825 | 159.704 |
+| pruned cap 50 | 160.379 | 162.624 | 160.423 | 159.002 | 164.001 | **159.265** | 164.001 | 161.287 | **158.703** |
+| pruned cap 100 | 159.002 | **159.745** | 160.972 | **158.921** | **162.481** | 162.866 | 164.002 | **159.319** | 159.591 |

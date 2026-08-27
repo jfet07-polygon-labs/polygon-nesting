@@ -2541,6 +2541,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 options.integer("itercap", 0)? as u64,
             );
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
+            homotopy::set_adaptive_step_ceiling(options.number("adaptivestep", 0.0)?);
             homotopy::set_pool_spread(options.number("poolspread", 0.0)?);
             #[cfg(feature = "t-row-repair")]
             {
@@ -3621,6 +3622,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     document["wall"] = Value::Object(wall);
     document["exploreShrinkStep"] = json!(homotopy::explore_shrink_step());
+    document["adaptiveStepCeiling"] = json!(homotopy::adaptive_step_ceiling());
     document["poolSpread"] = json!(homotopy::pool_spread());
     document["explorePatience"] =
         json!(polygon_nesting_core::search::overlap_ics::explore_patience());
