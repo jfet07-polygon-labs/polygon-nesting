@@ -3450,3 +3450,60 @@ fn the_other_two_budgets_carry_no_calibrated_ledger() {
     assert!(run.calibrated.is_none());
     assert_eq!(run.strike_arm.arm(), "control-iteration-strikes");
 }
+
+/// **Conformance for the only thing the quorum of 2026-08-28 wrote.**
+///
+/// Sol, round 5: *"only conformance checks proving `Wall10s -> 0.032/None/0.80`,
+/// legacy remains `0.001/50/0.80`, explicit old overrides replay, and the four
+/// unrelated gates remain unchanged."* This is the first three; the gates are a
+/// driver.
+#[test]
+fn schedule_profiles_carry_exactly_what_the_quorum_wrote() {
+    use super::{ScheduleProfile, WALL10S_EXPLORE_STEP};
+
+    // Legacy is Sparrow's Table 1 step with the separately ratified pacer.
+    assert_eq!(
+        ScheduleProfile::Legacy.explore_shrink_step(),
+        super::homotopy::EXPLORE_SHRINK_STEP
+    );
+    assert_eq!(ScheduleProfile::Legacy.explore_shrink_step(), 0.001);
+    assert_eq!(ScheduleProfile::Legacy.wall_iteration_cap(), 50);
+    assert_eq!(ScheduleProfile::Legacy.explore_time_ratio(), 0.8);
+
+    // `ICS-10s-coarse-v1` is arm D of the signed round: the coarse step with the
+    // cap **off**, not with the ratified 50, which on the holdout is the worst
+    // pair of the four.
+    assert_eq!(ScheduleProfile::Wall10s.explore_shrink_step(), 0.032);
+    assert_eq!(ScheduleProfile::Wall10s.explore_shrink_step(), WALL10S_EXPLORE_STEP);
+    assert_eq!(ScheduleProfile::Wall10s.wall_iteration_cap(), 0);
+    assert_eq!(ScheduleProfile::Wall10s.explore_time_ratio(), 0.8);
+
+    // The constant itself did not move. Grok, round 5: "do not mutate the const
+    // `EXPLORE_SHRINK_STEP`; the identity pin stays 0.001."
+    assert_eq!(super::homotopy::EXPLORE_SHRINK_STEP, 0.001);
+}
+
+/// The profile refuses every request arm D did not run.
+#[test]
+fn wall10s_refuses_any_request_that_is_not_a_named_ten_second_wall() {
+    use super::ScheduleProfile;
+
+    assert!(ScheduleProfile::Wall10s.validate_for(true, 10.0).is_ok());
+    for (is_wall, wall) in [
+        (true, 7.0),
+        (true, 9.999),
+        (true, 10.001),
+        (true, 15.0),
+        (true, 30.0),
+        (false, 10.0),
+    ] {
+        assert!(
+            ScheduleProfile::Wall10s.validate_for(is_wall, wall).is_err(),
+            "wall10s must refuse mode_is_wall={is_wall}, wall={wall}"
+        );
+    }
+    // Legacy is the engine as it was and refuses nothing.
+    for (is_wall, wall) in [(true, 10.0), (true, 30.0), (false, 0.0)] {
+        assert!(ScheduleProfile::Legacy.validate_for(is_wall, wall).is_ok());
+    }
+}

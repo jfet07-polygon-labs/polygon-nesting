@@ -3895,6 +3895,100 @@ pub mod publish_census {
     }
 }
 
+/// **The schedule profile.** The only thing the quorum of 2026-08-28 wrote, and
+/// it is a *named configuration*, not a constant.
+///
+/// The vote was 2-1 to write `0.032` (`docs/quorum/third-voice-appointment.md`),
+/// and both sitting reviewers, including the one who voted against, converged on
+/// the same shape for it. Sol: *"a named profile, not a numeric interval ...
+/// avoids pretending an exact floating-point comparison is a scheduling
+/// theory."* Grok: *"caller-named request wall of 10 s, wall mode only, uses the
+/// passing pair `step 0.032` / `cap none`. Every other named wall, and all of
+/// fixed-work, keep `0.001` / cap 50. Do not mutate the const
+/// `EXPLORE_SHRINK_STEP`; the identity pin stays `0.001`. A global const is a
+/// thirty-second default."*
+///
+/// **[`ScheduleProfile::Wall10s`] carries `cap none`, not the ratified 50, and
+/// that is deliberate.** The specification that passed is arm D of the signed
+/// round: `step 0.032` with the cap *off*. Cap `50` was ratified separately, at
+/// the frozen step, where it is the best arm. At `0.032` it is the worst pair on
+/// the holdout - median 164.245 and worst 170.550 against 159.297 and 160.305 -
+/// because a separation cut off at fifty iterations cannot finish a 3.2 % bite.
+/// Pairing the written step with the ratified cap would have been a third
+/// configuration nobody measured, and Grok put exactly that on the record as a
+/// defect of the appointment's wording before it could be built.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ScheduleProfile {
+    /// Sparrow's Table 1 schedule with the ratified wall pacer: `0.001`, cap
+    /// `50`, ratio `0.80`. Everything that does not name a profile.
+    Legacy,
+    /// `ICS-10s-coarse-v1`, authorised for a **caller-named ten-second wall
+    /// request** and nothing else: `0.032`, cap none, ratio `0.80`.
+    Wall10s,
+}
+
+/// The explore step of [`ScheduleProfile::Wall10s`]. Not a new value of
+/// `EXPLORE_SHRINK_STEP`, which stays `0.001` and remains the identity pin.
+pub const WALL10S_EXPLORE_STEP: f64 = 0.032;
+
+impl ScheduleProfile {
+    pub fn explore_shrink_step(self) -> f64 {
+        match self {
+            ScheduleProfile::Legacy => homotopy::EXPLORE_SHRINK_STEP,
+            ScheduleProfile::Wall10s => WALL10S_EXPLORE_STEP,
+        }
+    }
+
+    /// `0` is unbounded, which is what the passing arm ran with.
+    pub fn wall_iteration_cap(self) -> u64 {
+        match self {
+            ScheduleProfile::Legacy => DEFAULT_WALL_ITERATION_CAP,
+            ScheduleProfile::Wall10s => 0,
+        }
+    }
+
+    pub fn explore_time_ratio(self) -> f64 {
+        homotopy::EXPLORE_TIME_RATIO
+    }
+
+    /// **The guard.** `Wall10s` was measured at a caller-named wall of exactly
+    /// ten seconds, in wall mode, and nowhere else. Arm D ran no other cell, so
+    /// the profile refuses every other request rather than extrapolating: Sol,
+    /// *"testing `0.032` at seven seconds requires fresh precommitted
+    /// evidence"*; Grok, *"I will not launder D below 10 s"*.
+    ///
+    /// `named_wall_s` is the **request's** wall, not the pacer's remaining
+    /// clock. A ten-second request enters the loop with about 7.7 s left after
+    /// the constructor, and binding on that number would silently make the
+    /// profile a seven-second one.
+    pub fn validate_for(self, mode_is_wall: bool, named_wall_s: f64) -> Result<(), String> {
+        match self {
+            ScheduleProfile::Legacy => Ok(()),
+            ScheduleProfile::Wall10s if mode_is_wall && named_wall_s == 10.0 => Ok(()),
+            ScheduleProfile::Wall10s => Err(format!(
+                "profile `wall10s` is authorised for a caller-named ten-second wall request only; got wall mode = {mode_is_wall}, named wall = {named_wall_s}"
+            )),
+        }
+    }
+}
+
+static SCHEDULE_PROFILE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+
+pub fn set_schedule_profile(profile: ScheduleProfile) {
+    let bits = match profile {
+        ScheduleProfile::Legacy => 0,
+        ScheduleProfile::Wall10s => 1,
+    };
+    SCHEDULE_PROFILE.store(bits, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn schedule_profile() -> ScheduleProfile {
+    match SCHEDULE_PROFILE.load(std::sync::atomic::Ordering::Relaxed) {
+        1 => ScheduleProfile::Wall10s,
+        _ => ScheduleProfile::Legacy,
+    }
+}
+
 /// **The bound wall mode never had.**
 ///
 /// `Pacer::Wall::iteration_cap()` returned `None` from the day it was written,
@@ -3941,7 +4035,7 @@ pub fn clear_wall_iteration_cap() {
 
 pub fn wall_iteration_cap() -> u64 {
     match WALL_ITERATION_CAP.load(std::sync::atomic::Ordering::Relaxed) {
-        UNNAMED => DEFAULT_WALL_ITERATION_CAP,
+        UNNAMED => schedule_profile().wall_iteration_cap(),
         named => named,
     }
 }

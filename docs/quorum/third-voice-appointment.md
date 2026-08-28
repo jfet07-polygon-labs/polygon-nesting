@@ -179,3 +179,69 @@ the correct form."*
 passed specification ran arm D at **10.000 s and nowhere else**. What a wall of
 7 s or 11 s should do is not in any ballot, and the proposer will not invent it:
 see the open question put to both sitting reviewers in round 5.
+
+---
+
+# Round 5: what was written, and the defect Grok caught before it was built
+
+The two sitting reviewers converged on the *shape* of the write while remaining
+split on its merit.
+
+**Sol:** *"a named profile, not a numeric interval. Add `ScheduleProfile::Wall10s`
+containing `step=0.032`, cap `None`, ratio `0.80`. ... This implements the 2-1
+WRITE as configuration, avoids inventing behavior at 3/7/15 seconds, and avoids
+pretending an exact floating-point comparison is a scheduling theory."*
+
+**Grok:** *"caller-named request wall of 10 s, wall mode only, uses the passing
+pair `step 0.032` / `cap none`. Every other named wall, and all of fixed-work,
+keep `0.001` / cap 50. Bind on the request the caller named, not leftover clock.
+Do not mutate the const `EXPLORE_SHRINK_STEP`; the identity pin stays `0.001`. A
+global const is a thirty-second default."*
+
+## The defect in my own appointment wording
+
+Grok, asked whether the *appointment* was defective:
+
+> It names the **step** and leaves cap 50. The passed specification is D:
+> `0.032` / **none**. Holdout `(0.032, 50)` median **164.245**, worst
+> **170.550** - the pair that cannot finish a coarse bite. ... Writing the const
+> onto the ratified cap is a third configuration nobody passed.
+
+He is right and it would have been built. The appointment's resolution clause
+said "write `0.032` as the ten-second profile" and said nothing about the cap,
+and the cap had just been ratified at `50` in a *different* round at a *different
+step*. `Wall10s` therefore carries **cap none**, which is what arm D ran, and the
+ratified `50` stays where it was ratified: on `Legacy`.
+
+## And the trap in binding on the clock
+
+`Budget::Wall` is *leftover* clock: a ten-second request enters the loop with
+about 7.7 s after the constructor. Binding the profile on that number would have
+made a "ten-second profile" into a seven-second one without anybody noticing.
+`validate_for` takes the **request's** named wall.
+
+## Grok on the outcome
+
+> I accept the 2-1. I named three reviewers as the campaign and the two-model
+> quorum as the deviation. A third voice can vote. I do not convert this to 1-1.
+> ... The stdin hang was the proposer's harness, positive-controlled off-order,
+> amendment committed before re-invocation. Not a defect.
+>
+> I still will not sign `0.032`. Majority is not my signature.
+
+## What is in the tree
+
+| | step | wall cap | ratio |
+| --- | ---: | ---: | ---: |
+| `ScheduleProfile::Legacy` (default, everything unnamed) | 0.001 | 50 | 0.80 |
+| `ScheduleProfile::Wall10s` (`--profile=wall10s`) | **0.032** | **none** | 0.80 |
+
+`EXPLORE_SHRINK_STEP` is **still `0.001`** and is still the identity pin.
+`Wall10s` refuses wall 7 s, 9.999 s, 10.001 s, 15 s, 30 s and fixed-work mode.
+`--shrinkstep` and `--itercap` still override both profiles, so every
+pre-ratification replay reproduces. Four pinned gates `ALL_PASS`; 841
+`overlap-ics` tests, 1,104 workspace tests.
+
+Neither reviewer wants another quality battery. Sol: *"run no further quality
+battery before writing the authorized ten-second profile."* Grok: *"then stop on
+the step."*

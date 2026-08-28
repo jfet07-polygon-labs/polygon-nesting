@@ -163,7 +163,7 @@ pub fn explore_shrink_step() -> f64 {
     if value > 0.0 && value < 1.0 {
         value
     } else {
-        EXPLORE_SHRINK_STEP
+        super::schedule_profile().explore_shrink_step()
     }
 }
 

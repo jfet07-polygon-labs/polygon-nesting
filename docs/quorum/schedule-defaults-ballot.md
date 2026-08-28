@@ -743,3 +743,131 @@ Q3' disposition on promoting ICS?
 **Q5'''. Confidence**, and what you would run next.
 
 Under 700 words.
+
+---
+
+# Round 5: the applicability rule, and Grok accepts the 2-1
+
+## Sol, round 5 (verbatim)
+
+1. **Applicability rule: a named profile, not a numeric interval.** Add `ScheduleProfile::Wall10s` containing `step=0.032`, cap `None`, ratio `0.80`. The caller selects it when requesting the product’s declared ten-second SLA; optionally reject that profile with any other wall budget. Generic ICS remains `Legacy` (`0.001`, cap 50). This implements the 2–1 WRITE as configuration, avoids inventing behavior at 3/7/15 seconds, and avoids pretending an exact floating-point comparison is a scheduling theory.
+
+2. **No extension below ten seconds.** Arm C’s `0.02` result at seven seconds supports the broad proposition that short budgets prefer coarse bites, but licenses nothing operational for `0.032`. Different step, cap and specification. Testing `0.032` at seven seconds requires fresh precommitted evidence.
+
+3. **Not my ballot.** Grok must answer acceptance or appointment defects himself.
+
+4. **Yes, kimi-k3’s distinction narrows my integration plan.** The evidence promotes `ICS-10s-coarse-v1` as a configuration contender; it does not promote the ICS engine into the shipped portfolio. I withdraw any implication that production wiring follows automatically. First land the named profile inside the feature-gated ICS surface, retaining legacy replay. Production integration remains a separately funded, end-to-end comparison under the real request orchestrator.
+
+5. **Confidence: 99/100.** Run no further quality battery before writing the authorized ten-second profile—only conformance checks proving `Wall10s → 0.032/None/0.80`, legacy remains `0.001/50/0.80`, explicit old overrides replay, and the four unrelated gates remain unchanged. If automatic support for other budgets is wanted later, precommit a separate schedule-map experiment at 3/5/7/15/20/30 seconds on fresh seeds; do not interpolate from arm D.
+tokens used
+10,409,675
+1. **Applicability rule: a named profile, not a numeric interval.** Add `ScheduleProfile::Wall10s` containing `step=0.032`, cap `None`, ratio `0.80`. The caller selects it when requesting the product’s declared ten-second SLA; optionally reject that profile with any other wall budget. Generic ICS remains `Legacy` (`0.001`, cap 50). This implements the 2–1 WRITE as configuration, avoids inventing behavior at 3/7/15 seconds, and avoids pretending an exact floating-point comparison is a scheduling theory.
+
+2. **No extension below ten seconds.** Arm C’s `0.02` result at seven seconds supports the broad proposition that short budgets prefer coarse bites, but licenses nothing operational for `0.032`. Different step, cap and specification. Testing `0.032` at seven seconds requires fresh precommitted evidence.
+
+3. **Not my ballot.** Grok must answer acceptance or appointment defects himself.
+
+4. **Yes, kimi-k3’s distinction narrows my integration plan.** The evidence promotes `ICS-10s-coarse-v1` as a configuration contender; it does not promote the ICS engine into the shipped portfolio. I withdraw any implication that production wiring follows automatically. First land the named profile inside the feature-gated ICS surface, retaining legacy replay. Production integration remains a separately funded, end-to-end comparison under the real request orchestrator.
+
+5. **Confidence: 99/100.** Run no further quality battery before writing the authorized ten-second profile—only conformance checks proving `Wall10s → 0.032/None/0.80`, legacy remains `0.001/50/0.80`, explicit old overrides replay, and the four unrelated gates remain unchanged. If automatic support for other budgets is wanted later, precommit a separate schedule-map experiment at 3/5/7/15/20/30 seconds on fresh seeds; do not interpolate from arm D.
+
+## Grok, round 5 (verbatim)
+
+I'll ground this round in the freeze, the appointment clause, and the 10 s evidence rather than restating the round-4 vote. First I'll read the committed schedule, the write-as-ten-second-profile language, and kimi-k3's ballot.The appointment and signed spec are the decision record. I'll read those next, then the holdout walls and the current default.I have the appointment. Next I'll confirm how wall profiles bind in the engine, then the 7 s cells and the freeze language.The appointment writes a sentence. Arm D ran at 10.000 s. The CLI already defaults `--wall` to 10.0. That is the product; I will not invent the rest.
+
+**Q1.** Not (i), not (iii), not (iv) for this vote. (ii) as `remaining_seconds == 10.000` is the constructor-tax trap: `Budget::Wall` is leftover clock (a 10 s request enters at ~7.7 s; grok-review-13), and the CLI default `--wall` is already `10.0`.
+
+The rule: **caller-named request wall of 10 s, wall mode only, uses the passing pair `step 0.032` / `cap none`. Every other named wall, and all of fixed-work, keep `0.001` / cap 50.** Bind on the request the caller named, not leftover clock. Do not mutate the const `EXPLORE_SHRINK_STEP`; the identity pin stays `0.001`. A global const is a thirty-second default. `--shrinkstep` and `--itercap` retained.
+
+(i) applies D at 7 s and 3 s where D never ran, and makes 10.001 s finer than 10.000 — the inversion is at 30 s, not at 10. (iii) is a 2-1 implemented as a refusal. (iv) is the correct long-term form; kimi-k3 named it and still voted write. It does not unwrite this majority.
+
+**Q2.** Nothing. C at 7 s is `0.02` / cap 50, **+6.054**, 9/9. Different step, different cap. Signed-round JSON has `m61-D-w10.0` and no D cell at 7 s. The shipped-path `0.02 ~ 0.032` was a different engine at ~2.6 s. “Coarse helps when bites are few” is the mechanism. It is not a measurement of D. I forbade re-scoping C after FAIL. I will not launder D below 10 s with C’s cell.
+
+**Q3.** I accept the 2-1. I named three reviewers as the campaign and the two-model quorum as the deviation. A third voice can vote. I do not convert this to 1-1. The signed-round adoption governed that battery; filling the empty seat restores the campaign. The stdin hang was the proposer’s harness, positive-controlled off-order, amendment committed before re-invocation. Not a defect.
+
+Appointment defects, on the record:
+
+1. It names the **step** and leaves cap 50. The passed specification is D: `0.032` / **none**. Holdout `(0.032, 50)` median **164.245**, worst **170.550** — the pair that cannot finish a coarse bite. kimi-k3’s Q3 is (c): `0.032/cap-none`. Writing the const onto the ratified cap is a third configuration nobody passed. Cap 50 was ratified at the frozen step; at 0.032, 50 is harmful and none is idle-equivalent to 200.
+2. “Ten-second wall profile” had no engine rule. That is this round, not fatal.
+
+I still will not sign `0.032`. Majority is not my signature. Review 12 §4.4 remains true of the member it named. The lift is the appointment, which I accept as the exit I listed beside owner-overrule. The engine stays research-only: Gate0-stop and the `Cargo.toml` portfolio bar are not this vote.
+
+**Q5.** **74.** Strongest against: I required 15 s so a 10 s-only gate could not launder a budget-dependent constant, and a 2-1 now writes exactly that gate. Next: nothing on D at 7 s. Do not ship `(0.032, 50)`. If you write, write D’s pair as the named-10 s wall-mode default and leave the const at 0.001. Then stop on the step.
+
+## Round 5 brief, for the record
+
+# Round 5: the seat is filled, the vote is 2-1 to write, and one thing is not settled
+
+`opencode-go/kimi-k3` - first in the order committed before any candidate was
+invoked - took the seat with a complete ballot and voted **WRITE**.
+
+| | Q1 | Q3 | confidence |
+| --- | --- | --- | ---: |
+| Sol | write | (a) | 98 |
+| Grok | refuse | (b) | 70 |
+| **kimi-k3** | **WRITE** | **(c)** the configuration, not the engine | 78 |
+
+Its Q2, in full, because it is the argument neither of you made:
+
+> The forbidden-rescue rule forbids fitting a literal after seeing results and
+> then validating with those same results - it is a rule about evidence status,
+> not about a value's ancestry. What distinguishes Sol's route: `0.032` was
+> pre-registered in a signed specification before the validating cells ran, then
+> passed every clause on seeds that chose nothing, with a 273.671 mm
+> certified-headroom fixture moving +37 mm at 9/9. ... Grok signed a spec under
+> the same protocol, and its failure (0.02, his only signable value) shows the
+> protocol has teeth rather than rubber-stamping proposals. ... the sweep
+> finding is corroborated off-fixture: Grok's own shipped-engine falsifier
+> predicted and confirmed `0.02 ~ 0.032` on an engine sharing none of ICS's
+> operators - the coarse regime is generic, a broad optimum, not the knife-edge
+> "whatever reaches 168 in 80 bites" the freeze text was aimed at.
+
+**A correction I owe you both first.** The first two invocations returned
+`RC=124` at 900 s with zero bytes and I nearly recorded them as failed ballots.
+They were my harness: `opencode run` blocks on an open stdin, the invocations
+inherited a pipe, and the brief never reached the model. A positive control on a
+model deliberately outside the candidate order reproduced it on a one-line
+prompt; `< /dev/null` fixes it. The order was restarted from the top with the
+corrected invocation, the amendment committed before the re-invocation, and the
+empty transcripts kept. Had I not checked, the seat would have gone to the third
+name in the list because of a bug of mine.
+
+## The question this round exists for
+
+The appointment's resolution clause, fixed in advance, says `0.032` is written
+**"as the ten-second wall profile only, never as a thirty-second default where
+`0.016` is the better datum"**. That is a sentence. The engine needs a rule, and
+**arm D ran at 10.000 s and at no other wall**. I will not invent the rest.
+
+**Q1. What is the applicability rule?** Choose one, or give another:
+
+- **(i)** `wall <= 10.0 s -> 0.032`, otherwise the frozen `0.001`. Literal, uses
+  only the authorised budget as its own boundary, invents no value - but it
+  applies `0.032` at 7 s and 3 s where arm D never ran, and it leaves a
+  discontinuity at 10 s.
+- **(ii)** exactly `wall == 10.000 s -> 0.032`, everything else `0.001`. Writes
+  only what was measured, and is absurd as a shipped rule.
+- **(iii)** no default at all: `--shrinkstep=0.032` stays the documented
+  ten-second recipe and no constant moves. A 2-1 to write, implemented as
+  documentation. Say so plainly if that is your position.
+- **(iv)** a budget-schedule rule, which is what kimi-k3's own counter-argument
+  says the repository should have instead of a per-budget literal - in which
+  case name its form and what must be measured to fit it, and accept that
+  nothing is written until that round passes.
+
+**Q2. Does arm D's evidence extend below 10 s?** Grok's arm C at 7 s was the
+strongest cell of his whole battery (+6.054 paired, 9/9). That is a different
+step. Does it license anything for `0.032` at 7 s, or nothing?
+
+**Q3. Grok only.** You are outvoted 2-1 under a protocol you helped write and
+whose teeth you demonstrated by failing your own specification. Do you accept
+the outcome, and is there a defect in the *appointment* - not in the vote - that
+you want on the record?
+
+**Q4. Sol only.** kimi-k3's Q3 was (c), not your (a): the configuration is a
+contender, the engine at faithful defaults is not. Does that change your
+production-integration plan?
+
+**Q5. Confidence**, and what you would have me run next, if anything.
+
+Under 600 words.

@@ -2547,6 +2547,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .map_err(|_| format!("--itercap: `{value}`"))?,
                 );
             }
+            // The only thing the quorum wrote. `legacy` is the default and is
+            // the engine as it was; `wall10s` is `ICS-10s-coarse-v1` and
+            // refuses any request that is not a caller-named ten-second wall.
+            let profile = match options.get("profile").unwrap_or("legacy") {
+                "legacy" => polygon_nesting_core::search::overlap_ics::ScheduleProfile::Legacy,
+                "wall10s" => polygon_nesting_core::search::overlap_ics::ScheduleProfile::Wall10s,
+                other => return Err(format!("--profile: `{other}`").into()),
+            };
+            profile.validate_for(mode == "wall", options.number("wall", 10.0)?)?;
+            polygon_nesting_core::search::overlap_ics::set_schedule_profile(profile);
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
             homotopy::set_adaptive_step_ceiling(options.number("adaptivestep", 0.0)?);
             homotopy::set_adaptive_step_floor(options.number("adaptivefloor", 0.0)?);
@@ -3631,6 +3641,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     document["wall"] = Value::Object(wall);
     document["exploreShrinkStep"] = json!(homotopy::explore_shrink_step());
+    document["scheduleProfile"] = json!(match polygon_nesting_core::search::overlap_ics::schedule_profile() {
+        polygon_nesting_core::search::overlap_ics::ScheduleProfile::Legacy => "legacy",
+        polygon_nesting_core::search::overlap_ics::ScheduleProfile::Wall10s => "wall10s",
+    });
     document["adaptiveStepCeiling"] = json!(homotopy::adaptive_step_ceiling());
     document["adaptiveStepFloor"] = json!(homotopy::adaptive_step_floor());
     document["compressStartStep"] = json!(homotopy::compress_start_step());
