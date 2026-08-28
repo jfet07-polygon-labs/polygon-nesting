@@ -200,3 +200,29 @@ along with `iter_no_imprv_limit`, `strike_limit` and the 80/20 split - four
 constants, all tuned on a twenty-minute clock, all applied to ten seconds
 without anyone asking whether they still meant the same thing. Three of the four
 have now moved under measurement.
+
+## The 80/20 split stopped being a parameter
+
+`DEFAULT_EXPLORE_TIME_RATIO` was worth 0.78 mm of median when the wall-cap round
+swept it. At `step = 0.032, cap = 200`, nine seeds, two repetitions
+(`evidence/explore-ratio.json`):
+
+| ratio | median | mean | best | worst | explore bites | compress bites |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.60 | 159.005 | 158.654 | **154.107** | **160.011** | 5.1 | 40.8 |
+| 0.80 | 159.413 | 158.882 | 154.594 | 160.168 | 5.1 | 32.4 |
+| 0.90 | 159.424 | 159.094 | 154.459 | 160.297 | 5.1 | 26.6 |
+| 0.95 | **159.393** | **158.630** | 154.560 | 160.347 | 5.2 | 21.8 |
+
+Flat - 0.46 mm across the whole range, which is noise on eighteen cells - and
+the reason is in the last two columns. **The explore phase runs 5.1 bites
+whatever the ratio says**, because it ends when a bite fails to publish, not
+when its clock runs out, and at 3.2 % a bite it fails on the sixth. Everything
+after that is compress no matter what number the split holds.
+
+So the split is no longer dividing the budget; the schedule is. What the tuned
+configuration actually does is take five coarse bites straight down to a width
+nothing can separate, and then spend the rest of the run polishing in compress -
+which was never the design, and is now the thing to measure next: at
+`step = 0.001` compress was the last five per cent of a run and its
+`(0.05 % -> 0.001 %)` range hardly mattered, and it is now most of it.

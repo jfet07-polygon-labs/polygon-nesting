@@ -50,6 +50,43 @@ pub const EXPLORE_SHRINK_STEP: f64 = 0.001;
 /// `config.rs`'s `shrink_range` under `ShrinkDecayStrategy::TimeBased`.
 pub const COMPRESS_SHRINK_RANGE: (f64, f64) = (0.0005, 0.00001);
 
+/// **The compression range's opening step, overridable for measurement.**
+///
+/// The fourth inherited twenty-minute constant, and the one that mattered least
+/// until the explore step moved: at `0.001` explore ran a hundred bites and used
+/// nearly the whole wall, so compress polished whatever was left. At `0.032`
+/// explore self-terminates in about five bites and **compress does most of the
+/// work**, which makes the range it decays across a live parameter for the first
+/// time. `0` keeps [`COMPRESS_SHRINK_RANGE`] exactly.
+static COMPRESS_START_OVERRIDE: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_compress_start_step(step: f64) {
+    COMPRESS_START_OVERRIDE.store(step.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn compress_start_step() -> f64 {
+    let value = f64::from_bits(COMPRESS_START_OVERRIDE.load(std::sync::atomic::Ordering::Relaxed));
+    if value > 0.0 && value < 1.0 {
+        value
+    } else {
+        0.0
+    }
+}
+
+/// [`COMPRESS_SHRINK_RANGE`] with the opening step overridden, keeping the
+/// frozen `50:1` decay ratio between the two ends.
+#[inline]
+pub fn compress_shrink_range() -> (f64, f64) {
+    let named = compress_start_step();
+    if named > 0.0 {
+        let (start, end) = COMPRESS_SHRINK_RANGE;
+        (named, named * (end / start))
+    } else {
+        COMPRESS_SHRINK_RANGE
+    }
+}
+
 /// The share of the post-constructor wall that belongs to exploration.
 /// Sparrow `consts.rs`: `DEFAULT_EXPLORE_TIME_RATIO = 0.8`,
 /// `DEFAULT_COMPRESS_TIME_RATIO = 0.2`.
@@ -155,7 +192,7 @@ pub fn compress_width_mm(width_mm: f64, step: f64) -> f64 {
 /// a non-positive or non-finite limit gives the start, because an unmeasured
 /// phase has not decayed.
 pub fn time_based_step(elapsed: f64, limit: f64) -> f64 {
-    let (start, end) = COMPRESS_SHRINK_RANGE;
+    let (start, end) = compress_shrink_range();
     if !(limit > 0.0) || !elapsed.is_finite() {
         return start;
     }
