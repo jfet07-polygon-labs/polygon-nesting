@@ -1,0 +1,5 @@
+invocation: opencode run --pure -m deepseek-v4-pro --agent plan "<brief>"  (stdin NOT closed - harness defect)
+exit: 124 (timeout at 900 s)
+stdout bytes: 0
+stderr bytes: 0
+ruling: not a ballot; the brief never reached the model

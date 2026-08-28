@@ -80,3 +80,45 @@ It may **not**:
 
 Already written and outside this appointment: `Pacer::Wall::iteration_cap`
 defaults to `50`, ratified unanimously in round 3.
+
+---
+
+# Amendment, committed before the re-invocation: the first two were never asked
+
+The first two invocations both returned `RC=124` - killed by `timeout` at 900 s
+with zero bytes on stdout and stderr. Under the rule above that is an incomplete
+ballot and the seat passes on. **It is not.** It was a defect in the proposer's
+harness, and recording it as a candidate's failure would have been a silent
+manipulation of an order this document exists to fix.
+
+A positive control on `opencode/hy3-free` - a model deliberately **not** in the
+candidate order, so the order could not be contaminated by the test - reproduced
+the hang on a one-line prompt, which no model could plausibly take 240 s to
+refuse. Closing stdin fixes it:
+
+| invocation | result |
+| --- | --- |
+| `opencode run --pure -m M --agent plan "..."` | `RC=124`, 0 bytes, 240 s |
+| `opencode run --pure -m M --agent plan "..." < /dev/null` | `RC=0`, `PLUMBING_OK`, seconds |
+| `opencode run --pure -m M "..." < /dev/null` | `RC=0`, `PLUMBING_OK`, seconds |
+
+`opencode run` blocks on an open stdin. The candidate invocations inherited a
+pipe and waited on it until the timeout. The prompt never reached the model.
+
+## Ruling
+
+An invocation that never delivered the brief is **not a ballot**. The rule's
+list of incompletenesses - a provider error, a refusal, an omitted question, a
+different question answered - all presuppose that the model was asked. None was.
+
+Therefore the order **restarts from the top** with the corrected invocation:
+`opencode run --pure -m <model> --agent plan "<brief>" < /dev/null`, the same
+900-second ceiling applied uniformly to every candidate. `opencode-go/kimi-k3`
+is invoked again, and the clause "earlier candidates are not retried" is not
+engaged, because it governs a candidate that *answered*, and neither did.
+
+The failed transcripts are kept at `evidence/third-voice/` exactly as they came
+back - two empty files and their exit codes - because the record of a proposer's
+harness bug belongs in the record as much as a ballot does.
+
+This amendment is committed and pushed **before** the corrected invocation runs.
