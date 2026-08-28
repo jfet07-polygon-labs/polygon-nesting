@@ -122,3 +122,60 @@ back - two empty files and their exit codes - because the record of a proposer's
 harness bug belongs in the record as much as a ballot does.
 
 This amendment is committed and pushed **before** the corrected invocation runs.
+
+---
+
+# The seat, and the verdict
+
+`opencode-go/kimi-k3`, first in the fixed order, returned a **complete ballot**
+on the corrected invocation - all four questions decided. By the rule above it
+takes the seat, and **no later candidate was invoked**. The ballot is verbatim
+at `evidence/third-voice/1-kimi-k3.ballot.txt`; it opens by checking the brief's
+claims against the repository rather than taking them from me, and names the
+lines it checked.
+
+| | Q1 | Q3 | confidence |
+| --- | --- | --- | ---: |
+| Sol | write | (a) contender | 98 |
+| Grok | refuse | (b) research-only | 70 |
+| **kimi-k3** | **WRITE** | **(c)** the configuration, not the engine | 78 |
+
+**2-1 to write**, on the terms the appointment fixed in advance: `0.032` as the
+**ten-second wall profile only**, never as a thirty-second default where
+`0.016` is the better datum, with `--shrinkstep` retained so every
+pre-ratification replay reproduces.
+
+Its answer to Q2 - the question the whole quorum turned on - is worth quoting,
+because it is the argument neither sitting reviewer made:
+
+> The forbidden-rescue rule forbids fitting a literal after seeing results and
+> then validating with those same results - it is a rule about evidence status,
+> not about a value's ancestry. What distinguishes Sol's route: `0.032` was
+> pre-registered in a signed specification before the validating cells ran, then
+> passed every clause on seeds that chose nothing ... Grok signed a spec under
+> the same protocol, and its failure (0.02, his only signable value) shows the
+> protocol has teeth rather than rubber-stamping proposals.
+
+And it corroborates Grok against Grok:
+
+> the sweep finding is corroborated off-fixture: Grok's own shipped-engine
+> falsifier predicted and confirmed `0.02 ~ 0.032` on an engine sharing none of
+> ICS's operators - the coarse regime is generic, a broad optimum, not the
+> knife-edge "whatever reaches 168 in 80 bites" the freeze text was aimed at.
+
+Its Q3 is neither Sol's nor Grok's: **(c)**, the measured configuration is a
+feature-gated production contender, the engine at its faithful defaults - which
+loses to the shipped path - stays research-only.
+
+Its own strongest counter-argument, which it was asked for and gave: the shelf
+reading, the budget-dependence, and that *"writing a per-budget literal now sets
+a precedent that future post-selected constants may ride, grandfathered by this
+one, instead of the parametric law the schedule-defaults ballot already names as
+the correct form."*
+
+## The one thing the ballot does not settle
+
+"The ten-second wall profile" is a sentence, and the engine needs a rule. The
+passed specification ran arm D at **10.000 s and nowhere else**. What a wall of
+7 s or 11 s should do is not in any ballot, and the proposer will not invent it:
+see the open question put to both sitting reviewers in round 5.
