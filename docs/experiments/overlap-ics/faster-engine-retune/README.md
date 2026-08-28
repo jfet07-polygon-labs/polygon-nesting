@@ -226,3 +226,39 @@ nothing can separate, and then spend the rest of the run polishing in compress -
 which was never the design, and is now the thing to measure next: at
 `step = 0.001` compress was the last five per cent of a run and its
 `(0.05 % -> 0.001 %)` range hardly mattered, and it is now most of it.
+
+## And compress is separation-limited too, so the schedule is finished
+
+The obvious follow-up - compress now runs most of the wall, so widen the range
+it decays across. Nine seeds, two repetitions, opening step from `0.05 %` to
+`1 %`, frozen `50:1` decay ratio kept (`evidence/compress-start.json`):
+
+| compress opening step | median | mean | best | worst | compress bites |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.0005 (frozen) | 159.398 | 158.665 | 154.564 | 160.478 | 22.0 |
+| 0.0015 | 159.491 | **158.601** | 154.404 | 160.459 | 7.1 |
+| 0.0040 | 159.435 | 158.627 | 154.664 | 160.445 | 4.0 |
+| 0.0100 | 160.648 | 159.065 | **153.955** | 160.655 | 1.4 |
+
+Flat again: 0.46 mm across a twentyfold change, and the last column says why.
+**Twenty-two bites of 0.05 % and 1.4 bites of 1 % deliver the same total
+shrink** - about 1.7 mm - because compress is not step-limited, it is
+*separation*-limited. It shrinks until a separation fails, and where it stops
+does not depend on the size of the steps it took to get there.
+
+Which is the same thing the explore phase said, and together they close the
+schedule:
+
+> The depth a bare request reaches is set by **how many successful separations
+> fit in the wall**. The schedule decides how that budget is spent, and once it
+> is coarse enough not to waste any, no further coarsening buys anything.
+
+Four inherited twenty-minute constants were examined this night. The explore
+step was thirty-two times too small and moving it was worth **-8 mm**. The
+iteration cap moved with it, `50 -> 200`, and was worth another **-2 mm**. The
+80/20 split and the compression range are both **flat** in the new regime and
+Sparrow's values stand.
+
+The next lever is not on this list. It is separations per second - which is
+where the night started, and where the contact pruning bought 1.47x - and
+separation *success rate*, which nothing here has touched.
