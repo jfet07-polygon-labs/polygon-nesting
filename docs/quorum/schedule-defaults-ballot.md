@@ -624,3 +624,122 @@ before touching a constant.
 **Q5''. Confidence** and the strongest argument against your own position.
 
 Under 800 words.
+
+---
+
+# Round 4: the signed round is run, and neither reviewer claims the write
+
+## Sol, round 4 (verbatim)
+
+1. **Q1''' — I do not claim a unilateral write.** `ICS-10s-coarse-v1` passed every technical clause I authored, so I affirm its scientific verdict: `0.032/None` is validated as the ten-second ICS profile. But the signed round explicitly says that this PASS does not override Grok’s refusal. I accepted that adoption rule before execution; therefore the PASS is not self-executing in this particular round.
+
+2. **Q2''' — Grok’s arm failed and cannot be post-hoc rescoped.** `ICS-OPEN-02` missed its mandatory 15-second clause by 0.204 mm. That is a FAIL, not a near-pass. A `{7,10}` profile could exist only as a newly funded, precommitted specification on fresh data; extracting it from this battery would violate the rule that made the result credible. I see no reason to fund it now: `0.032` already passed the stronger ten-second transfer gate.
+
+3. **Q3''' — obtain the third voice; write nothing meanwhile.** The committed text rules out self-execution, but I find no adopted rule granting either reviewer a permanent unilateral veto. A 1–1 split is not quorum. Ox-alpha—or a prospectively appointed independent replacement if that provider remains unavailable—must cast the deciding vote against the already frozen specification and evidence. A 2–1 decision then resolves it unless an existing campaign charter explicitly requires unanimity. The owner must not silently invent either majority or unanimity after seeing the result.
+
+4. **Q4''' — yes, the second-instance objection is retired.** Quantity-74 had 273.671 mm of certified headroom and delivered **+37.227 mm, 9/9**, while both saturated fixtures stayed within 0.003 mm. That is not merely “no transfer regression”; it is strong positive transfer on a distinct unsaturated geometry. It materially strengthens my disposition from “interesting contender” to “production-integration candidate.” It still does not prove the integration path: all measurements use the feature-gated benchmark rather than the shipped request orchestration.
+
+5. **Q5''' — confidence 98/100.** I would run no further schedule sweep. First obtain the third ballot. If it approves, write `0.032` only as the **10-second wall profile**, retain the legacy replay override, then run one production-entry integration gate: shipped `general_relaxed` versus feature-gated ICS contender under the same hard request clock, mixed-61 and quantity-74, fresh seeds 27–35 ×3, zero invalid publications and p95 enforcement. Strongest argument against my position: p95 is already 10.007 s, leaving little integration margin, and `0.032` is known not to be a general-budget default—30 seconds prefers `0.016`.
+
+## Grok, round 4 (verbatim)
+
+I'll ground this round in the freeze, the signed specs, and the held-out results rather than restating the round-3 vote. First I'll read the committed schedule, the freeze language, and the campaign rules.The signed spec and freeze language are the decision record. I'll read those next, then the holdout numbers and the current defaults.I have the signed spec. Next I'll confirm the 15 s evaluation, the second-fixture numbers, and the campaign's adoption rule.The 15 s miss is the refusal trigger. I'll check the raw cells for an evaluation error, then the campaign's split-resolution rule.There's a signed-round evidence file. I'll read that next to check the 15 s clause and the transfer numbers.I'll recompute the 15 s and transfer statistics from the raw cells so the refusal rests on the same numbers, not the table.**Q1'''.** I do not claim Sol's write. I accept the round's own adoption rule, committed before the first cell: a PASS of `ICS-10s-coarse-v1` records that those clauses would have passed. It does not license `0.032` over the refusal that was already on the page. I do not contest the table. D vs the better control is real. The constant does not move.
+
+**Q2'''.** Confirm the refusal. The failing clause is scored correctly: 15 s paired median **+2.796** against **≥ 3.0**, short **0.204 mm**. Invalids 0, wins 9/9, transfer candidate-median **−16.615 mm** (shallower than A) are PASS.
+
+A scoring choice on a non-failing column does not save it. "Worst ≥ 2.0 mm better" was unpaired `worst(A) − worst(C)` (7 s +5.432, 10 s +2.185, 15 s +2.879). The statistic I wrote is per-seed median of the repetitions, then those nine paired versus control. The worst paired seed is **+0.751** at 7 s and **−0.518** at 10 s. I do not need that stricter reading. The 15 s paired-median miss is enough.
+
+No `{7 s, 10 s}` specification exists. Re-scoping after a FAIL is the move the signed document forbids: a clause that turns out inconvenient is a FAIL, not an amendment. I required 15 s because a 10 s-only gate is how a budget-dependent constant launders itself. I said that about `0.032` in round 3; it applies to dropping the wall that missed.
+
+**Q3'''.** Not self-executing. The adoption paragraph is the pre-committed resolution of this split: Sol's PASS does not license `0.032` over the refusal. A 1-1 writes nothing; that is the tree (`EXPLORE_SHRINK_STEP = 0.001`, cap 50). The campaign rule is three reviewers; this two-model quorum is already a recorded deviation. A third voice can vote. It cannot rewrite the adoption rule after seeing the data. Unanimity is what wrote the cap. The step stays until a spec I will sign passes, or the owner overrules.
+
+**Q4'''.** It retires the "only mixed-61" objection for the coarse-step *effect*. `quantity-expanded-74` had 273.671 mm of certified headroom and moved **+37.227 mm at 9/9** under D. That is not one-instance noise.
+
+It does not change Q3': still **(b)**. Gate0-stop, Round-2 FAIL, and `Cargo.toml` (no portfolio route until that gate passes) are unchanged. Two unsaturated fixtures do not put this engine on a production request. They make `--shrinkstep=0.032` the honest 10 s CLI recipe. Default stays 0.001. Held-out transfer of a post-selected number is still that number.
+
+**Q5'''.** **70.** Strongest against: Sol passed every clause on unused seeds with a second fixture at +37 mm 9/9, and the product is ten seconds. I was wrong that 200 beats 50. I am not wrong that 15 s is where a coarse constant stops being free (C stuck ~161.7 mm; A has caught up to 164.0). Next: nothing on the step. Do not re-scope `0.02`. Do not rerun D. Wait for ox-alpha or stop.
+
+## Round 4 brief, for the record
+
+# Round 4: the signed round is run. One specification passed, one failed.
+
+Both specifications from round 3 were transcribed into
+`docs/quorum/ics-schedule-round-spec.md`, **committed and pushed before the
+first cell ran**, and executed verbatim. Seeds 18-26, ratio 0.80, 8 workers,
+`--orders=1`, exact 5.0/5.0, one fresh process per cell. Statistic as Grok
+specified: per-seed median of the repetitions, then median and worst of those
+nine, paired against the control.
+
+## `ICS-10s-coarse-v1` - Sol - arm D (`step 0.032`, cap none) - **PASS, all clauses**
+
+Better control by Sol's rule is A (`0.001`, cap 50): median 164.758 against B's
+169.363.
+
+| # | clause | required | measured | |
+| --- | --- | ---: | ---: | :---: |
+| 1 | mixed-61 paired median improvement | >= 4.000 mm | **+4.983** | PASS |
+| 2 | mixed-61 per-seed median wins | >= 8/9 | **9/9** | PASS |
+| 3 | mixed-61 absolute median | <= 161.000 mm | **159.953** | PASS |
+| 4 | mixed-61 worst per-seed regression | <= 1.000 mm | **0.000** | PASS |
+| 5 | quantity-74 paired median | >= 3.000 mm | **+37.227** | PASS |
+| 5 | quantity-74 wins | >= 6/9 | **9/9** | PASS |
+| 5 | quantity-74 worst regression | <= 1.000 mm | **0.000** | PASS |
+| 6 | shapes-17 median regression | <= 0.050 mm | **+0.003** | PASS |
+| 6 | triangle-20 median regression | <= 0.050 mm | **+0.002** | PASS |
+| 7 | invalid publications | 0 | **0** | PASS |
+| 7 | request-relative p95 | <= 10.250 s | **10.007** | PASS |
+
+## `ICS-OPEN-02` - Grok - arm C (`step 0.02`, cap 50) vs A - **FAIL**
+
+| wall | invalid | paired median (>= 3.0) | wins (>= 7/9) | worst better (>= 2.0) | |
+| ---: | ---: | ---: | ---: | ---: | :---: |
+| 7 s | 0 | **+6.054** | **9/9** | **+5.432** | PASS |
+| 10 s | 0 | **+3.301** | 8/9 | **+2.185** | PASS |
+| **15 s** | 0 | **+2.796** | 9/9 | +2.879 | **FAIL** |
+
+Transfer on the certified fixture: candidate median **-16.615 mm** against the
+control, requirement "no worse than +1.0". Passes with room.
+
+**One clause, at one wall, short by 0.204 mm.** Your refusal condition is *"if
+any wall misses a clause"*. I have not reported it as nearly met and I am not
+asking for it to be.
+
+## What has been written
+
+Only the change both of you ratified in round 3, which was outside this round:
+`Pacer::Wall::iteration_cap` now defaults to **50**. `--itercap=0` still means
+unbounded so every pre-ratification replay reproduces; the benchmark overrides
+the knob only when the flag is named. Four pinned gates `ALL_PASS`; 839 and
+1,104 tests pass. No step has been written. `EXPLORE_SHRINK_STEP` is `0.001`.
+
+## Ballot
+
+**Q1'''. Sol - do you claim the write?** Your specification passed every clause
+you wrote, on virgin seeds, with a second unsaturated fixture at +37.227 mm and
+9/9. The round's own adoption rule says a PASS of your clauses records that it
+would have passed and does not license `0.032` over Grok's categorical refusal.
+Say whether you accept that, or whether you consider a passed signed
+specification to be authority on its own.
+
+**Q2'''. Grok - confirm the refusal.** Your own condition is met for refusal.
+Confirm, or identify an error in how the clause was evaluated. Separately: the
+`15 s` miss is the wall furthest from the ten-second SLA, and your own round-3
+text authorised only what all three walls carried. Does a `0.02` specification
+scoped to `{7 s, 10 s}` exist, or is re-scoping after a FAIL exactly the move
+your rule forbids?
+
+**Q3'''. The deadlock.** Two of three reviewers; ox-alpha still returns
+`UnknownError` from the provider. Sol's specification passed and Grok vetoes its
+value. What resolves a 1-1 split - does the campaign rule require unanimity, a
+third voice before anything is written, or is a passed pre-committed
+specification self-executing?
+
+**Q4'''. The second fixture.** Both of you named the absence of a second
+unsaturated instance as the strongest argument against your own position.
+`quantity-expanded-74` has 273.671 mm of certified headroom and moved
+**+37.227 mm at 9/9**. Does that retire that objection, and does it change your
+Q3' disposition on promoting ICS?
+
+**Q5'''. Confidence**, and what you would run next.
+
+Under 700 words.

@@ -190,3 +190,67 @@ rule says a PASS records what would have happened rather than licensing it.
 That is a 1-1 split on a two-model quorum, with the third reviewer down
 provider-side. It is put to both in round 4 rather than resolved by the
 proposer.
+
+---
+
+# Correction: my scoring of Grok's clause 4 was looser than his specification
+
+Grok audited the evaluation rather than accepting the table, and found that I
+scored one of his own clauses in the direction that flattered his candidate.
+
+The specification's statistic is his: *"per-seed median of five; then median and
+worst of those nine, paired versus control."* I read clause 4 - *"worst >= 2.0
+mm better"* - as the difference of the two arms' **worst absolute** values. It
+should be the **worst paired** seed: the minimum over the nine of
+`A_seed - C_seed`. Recomputed from the raw cells:
+
+| wall | my reading, `worst(A) - worst(C)` | the specification's, `min(A - C)` over seeds | clause 4 |
+| ---: | ---: | ---: | :---: |
+| 7 s | +5.432 | **+0.751** | **FAIL** |
+| 10 s | +2.185 | **-0.518** | **FAIL** |
+| 15 s | +2.879 | +2.088 | PASS |
+
+So `ICS-OPEN-02` fails at **all three walls**, not one. Grok's own words: *"a
+scoring choice on a non-failing column does not save it ... I do not need that
+stricter reading. The 15 s paired-median miss is enough."*
+
+The verdict does not change. What changes is that the record should not carry a
+scoring error in the proposer's favour, and the reviewer who caught it is the
+one it favoured.
+
+# Where round 4 leaves it
+
+**Neither reviewer claims the write.** Sol: *"I do not claim a unilateral write
+... I accepted that adoption rule before execution; therefore the PASS is not
+self-executing in this particular round."* Grok: *"I do not claim Sol's write. I
+do not contest the table. D vs the better control is real. The constant does not
+move."*
+
+Both refuse a `{7 s, 10 s}` re-scope of `ICS-OPEN-02`. Sol: *"extracting it from
+this battery would violate the rule that made the result credible."* Grok:
+*"re-scoping after a FAIL is the move the signed document forbids."*
+
+Both agree the second-instance objection is retired: `quantity-expanded-74`,
+273.671 mm of certified headroom, **+37.227 mm at 9/9**. Sol moves from
+"interesting contender" to "production-integration candidate". Grok holds at
+research-only, on the grounds that two unsaturated fixtures do not put the
+engine on a production request while the Gate-0 stop and the `Cargo.toml`
+portfolio bar stand.
+
+They differ on what breaks the 1-1 split, and both name the same two exits:
+
+- **Sol:** obtain the third voice - ox-alpha, or *"a prospectively appointed
+  independent replacement if that provider remains unavailable"* - and write
+  nothing meanwhile. *"The owner must not silently invent either majority or
+  unanimity after seeing the result."*
+- **Grok:** *"A 1-1 writes nothing; that is the tree."* A third voice may vote
+  but *"cannot rewrite the adoption rule after seeing the data"*. *"The step
+  stays until a spec I will sign passes, **or the owner overrules**."*
+
+ox-alpha was retried at the close of round 4 and still returns
+`UnknownError / Unexpected server error` (`ref err_6fcbf28f`).
+
+**Nothing further is written by the proposer.** The two live routes are a
+prospectively appointed third reviewer, or an explicit owner decision - and by
+Sol's clause the second must be explicit, on the record, and not dressed as a
+majority.
