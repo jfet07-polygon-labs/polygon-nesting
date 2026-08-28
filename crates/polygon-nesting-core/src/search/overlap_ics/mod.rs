@@ -3895,19 +3895,55 @@ pub mod publish_census {
     }
 }
 
-/// **The wall iteration cap, process-level.** `0` is unbounded, which is what
-/// wall mode has always been. One cell per process, so a switch beside the code
-/// it switches is simpler than a field through `IcsConfig`, every test literal
-/// and the checkpoint reconstructor.
+/// **The bound wall mode never had.**
+///
+/// `Pacer::Wall::iteration_cap()` returned `None` from the day it was written,
+/// so on a hard bite one `separate` call consumed 800-1,400 master iterations
+/// and a ten-second budget bought about one attempt at it. The pool restore and
+/// the Algorithm-12 disruption happen only *between* attempts, so at the
+/// production budget the whole escape mechanism this campaign built and
+/// verified was never switched on. The fixed-work pacer has always had this
+/// bound (`iterations_per_separation`); the wall pacer simply did not.
+///
+/// **Ratified unanimously by the quorum of 2026-08-28**
+/// (`docs/quorum/schedule-defaults-ballot.md`, round 3) after the held-out
+/// factorial refuted the alternative both reviewers had first proposed: on
+/// seeds 9-17 at the frozen step, `200` loses to `50` by 1.942 mm of paired
+/// median and 7.5 mm of worst case, and `200` on its own regresses on three of
+/// nine seeds. Sol: *"il mio voto per cap 200 e confutato"*. Grok: *"default
+/// `Pacer::Wall::iteration_cap = Some(50)`. Do not write 200."*
+///
+/// It is a pacer, not a quality lever, and it is isolated from fixed-work mode,
+/// so the four pinned identity gates do not read it.
+pub const DEFAULT_WALL_ITERATION_CAP: u64 = 50;
+
+/// The process-level override. [`UNNAMED`] means "nobody named it, take the
+/// default"; an explicit `0` means **unbounded**, which is what wall mode did
+/// before this and what every replay of the pre-ratification evidence needs.
+/// One cell per process, so a switch beside the code it switches is simpler
+/// than a field through `IcsConfig`, every test literal and the checkpoint
+/// reconstructor.
 static WALL_ITERATION_CAP: std::sync::atomic::AtomicU64 =
-    std::sync::atomic::AtomicU64::new(0);
+    std::sync::atomic::AtomicU64::new(UNNAMED);
+
+/// The sentinel for "not named by this process".
+const UNNAMED: u64 = u64::MAX;
 
 pub fn set_wall_iteration_cap(cap: u64) {
     WALL_ITERATION_CAP.store(cap, std::sync::atomic::Ordering::Relaxed);
 }
 
+/// Clears the override, so the default applies again. For tests that need to
+/// exercise both sides in one process.
+pub fn clear_wall_iteration_cap() {
+    WALL_ITERATION_CAP.store(UNNAMED, std::sync::atomic::Ordering::Relaxed);
+}
+
 pub fn wall_iteration_cap() -> u64 {
-    WALL_ITERATION_CAP.load(std::sync::atomic::Ordering::Relaxed)
+    match WALL_ITERATION_CAP.load(std::sync::atomic::Ordering::Relaxed) {
+        UNNAMED => DEFAULT_WALL_ITERATION_CAP,
+        named => named,
+    }
 }
 
 pub fn pose_bits_digest(poses: &[Pose]) -> [u8; 32] {

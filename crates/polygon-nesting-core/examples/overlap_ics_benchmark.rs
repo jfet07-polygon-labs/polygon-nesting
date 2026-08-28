@@ -2537,9 +2537,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // committed cell and every existing driver invocation runs the
             // trajectory it always ran.
             let arm = options.get("arm").unwrap_or("control").to_owned();
-            polygon_nesting_core::search::overlap_ics::set_wall_iteration_cap(
-                options.integer("itercap", 0)? as u64,
-            );
+            // Only when named. Absent, the engine's own default applies, so a
+            // bare cell measures the shipped pacer; `--itercap=0` is still the
+            // explicit unbounded arm every pre-ratification replay needs.
+            if let Some(value) = options.get("itercap") {
+                polygon_nesting_core::search::overlap_ics::set_wall_iteration_cap(
+                    value
+                        .parse()
+                        .map_err(|_| format!("--itercap: `{value}`"))?,
+                );
+            }
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
             homotopy::set_adaptive_step_ceiling(options.number("adaptivestep", 0.0)?);
             homotopy::set_adaptive_step_floor(options.number("adaptivefloor", 0.0)?);
