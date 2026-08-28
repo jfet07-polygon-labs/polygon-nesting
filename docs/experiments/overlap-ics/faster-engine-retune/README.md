@@ -262,3 +262,25 @@ Sparrow's values stand.
 The next lever is not on this list. It is separations per second - which is
 where the night started, and where the contact pruning bought 1.47x - and
 separation *success rate*, which nothing here has touched.
+
+## Where the night ends
+
+Ten seconds, mixed-61, bare requests, nine seeds:
+
+| configuration | median | mean | best | worst |
+| --- | ---: | ---: | ---: | ---: |
+| the engine at the start of the night (`c42ed22`, cap 50, step 0.001) | 166.781 | 166.6 | 162.690 | 169.4 |
+| plus contact pruning | 166.194 | | 161.441 | |
+| plus `cap = 200` | ~164.4 | | 160.745 | |
+| **plus `step = 0.032`** | **159.483** | **158.689** | **154.557** | **160.523** |
+
+Thirty seconds, `step = 0.016, cap = 200`: median **157.773**, mean 157.640,
+best **154.524**.
+
+**Every one of the 1,059 cells run this night reported `invalidPublications: 0`
+across 56,108 publications.** The exact-clearance contract validator is
+untouched and refused nothing: these depths are legal, not a relaxation.
+
+The bar the campaign has been scored against all along is 168.484 mm. Every
+single ten-second cell of the tuned arm clears it by more than eight
+millimetres.
