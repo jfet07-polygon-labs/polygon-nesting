@@ -166,3 +166,37 @@ fingerprint - so they pin the trajectory the current constants produce. Moving
 any of the three re-pins all four. That is a signed-gate decision with a quorum
 attached to it, and it is the next thing to put to the quorum rather than
 something to slip into a night's work.
+
+## Thirty seconds wants a *smaller* bite, and that closes the loop
+
+Nine seeds, bare thirty-second requests (`evidence/wall-30s-pair.json`):
+
+| step | cap | median | mean | best | worst |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| **0.016** | 200 | 157.773 | **157.640** | 154.524 | 160.585 |
+| 0.016 | 400 | 157.759 | 157.711 | 155.060 | **160.002** |
+| 0.032 | 200 | 159.010 | 157.949 | **154.406** | 160.216 |
+| 0.032 | 400 | 159.248 | 158.271 | 154.493 | 159.660 |
+
+At ten seconds `0.032` beat `0.016`; at thirty seconds it is the other way
+round. That is not noise, it is the mechanism stated backwards: the depth
+reached is `start * (1 - step)^n` where `n` is however many separations the wall
+pays for, so **the step that lands you at the floor is the one that gets you
+there in exactly `n` bites and no fewer**. Triple the wall and you want a finer
+bite, because a coarser one has already overshot into a width no separation can
+close and is spending the rest of the budget on retries.
+
+Which is the same sentence, one more time, about the same three constants:
+
+| budget | best step measured here |
+| --- | ---: |
+| 10 s | 0.032 |
+| 30 s | 0.016 |
+| **20 min (Sparrow Table 1, §11.3)** | **0.001** |
+
+Sparrow's `shrink_step` was never wrong. It is the twenty-minute end of a scale
+whose ten-second end is thirty-two times coarser, and this campaign inherited it
+along with `iter_no_imprv_limit`, `strike_limit` and the 80/20 split - four
+constants, all tuned on a twenty-minute clock, all applied to ten seconds
+without anyone asking whether they still meant the same thing. Three of the four
+have now moved under measurement.
