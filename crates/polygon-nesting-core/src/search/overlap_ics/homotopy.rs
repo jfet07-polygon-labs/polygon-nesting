@@ -232,6 +232,33 @@ pub fn adaptive_step_ceiling() -> f64 {
     }
 }
 
+/// **The adaptive-step floor, `0` for "the base step".**
+///
+/// The first spelling of the rule clamped the fall at the base step, which
+/// makes the rule purely *upward* from a small start: it can only grow, and it
+/// spends its first eight bites climbing out of a step that the constant sweep
+/// then showed was sixteen times too small. That is why its control beat it.
+///
+/// A floor below the base inverts the rule: start large, where the layout has
+/// headroom and a bite is absorbed without a retry, and let the halving take it
+/// down as the strip tightens. `0` keeps the original clamp, so the falsified
+/// arm stays reproducible.
+static ADAPTIVE_STEP_FLOOR: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_adaptive_step_floor(floor: f64) {
+    ADAPTIVE_STEP_FLOOR.store(floor.to_bits(), std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn adaptive_step_floor() -> f64 {
+    let value = f64::from_bits(ADAPTIVE_STEP_FLOOR.load(std::sync::atomic::Ordering::Relaxed));
+    if value > 0.0 && value < 1.0 {
+        value
+    } else {
+        0.0
+    }
+}
+
 /// The explore step after a bite, given whether it published on its first
 /// separation. `ceiling <= 0` returns `step` unchanged.
 #[inline]
@@ -239,10 +266,18 @@ pub fn adapt_explore_step(step: f64, base: f64, ceiling: f64, first_attempt: boo
     if !(ceiling > 0.0) {
         return step;
     }
+    let floor = {
+        let named = adaptive_step_floor();
+        if named > 0.0 {
+            named.min(base)
+        } else {
+            base
+        }
+    };
     if first_attempt {
         (step * ADAPTIVE_STEP_GROW).min(ceiling)
     } else {
-        (step * ADAPTIVE_STEP_FAIL).max(base)
+        (step * ADAPTIVE_STEP_FAIL).max(floor)
     }
 }
 

@@ -64,3 +64,54 @@ Per seed, best of the two repetitions:
 | `c42ed22` cap 50 | 160.815 | 166.089 | 161.223 | 160.622 | 165.530 | 164.001 | 164.016 | 161.825 | 159.704 |
 | pruned cap 50 | 160.379 | 162.624 | 160.423 | 159.002 | 164.001 | **159.265** | 164.001 | 161.287 | **158.703** |
 | pruned cap 100 | 159.002 | **159.745** | 160.972 | **158.921** | **162.481** | 162.866 | 164.002 | **159.319** | 159.591 |
+
+## The bite and the separation budget are one parameter in two halves
+
+`EXPLORE_SHRINK_STEP = 0.001` is Sparrow `config.rs`'s `shrink_step`, the third
+Table 1 constant this campaign inherited and the one the shrink-step round left
+alone because Sparrow's value held the best median. That round swept it at
+`cap = 50` on an engine running 138 master iterations per second, and read
+`0.0020` as the first setting that clearly loses:
+
+> 41 bites instead of 87, and each one **a bigger shock than a 50-iteration
+> separation can absorb**.
+
+That sentence is the whole result. It is not a statement about the bite; it is a
+statement about the *pair*. Ten seconds, nine seeds, two repetitions,
+`cap = 100`, eighteen cells per arm:
+
+| constant step | median | mean | best | worst | explore bites |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.001 (frozen) | 164.974 | 164.455 | 160.802 | | 106.1 |
+| 0.004 | 162.389 | 162.471 | 160.601 | 164.157 | 30.2 |
+| 0.008 | 160.590 | 161.648 | 159.490 | 165.799 | 16.2 |
+| **0.016** | **160.564** | **160.586** | 157.438 | **163.016** | 8.9 |
+| 0.024 | 161.411 | 161.007 | 157.710 | 161.982 | 6.1 |
+| 0.032 | 159.802 | 160.431 | 159.015 | 165.813 | 4.9 |
+| 0.048 | 164.601 | 163.237 | **157.030** | 165.502 | 3.2 |
+| 0.064 | 160.003 | 161.967 | 159.129 | 170.078 | 2.8 |
+
+**A hundred small bites became nine large ones, and the depth fell by four
+millimetres.** Every bite costs a separation whether it is 0.1 % or 1.6 % of the
+width, and a fixed wall buys a roughly fixed number of separations - so the
+depth reached is `start * (1 - step)^n`, and the only thing a smaller step buys
+is a smaller exponent base for the same `n`. The limit is that a larger bite is
+harder to separate; the optimum is where the extra retries eat the extra ground.
+
+Then move the other half. Step fixed at `0.016`:
+
+| cap | median | mean | best | worst | under 159 mm | explore bites | retries |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 50 | 163.137 | 162.663 | 159.496 | 165.662 | 0/18 | 8.0 | 19.1 |
+| 100 | 160.551 | 160.581 | 157.411 | 163.114 | 2/18 | 8.9 | 10.5 |
+| **200** | 160.015 | **159.498** | **155.613** | 163.241 | 6/18 | 9.3 | 6.1 |
+| **400** | **158.175** | 159.777 | 157.783 | 163.357 | **10/18** | 9.3 | 5.6 |
+| none | 160.546 | 160.535 | 157.750 | 163.386 | 6/18 | 9.0 | 5.6 |
+
+**`cap = 50` - the value the wall-cap round measured as the optimum, and it
+was - is now the worst arm on the board**, at 19 retries per run against 6. It
+was the optimum for a 0.1 % bite. At 1.6 % a separation cut off at 50 iterations
+has not finished the job and the retry does it again from a pool entry.
+
+`155.613 mm` in a bare ten-second request. The campaign's previous best anywhere,
+at any budget, was `159.079` - a fixed-work gate.
