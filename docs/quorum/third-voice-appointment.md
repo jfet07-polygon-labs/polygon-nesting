@@ -1,0 +1,82 @@
+# Prospective appointment of the third reviewer
+
+**Committed and pushed before any candidate is invoked.** That is the whole
+point of the document: the deciding voice is named by a rule fixed in advance,
+so nobody - least of all the proposer, who wants a particular answer - can be
+accused of having chosen the voter after seeing the vote.
+
+Sol, round 4: *"Ox-alpha - or a prospectively appointed independent replacement
+if that provider remains unavailable - must cast the deciding vote against the
+already frozen specification and evidence. The owner must not silently invent
+either majority or unanimity after seeing the result."*
+
+Grok, round 4: *"A third voice can vote. It cannot rewrite the adoption rule
+after seeing the data."*
+
+The owner was asked and chose this route over an owner overrule.
+
+## Why a replacement at all
+
+`ox-alpha` is the campaign's third seat. It has been unavailable for the whole
+of this quorum and was retried at the close of every round; the last attempt, at
+the close of round 4, returned `UnknownError / Unexpected server error`
+(`ref err_6fcbf28f`), as did the attempts at rounds 1 and 3 (`err_10fa293a`).
+The two-model quorum is already a recorded deviation. A 1-1 split writes
+nothing, so without a third seat the question is simply closed by default rather
+than decided.
+
+## Selection rule, fixed here
+
+1. **Independence.** The candidate must come from a model family **not already
+   represented in the quorum**. Sol is OpenAI/Codex and Grok is xAI, so
+   `opencode-go/gpt-*` and `opencode-go/grok-*` are excluded by rule, not by
+   preference.
+2. **Order of invocation**, fixed now and not to be reordered:
+
+   1. `opencode-go/kimi-k3`
+   2. `opencode-go/deepseek-v4-pro`
+   3. `opencode-go/qwen3.8-max`
+   4. `opencode-go/glm-5.3`
+   5. `opencode-go/minimax-m3`
+
+3. **First complete ballot wins the seat.** A ballot is *complete* iff it
+   returns a decision on every one of the four questions in
+   `third-voice-brief.md` - `Q1` through `Q4` - each identifiable as an answer
+   to that question. Anything else - a provider error, a refusal to answer, a
+   response that omits a question, a response that answers a different question -
+   is incomplete, and the next candidate in the order is invoked.
+4. **No shopping.** Once a candidate returns a complete ballot, **no later
+   candidate is invoked**, whatever the ballot says. Earlier candidates are not
+   retried. The transcript of every invocation, including the failures, is
+   recorded verbatim.
+
+## What the third voice may decide, and what it may not
+
+It votes on one question: **does `EXPLORE_SHRINK_STEP` move to `0.032` as the
+ten-second wall profile of the ICS engine?**
+
+It may **not**:
+
+- re-score the signed round, whose clauses were fixed before its first cell and
+  whose evaluation has already been audited and corrected once;
+- re-scope, amend or re-run either specification;
+- rewrite the adoption rule after seeing the data (Grok's constraint, which the
+  proposer accepts as binding on the appointment);
+- propose a third value of the step. Only `0.032` is on the ballot, because only
+  `0.032` has a passed specification behind it.
+
+## Resolution
+
+- **Third voice with Sol** (write `0.032` as the ten-second profile): 2-1, and
+  it is written - as the ten-second wall profile only, never as a thirty-second
+  default where `0.016` is the better datum, with `--shrinkstep` retained so
+  every pre-ratification replay reproduces.
+- **Third voice with Grok** (refuse): 2-1, nothing is written,
+  `EXPLORE_SHRINK_STEP` stays `0.001`, and `--shrinkstep=0.032 --itercap=0`
+  remains the documented ten-second CLI recipe.
+- **Third voice declines to break the tie**: that is a complete ballot only if it
+  answers Q1 with an explicit abstention *and* answers Q2-Q4. An abstention
+  leaves 1-1, and nothing is written.
+
+Already written and outside this appointment: `Pacer::Wall::iteration_cap`
+defaults to `50`, ratified unanimously in round 3.
