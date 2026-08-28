@@ -437,3 +437,190 @@ held-out seeds for the concession clause to be decidable.
 `general_request_benchmark` already exposes `relaxed-initial-shrink-ratio`
 positionally: sweep it over `{0.001, 0.02, 0.032}`, 9 seeds x 3, and see whether
 `0.001` loses. Grok predicts it does, and that `0.02 ~ 0.032`.
+
+---
+
+# Round 3: the two ordered measurements, and the ruling on the freeze
+
+Both measurements the reviewers ordered in round 2 were run as specified and
+are reproduced in `docs/experiments/overlap-ics/holdout-and-head-to-head/`.
+They disagreed with the round-2 votes, which is why round 3 exists.
+
+## Sol, round 3 (verbatim)
+
+**Q1''. Sì, ma non si “solleva” retroattivamente.** Il freeze resta vero per il member chiuso: il suo FAIL non può essere ricalcolato con `0.032`. La via legittima è una nuova specifica, un nuovo nome di member e dati ancora vergini. Lo stesso record distingue una “different homotopy” come proposta separatamente finanziabile; §4.4 vieta il rescue post-risultato, non ogni esperimento futuro. I seed 9–17 ora sono evidenza esplorativa consumata: non possono approvare il cambiamento.
+
+**Q2''. Il mio voto per cap 200 è confutato.** A `step=0.032`, `200` vale **+0.008 mm / 5 su 9** rispetto a `None`: zero valore misurabile. A `step=0.001`, invece, `50` batte `200` di **1.942 mm**, con una coda molto migliore; `200` non è un default autonomo. La lettura corretta è condizionale:
+
+- profilo legacy `0.001`: cap **50** è un utile limite anti-tail;
+- profilo coarse `0.032`: cap **None**; `200` è complessità senza beneficio;
+- nessun cap universale.
+
+**Q3''. Rafforza, non inverte, la mia disposizione (a)—ma solo per il member coarse.** L’ICS faithful perde dal shipped di 3.081 mm e non merita integrazione. `0.032/None` è invece sostanzialmente equivalente al `0.032/200` misurato e quest’ultimo batte lo shipped di **6.893 mm, 9/9**. Quindi promuoverei verso produzione esclusivamente `ICS-10s-coarse`, inizialmente come contender feature-gated; non l’ICS corrente e non ancora come sostituto predefinito.
+
+**Q4''. Specifica pre-committibile: `ICS-10s-coarse-v1`.**
+
+Configurazione congelata:
+
+- treatment: `step=0.032`, wall cap `None`, ratio `0.80`;
+- controlli: `step=0.001/cap=None` e il più forte legacy `step=0.001/cap=50`;
+- 10.000 s bare-request, 8 worker, `orders=1`, exact 5.0/5.0;
+- nessun altro knob, nessun retune dopo il primo risultato.
+
+Popolazioni:
+
+- mixed-61: seed **18–26**, cinque ripetizioni, processi freschi, ordine AB/BA;
+- `quantity-expanded-74-request.json`: seed 18–26, tre ripetizioni;
+- shapes-17 e triangle-20: seed 18–26, tre ripetizioni, solo transfer floor.
+
+Gate 0: `quantity-expanded-74` deve avere, col migliore controllo legacy, mediana almeno **20 mm sopra un lower bound certificato**. Se non la ha, il round è invalido e non si sostituisce la fixture.
+
+PASS, tutto obbligatorio:
+
+- mixed-61: treatment migliora di **≥4.000 mm** la mediana appaiata contro il migliore dei due controlli; vince su **≥8/9** mediane per-seed; mediana assoluta **≤161.000 mm**; nessuna regressione per-seed >1.000 mm;
+- quantity-74: miglioramento appaiato **≥3.000 mm**, vittorie **≥6/9**, nessuna regressione per-seed >1.000 mm;
+- shapes-17 e triangle-20: regressione mediana ≤0.050 mm;
+- zero pubblicazioni invalide e p95 request-relative ≤10.250 s.
+
+FAIL di una clausola: `0.032` resta override sperimentale, non diventa profilo ICS né contender produttivo; nessuna seconda scelta di step/cap nello stesso round. Un PASS autorizza soltanto il profilo wall da 10 s—non un default per 30 s, dove `0.016` resta il miglior dato.
+
+**Q5''. Confidenza: 95/100.** Argomento contrario più forte: tutti i grandi guadagni provengono ancora da una sola istanza non satura; anche nuovi seed mixed-61 non sono un holdout di geometria. Se `quantity-expanded-74` non offre headroom o non trasferisce, il risultato è tuning d’istanza molto ben replicato, non una politica produttiva.
+
+## Grok, round 3 (verbatim)
+
+I'll ground this round in the freeze language, the held-out numbers, and the shipped-path evidence rather than restating the round-2 vote.The freeze text and the holdout table are the two things that decide this; I'll read those next.The freeze text has no exception; I’ll check Gate0, the wall-cap evidence, and whether a signed-gate lift is even a thing this campaign has used.**Q1''.** A later specification, committed before the next cell, can lift a freeze. This table cannot. Review 12 §4.4 has no exception because the exception *is* the rescue: 3 % (or any %) substituted for 0.1 % after seeing a number. Held-out confirmation of a post-selected `0.032` is still that number. A mixed-61 10 s gate that names it cannot fail on the quantity that chose it; seeds 18–26 on the same fixture and budget are confirmation.
+
+I will not author a `0.032` spec. If that is the only lift on offer, then **no**, and the default stays the Sparrow identity. That is not a hostage. `--shrinkstep=0.032 --itercap=200` exists. Faithful-worse-than-shipped is the experimental result, not a reason to rewrite Table 1.
+
+The route I will sign is **`0.02`**: the shipped `initial_shrink_ratio`, independently motivated, not in the ICS factorial.
+
+**Q2''.** **50**, at the frozen step. Concession settled against my prediction: `(0.001, 200)` loses to `(0.001, 50)` on median (−1.942 mm) and worst (176.151 vs 168.621), 4/9, and regresses versus unbounded on 3/9. Cap 50 kills the 179 mm Algorithm-12 tail and ties shipped (+1.101 mm, 5/9). That is the product value: a pacer, not a quality lever. At `0.032` the cap is idle (+0.008 mm, 5/9 vs none) and 50 is harmful. Sol’s 200 is the idle companion of a step I will not write, and it is the stand-alone arm that hurts a third of the holdout. Default `Pacer::Wall::iteration_cap = Some(50)`. Do not write 200.
+
+**Q3''.** No. Still **(b)**. Losing by 3 mm at Table 1 is the diagnosis: ICS lacks the 2 % opening this repository already ships. That is a reason not to promote the engine. The 9/9 +6.893 mm column is the rescue’s payoff; (a) with `0.032/200` writes it. Both Q2' directional predictions held on the pinned tail (`0.001` loses, `0.02 ≈ 0.032`); the 9 mm ICS effect did not transfer. `overlap-ics` is Gate0-stopped; the Round-2 gate failed; `Cargo.toml` still bars a portfolio route. Document the pair as the 10 s CLI recipe. Default cap 50, step 0.001.
+
+**Q4''.** **ICS-OPEN-02.** Candidate: `EXPLORE_SHRINK_STEP = 0.02`, cap 50 (shipped opening + holdout pacer). Control: `0.001` / 50.
+
+- `overlap_ics_benchmark --cell=cutclose`, mixed-61 exact 5.0/5.0, 8 workers, `--orders=1`, one fresh process per cell.
+- Walls **7.000, 10.000, 15.000** s.
+- Seeds **18–26** × 5 (unused).
+- Transfer: one request ∉ {mixed-61, shapes-17, triangle-20}, first certified ≥20 mm headroom at 10 s under the control, then 9×3 at 10 s. **No such request ⇒ cannot PASS.** Saturated fixtures reporting-only.
+- Statistic: per-seed median of five; then median and worst of those nine; paired versus control.
+- PASS at each wall: `invalidPublications = 0`; candidate ≥3.0 mm better paired median; wins ≥7/9; worst ≥2.0 mm better.
+- Transfer: candidate median versus control no worse than 1.0 mm.
+- **Refuse the write after the run if** any wall misses a clause, transfer is missing or regresses >1.0 mm, or any invalid.
+
+I will not specify a `0.032` lift. The 30 s inversion is already in (`0.032/200` median 159.010 vs `0.016/200` 157.773). A 10 s-only gate would pass and I would still refuse.
+
+Default cap 50 on the holdout already in. No further cap cell.
+
+**Q5''.** **64.** Strongest against: 9/9 held-out, +6.893 mm versus shipped, 0 invalids, and that configuration stays behind a flag because mixed-61 selected it. If the product is ten seconds and no second unsaturated fixture appears, this vote wastes the next week. I was wrong that 200 would beat 50 at the frozen step.
+
+## Round 3 brief, for the record
+
+# Round 3: your two ordered measurements are in, and they disagree with your votes
+
+Neither of you had these numbers. Both were run exactly as specified. I am not
+asking you to like the result; I am asking you to rule on it.
+
+## 1. Sol's pre-committed factorial, HELD-OUT seeds 9-17, five repetitions, ratio 0.80
+
+45 cells per arm, mixed-61 exact 5.0/5.0, 8 workers, one fresh process per cell.
+Seeds 0-8 were discovery; these nine were never used to choose anything.
+I added the `cap 50` arms so Grok's concession clause is decidable.
+
+| cap | step | median | mean | best | worst |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| none | 0.001 (**the real defaults**) | 169.221 | 171.791 | 162.799 | 179.082 |
+| **50** | 0.001 | **165.287** | **165.445** | 163.053 | **168.621** |
+| 200 | 0.001 | 166.961 | 167.443 | 161.376 | 176.151 |
+| none | 0.032 | 159.480 | **158.941** | **154.108** | **160.304** |
+| 50 | 0.032 | 164.245 | 163.131 | 159.000 | 170.550 |
+| 200 | 0.032 | 159.297 | 158.966 | 154.582 | 160.305 |
+
+Decomposed, paired, per seed:
+
+- **at step 0.032, cap 200 vs cap none is worth `+0.008 mm` and wins 5/9.** The
+  cap does essentially nothing once the step is coarse.
+- **at cap 200, step 0.032 vs 0.001 is worth `+9.060 mm` and wins 9/9.**
+- **cap 200 alone regresses on 3 of 9 held-out seeds** (`-2.160`, `-2.337`,
+  `-4.697`).
+
+**Grok's concession clause is settled, against Grok's prediction and against
+Sol's vote.** `(0.001, 200)` vs `(0.001, 50)`: paired median **-1.942 mm**, wins
+**4/9**, median 166.961 vs 165.287, worst **176.151 vs 168.621**. Cap 200 is
+*worse* than cap 50 at the frozen step, on both required columns. Grok's other
+prediction holds: `(0.032, 50)` loses badly (163.131 mean, 170.550 worst).
+
+So the quorum approved the change that does nothing on top of the step, and
+whose stand-alone version hurts a third of held-out seeds.
+
+## 2. Grok's head-to-head against the shipped engine, matched ~10 s wall
+
+`general_request_benchmark`, bare request (no pinned parent, mode 0), mixed-61
+exact 5.0/5.0, 8 workers, `initial_shrink_ratio = 0.02`, work parameters
+calibrated to the wall: `relaxed-epochs 36, sweeps 160, refinement 8` gives mean
+**10.56 s** (max 12.97 - the shipped path has no deadline, it is
+work-parameterised). Same held-out seeds 9-17, three repetitions.
+
+| arm | median | mean | best | worst | paired vs shipped | wins |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **SHIPPED `general_relaxed`** | 165.904 | 166.713 | 162.847 | 170.666 | - | - |
+| ICS at its real defaults | 169.221 | 171.791 | 162.799 | 179.082 | **-3.081** | 3/9 |
+| ICS cap 50, step 0.001 (**what you approved**) | 165.287 | 165.445 | 163.053 | 168.621 | **+1.101** | 5/9 |
+| ICS cap 200, step 0.032 (**what you refused**) | 159.297 | 158.966 | 154.582 | 160.305 | **+6.893** | **9/9** |
+
+Read that column three times if you like. **ICS at its own faithful defaults is
+worse than the engine this repository already ships.** The change you approved
+brings it to a coin flip. The change you refused is the only thing that makes it
+win, and it wins on every held-out seed.
+
+## 3. Grok's shipped-path falsifier: both predictions confirmed
+
+`relaxed-initial-shrink-ratio` swept on the shipped engine, 9 seeds, everything
+else at the pinned tail:
+
+| shrink | median depth | wall |
+| ---: | ---: | ---: |
+| 0.001 | **181.601** | 1.50 s |
+| 0.005 | 179.821 | 1.96 s |
+| 0.02 | 179.887 | 2.63 s |
+| 0.032 | 180.488 | 2.78 s |
+
+`0.001` loses by ~1.8 mm; `0.02 ~ 0.032`. Grok predicted exactly this, both
+halves. The mechanism is confirmed on an engine that shares none of ICS's
+operators.
+
+Also: `relaxed-failed-attempts-per-depth` at 1, 8 and 32 gives byte-identical
+depth (164.172). The shipped path's retry knob is inert.
+
+## The question, and it is not "does the evidence justify it"
+
+I am not going to argue that held-out evidence dissolves a pre-registered
+freeze. `grok-review-12` §4.4 does not have an exception clause and I verified
+it in the tree. So:
+
+**Q1''. Does a pre-registered forbidden rescue admit *any* route to being
+lifted?** If yes, name it. The obvious candidate is the campaign's own
+machinery: pre-commit a specification with clauses, budgets, holdout seeds and
+transfer floors *before* the next run, and let that signed gate move the
+constant, rather than this evidence. If no, say so plainly and accept that ICS
+is then permanently pinned to a configuration measured worse than the shipped
+engine.
+
+**Q2''. Given cap 200 is worse than cap 50 at the frozen step and worth nothing
+at the coarse step, what is the wall cap's actual value?** Sol: your 200 is
+refuted on the holdout. Grok: your 50 is confirmed, but it only buys a tie with
+the shipped engine.
+
+**Q3''. Does "ICS defaults lose to the shipped engine by 3 mm" change your Q1'
+disposition?** Sol voted (a) promote as contender; Grok voted (b) research-only.
+
+**Q4''. Write the specification.** If either of you thinks a signed gate is the
+route, give me its clauses now - instance(s), budget(s), seeds, repetitions,
+statistic, threshold, transfer floor, and the failure condition that would make
+you refuse the step *after* the run. I will run whatever you specify, verbatim,
+before touching a constant.
+
+**Q5''. Confidence** and the strongest argument against your own position.
+
+Under 800 words.
