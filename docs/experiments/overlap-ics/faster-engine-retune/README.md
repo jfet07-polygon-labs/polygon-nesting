@@ -115,3 +115,54 @@ has not finished the job and the retry does it again from a pool entry.
 
 `155.613 mm` in a bare ten-second request. The campaign's previous best anywhere,
 at any budget, was `159.079` - a fixed-work gate.
+
+## The pair, refined, and confirmed on a third repetition
+
+Nine seeds, **three** repetitions, twenty-seven bare ten-second requests per arm
+(`evidence/step-cap-pair.json`):
+
+| step | cap | median | mean | best | **worst** |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.016 | 200 | 159.968 | 159.493 | 155.586 | 163.268 |
+| **0.032** | **200** | **159.483** | **158.689** | **154.557** | **160.523** |
+
+The second row is the one to read for the *worst* column as much as the best:
+**every one of twenty-seven bare ten-second requests came back under 160.6 mm.**
+Where the night started - `cap = 50, step = 0.001` on the axis-cache engine -
+the same twenty-seven cells had a median of 166.78 and a worst of 169.4.
+
+## The transfer test
+
+The severe test against "you tuned it on your own fixture" is the two corpus
+fixtures that were never looked at while the pair was found. Nine seeds, ten
+seconds, `frozen` is `cap = 50, step = 0.001`:
+
+| fixture | arm | median | best | worst | certified lower bound |
+| --- | --- | ---: | ---: | ---: | ---: |
+| shapes-17 | frozen | 200.350 | 200.348 | 200.350 | 200.347 |
+| shapes-17 | **tuned** | 200.351 | **200.347** | 200.353 | 200.347 |
+| triangle-20 | frozen | 70.251 | 70.250 | 70.254 | 70.250 |
+| triangle-20 | **tuned** | 70.254 | 70.251 | 70.263 | 70.250 |
+
+Neutral on shapes-17, whose best cell now lands **on** the certified bound, and
+**3 um worse in the median on triangle-20**, worst case 9 um. Both fixtures are
+solved to within thirteen micrometres of a bound the request certifies as
+unreachable-below, so there is nothing there to win and the honest reading is
+the same one the wall-cap round arrived at: the tuning helps where there is
+headroom and is neutral-to-noise where there is not. The 3 um is reported
+because it is a regression, small and on a saturated instance, and not rounding
+it to "neutral" is the whole point of running the test.
+
+## What this is not
+
+**The defaults are unchanged and a bare request does not get any of this.**
+`EXPLORE_SHRINK_STEP` is still `0.001`, `DEFAULT_EXPLORE_TIME_RATIO` still
+`0.8`, and `Pacer::Wall`'s iteration cap still `0`. Every number above is a
+`--shrinkstep / --exploreratio / --itercap` override.
+
+That is deliberate and it is the open decision, not an oversight. The four
+pinned regression gates are **identity** gates - a raw depth *and* a placement
+fingerprint - so they pin the trajectory the current constants produce. Moving
+any of the three re-pins all four. That is a signed-gate decision with a quorum
+attached to it, and it is the next thing to put to the quorum rather than
+something to slip into a night's work.
