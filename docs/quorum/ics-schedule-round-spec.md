@@ -125,3 +125,68 @@ missing or regresses by more than 1.0 mm, or if any publication is invalid.
 Choose a different step or cap after seeing this round; re-run a failing arm
 with a different seed set; substitute a fixture; report a clause as "nearly
 met"; or read a PASS of one specification as authority for the other's value.
+
+---
+
+# Result of the round
+
+Run verbatim after this document was committed and pushed. Raw depths in
+`evidence/signed-round.json`.
+
+## `ICS-10s-coarse-v1` (Sol) - arm D, `step 0.032`, cap none - **PASS, every clause**
+
+Better control by Sol's rule is A (`0.001`, cap 50), median 164.758 against B's
+169.363.
+
+| # | clause | required | measured | |
+| --- | --- | ---: | ---: | :---: |
+| 1 | mixed-61 paired median improvement | >= 4.000 mm | **+4.983** | PASS |
+| 2 | mixed-61 per-seed median wins | >= 8/9 | **9/9** | PASS |
+| 3 | mixed-61 absolute median | <= 161.000 mm | **159.953** | PASS |
+| 4 | mixed-61 worst per-seed regression | <= 1.000 mm | **0.000** | PASS |
+| 5 | quantity-74 paired median | >= 3.000 mm | **+37.227** | PASS |
+| 5 | quantity-74 wins | >= 6/9 | **9/9** | PASS |
+| 5 | quantity-74 worst regression | <= 1.000 mm | **0.000** | PASS |
+| 6 | shapes-17 median regression | <= 0.050 mm | **+0.003** | PASS |
+| 6 | triangle-20 median regression | <= 0.050 mm | **+0.002** | PASS |
+| 7 | invalid publications | 0 | **0** | PASS |
+| 7 | request-relative p95 | <= 10.250 s | **10.007** | PASS |
+
+## `ICS-OPEN-02` (Grok) - arm C, `step 0.02`, cap 50, against A - **FAIL**
+
+| wall | invalid | paired median (>= 3.0) | wins (>= 7/9) | worst better (>= 2.0) | |
+| ---: | ---: | ---: | ---: | ---: | :---: |
+| 7 s | 0 | +6.054 | 9/9 | +5.432 | PASS |
+| 10 s | 0 | +3.301 | 8/9 | +2.185 | PASS |
+| **15 s** | 0 | **+2.796** | 9/9 | +2.879 | **FAIL** |
+
+Transfer on the certified fixture: candidate median **-16.615 mm** against the
+control, against a requirement of "no worse than +1.0". Passes with room.
+
+**One clause, at one wall, short by 0.204 mm.** Grok's refusal condition is
+"refuse the write after the run if any wall misses a clause". It is not reported
+as nearly met, it is not re-scoped to the two walls that carried it, and the
+round is not re-run with a different seed set - all three are on the list of
+things this document forbids the proposer to do.
+
+## What was written
+
+Nothing from this round. `EXPLORE_SHRINK_STEP` remains `0.001`.
+
+The only default that moved is the one both reviewers ratified in round 3,
+outside this round: `Pacer::Wall::iteration_cap` now defaults to **50**, with
+`--itercap=0` preserved as the explicit unbounded arm so every pre-ratification
+replay reproduces. Four pinned gates `ALL_PASS`; 839 `overlap-ics` and 1,104
+workspace tests pass.
+
+## The state this leaves
+
+A pre-committed specification passed every clause it wrote - on seeds that chose
+nothing, with a second fixture carrying 273.671 mm of certified headroom moving
+**+37.227 mm at 9/9** - and its value is still not written, because the other
+reviewer refuses that value categorically and the specification's own adoption
+rule says a PASS records what would have happened rather than licensing it.
+
+That is a 1-1 split on a two-model quorum, with the third reviewer down
+provider-side. It is put to both in round 4 rather than resolved by the
+proposer.
