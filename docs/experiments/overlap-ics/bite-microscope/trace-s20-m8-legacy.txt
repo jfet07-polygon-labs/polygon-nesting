@@ -1,0 +1,37 @@
+== s20-m8-legacy.json  margin 8 um  depth 164.005  exposure: complete: trigger bite 15 and the 3 explore bites after it
+
+-- bite 15 [trigger] 180.195 -> 180.015: 43 iterations, published True, cutMoved 34, initialPositive 16
+   stop published; iterations 43; end-of-sweep max violation (um) by zone: {'50-200': 8, '20-50': 16, '4-20': 14, '>200': 4, '<=4': 1}; first iteration with max<=50um: 4, <=20um: 14, <=4um: 43
+   evaluations all workers 685980, winner 87285; relocates per sweep median 8; order size median 8
+   distinct blocking rows 37; most persistent (rowId, iterations present): [(1832, 36), (5, 35), (382, 34), (381, 34), (2009, 32)]
+   relocates 339; nonzero fine-CD exits 282 (83%): exit max median 7.8 um, <=8um 147, 8-20 54, 20-50 47, >50 34
+     of which UNMOVED (local minimum of the weighted incident objective, any +- step worse): 108 (exit max median 5.4 um); MOVED then stopped by limits: 174 (exit max median 14.0 um)
+     moved exits: final translation step median 36.8 um (limit median 60 um), candidate pairs median 19.0
+   changed rows by other-endpoint status: {'later': 201, 'boundary': 78, 'visited': 176, 'absent': 37}; conflict BIRTHS (row went 0 -> positive) by status: {'boundary': 11, 'later': 23, 'visited': 28, 'absent': 37}
+
+-- bite 16 [after-1] 180.006 -> 179.826: 4 iterations, published True, cutMoved 35, initialPositive 20
+   stop published; iterations 4; end-of-sweep max violation (um) by zone: {'20-50': 1, '4-20': 2, '<=4': 1}; first iteration with max<=50um: 1, <=20um: 2, <=4um: 4
+   evaluations all workers 60262, winner 7513; relocates per sweep median 5.5; order size median 6.5
+   distinct blocking rows 10; most persistent (rowId, iterations present): [(124, 4), (1840, 4), (2013, 4), (1984, 2), (488, 2)]
+   relocates 29; nonzero fine-CD exits 17 (59%): exit max median 8.5 um, <=8um 7, 8-20 6, 20-50 3, >50 1
+     of which UNMOVED (local minimum of the weighted incident objective, any +- step worse): 1 (exit max median 7.8 um); MOVED then stopped by limits: 16 (exit max median 8.8 um)
+     moved exits: final translation step median 36.4 um (limit median 60 um), candidate pairs median 17.5
+   changed rows by other-endpoint status: {'later': 21, 'boundary': 11, 'absent': 3, 'visited': 9}; conflict BIRTHS (row went 0 -> positive) by status: {'boundary': 2, 'later': 4, 'absent': 3, 'visited': 1}
+
+-- bite 17 [after-2] 179.819 -> 179.639: 26 iterations, published True, cutMoved 35, initialPositive 18
+   stop published; iterations 26; end-of-sweep max violation (um) by zone: {'50-200': 7, '20-50': 13, '4-20': 5, '<=4': 1}; first iteration with max<=50um: 3, <=20um: 15, <=4um: 26
+   evaluations all workers 262987, winner 33332; relocates per sweep median 5.0; order size median 5.0
+   distinct blocking rows 14; most persistent (rowId, iterations present): [(2013, 26), (1840, 24), (124, 23), (488, 23), (1713, 15)]
+   relocates 130; nonzero fine-CD exits 92 (71%): exit max median 30.2 um, <=8um 21, 8-20 17, 20-50 39, >50 15
+     of which UNMOVED (local minimum of the weighted incident objective, any +- step worse): 23 (exit max median 8.2 um); MOVED then stopped by limits: 69 (exit max median 35.1 um)
+     moved exits: final translation step median 26.5 um (limit median 60 um), candidate pairs median 19
+   changed rows by other-endpoint status: {'boundary': 32, 'later': 75, 'visited': 63, 'absent': 19}; conflict BIRTHS (row went 0 -> positive) by status: {'absent': 19, 'boundary': 4, 'visited': 12, 'later': 5}
+
+-- bite 18 [after-3] 179.632 -> 179.452: 16 iterations, published True, cutMoved 35, initialPositive 23
+   stop published; iterations 16; end-of-sweep max violation (um) by zone: {'50-200': 9, '20-50': 4, '4-20': 2, '<=4': 1}; first iteration with max<=50um: 9, <=20um: 13, <=4um: 16
+   evaluations all workers 184129, winner 23183; relocates per sweep median 5.0; order size median 5.0
+   distinct blocking rows 18; most persistent (rowId, iterations present): [(2013, 15), (488, 14), (124, 12), (1840, 11), (1713, 10)]
+   relocates 91; nonzero fine-CD exits 54 (59%): exit max median 43.9 um, <=8um 6, 8-20 5, 20-50 29, >50 14
+     of which UNMOVED (local minimum of the weighted incident objective, any +- step worse): 8 (exit max median 46.7 um); MOVED then stopped by limits: 46 (exit max median 42.3 um)
+     moved exits: final translation step median 41.3 um (limit median 60 um), candidate pairs median 16.5
+   changed rows by other-endpoint status: {'later': 59, 'absent': 15, 'visited': 42, 'boundary': 26}; conflict BIRTHS (row went 0 -> positive) by status: {'later': 2, 'absent': 15, 'boundary': 4, 'visited': 12}
