@@ -42,14 +42,22 @@ pub fn pair_is_near(first: [f64; 4], second: [f64; 4], clearance: f64) -> bool {
 /// `depth_target_mm` is the locked strip `T`, not the sheet: the strip is a
 /// hard boundary of the objective, and the spec refuses `E + lambda * D`
 /// precisely so that the optimizer can never trade illegality against depth.
+///
+/// All four sides carry the opt-in proxy margin ([`super::proxy_margin_mm`],
+/// zero by default): the three physical edges are charged `edge + sag + m`,
+/// and the top aims `m` under both the strip and the sheet top. The top row
+/// *is* the depth, so a margin there makes the proxy target `T - m`; that is
+/// the intended cost of the mechanism (about `m` per stacked row), not an
+/// omission. The exact authority reads the contract and `T` themselves.
 #[inline]
 pub fn boundary_residuals(
     box_mm: [f64; 4],
     contract: &Contract,
     depth_target_mm: f64,
 ) -> [f64; 4] {
-    let physical = contract.physical_edge_clearance_mm();
-    let strip_top = depth_target_mm - contract.depth_top_inset_mm();
+    let margin = super::proxy_margin_mm();
+    let physical = contract.physical_edge_clearance_mm() + margin;
+    let strip_top = depth_target_mm - contract.depth_top_inset_mm() - margin;
     let sheet_top = contract.sheet_long_axis_mm - physical;
     [
         (physical - box_mm[0]).max(0.0),

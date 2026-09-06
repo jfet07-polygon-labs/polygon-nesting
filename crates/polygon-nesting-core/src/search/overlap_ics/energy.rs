@@ -264,11 +264,26 @@ pub fn measure_edges(
     rows
 }
 
+/// The clearance every proxy pair row is measured against: the contract's
+/// pair clearance plus the opt-in [`super::proxy_margin_mm`]. Zero margin by
+/// default, and `x + 0.0 == x` to the bit, so the frozen engine is unchanged.
+///
+/// One function on purpose: [`rebuild_all`] and [`rebuild_piece_rows`] must
+/// agree, `binary_close` bit-compares its table energy against the cold raw
+/// Phi, and the corpus oracle re-measures the same rows. A margin that only
+/// one of them saw would make Phi depend on which path last touched a row.
+/// The exact authority and the repair never read this; they read the
+/// contract.
+#[inline]
+pub fn proxy_pair_clearance_mm(contract: &Contract) -> f64 {
+    contract.pair_clearance_mm() + super::proxy_margin_mm()
+}
+
 /// Rebuilds **every** row from the geometry: the cold reconstruction the
 /// incremental cache is tested against.
 pub fn rebuild_all(state: &mut IcsState, contract: &Contract, work: &mut WorkVector) {
     let count = state.poses.len();
-    let clearance = contract.pair_clearance_mm();
+    let clearance = proxy_pair_clearance_mm(contract);
     for near in &mut state.near {
         near.clear();
     }
@@ -311,7 +326,7 @@ pub fn rebuild_piece_rows(
     work: &mut WorkVector,
 ) {
     let count = state.poses.len();
-    let clearance = contract.pair_clearance_mm();
+    let clearance = proxy_pair_clearance_mm(contract);
     // Zero every row this piece currently owns, and unlink it from the other
     // end. A row that was zero before and is zero now is never touched at all,
     // which is the whole point: it is the reaching that costs, not the value.

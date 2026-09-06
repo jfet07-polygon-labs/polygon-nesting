@@ -268,7 +268,9 @@ pub fn independent_score(
     target_depth_mm: f64,
 ) -> IndependentScore {
     let count = geometry.piece_rings.len();
-    let clearance = contract.pair_clearance_mm();
+    // The proxy clearance, margin included: this oracle re-measures Phi's
+    // rows and already shares `boundary_residuals` with it.
+    let clearance = super::energy::proxy_pair_clearance_mm(contract);
     let mut score = IndependentScore::default();
     for first in 0..count {
         for second in (first + 1)..count {
@@ -306,7 +308,7 @@ pub fn independent_incident(
     piece: usize,
 ) -> f64 {
     let count = geometry.piece_rings.len();
-    let clearance = contract.pair_clearance_mm();
+    let clearance = super::energy::proxy_pair_clearance_mm(contract);
     let mut total = 0.0;
     for other in 0..count {
         if other == piece {

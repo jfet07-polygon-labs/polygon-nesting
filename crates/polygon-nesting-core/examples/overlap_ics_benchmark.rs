@@ -2585,6 +2585,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             polygon_nesting_core::search::overlap_ics::set_publish_achieved(
                 options.integer("publishachieved", 0)? != 0,
             );
+            // Proxy margin: `--proxymargin=<um>` measures every proxy pair row
+            // against `pair + m` and every boundary against `edge + m` (the top
+            // aims `m` under `T`), so a proxy-zero state lies strictly inside
+            // the Exclusive kernel's region. Default 0; the default path is the
+            // frozen engine to the bit.
+            polygon_nesting_core::search::overlap_ics::set_proxy_margin_um(
+                options.integer("proxymargin", 0)?,
+            );
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
             homotopy::set_adaptive_step_ceiling(options.number("adaptivestep", 0.0)?);
             homotopy::set_adaptive_step_floor(options.number("adaptivefloor", 0.0)?);
@@ -3687,6 +3695,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // alone while changing no trajectory. Absence means off.
     if polygon_nesting_core::search::overlap_ics::publish_achieved() {
         document["publishAchieved"] = json!(true);
+    }
+    // Same rule: present exactly when the margin is on. Absence means zero.
+    let proxy_margin_um = polygon_nesting_core::search::overlap_ics::proxy_margin_um();
+    if proxy_margin_um != 0 {
+        document["proxyMarginUm"] = json!(proxy_margin_um);
     }
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());

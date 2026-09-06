@@ -914,6 +914,92 @@ fn the_strip_top_is_sag_less_while_the_sheet_edges_are_not() {
     assert!((rows[3] - 0.25).abs() < 1e-12, "sheet top row {rows:?}");
 }
 
+/// Restores the process-level proxy margin on every exit, including a panic,
+/// so a failing assertion cannot leak a margin into the tests sharing this
+/// process (the same shape as `PublishAchievedGuard`).
+struct ProxyMarginGuard;
+impl Drop for ProxyMarginGuard {
+    fn drop(&mut self) {
+        super::set_proxy_margin_um(0);
+    }
+}
+
+/// **The proxy margin, off and on.** Two 20 mm squares whose facing sides are
+/// exactly `pair clearance` (5.000 mm) apart, and one box sitting exactly on
+/// all four boundary thresholds.
+///
+/// Off (the default): the pair row and every boundary row are exactly zero.
+/// That is the state the proxy converges to today, and the one the Exclusive
+/// kernel reads as 4.999 mm - on seed 20 the kernel's first failing pair is
+/// short by a median 1 um while the proxy's own row on that pair is exactly
+/// zero in 100 of 219 cases (`firstPairKernelShortfallUm` /
+/// `firstPairProxyViolationUm`, `docs/quorum/ics-achieved-depth-v1-spec.md`,
+/// "Result").
+///
+/// On at 4 um: the same layout is 4 um in violation on the pair row (and the
+/// pair is in the near set) and 4 um on all four boundary rows, the physical
+/// sheet top included. A proxy-zero state therefore has every true pair
+/// distance `>= 5.004` and every edge residual `>= 0.004`: strictly inside
+/// the kernel's region, with room for the row repair to move.
+#[test]
+fn the_proxy_margin_charges_a_pair_at_the_clearance_and_all_four_edges_only_when_on() {
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    assert_eq!(super::proxy_margin_mm(), 0.0);
+    let fixture = Fixture::squares(2, 20.0);
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    assert_eq!(contract.pair_clearance_mm(), 5.0);
+    assert_eq!(contract.physical_edge_clearance_mm(), 5.0);
+    assert_eq!(contract.depth_top_inset_mm(), 5.0);
+    // Piece 0 occupies x in [10, 30]; piece 1 starts at x = 35: a gap of
+    // exactly 5.000 mm, the contract's pair clearance to the bit.
+    let poses = vec![pose_at(10.0, 10.0), pose_at(35.0, 10.0)];
+    let target = 100.0;
+    let on_threshold = [5.0, 5.0, settings.sheet_short_axis_mm - 5.0, target - 5.0];
+
+    // Off.
+    let (_, _, state) = state_of_poses(&fixture, poses.clone(), target);
+    let row = super::energy::pair_row(&state, 0, 1);
+    assert_eq!(
+        row.violation_mm, 0.0,
+        "a pair at exactly 5.000 mm is proxy-zero without a margin: {row:?}"
+    );
+    assert_eq!(super::energy::proxy_pair_clearance_mm(&contract), 5.0);
+    let rows = super::broad_phase::boundary_residuals(on_threshold, &contract, target);
+    assert_eq!(rows, [0.0; 4], "every side is exactly satisfied without a margin");
+
+    // On, one band.
+    super::set_proxy_margin_um(4);
+    let _guard = ProxyMarginGuard;
+    assert_eq!(super::proxy_margin_mm(), 0.004);
+    assert_eq!(super::energy::proxy_pair_clearance_mm(&contract), 5.004);
+    let (_, _, state) = state_of_poses(&fixture, poses, target);
+    let row = super::energy::pair_row(&state, 0, 1);
+    assert!(
+        (row.violation_mm - 0.004).abs() < 1e-12,
+        "the same pair is one margin in violation: {row:?}"
+    );
+    assert!(
+        state.near[0].contains(&1) && state.near[1].contains(&0),
+        "the near set follows the inflated clearance: {:?}",
+        state.near
+    );
+    let rows = super::broad_phase::boundary_residuals(on_threshold, &contract, target);
+    for (side, residual) in rows.iter().enumerate() {
+        assert!((residual - 0.004).abs() < 1e-12, "side {side} of {rows:?}");
+    }
+    // The physical sheet top carries the margin too, when it is the binding
+    // top.
+    let deep = [
+        on_threshold[0],
+        on_threshold[1],
+        on_threshold[2],
+        settings.sheet_long_axis_mm - 5.0,
+    ];
+    let rows = super::broad_phase::boundary_residuals(deep, &contract, 3000.0);
+    assert!((rows[3] - 0.004).abs() < 1e-12, "sheet top row {rows:?}");
+}
+
 /// The same split, one level up: `lower_scale_mm` is sag-aware and asymmetric.
 ///
 /// Sol review 15 §A.1 computes triangle-20's correct floor as

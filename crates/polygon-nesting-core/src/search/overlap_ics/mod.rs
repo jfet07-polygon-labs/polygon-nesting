@@ -4047,6 +4047,86 @@ pub fn publish_achieved() -> bool {
     PUBLISH_ACHIEVED.load(std::sync::atomic::Ordering::Relaxed)
 }
 
+/// **A proxy margin: the search targets strictly inside the Exclusive
+/// kernel's acceptance region.** Opt-in, in whole micrometres; `0` (the
+/// default) leaves every proxy row bit-identical to the frozen engine.
+///
+/// Why. The proxy (signed-gap SAT on `f64` rings, pair clearance exactly
+/// 5.000 mm) converges layouts to the *edge* of the region the exact
+/// authority accepts, and the authority (`validation::round_envelope`,
+/// integer-micrometre `GridRing::of`, exact integer segment distance,
+/// fail-closed) is one grid cell stricter than the proxy on the same pair.
+/// Measured on the control cell, seed 20, Legacy, ten seconds, 341 exact
+/// checkpoints (`firstPairKernelShortfallUm` / `firstPairProxyViolationUm` /
+/// `blockedOn` / `blockingShortfallUm` in the benchmark document; commit
+/// "Instrument the give-up"; `docs/quorum/ics-achieved-depth-v1-spec.md`,
+/// "Result"): the kernel's first failing pair is short by a median of 1 um
+/// (max 4 um) while the proxy's own violation on that same pair is a median
+/// 0.041 um and exactly zero in 100 of 219 cases; kernel minus proxy on the
+/// same pair is +1.00 um median, 1.00 p90, 1.97 max. The row repair
+/// (`publish.rs`, one row at a time, `shortfall + guard` with a 4 um guard)
+/// then moves a piece 5 um to clear that row and pushes it into another
+/// neighbour that also sits at exactly 5.000 mm, opening a fresh 5 um
+/// shortfall (give-up `blockingShortfallUm` median 5, max 11, always a pair)
+/// that exceeds the guard: give up. Two exact calls in three refuse that way,
+/// and a bite spends hundreds of master iterations re-entering the band until
+/// a lucky state repairs.
+///
+/// What the margin does. Every proxy pair row is measured against
+/// `pair clearance + m` and every boundary against `edge clearance + m`, and
+/// the top row aims `m` under the strip `T`. A proxy-zero state then has
+/// every true pair distance `>= 5.000 + m` and every edge residual `>= m`: it
+/// lies strictly inside the kernel's region, with room for the repair to move
+/// a piece without landing on a neighbour that is itself at the edge. At
+/// `m = 4 um` (one band) the kernel reads a proxy-zero pair as `>= 5003 um`,
+/// and a 5 um repair move into a neighbour at `>= 5.004` leaves `>= 4.999`,
+/// a 1 um shortfall the guard repairs.
+///
+/// Two limits, both from GPT-6 Astra's second review
+/// (`docs/astra-review-2-the-proxy-margin.md`, Q2): at `m = 4 um` the 4 um
+/// band still admits a layout whose pairs sit at exactly 5.000 mm to the
+/// exact call (its proxy violation is exactly the band), so only `m > band`
+/// keeps the old edge states out; and the depth cost is `m` per contact
+/// stacked along the depth axis, which is geometry (a chain of 61 pieces
+/// would pay 0.24 mm at 4 um), not a bound.
+///
+/// Measured on the consumed dev seeds 18-26, one repetition, both profiles,
+/// `--proxymargin=4` (`docs/experiments/overlap-ics/proxy-margin/`): give-ups
+/// 1535 -> 3 (Legacy) and 737 -> 1 (Wall10s); exact checkpoints per
+/// publication 2.84 -> 1.00 and 4.35 -> 1.01; invalid publications 0 of
+/// 1281; depth paired median -0.181 / -0.076 mm, 4/9 wins on each profile;
+/// explore bites per cell unchanged (889 -> 906, 35 -> 34); sample
+/// evaluations per cell +6 %. The churn is real and the margin removes it,
+/// and it was not the depth bottleneck: the freed exact-call time is spent
+/// again on the rows the margin activates, and the bite rate does not move.
+///
+/// What it does not touch: `publish.rs`, `raw_source_depth_mm`, the kernel,
+/// the repair, `validate_placements_against_contract`, the 4 um band. The
+/// contract itself is unchanged; only the proxy's *aim* moves inward. The
+/// analogy is Sparrow's `--min-item-separation`, which is enforced inside its
+/// own proxy so that its zero is its legal; ours is not, by contract, which is
+/// why the margin sits in the proxy rows and nowhere else.
+///
+/// Process-level like [`set_publish_achieved`]: one cell per process, and a
+/// switch beside the code it switches is simpler than a field through
+/// `IcsConfig`, every test literal and the checkpoint reconstructor.
+static PROXY_MARGIN_UM: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+pub fn set_proxy_margin_um(micrometres: u64) {
+    PROXY_MARGIN_UM.store(micrometres, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn proxy_margin_um() -> u64 {
+    PROXY_MARGIN_UM.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// The margin in the proxy's own unit. `0 / 1000.0 == 0.0`, and `x + 0.0`
+/// and `x - 0.0` are `x` to the bit for every finite `x`, so the default path
+/// measures exactly what it measured before.
+pub fn proxy_margin_mm() -> f64 {
+    proxy_margin_um() as f64 / 1000.0
+}
+
 /// **The bound wall mode never had.**
 ///
 /// `Pacer::Wall::iteration_cap()` returned `None` from the day it was written,

@@ -179,7 +179,9 @@ impl BinaryCloseDecision {
             pose_transforms: (2 * count) as u64,
             ..WorkVector::default()
         };
-        let clearance = contract.pair_clearance_mm();
+        // The proxy clearance, margin included: the table energy is
+        // bit-compared against the cold raw Phi below.
+        let clearance = energy::proxy_pair_clearance_mm(contract);
         let mut pair_terms = Vec::with_capacity(pair_count(count));
         for first in 0..count {
             for second in (first + 1)..count {
