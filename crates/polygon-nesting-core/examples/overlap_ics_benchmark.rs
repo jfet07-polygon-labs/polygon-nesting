@@ -22,11 +22,14 @@
 //! Chinese wall: the Sparrow pose fixture is read by the `s0`, `s1` and `s2`
 //! cells and by nothing else. It is a correctness pin - never a seed, never a
 //! parameter source - and no constant in `search::overlap_ics` was chosen by
-//! looking at it.
+//! looking at it. The one other door is `--start` on the `cutclose` cell
+//! (`StartLayout` below): a diagnostic-only start from a caller-named layout
+//! that stamps the document with a `startedFrom` tripwire so it can never be
+//! scored.
 
 #![recursion_limit = "256"]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 #[cfg(feature = "pool-retry-tracker-rebase")]
@@ -177,6 +180,108 @@ struct FixturePose {
 
 fn default_true() -> bool {
     true
+}
+
+// ------------------------------------------------------- the start layout ---
+
+/// `--start=<placements.json>`: begin the `cutclose` trajectory from a given
+/// contract-valid layout instead of the constructor's. **Diagnostic only.**
+///
+/// WHY. `docs/experiments/overlap-ics/sparrow-warm-start/README.md` warm-starts
+/// Sparrow from our constructor's own layout and watches it reach 149.195 mm
+/// in 8 s, where our engine reaches ~165 mm from the identical layout; and
+/// from the layouts our engine leaves behind at 164-166 mm even Sparrow gets
+/// no deeper than 152.7-157.3. The mirror experiment - our engine started from
+/// Sparrow's layouts, converted by that directory's
+/// `tools/from-sparrow-solution.py` - needs this driver to start a cutclose
+/// trajectory from a layout it did not construct. That is the whole purpose
+/// of the flag: to ask whether our separator, given Sparrow's basin, holds it,
+/// loses it, or deepens it.
+///
+/// WHAT. The file is JSON with a top-level `placements` array in exactly the
+/// shape [`placements_json`] writes (`pieceId`, `rotationDeg`, `mirrored`,
+/// `translateShortAxis`, `translateLongAxis`; extra keys such as `itemId`,
+/// `source` or `stripWidth` are ignored). The constructor still runs exactly
+/// as today, so `constructor` accounting and the wall clocks stay comparable;
+/// its layout is then **replaced** by the loaded one before the ICS state is
+/// built, and the initial target depth, the incumbent and its fingerprint are
+/// derived from the loaded placements by the very same calls that derive them
+/// from the constructor's. The loaded layout must place exactly the request's
+/// piece ids, each once, and must pass the untouched contract validator
+/// (`validate_placements_against_contract`, reached through
+/// `publish::independently_revalidate`) with the cell's own contract;
+/// otherwise the run is a hard error naming the first failure. There is no
+/// fallback to the constructor's layout.
+///
+/// FORBIDDEN AS A RESULT. `docs/grok-review-12-reading-sparrow.md` §5.2, row
+/// "fixture as a seed", forbids starting a scored cell from a known-good
+/// layout, and this flag is exactly that door. So it is never a default, it
+/// is refused on every cell but `cutclose`, and whenever it is on the
+/// document carries a loud tripwire: top-level
+/// `startedFrom: {path, sha256, rawSourceDepthMm, placementFingerprint, ...}`
+/// and `constructor.startedFrom = true`. With the flag absent neither key
+/// exists and the document is byte-identical to today's.
+/// `/var/lib/t3/tmp/astra/score.py` must refuse any document carrying
+/// `startedFrom` (that change is out of this instrument's scope; the key is
+/// what makes it possible).
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StartLayout {
+    placements: Vec<StartPlacement>,
+}
+
+/// One start placement. Every field is required - unlike `FixturePose`, whose
+/// `mirrored` defaults - because a start layout is a claim about a full pose
+/// and a silently defaulted mirror bit would be a different layout.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StartPlacement {
+    piece_id: String,
+    rotation_deg: f64,
+    mirrored: bool,
+    translate_short_axis: f64,
+    translate_long_axis: f64,
+}
+
+/// Decodes a `--start` document into placements for exactly `expected_ids`,
+/// each once. Geometry is not checked here; that is the contract validator's
+/// job at the call site, and it runs on every load.
+fn start_layout_placements(
+    bytes: &[u8],
+    expected_ids: &[&str],
+) -> Result<Vec<GeneralFastPlacement>, String> {
+    let layout: StartLayout =
+        serde_json::from_slice(bytes).map_err(|error| format!("--start: {error}"))?;
+    let expected = expected_ids.iter().copied().collect::<BTreeSet<&str>>();
+    let mut seen = BTreeSet::new();
+    for placement in &layout.placements {
+        if !expected.contains(placement.piece_id.as_str()) {
+            return Err(format!(
+                "--start: placement for `{}` names a piece that is not in this request",
+                placement.piece_id
+            ));
+        }
+        if !seen.insert(placement.piece_id.as_str()) {
+            return Err(format!(
+                "--start: piece `{}` is placed twice",
+                placement.piece_id
+            ));
+        }
+    }
+    if let Some(missing) = expected_ids.iter().find(|id| !seen.contains(*id)) {
+        return Err(format!("--start: piece `{missing}` has no placement"));
+    }
+    Ok(layout
+        .placements
+        .into_iter()
+        .map(|placement| GeneralFastPlacement {
+            piece_id: placement.piece_id,
+            rotation_deg: placement.rotation_deg,
+            mirrored: placement.mirrored,
+            translate_short_axis: placement.translate_short_axis,
+            translate_long_axis: placement.translate_long_axis,
+        })
+        .collect())
 }
 
 struct OwnedPiece {
@@ -1712,6 +1817,11 @@ fn quota_json(config: &IcsConfig, work: &WorkVector, pieces: usize) -> Value {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let options = Options::parse()?;
     let cell = options.required("cell")?.to_owned();
+    // `--start` is a cutclose-only diagnostic (see `StartLayout`); on any
+    // other cell it would be silently ignored, which is worse than refused.
+    if options.get("start").is_some() && cell != "cutclose" {
+        return Err(format!("--start is a cutclose-only diagnostic, not a `{cell}` option").into());
+    }
     let request_path = options.required("request")?.to_owned();
     let request_bytes = fs::read(&request_path)?;
     let request_sha256 = format!("{:x}", Sha256::digest(&request_bytes));
@@ -1818,6 +1928,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut wall = serde_json::Map::new();
     let started = Instant::now();
+    // The `--start` tripwire, filled by the cutclose arm exactly when the flag
+    // is on and emitted at the tail. `None` means the constructor's own layout.
+    let mut started_from: Option<Value> = None;
 
     let mut document = json!({
         "experiment": "overlap-ics",
@@ -2548,6 +2661,63 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             wall.insert("constructorSeconds".to_owned(), json!(constructor_seconds));
             let constructor_depth = raw_depth_of(&pieces, &placements, &contract);
             let constructor_fingerprint = placement_fingerprint(&placements);
+            // `--start`: the constructor has run and been accounted for; now
+            // its layout is replaced by the loaded one, and the three values
+            // the trajectory is built from - placements, initial target depth
+            // `T`, incumbent fingerprint - are re-derived from the loaded
+            // layout by the same two calls above. See `StartLayout` for why
+            // this exists and why it is diagnostic only.
+            let (placements, constructor_depth, constructor_fingerprint) = match options
+                .get("start")
+            {
+                None => (placements, constructor_depth, constructor_fingerprint),
+                Some(start_path) => {
+                    let load_started = Instant::now();
+                    let start_bytes = fs::read(start_path)
+                        .map_err(|error| format!("--start: reading `{start_path}`: {error}"))?;
+                    let start_sha256 = format!("{:x}", Sha256::digest(&start_bytes));
+                    let piece_ids = pieces.iter().map(|piece| piece.id).collect::<Vec<_>>();
+                    let loaded = start_layout_placements(&start_bytes, &piece_ids)?;
+                    // The cell's own contract, through the untouched
+                    // validator. A refusal is the answer, never a fallback.
+                    let revalidation =
+                        publish::independently_revalidate(&pieces, &loaded, settings, &contract);
+                    if !revalidation.contract_valid {
+                        return Err(format!(
+                                "--start: `{start_path}` is not contract-valid at edge {} / pair {}: {}",
+                                contract.sheet_edge_clearance_mm,
+                                settings.total_padding_mm,
+                                revalidation
+                                    .contract_error
+                                    .as_deref()
+                                    .unwrap_or("the contract validator refused without a message")
+                            )
+                            .into());
+                    }
+                    let loaded_depth = raw_depth_of(&pieces, &loaded, &contract);
+                    let loaded_fingerprint = placement_fingerprint(&loaded);
+                    wall.insert(
+                        "startLoadSeconds".to_owned(),
+                        json!(load_started.elapsed().as_secs_f64()),
+                    );
+                    started_from = Some(json!({
+                        "path": start_path,
+                        "sha256": start_sha256,
+                        "rawSourceDepthMm": loaded_depth,
+                        "placementFingerprint": loaded_fingerprint,
+                        "placementCount": loaded.len(),
+                        "contractValid": revalidation.contract_valid,
+                        "kernelExclusiveValid": revalidation.kernel_exclusive_valid,
+                        "kernelError": revalidation.kernel_error,
+                        // The layout this run did NOT start from.
+                        "replacedConstructor": {
+                            "rawSourceDepthMm": constructor_depth,
+                            "placementFingerprint": constructor_fingerprint,
+                        },
+                    }));
+                    (loaded, loaded_depth, loaded_fingerprint)
+                }
+            };
             let mode = options.get("mode").unwrap_or("fixed").to_owned();
             let workers = options.integer("workers", 8)? as usize;
             // **The arm, and nothing else about the arm.** `--arm=control` is
@@ -2916,6 +3086,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "placementCount": placements.len(),
                 "lowerScaleMm": lower_scale_mm,
             });
+            // The `--start` tripwire's second half: present exactly when the
+            // constructor's layout was replaced. Absence means today's path.
+            if started_from.is_some() {
+                document["constructor"]["startedFrom"] = json!(true);
+            }
             // **The schedule block, and the two-arm gate's cell key.**
             //
             // The four `*IterationsWithoutImprovement` / `*Strikes` keys keep
@@ -3701,6 +3876,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if proxy_margin_um != 0 {
         document["proxyMarginUm"] = json!(proxy_margin_um);
     }
+    // Same rule, and the loudest of the three: present exactly when the
+    // trajectory did not start from the constructor's layout. A scorer must
+    // refuse any document that carries this key (`StartLayout`).
+    if let Some(started_from) = started_from.take() {
+        document["startedFrom"] = started_from;
+    }
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());
     // Instrument only, and present only on a census build: which publication
@@ -4042,4 +4223,94 @@ fn throughput(engine: &mut Engine<'_>, repeats: usize, proposals: u64) -> Value 
             && (evaluations as f64 / gap_seconds) >= 1.0e6
             && projected_relocate_evals >= 100_000.0,
     })
+}
+
+#[cfg(test)]
+mod start_layout_tests {
+    use super::*;
+
+    fn layout() -> Vec<GeneralFastPlacement> {
+        vec![
+            GeneralFastPlacement {
+                piece_id: "b".to_owned(),
+                rotation_deg: 179.93750000000003,
+                mirrored: true,
+                translate_short_axis: 159.1695963788811,
+                translate_long_axis: 109.11815942459275,
+            },
+            GeneralFastPlacement {
+                piece_id: "a".to_owned(),
+                rotation_deg: 0.0,
+                mirrored: false,
+                translate_short_axis: 12.5,
+                translate_long_axis: -3.25,
+            },
+        ]
+    }
+
+    fn bytes_of(placements: &[GeneralFastPlacement]) -> Vec<u8> {
+        serde_json::to_vec(&json!({ "placements": placements_json(placements) })).unwrap()
+    }
+
+    #[test]
+    fn round_trips_through_placements_json() {
+        let original = layout();
+        let decoded = start_layout_placements(&bytes_of(&original), &["a", "b"]).unwrap();
+        assert_eq!(decoded, original);
+        assert_eq!(
+            placement_fingerprint(&decoded),
+            placement_fingerprint(&original)
+        );
+    }
+
+    #[test]
+    fn ignores_extra_keys_at_both_levels() {
+        let bytes = br#"{
+            "source": "sparrow", "stripWidth": 164.36841,
+            "placements": [
+                {"pieceId": "a", "itemId": 38, "rotationDeg": 90.0, "mirrored": false,
+                 "translateShortAxis": 1.0, "translateLongAxis": 2.0, "extra": [1, 2]}
+            ]
+        }"#;
+        let decoded = start_layout_placements(bytes, &["a"]).unwrap();
+        assert_eq!(decoded.len(), 1);
+        assert_eq!(decoded[0].piece_id, "a");
+        assert_eq!(decoded[0].rotation_deg, 90.0);
+        assert!(!decoded[0].mirrored);
+        assert_eq!(decoded[0].translate_short_axis, 1.0);
+        assert_eq!(decoded[0].translate_long_axis, 2.0);
+    }
+
+    #[test]
+    fn refuses_a_missing_piece() {
+        let mut short = layout();
+        short.pop();
+        let error = start_layout_placements(&bytes_of(&short), &["a", "b"]).unwrap_err();
+        assert!(error.contains("`a` has no placement"), "{error}");
+    }
+
+    #[test]
+    fn refuses_a_duplicate_piece() {
+        let mut doubled = layout();
+        doubled.push(doubled[0].clone());
+        let error = start_layout_placements(&bytes_of(&doubled), &["a", "b"]).unwrap_err();
+        assert!(error.contains("`b` is placed twice"), "{error}");
+    }
+
+    #[test]
+    fn refuses_a_piece_the_request_does_not_have() {
+        let error = start_layout_placements(&bytes_of(&layout()), &["a"]).unwrap_err();
+        assert!(
+            error.contains("`b` names a piece that is not in this request"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn refuses_a_placement_without_its_mirror_bit() {
+        let bytes = br#"{"placements": [{"pieceId": "a", "rotationDeg": 0.0,
+            "translateShortAxis": 1.0, "translateLongAxis": 2.0}]}"#;
+        let error = start_layout_placements(bytes, &["a"]).unwrap_err();
+        assert!(error.contains("mirrored"), "{error}");
+    }
 }
