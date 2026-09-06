@@ -81,3 +81,49 @@ pair(6, 44) and related rows again: the column is still there. Margin 0: 11, 11,
 - What breaks the column is a rearrangement: one member leaving, which the GLS weights
   produce after thirty iterations. Sparrow's weights follow the same rule and it escapes in
   seventeen passes on the same layout; why is the question for review 5.
+
+## Addendum: how the column broke, and what it cost in weight
+
+The winner's relocates at iterations 35-38 of bite 15 (margin 8), from the trace:
+
+- iterations 35-36: pieces 47, 6, 40, 0, 44, 43 all `stayPut`, unmoved or moved by 0.05-0.09 mm;
+  residuals 4.3-10.7 um; the column's pieces carry guided costs of 4-8 on raw violations of
+  4e-5 to 8e-5 mm^2, i.e. effective weights of 1e5 on their rows.
+- iteration 37: piece 43 (top of the column) commits a **container** sample 165.9 mm away,
+  rotated 120 degrees, opening 1.77-1.82 mm overlaps with pieces 40, 42 and 60 (fresh rows,
+  weight 1): raw 6.1e-5 -> 9.58, guided 10.7 -> 9.58. The weighted cost of a 5.6 um residual on
+  a row that has been blocking for 36 updates had just exceeded the cost of nearly two
+  millimetres of new overlap elsewhere. In the same sweep piece 6 (focused, 7.2 mm, 200
+  degrees) and piece 0 (2.4 mm) clear their rows: the column is gone.
+- iterations 38-43: pieces 40, 42, 60, 47 absorb the new overlaps in 1-2 mm moves; proxy-zero
+  at 43.
+
+Effective weight (guided / raw) on the pinned pieces, iterations 25-37:
+
+```
+effective weight (guidedBefore / rawBefore) of the pinned column pieces, iterations 25-37:
+  it 25 max    34.0 um  p44:1.47e+02 p43:1.22e+03 p0:2.48e+03 p6:1.81e+03
+  it 26 max     9.6 um  p43:1.13e+03 p0:3.22e+03 p6:2.35e+03 p44:1.97e+02
+  it 27 max     9.0 um  p44:6.95e+02 p43:1.96e+03 p6:3.16e+03 p0:4.94e+03
+  it 28 max    14.3 um  p44:2.82e+03 p0:7.69e+03 p43:3.49e+03 p6:4.93e+03
+  it 29 max     6.1 um  p43:5.50e+03 p6:7.34e+03 p44:7.69e+02 p0:1.10e+04
+  it 30 max     6.1 um  p6:1.13e+04 p44:7.21e+03 p43:1.10e+04 p0:1.90e+04
+  it 31 max    95.2 um  p43:2.16e+04 p6:2.55e+04 p44:1.43e+04 p0:3.28e+04
+  it 32 max    28.9 um  p44:1.78e+04 p0:4.05e+04 p43:2.31e+04 p6:2.28e+04
+  it 33 max    10.7 um  p43:3.13e+04 p44:1.18e+04 p0:5.81e+03 p6:1.57e+04
+  it 34 max    50.9 um  p44:2.26e+04 p6:4.63e+04 p0:2.34e+04 p43:5.36e+04
+  it 35 max    10.7 um  p6:2.04e+03 p0:1.04e+05 p44:2.92e+04 p43:6.87e+04
+  it 36 max    10.7 um  p43:1.09e+05 p6:1.10e+05 p0:1.61e+05 p44:4.32e+04
+  it 37 max  1815.2 um  p43:1.75e+05 p44:7.74e+04 p6:1.22e+05 p0:2.02e+05
+```
+
+So the escape from a pinned column is a weight race: the guided objective is `w * v^2`, a
+micrometre residual is 1e-5 mm^2, and a member leaves only when its rows' weights make that
+residual cost more than a millimetre-scale fresh overlap, which takes weights of order 1e5,
+about 36 updates at the 1.4-1.6x per update that `1.2 + 0.8 v / v_max` gives a row that is
+not the current maximum. If Sparrow's quantifier is closer to linear in the penetration, the
+same escape needs weights of order 3e2, about 15 updates: its 17 passes on this bite. That is
+a hypothesis with a direct test in the replay harness: `--probe=linear` (guided = w * v, same
+weights, same sampler) from the bite-15 capsule, and the prediction is that the column breaks
+in 15-20 iterations instead of 36. It is also a landscape change, not a constant change, and
+it would go to a prospective spec on its own.
