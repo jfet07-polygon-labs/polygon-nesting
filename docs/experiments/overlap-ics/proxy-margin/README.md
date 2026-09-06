@@ -128,3 +128,21 @@ what a signed round on the margin would have to carry. The round is still not op
 preflight Astra drafted (`P_M >= P_R` per seed) is written against a premise the data has
 refuted (publications per cell fall when the churn goes, 1042 -> 972 on Legacy), and the next
 brief asks Astra to rewrite it before any scored cell.
+
+## Addendum 2: the iteration cap under the margin (Legacy, m = 8, seeds 18-26, one repetition)
+
+Astra's review 3 corrected the tail mechanism on Legacy: the profile's cap is 50 iterations per
+separation, and `WorkCap` goes to the pool and the disruption, so a 1145-iteration bite is 22
+attempts of about 50, each ending in a refused proxy-zero state. With the margin those refusals
+are gone, so the cap was re-measured (`analyse-m8-cap0-vs-cap50-seeds18-26.txt`,
+`analyse-m8-cap200-vs-cap50-seeds18-26.txt`):
+
+| arm | median | mean | worst | paired median vs cap 50 | wins | worst paired | explore bites / cell | disruptions |
+|---|---|---|---|---|---|---|---|---|
+| cap 50 | 164.010 | 163.860 | 167.102 | - | - | - | 104.2 | 68 |
+| cap 200 | 164.008 | 164.343 | 172.061 | +1.603 | 6/9 | -8.758 | 99.4 | 15 |
+| cap 0 | 164.028 | 165.706 | 179.095 | +0.597 | 5/9 | -15.792 | 91.0 | 2 |
+
+The cap is a fuse, not a lever: unbounded, seed 26 spends most of the wall inside one bite of
+2555 master iterations and ends twenty millimetres shallower. The stall the cap truncates is
+the separator's, and that is what the next mechanism must address. Cap 50 stays.

@@ -73,3 +73,29 @@ its next three cost 11, 11, 14. At width >= 175 on seed 20 the medians are equal
 the means are 3.5 against 32.2, max 17 against 1145. So the separator is not slower on the
 ordinary bite. It is slower on the hard bite, and the way it resolves a hard bite leaves a
 layout on which the following bites are hard too. That is the mechanism to find.
+
+## Addendum 2: from the margin-8 layouts, and how far the pieces travelled
+
+Sparrow warm-started from our **margin-8** Legacy incumbents (seeds 18/20/22/24/26, starts
+164.005 / 164.005 / 157.436 / 167.102 / 163.303) reaches 152.453 / 152.454 / 151.563 / 151.042 /
+151.649 (`logs/`, `tools/batch.sh proxy-margin8full legacy ...`). Against 152.7-157.3 from the
+no-margin incumbents, and 150.8 from its own 165.5 layout.
+
+Per-piece centroid displacement from the constructor layout (our placements; Sparrow's converted
+back by `tools/from-sparrow-solution.py`, whose rotation/mirror columns are artefacts of the
+axis swap and are not reported):
+
+| layout | depth | displacement median / mean / max (mm) | moved > 20 mm |
+|---|---|---|---|
+| Sparrow, 2 s from our constructor | 160.334 | 52 / 387 / 1641 | 44/61 |
+| Sparrow, 10 s from our constructor | 149.195 | 339 / 509 / 1628 | 54/61 |
+| ours, devbase Legacy s20 | 164.954 | 562 / 605 / 1794 | 58/61 |
+| ours, devbase Legacy s18 | 164.262 | 404 / 460 / 1550 | 52/61 |
+| ours, devbase Wall10s s20 | 159.773 | 599 / 629 / 1770 | 57/61 |
+| ours, margin 8 Legacy s20 | 164.005 | 45 / 351 / 1635 | 39/61 |
+
+The no-margin path moves the median piece 400-600 mm for 18 mm of depth: the refused-proxy-zero
+-> pool -> disruption cycle (22 disruptions inside one bite on seed 20; 304 disruptions over the
+nine devbase cells, 68 with margin 8) scrambles the layout, and that is why those layouts are
+poor basins even for Sparrow. With the margin the median piece moves 45 mm, the structure of
+the constructor survives, and Sparrow takes the result to about 151.5.

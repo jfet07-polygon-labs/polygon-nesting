@@ -1,0 +1,5 @@
+== profile legacy | proxy-margin8full vs m8cap0 | 9 seeds, 9/9 cells ==
+  proxy-margin8full median  164.010  mean  163.860  best  157.436  worst  167.102  iters/cell   2236  explore bites 104.2
+  m8cap0       median  164.028  mean  165.706  best  160.968  worst  179.095  iters/cell   2419  explore bites  91.0
+  paired median gain (A-B) +0.597 mm | B wins 5/9 | worst paired -15.792 | invalid publications 0
+  per seed: 18:+1.82 19:-4.19 20:+1.34 21:+1.43 22:-3.53 23:-0.02 24:+0.60 25:+1.73 26:-15.79
