@@ -3507,3 +3507,68 @@ fn wall10s_refuses_any_request_that_is_not_a_named_ten_second_wall() {
         assert!(ScheduleProfile::Legacy.validate_for(is_wall, wall).is_ok());
     }
 }
+
+
+/// **The rollback restores the near set with the rows.** GPT-6 Astra review 1
+/// §Q2's regression vector: snapshot a colliding pair, move the pair apart so
+/// its near-set entries disappear, change a live weight, roll back keeping
+/// weights, and require that the incident fold and the colliding-piece
+/// selection both see the restored collision again.
+///
+/// Before the fix `incident_totals` folded over the stale `near`, which no
+/// longer named the restored row, and reported zero for a piece whose pair
+/// row was positive.
+#[test]
+fn rollback_keeping_weights_restores_the_near_set_with_the_rows() {
+    use super::energy::{incident_totals, rebuild_piece_rows};
+    use super::relocate::{colliding_permutation, RelocateKey};
+    use super::state::transform_piece;
+
+    let fixture = Fixture::squares(3, 20.0);
+    let (sources, contract, mut state) = state_of_poses(
+        &fixture,
+        vec![
+            pose_at(10.0, 10.0),
+            pose_at(10.0, 10.0),
+            pose_at(80.0, 80.0),
+        ],
+        300.0,
+    );
+    let mut work = WorkVector::default();
+    let (raw_before, _) = incident_totals(&state, 0);
+    assert!(raw_before > 0.0, "pieces 0 and 1 overlap in the snapshot");
+    assert!(state.near[0].contains(&1) && state.near[1].contains(&0));
+    let snapshot = state.clone();
+
+    // Move piece 1 far away and rebuild its rows: the pair row goes to zero
+    // and both near-set entries disappear.
+    state.poses[1] = pose_at(150.0, 150.0);
+    transform_piece(&sources, &mut state.geometry, &state.poses, 1);
+    rebuild_piece_rows(&mut state, &contract, 1, &mut work);
+    assert!(!state.near[0].contains(&1) && !state.near[1].contains(&0));
+    assert_eq!(incident_totals(&state, 0).0, 0.0);
+
+    // Evolve a live weight, then roll back the way a separation does.
+    state.pair_rows[0].weight = 64.0;
+    super::restore_keeping_weights(&mut state, &snapshot);
+
+    assert_eq!(state.pair_rows[0].weight, 64.0, "weights survive the rollback");
+    assert_eq!(state.near, snapshot.near, "the near set is restored with the rows");
+    let (raw_after, _) = incident_totals(&state, 0);
+    assert_eq!(raw_after, raw_before, "the incident fold sees the restored collision");
+    let mut colliding = Vec::new();
+    colliding_permutation(
+        &state,
+        RelocateKey {
+            seed: 1,
+            bite: 1,
+            iteration: 1,
+            worker: 0,
+        },
+        &mut colliding,
+    );
+    assert!(
+        colliding.contains(&0) && colliding.contains(&1),
+        "colliding-piece selection sees the restored collision: {colliding:?}"
+    );
+}

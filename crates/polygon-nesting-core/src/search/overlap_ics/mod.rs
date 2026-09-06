@@ -2512,6 +2512,18 @@ fn restore_keeping_weights(state: &mut IcsState, snapshot: &IcsState) {
     }
     state.poses.copy_from_slice(&snapshot.poses);
     state.geometry.clone_from(&snapshot.geometry);
+    // **The near set is part of the rows.** `IcsState::near` holds, per piece,
+    // exactly the others whose pair row is non-zero, and both
+    // `incident_totals` and `rebuild_piece_rows` trust it instead of walking
+    // all `n - 1` rows. Restoring the rows without it left the live set
+    // describing the abandoned state: a collision the snapshot holds could be
+    // missing from a piece's incident fold and from colliding-piece selection,
+    // and a row the stale set did not own was never zeroed when its piece
+    // moved away, so a phantom violation could sit in `pair_rows` and hold
+    // `max_violation_mm` out of the band. The snapshot's set is exactly
+    // consistent with the rows just copied from it. GPT-6 Astra review 1 §Q2;
+    // the near set itself is `fe256b3`, 2026-08-27.
+    state.near.clone_from(&snapshot.near);
 }
 
 /// Inserts a failed separation into the loss-sorted pool, worst evicted first.
