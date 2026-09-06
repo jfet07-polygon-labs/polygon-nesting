@@ -177,3 +177,25 @@ The control's five most persistent rows on bite 15 clear at iterations 37/37/37/
 on every captured bite at less work; the continuation helps in iterations everywhere and
 costs more evaluations without the margin; neither breaks the pinned column early. The
 column still waits for its weights, and the exponent probe is next.
+
+## The matched comparison: Sparrow from the exact parents of the two traced hard bites
+
+Astra's review 5 objected that the first-bite comparison in `../sparrow-warm-start/first-bites.txt`
+is not matched after bite 1. It can be: the capsule at bite entry holds the post-cut poses and
+the cut mask, and `split_and_close` only adds `delta` to the moved pieces' `ty`, so the parent is
+recovered exactly (both parents pass Sparrow's validator: minimum pair distance 5.0052 and
+5.0012 mm, boundary 5.000). Sparrow warm-started from each parent (`-t 10 -s 0
+--min-item-separation 5 --workers 8`; solution files and logs beside this file) first
+re-legalises the parent on its own proxy (simplified polygons: it reads our contract-valid
+layout as a 12.5 K / 10.9 K loss and clears it in 9 / 6 passes), then cuts at `W/2`, the same
+rule as ours, and separates:
+
+| parent | our bite (master iterations) | Sparrow's matched bite (passes, entry loss) | Sparrow's next bites (passes) |
+|---|---|---|---|
+| bite-15 parent, 180.195 (margin 8 trace) | 43 | **8** (6.31 K) | 2, 3, 3, 1, 8, 13, 2, 3, 1, 1 |
+| bite-17 parent, 180.070 (margin 0 trace) | 37 | **7** (4.73 K) | 1, 4, 5, 4, 45, 6, 2, 1, 2, 2 |
+
+Same parent (up to Sparrow's own re-legalisation of it), same cut, same 0.1 %: 8 passes
+against 43 and 7 against 37. Sparrow also shows a 45-pass bite six bites later on the margin-0
+parent, so the column is hard for it too, five times less so. From these parents it reaches
+151.404 and 152.668 at 8 s.
