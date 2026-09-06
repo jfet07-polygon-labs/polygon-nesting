@@ -281,6 +281,42 @@ impl RelocateOutcome {
     }
 }
 
+/// **How one coordinate-descent walk ended.** Diagnostic: the bite
+/// microscope's record (f) (`super::microscope`), which asks whether the fine
+/// walk stopped because every step fell under its piece-relative limit or
+/// because it hit `MAX_CD_STEPS`, and what the steps were when it did. Nothing
+/// in the walk reads it back.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct CdExit {
+    /// `true`: every step was under its limit (`limits`); `false`: the walk
+    /// ran to `MAX_CD_STEPS` (`iteration-cap`).
+    pub stalled: bool,
+    pub final_steps: [f64; 2],
+    pub final_rotation_step_deg: f64,
+    pub translation_limit_mm: f64,
+    pub rotation_limit_deg: f64,
+    /// `+/-` candidate pairs the walk evaluated.
+    pub candidate_pairs: u32,
+}
+
+/// **What the bite microscope reads off one relocate, and nothing the
+/// relocate reads back.** Filled by [`relocate_probed`] only; the default
+/// path passes `None` and pays nothing.
+///
+/// The rows are the piece's incident rows at entry and after the final
+/// committed rebuild - never a scratch candidate's, because [`evaluate`]
+/// installs every trial pose (`super::microscope`, "entry rows against the
+/// committed rebuild").
+#[derive(Clone, Debug, Default)]
+pub struct RelocateProbe {
+    pub entry_rows: Vec<(super::microscope::RowId, f64)>,
+    pub committed_rows: Vec<(super::microscope::RowId, f64)>,
+    pub fine_exit: CdExit,
+    /// The centroid displacement vector, entry to commit.
+    pub dx_mm: f64,
+    pub dy_mm: f64,
+}
+
 /// One candidate in the pool, with the provenance the counters are keyed on.
 #[derive(Clone, Copy, Debug)]
 pub struct Candidate {
@@ -579,6 +615,39 @@ pub fn coord_descent(
     stream: u64,
     work: &mut WorkVector,
 ) -> (Pose, SampleEval) {
+    let (pose, eval, _) = coord_descent_inner(
+        state,
+        sources,
+        contract,
+        piece,
+        start,
+        start_eval,
+        stage,
+        config,
+        allow_rotation,
+        stream,
+        work,
+    );
+    (pose, eval)
+}
+
+/// [`coord_descent`] with its exit reported. The walk is this function; the
+/// public one drops the third value. The [`CdExit`] is written at the exit
+/// only and read by nothing before it.
+#[allow(clippy::too_many_arguments)]
+pub fn coord_descent_inner(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    piece: usize,
+    start: Pose,
+    start_eval: SampleEval,
+    stage: CoordDescentStage,
+    config: &RelocateConfig,
+    allow_rotation: bool,
+    stream: u64,
+    work: &mut WorkVector,
+) -> (Pose, SampleEval, CdExit) {
     let min_dim = sources[piece].min_bbox_dim_mm.max(f64::MIN_POSITIVE);
     let translation_limit = min_dim * stage.translation_limit_ratio;
     let rotation_limit = stage.rotation_limit_deg;
@@ -590,13 +659,17 @@ pub fn coord_descent(
     let mut pose = start;
     let mut eval = start_eval;
     let mut axis = draw_axis(counter_hash(&[stream, AXIS_STREAM_TAG, 0]), allow_rotation);
+    let mut exit_stalled = false;
+    let mut candidate_pairs = 0u32;
     for step_ordinal in 0..MAX_CD_STEPS {
         let stalled = steps.0 < translation_limit
             && steps.1 < translation_limit
             && (rotation_step < rotation_limit || !allow_rotation);
         if stalled {
+            exit_stalled = true;
             break;
         }
+        candidate_pairs += 1;
         let candidates = match axis {
             CdAxis::Horizontal => [
                 translate(pose, steps.0, 0.0),
@@ -655,7 +728,15 @@ pub fn coord_descent(
             );
         }
     }
-    (pose, eval)
+    let exit = CdExit {
+        stalled: exit_stalled,
+        final_steps: [steps.0, steps.1],
+        final_rotation_step_deg: rotation_step,
+        translation_limit_mm: translation_limit,
+        rotation_limit_deg: rotation_limit,
+        candidate_pairs,
+    };
+    (pose, eval, exit)
 }
 
 /// The hard ceiling on one coordinate-descent walk. The step schedule already
@@ -703,6 +784,59 @@ pub fn relocate(
     key: RelocateKey,
     work: &mut WorkVector,
 ) -> RelocateOutcome {
+    relocate_inner(
+        state,
+        sources,
+        contract,
+        allow_rotation,
+        piece,
+        config,
+        key,
+        work,
+        None,
+    )
+}
+
+/// [`relocate`] observed by the bite microscope: the identical member, with
+/// the probe filled at entry, at the fine-CD exit and after the commit.
+/// Diagnostic only; the probe is never read by the relocate.
+#[allow(clippy::too_many_arguments)]
+pub fn relocate_probed(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    allow_rotation: &[bool],
+    piece: usize,
+    config: &RelocateConfig,
+    key: RelocateKey,
+    work: &mut WorkVector,
+    probe: &mut RelocateProbe,
+) -> RelocateOutcome {
+    relocate_inner(
+        state,
+        sources,
+        contract,
+        allow_rotation,
+        piece,
+        config,
+        key,
+        work,
+        Some(probe),
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn relocate_inner(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    allow_rotation: &[bool],
+    piece: usize,
+    config: &RelocateConfig,
+    key: RelocateKey,
+    work: &mut WorkVector,
+    mut probe: Option<&mut RelocateProbe>,
+) -> RelocateOutcome {
     let entry_pose = state.poses[piece];
     let (entry_raw, entry_weighted) = incident_totals(state, piece);
     let entry_eval = SampleEval {
@@ -711,6 +845,9 @@ pub fn relocate(
     };
     if entry_raw <= 0.0 {
         return RelocateOutcome::skipped(piece, entry_eval);
+    }
+    if let Some(probe) = probe.as_deref_mut() {
+        probe.entry_rows = super::microscope::incident_rows(state, piece);
     }
     work.relocates += 1;
     let evaluations_before = work.sample_evaluations;
@@ -814,7 +951,7 @@ pub fn relocate(
         eval: entry_eval,
         origin: SampleOrigin::StayPut,
     });
-    let (final_pose, final_eval) = coord_descent(
+    let (final_pose, final_eval, fine_exit) = coord_descent_inner(
         state,
         sources,
         contract,
@@ -841,6 +978,12 @@ pub fn relocate(
         final_centre[0] - entry_centre[0],
         final_centre[1] - entry_centre[1],
     );
+    if let Some(probe) = probe.as_deref_mut() {
+        probe.committed_rows = super::microscope::incident_rows(state, piece);
+        probe.fine_exit = fine_exit;
+        probe.dx_mm = final_centre[0] - entry_centre[0];
+        probe.dy_mm = final_centre[1] - entry_centre[1];
+    }
     let moved = final_pose.tx_mm.to_bits() != entry_pose.tx_mm.to_bits()
         || final_pose.ty_mm.to_bits() != entry_pose.ty_mm.to_bits()
         || final_pose.theta_deg.to_bits() != entry_pose.theta_deg.to_bits();

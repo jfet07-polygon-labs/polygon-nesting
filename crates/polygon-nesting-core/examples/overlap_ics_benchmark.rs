@@ -25,7 +25,10 @@
 //! looking at it. The one other door is `--start` on the `cutclose` cell
 //! (`StartLayout` below): a diagnostic-only start from a caller-named layout
 //! that stamps the document with a `startedFrom` tripwire so it can never be
-//! scored.
+//! scored. `--bitemicroscope=1` (`overlap_ics::microscope`) is a diagnostic
+//! of the same kind in the other direction - it *emits* replay capsules, which
+//! are known-good layouts - and stamps `biteMicroscope.tripwire` for the same
+//! reason.
 
 #![recursion_limit = "256"]
 
@@ -65,6 +68,7 @@ use polygon_nesting_core::search::overlap_ics::icscal::{
     BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase, WorkPlan,
 };
 use polygon_nesting_core::search::overlap_ics::icscal_read::plan_from_bytes;
+use polygon_nesting_core::search::overlap_ics::microscope::MicroscopeConfig;
 #[cfg(feature = "pool-retry-tracker-rebase")]
 use polygon_nesting_core::search::overlap_ics::pool_rebase::{
     apply_weight_policy, raw_row_digest as pool_raw_row_digest, PoolRebaseArm, PoolRebaseTrace,
@@ -1822,6 +1826,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if options.get("start").is_some() && cell != "cutclose" {
         return Err(format!("--start is a cutclose-only diagnostic, not a `{cell}` option").into());
     }
+    // `--bitemicroscope=1` is the other cutclose-only diagnostic
+    // (`overlap_ics::microscope`): a buffered per-relocate trace of the first
+    // hard explore bite and the three after it, with replay capsules. Off by
+    // default and byte-identical off; on, the document carries the top-level
+    // `biteMicroscope` block whose `tripwire` a scorer must refuse - a replay
+    // capsule is a known-good layout, and the forbidden-rescue table
+    // (`docs/grok-review-12-reading-sparrow.md` §5.2, "fixture as a seed")
+    // forbids starting a scored cell from one.
+    if options.integer("bitemicroscope", 0)? != 0 && cell != "cutclose" {
+        return Err(
+            format!("--bitemicroscope is a cutclose-only diagnostic, not a `{cell}` option").into(),
+        );
+    }
     let request_path = options.required("request")?.to_owned();
     let request_bytes = fs::read(&request_path)?;
     let request_sha256 = format!("{:x}", Sha256::digest(&request_bytes));
@@ -1931,6 +1948,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // The `--start` tripwire, filled by the cutclose arm exactly when the flag
     // is on and emitted at the tail. `None` means the constructor's own layout.
     let mut started_from: Option<Value> = None;
+    // The `--bitemicroscope` report, filled by the cutclose arm exactly when
+    // the flag is on and emitted at the tail with its tripwire. `None` means
+    // the frozen document.
+    let mut bite_microscope: Option<Value> = None;
 
     let mut document = json!({
         "experiment": "overlap-ics",
@@ -2825,6 +2846,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // how it gets measured. The default is unchanged.
                 explore_time_ratio: options
                     .number("exploreratio", homotopy::EXPLORE_TIME_RATIO)?,
+                // The bite microscope, at its prospectively fixed trigger
+                // (34 master iterations, three bites after). Diagnostic only.
+                bite_microscope: (options.integer("bitemicroscope", 0)? != 0)
+                    .then(MicroscopeConfig::default),
                 ..ScheduleConfig::default()
             };
             #[cfg(feature = "pool-retry-tracker-rebase")]
@@ -3183,6 +3208,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 },
             );
             document["finalPoseDigest"] = json!(pose_digest(&outcome.final_poses));
+            // The microscope's report, serialized after the timed region with
+            // `f64` as-is (`float_roundtrip`), and the schedule block's half
+            // of the tripwire. Present exactly when the flag was on.
+            if let Some(report) = &outcome.bite_microscope {
+                bite_microscope = Some(serde_json::to_value(report)?);
+                document["schedule"]["biteMicroscope"] = json!(true);
+            }
 
             // **The calibration entry point.** A wall trajectory measures two
             // per-phase rates and writes them; a `--mode=calibrated` run in a
@@ -3881,6 +3913,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // refuse any document that carries this key (`StartLayout`).
     if let Some(started_from) = started_from.take() {
         document["startedFrom"] = started_from;
+    }
+    // Same rule, same loudness: present exactly when `--bitemicroscope=1`
+    // ran. The `tripwire` field is what a scorer refuses on; the rest is the
+    // trace (`overlap_ics::microscope`).
+    if let Some(mut report) = bite_microscope.take() {
+        report["tripwire"] = json!(
+            "DIAGNOSTIC ONLY: --bitemicroscope=1 ran; this document carries replay capsules \
+             (known-good layouts) and must never be scored (forbidden-rescue row: fixture as a seed)"
+        );
+        report["flag"] = json!("--bitemicroscope=1");
+        document["biteMicroscope"] = report;
     }
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());

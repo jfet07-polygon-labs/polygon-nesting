@@ -30,8 +30,10 @@ use super::energy::{fold, gls_update, Totals};
 use super::cluster_budget::{
     AtomicOrderTrace, ClusterField, PartitionArm, PartitionDecision, PartitionTrace,
 };
+use super::microscope::SweepTrace;
 use super::relocate::{
-    colliding_permutation, relocate, RelocateConfig, RelocateKey, RelocateOutcome, SampleOrigin,
+    colliding_permutation, relocate, relocate_probed, RelocateConfig, RelocateKey,
+    RelocateOutcome, RelocateProbe, SampleOrigin,
 };
 use super::state::{Contract, IcsState, PieceSource};
 
@@ -677,6 +679,31 @@ impl Descent {
         pass
     }
 
+    /// [`Descent::worker_sweep`] observed by the bite microscope: the same
+    /// pass, with the initial order and every visited piece's relocate
+    /// written into `trace`. Diagnostic only (`super::microscope`); the trace
+    /// is never read by the sweep and no counter key changes.
+    pub fn worker_sweep_traced(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        work: &mut WorkVector,
+        trace: &mut SweepTrace,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel_inner(
+            state,
+            sources,
+            contract,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            None,
+            work,
+            Some(trace),
+        );
+        let totals = fold(state);
+        pass.finish(0, totals)
+    }
+
     /// The pass itself: collect the colliding set once, permute it from the
     /// counter stream, relocate each member that is still colliding at its turn.
     fn gauss_seidel(
@@ -686,6 +713,29 @@ impl Descent {
         contract: &Contract,
         #[cfg(feature = "minimum-conflict-binary-close")] consumed_order: Option<&mut Vec<usize>>,
         work: &mut WorkVector,
+    ) -> GaussSeidelPass {
+        self.gauss_seidel_inner(
+            state,
+            sources,
+            contract,
+            #[cfg(feature = "minimum-conflict-binary-close")]
+            consumed_order,
+            work,
+            None,
+        )
+    }
+
+    /// [`Descent::gauss_seidel`] with an optional microscope sink. `None` is
+    /// the frozen pass; `Some` runs the identical pass through
+    /// [`relocate_probed`] and records what it observed.
+    fn gauss_seidel_inner(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        #[cfg(feature = "minimum-conflict-binary-close")] consumed_order: Option<&mut Vec<usize>>,
+        work: &mut WorkVector,
+        mut trace: Option<&mut SweepTrace>,
     ) -> GaussSeidelPass {
         let count = state.poses.len();
         let entry_proposals = self.proposals;
@@ -697,21 +747,42 @@ impl Descent {
         if let Some(trace) = consumed_order {
             trace.extend_from_slice(&order);
         }
+        if let Some(trace) = trace.as_deref_mut() {
+            trace.begin(key, &order);
+        }
         let mut pass = GaussSeidelPass {
             raw_before,
             ..GaussSeidelPass::default()
         };
-        for piece in &order {
-            let outcome = relocate(
-                state,
-                sources,
-                contract,
-                &self.allow_rotation,
-                *piece,
-                &self.config.relocate,
-                key,
-                work,
-            );
+        for (position, piece) in order.iter().enumerate() {
+            let outcome = match trace.as_deref_mut() {
+                None => relocate(
+                    state,
+                    sources,
+                    contract,
+                    &self.allow_rotation,
+                    *piece,
+                    &self.config.relocate,
+                    key,
+                    work,
+                ),
+                Some(trace) => {
+                    let mut probe = RelocateProbe::default();
+                    let outcome = relocate_probed(
+                        state,
+                        sources,
+                        contract,
+                        &self.allow_rotation,
+                        *piece,
+                        &self.config.relocate,
+                        key,
+                        work,
+                        &mut probe,
+                    );
+                    trace.observe_relocate(position, &outcome, &probe);
+                    outcome
+                }
+            };
             self.record(&outcome);
             if outcome.ran {
                 pass.relocated += 1;

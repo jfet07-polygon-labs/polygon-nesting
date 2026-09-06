@@ -81,6 +81,11 @@ pub mod icscal;
 /// The `icscal/v1` **reader**, and nothing else: no writer, no filesystem, no
 /// measurement. Wave 3.
 pub mod icscal_read;
+/// **The bite microscope** (`--bitemicroscope=1`): a buffered per-relocate
+/// trace of the first hard explore bite and the three after it, with replay
+/// capsules. Diagnostic only, off by default, byte-identical off and
+/// trajectory-identical on. See the module doc for why it exists.
+pub mod microscope;
 #[cfg(feature = "pool-retry-tracker-rebase")]
 pub mod pool_rebase;
 #[cfg(feature = "pool-retry-tracker-rebase")]
@@ -235,6 +240,10 @@ pub struct Engine<'a> {
     explore_bite_ordinal: u64,
     /// The pose-bits digest of the last state offered for publication.
     last_attempt_pose_digest: Option<[u8; 32]>,
+    /// The bite microscope, owned for the duration of a `run_cutclose` with
+    /// `ScheduleConfig::bite_microscope` set and `None` otherwise. Every
+    /// hook on it reads the trajectory; none writes to it.
+    microscope: Option<Box<microscope::BiteMicroscope>>,
 }
 
 impl<'a> Engine<'a> {
@@ -364,6 +373,7 @@ impl<'a> Engine<'a> {
             #[cfg(feature = "minimum-conflict-binary-close")]
             explore_bite_ordinal: 0,
             last_attempt_pose_digest: None,
+            microscope: None,
         }
     }
 
@@ -908,6 +918,15 @@ impl<'a> Engine<'a> {
         // with `clone_from`; this loop allocates and clones eight of them every
         // master iteration. `prep_ns` is what that costs, measured rather than
         // asserted, and it is one of the two terms in the spec's 10 % clause.
+        // The microscope observes exactly while a bite is being buffered:
+        // every worker then carries a private trace, and only the winner's
+        // survives the merge (`microscope`, "buffer private worker traces,
+        // retain the selected worker after merging").
+        let microscope_on = self
+            .microscope
+            .as_ref()
+            .is_some_and(|microscope| microscope.buffering());
+        let piece_count = self.state.poses.len();
         let mut slots: Vec<Slot> = ics_time!(profile, prep_ns, {
             let mut slots: Vec<Slot> = Vec::with_capacity(workers);
             for ordinal in 0..workers {
@@ -922,6 +941,7 @@ impl<'a> Engine<'a> {
                     #[cfg(feature = "minimum-conflict-binary-close")]
                     consumed_order: Vec::new(),
                     sweep_ns: 0,
+                    trace: microscope_on.then(|| microscope::SweepTrace::new(piece_count)),
                 });
             }
             slots
@@ -1017,46 +1037,75 @@ impl<'a> Engine<'a> {
             #[cfg(feature = "conflict-cluster-budget")]
             self.trace.partition.append(&slot.partition);
         }
+        // Losers' work belongs in the microscope's denominator: the sum over
+        // every slot, read only when a bite is being buffered.
+        let evaluations_all_workers = microscope_on
+            .then(|| slots.iter().map(|slot| slot.work.sample_evaluations).sum::<u64>());
 
         // Steps 5-7: the ordinal merge, the install, and one Algorithm-8 pass.
         // Timed as one region because a persistent executor changes none of it
         // and the census must not be able to flatter the executor by counting
         // merge work as dispatch work.
-        ics_time!(profile, merge_gls_ns, {
-            let mut winner = 0usize;
-            for ordinal in 1..workers {
-                if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
-                    winner = ordinal;
+        let (result, merge, winner_trace, winner_evaluations) =
+            ics_time!(profile, merge_gls_ns, {
+                let mut winner = 0usize;
+                for ordinal in 1..workers {
+                    if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
+                        winner = ordinal;
+                    }
                 }
-            }
-            let contested = outcomes
-                .iter()
-                .any(|other| other.totals.guided != outcomes[0].totals.guided);
-            let outcome = outcomes[winner];
-            let merge = Merge {
-                winner,
-                guided: outcome.totals.guided,
-                contested,
-            };
-            let slot = slots.swap_remove(winner);
-            self.state = slot.state;
-            self.descent = slot.descent;
-            self.trace.sweeps += 1;
+                let contested = outcomes
+                    .iter()
+                    .any(|other| other.totals.guided != outcomes[0].totals.guided);
+                let outcome = outcomes[winner];
+                let merge = Merge {
+                    winner,
+                    guided: outcome.totals.guided,
+                    contested,
+                };
+                let mut slot = slots.swap_remove(winner);
+                let winner_trace = slot.trace.take();
+                let winner_evaluations = slot.work.sample_evaluations;
+                self.state = slot.state;
+                self.descent = slot.descent;
+                self.trace.sweeps += 1;
 
-            // Step 7. One Algorithm-8 pass, on the master, over every row.
-            let active_rows = energy::gls_update(&mut self.state);
-            self.trace.work.weight_updates += 1;
-            let totals = energy::fold(&self.state);
-            (
-                SweepOutcome {
-                    active_rows,
-                    raw_after: totals.raw,
-                    totals,
-                    ..outcome
-                },
-                merge,
-            )
-        })
+                // Step 7. One Algorithm-8 pass, on the master, over every row.
+                let active_rows = energy::gls_update(&mut self.state);
+                self.trace.work.weight_updates += 1;
+                let totals = energy::fold(&self.state);
+                (
+                    SweepOutcome {
+                        active_rows,
+                        raw_after: totals.raw,
+                        totals,
+                        ..outcome
+                    },
+                    merge,
+                    winner_trace,
+                    winner_evaluations,
+                )
+            });
+        // The microscope's record (c): the winner's private trace, every
+        // worker's evaluations, and the blocking rows of the state the winner
+        // installed. Read after the merge; the weights the GLS pass just
+        // changed are not part of a violation.
+        if let (Some(microscope), Some(trace), Some(all)) = (
+            self.microscope.as_mut(),
+            winner_trace,
+            evaluations_all_workers,
+        ) {
+            microscope.observe_sweep(
+                trace,
+                merge.winner,
+                merge.contested,
+                all,
+                winner_evaluations,
+                result.totals,
+                &self.state,
+            );
+        }
+        (result, merge)
     }
 
     // ------------------------------------------ Algorithm 9: one separation --
@@ -1165,6 +1214,12 @@ impl<'a> Engine<'a> {
         // per master iteration and never inside one.
         let mut elapsed_s = pacer.elapsed_s();
         let deadline_s = pacer.deadline_s(phase);
+        // The microscope's record (g) opens here: every separation call, not
+        // only the failed ones `attempts` counts. A no-op unless a bite is
+        // being buffered.
+        if let Some(microscope) = self.microscope.as_mut() {
+            microscope.begin_separation(attempt);
+        }
         #[cfg(not(feature = "pool-retry-tracker-rebase"))]
         let iteration_cap = pacer.iteration_cap();
         #[cfg(feature = "pool-retry-tracker-rebase")]
@@ -1183,11 +1238,21 @@ impl<'a> Engine<'a> {
             // meter calls the frozen `observe_raw` and charges the batch that
             // produced this reading to whichever patience counter its arm
             // spends; both counters are maintained in both arms.
-            if meter
+            let new_minimum = meter
                 .observe(totals.raw, batch_sample_evaluations)
-                .is_new_minimum()
-            {
+                .is_new_minimum();
+            if new_minimum {
                 ics_time!(profile, snapshot_ns, snapshot.clone_from(&self.state));
+            }
+            // The microscope reads the same fold the meter just classified,
+            // and learns which iteration the snapshot now holds.
+            if let Some(microscope) = self.microscope.as_mut() {
+                microscope.observe_iteration(
+                    iterations,
+                    totals,
+                    new_minimum,
+                    totals.max_violation_mm <= band,
+                );
             }
 
             if totals.max_violation_mm <= band {
@@ -1274,11 +1339,22 @@ impl<'a> Engine<'a> {
                 exact_checkpoint_calls += called;
                 profile.exact_calls += called;
                 profile.repair_rows += self.trace.work.repair_rows - repaired_before;
+                if let Some(microscope) = self.microscope.as_mut() {
+                    microscope.observe_exact_calls(called);
+                }
                 if let Some(publication) = outcome.publication {
                     #[cfg(feature = "ics-profile")]
                     {
                         profile.barrier_to_barrier_ns +=
                             turn_started.elapsed().as_nanos() as u64;
+                    }
+                    if let Some(microscope) = self.microscope.as_mut() {
+                        microscope.end_separation(
+                            SeparateStop::Published,
+                            iterations,
+                            meter.min_raw(),
+                            false,
+                        );
                     }
                     return SeparateOutcome {
                         published: Some(publication),
@@ -1313,6 +1389,9 @@ impl<'a> Engine<'a> {
                     snapshot_ns,
                     restore_keeping_weights(&mut self.state, &snapshot)
                 );
+                if let Some(microscope) = self.microscope.as_mut() {
+                    microscope.observe_rollback(iterations);
+                }
                 // The improving strike: a strike that still beat the previous
                 // strike's entry by 2 % does not count against the cap.
                 let event = meter.strike();
@@ -1412,6 +1491,9 @@ impl<'a> Engine<'a> {
         // will perturb.
         if meter.min_raw().is_finite() {
             restore_keeping_weights(&mut self.state, &snapshot);
+        }
+        if let Some(microscope) = self.microscope.as_mut() {
+            microscope.end_separation(stop, iterations, meter.min_raw(), meter.min_raw().is_finite());
         }
         SeparateOutcome {
             published: None,
@@ -1728,6 +1810,11 @@ impl<'a> Engine<'a> {
         let seed = self.config.descent.seed;
         let workers = schedule.workers.max(1);
         let strikes_config = schedule.strikes;
+        // The bite microscope lives on the engine for exactly this call and is
+        // taken back into the outcome at the end. `None` is the frozen path.
+        self.microscope = schedule
+            .bite_microscope
+            .map(|config| Box::new(microscope::BiteMicroscope::new(config, self.state.poses.len())));
         let mut pacer = Pacer::new(budget, schedule.explore_time_ratio);
         // A calibrated plan charges deltas against the trajectory's own
         // counters, and this engine may already carry some: `run_cutclose` is
@@ -1780,6 +1867,12 @@ impl<'a> Engine<'a> {
         let mut explore_step = explore_step_base;
         while !pacer.phase_done(Phase::Explore, explore_bites) {
             bite_ordinal += 1;
+            // The layout before the cut, for the microscope's cut-moved mask.
+            // A clone of the poses only when the flag is on.
+            let poses_before_cut = self
+                .microscope
+                .as_ref()
+                .map(|_| self.state.poses.clone());
             #[cfg(not(feature = "minimum-conflict-binary-close"))]
             let bite = homotopy::explore_bite_at(
                 &self.sources,
@@ -1860,6 +1953,15 @@ impl<'a> Engine<'a> {
                 }
             }
             self.last_attempt_pose_digest = None;
+            // The microscope's record (b): the bite entry, buffered from the
+            // beginning of every explore bite and discarded at its end unless
+            // the bite qualifies. Read after the cut, the rebuild and the
+            // weight reset, which is the state the first separation enters.
+            if let (Some(microscope), Some(poses_before)) =
+                (self.microscope.as_mut(), poses_before_cut.as_deref())
+            {
+                microscope.begin_bite(bite_ordinal, &bite, poses_before, &self.state, &self.descent);
+            }
 
             let mut record = BiteRecord {
                 ordinal: bite_ordinal,
@@ -2078,6 +2180,21 @@ impl<'a> Engine<'a> {
                 if disruption.fired {
                     record.disruptions += 1;
                 }
+                // The microscope's non-reconstructible reset: the pool entry
+                // installed and disrupted, captured as the capsule the next
+                // separation starts from. `attempt` was already advanced, so
+                // the failed separation this follows is `attempt - 1`.
+                if let Some(microscope) = self.microscope.as_mut() {
+                    microscope.observe_reset(
+                        attempt - 1,
+                        pool.len(),
+                        rank,
+                        entry.raw_phi,
+                        &disruption,
+                        &self.state,
+                        &self.descent,
+                    );
+                }
             }
 
             explore_step = homotopy::adapt_explore_step(
@@ -2100,6 +2217,18 @@ impl<'a> Engine<'a> {
                     width_mm = depth_mm;
                     parent_poses = publication.poses.clone();
                     parent_fingerprint = publication.placement_fingerprint.clone();
+                    // The microscope's publication reference and the installed
+                    // repair pose deltas: read against the pre-repair state,
+                    // one statement before that state is replaced.
+                    if let Some(microscope) = self.microscope.as_mut() {
+                        microscope.observe_publication(
+                            &publication,
+                            &self.state.poses,
+                            attempt,
+                            record.master_iterations,
+                            record.bite.width_after_mm,
+                        );
+                    }
                     self.install_publication(&publication);
                     energy::reset_weights(&mut self.state);
                     publications.push(row.clone());
@@ -2115,10 +2244,16 @@ impl<'a> Engine<'a> {
                         pool_rebase_trace.invalid_retries += u64::from(!decision.valid);
                     }
                     record.published = Some(row);
+                    if let Some(microscope) = self.microscope.as_mut() {
+                        microscope.end_bite(record.master_iterations, true);
+                    }
                     bites.push(record);
                     explore_bites += 1;
                 }
                 None => {
+                    if let Some(microscope) = self.microscope.as_mut() {
+                        microscope.end_bite(record.master_iterations, false);
+                    }
                     bites.push(record);
                     break;
                 }
@@ -2129,6 +2264,10 @@ impl<'a> Engine<'a> {
             {
                 break;
             }
+        }
+        // Exploration is over: the microscope observes nothing in compress.
+        if let Some(microscope) = self.microscope.as_mut() {
+            microscope.close_explore();
         }
         let explore_seconds = pacer.elapsed_s();
 
@@ -2281,6 +2420,12 @@ impl<'a> Engine<'a> {
             binary_close,
             #[cfg(feature = "pool-retry-tracker-rebase")]
             pool_rebase: pool_rebase_trace,
+            // Emitted only now, after the timed region; the buffer lived on
+            // the engine for exactly this call.
+            bite_microscope: self
+                .microscope
+                .take()
+                .map(|microscope| Box::new(microscope.finish())),
         }
     }
 
@@ -2459,6 +2604,7 @@ impl<'a> Engine<'a> {
             #[cfg(feature = "minimum-conflict-binary-close")]
             binary_close: BinaryCloseTrace::new(BinaryCloseArm::Centre),
             pool_rebase: pool_rebase_trace,
+            bite_microscope: None,
         })
     }
 
@@ -2841,6 +2987,12 @@ pub struct ScheduleConfig {
     /// deterministic replay cells leave it absent.
     #[cfg(feature = "pool-retry-tracker-rebase")]
     pub record_pool_rebase_timing: bool,
+    /// **The bite microscope** (`--bitemicroscope=1`, [`microscope`]).
+    /// `None` by default: no buffer exists and the trajectory is the frozen
+    /// engine to the byte. `Some` buffers every explore bite and retains the
+    /// first hard one and the three after it; the trajectory is identical.
+    /// Diagnostic only; never a default; refused off the cutclose cell.
+    pub bite_microscope: Option<microscope::MicroscopeConfig>,
 }
 
 impl Default for ScheduleConfig {
@@ -2850,6 +3002,7 @@ impl Default for ScheduleConfig {
             strikes: StrikeConfig::CONTROL,
             explore_time_ratio: homotopy::EXPLORE_TIME_RATIO,
             record_fingerprints: false,
+            bite_microscope: None,
             #[cfg(feature = "minimum-conflict-binary-close")]
             record_consumed_orders: false,
             #[cfg(feature = "minimum-conflict-binary-close")]
@@ -3182,6 +3335,11 @@ pub struct ScheduleOutcome {
     /// Empty unless the Gate-0/quality driver explicitly arms retry telemetry.
     #[cfg(feature = "pool-retry-tracker-rebase")]
     pub pool_rebase: PoolRebaseTrace,
+    /// The bite microscope's report: `Some` exactly when
+    /// `ScheduleConfig::bite_microscope` was set, whether or not a bite
+    /// qualified (the report's `exposure` says which). Emitted after the timed
+    /// region, never read by the engine.
+    pub bite_microscope: Option<Box<microscope::MicroscopeReport>>,
 }
 
 /// **What a calibrated plan spent, and what it did not charge.**
@@ -3268,6 +3426,13 @@ pub enum SeparateStop {
 impl SeparateStop {
     #[cfg(feature = "pool-retry-tracker-rebase")]
     fn as_str(self) -> &'static str {
+        self.label()
+    }
+
+    /// The stop's name in the bite microscope's record (g): the *actual* stop
+    /// of every separation call, which `BiteRecord::attempts` (failed calls
+    /// only) does not carry.
+    pub fn label(self) -> &'static str {
         match self {
             Self::Published => "published",
             Self::Refused => "refused",
@@ -3307,6 +3472,10 @@ struct Slot {
     /// read by nothing the engine decides on.
     #[cfg_attr(not(feature = "ics-profile"), allow(dead_code))]
     sweep_ns: u64,
+    /// The bite microscope's private buffer for this worker's sweep. `Some`
+    /// exactly while a bite is being buffered; the winner's is taken at the
+    /// merge and the losers' are dropped with their slots.
+    trace: Option<microscope::SweepTrace>,
 }
 
 impl Slot {
@@ -3321,16 +3490,25 @@ impl Slot {
     ) -> SweepOutcome {
         #[cfg(feature = "ics-profile")]
         let started = std::time::Instant::now();
-        let outcome = self
-            .descent
-            .worker_sweep(
+        let outcome = match self.trace.as_mut() {
+            None => self.descent.worker_sweep(
                 &mut self.state,
                 sources,
                 contract,
                 #[cfg(feature = "minimum-conflict-binary-close")]
                 record_consumed_orders.then_some(&mut self.consumed_order),
                 &mut self.work,
-            );
+            ),
+            // The identical pass, observed. The consumed-order recorder is a
+            // Gate-0 instrument that never runs beside the microscope.
+            Some(trace) => self.descent.worker_sweep_traced(
+                &mut self.state,
+                sources,
+                contract,
+                &mut self.work,
+                trace,
+            ),
+        };
         #[cfg(feature = "ics-profile")]
         {
             self.sweep_ns = started.elapsed().as_nanos() as u64;
@@ -3349,15 +3527,23 @@ impl Slot {
         #[cfg(feature = "ics-profile")]
         let started = std::time::Instant::now();
         let outcome = if self.descent.partition_arm() == PartitionArm::Off {
-            self.descent
-                .worker_sweep(
+            match self.trace.as_mut() {
+                None => self.descent.worker_sweep(
                     &mut self.state,
                     sources,
                     contract,
                     #[cfg(feature = "minimum-conflict-binary-close")]
                     record_consumed_orders.then_some(&mut self.consumed_order),
                     &mut self.work,
-                )
+                ),
+                Some(trace) => self.descent.worker_sweep_traced(
+                    &mut self.state,
+                    sources,
+                    contract,
+                    &mut self.work,
+                    trace,
+                ),
+            }
         } else {
             self.descent.worker_sweep_partitioned(
                 &mut self.state,

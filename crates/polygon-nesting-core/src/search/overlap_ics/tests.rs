@@ -690,8 +690,25 @@ impl Drop for PublishAchievedGuard {
     }
 }
 
+/// **The process-level knobs and the tests that compare two trajectories
+/// must not overlap in time.** `set_publish_achieved` and
+/// `set_proxy_margin_um` are process-wide atomics; the harness runs tests on
+/// parallel threads; a knob flipped by one test while another is halfway
+/// through the second of two runs it compares makes those runs see two
+/// different engines. Every test that writes a knob and every test that
+/// asserts two runs identical holds this for its whole body. A poisoned lock
+/// (a panic under it) is taken anyway: the guards above restore the knobs.
+static KNOB_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+fn knob_lock() -> std::sync::MutexGuard<'static, ()> {
+    KNOB_LOCK
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 #[test]
 fn publish_achieved_publishes_a_layout_proud_of_its_own_target_only_when_on() {
+    let _knobs = knob_lock();
     // Off (the default): a layout 3 um above `T`, inside the 4 um band, valid
     // on the sheet and 0.5 mm better than the incumbent, is refused before the
     // exact authority is called - no checkpoint row, no incumbent movement.
@@ -943,6 +960,7 @@ impl Drop for ProxyMarginGuard {
 /// the kernel's region, with room for the row repair to move.
 #[test]
 fn the_proxy_margin_charges_a_pair_at_the_clearance_and_all_four_edges_only_when_on() {
+    let _knobs = knob_lock();
     assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
     assert_eq!(super::proxy_margin_mm(), 0.0);
     let fixture = Fixture::squares(2, 20.0);
@@ -3758,5 +3776,318 @@ fn rollback_keeping_weights_restores_the_near_set_with_the_rows() {
     assert!(
         colliding.contains(&0) && colliding.contains(&1),
         "colliding-piece selection sees the restored collision: {colliding:?}"
+    );
+}
+
+// ------------------------------------------------------- the bite microscope --
+
+/// What the on/off identity compares: poses to the bit, the standing depth,
+/// the publication count, every bite's master-iteration count, the whole work
+/// vector, and the report (`None` off).
+type MicroscopeRun = (
+    Vec<(u64, u64, u64)>,
+    u64,
+    usize,
+    Vec<u64>,
+    WorkVector,
+    Option<Box<super::microscope::MicroscopeReport>>,
+);
+
+fn microscope_run_of(outcome: super::ScheduleOutcome) -> MicroscopeRun {
+    (
+        pose_bits(&outcome.final_poses),
+        outcome.depth_mm.to_bits(),
+        outcome.publications.len(),
+        outcome.bites.iter().map(|row| row.master_iterations).collect(),
+        outcome.trace.work,
+        outcome.bite_microscope,
+    )
+}
+
+fn pose_bits(poses: &[Pose]) -> Vec<(u64, u64, u64)> {
+    poses
+        .iter()
+        .map(|pose| {
+            (
+                pose.tx_mm.to_bits(),
+                pose.ty_mm.to_bits(),
+                pose.theta_deg.to_bits(),
+            )
+        })
+        .collect()
+}
+
+/// One fixed-work cutclose trajectory of the twelve-square tournament fixture
+/// (infeasible by area: every separation stops on its cap, the pool and the
+/// disruption both run) with the microscope off (`None`) or on.
+fn microscope_tournament_run(
+    microscope: Option<super::microscope::MicroscopeConfig>,
+) -> MicroscopeRun {
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = (0..pieces.len())
+        .map(|index| Pose {
+            tx_mm: 20.0 + (index % 4) as f64 * 22.0,
+            ty_mm: 20.0 + (index / 4) as f64 * 22.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        })
+        .collect::<Vec<_>>();
+    let config = IcsConfig {
+        target_depth_mm: 40.0,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: 40.0,
+        from_constructor: true,
+        placement_fingerprint: "the-constructor".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    let schedule = ScheduleConfig {
+        workers: 8,
+        bite_microscope: microscope,
+        ..ScheduleConfig::default()
+    };
+    microscope_run_of(engine.run_cutclose(
+        schedule,
+        Budget::FixedWork {
+            explore_bites: 2,
+            compress_bites: 1,
+            attempts_per_bite: 2,
+            iterations_per_separation: 3,
+        },
+    ))
+}
+
+/// The banded two-square trajectory of
+/// [`a_repaired_publication_becomes_the_next_bites_exact_parent`], which
+/// publishes inside its first bite: the publication hook's coverage.
+fn microscope_publishing_run(
+    microscope: Option<super::microscope::MicroscopeConfig>,
+) -> MicroscopeRun {
+    let fixture = two_squares();
+    let pieces = fixture.pieces();
+    let mut engine = banded_deficit_engine(&pieces, 60.0);
+    let schedule = ScheduleConfig {
+        workers: 2,
+        bite_microscope: microscope,
+        ..ScheduleConfig::default()
+    };
+    microscope_run_of(engine.run_cutclose(schedule, TWO_BITES))
+}
+
+/// **The bite microscope changes nothing it observes.**
+///
+/// `--bitemicroscope=1` must leave the trajectory identical to the flag off:
+/// it consumes no counter draw and reaches no decision. This is the in-process
+/// half of that claim on two fixed-work trajectories - one that never
+/// publishes and therefore exercises the cap, the pool restore and the
+/// disruption (the resets a replay capsule exists for), and one that publishes
+/// with a repair (the installed-pose-delta record). Poses to the bit, the
+/// standing depth, the publication count, every bite's master-iteration count
+/// and the whole work vector agree off and on. The two-process half is the
+/// mixed-61 demonstration in the commit that introduced the flag.
+///
+/// The trigger is lowered to one iteration so the small fixtures retain a bite
+/// and the report's structure can be checked rather than only its absence.
+#[test]
+fn the_bite_microscope_leaves_the_fixed_work_trajectory_identical() {
+    use super::microscope::MicroscopeConfig;
+    // Two runs compared for identity: no knob may move between them.
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    assert!(!super::publish_achieved(), "the knob must default to off");
+    let armed = Some(MicroscopeConfig {
+        trigger_iterations: 1,
+        retain_after: 3,
+    });
+
+    let (poses_off, depth_off, published_off, iterations_off, work_off, report_off) =
+        microscope_tournament_run(None);
+    let (poses_on, depth_on, published_on, iterations_on, work_on, report_on) =
+        microscope_tournament_run(armed);
+    assert!(report_off.is_none(), "off means no report at all");
+    assert_eq!(poses_off, poses_on, "poses differ with the microscope on");
+    assert_eq!(depth_off, depth_on, "depth differs with the microscope on");
+    assert_eq!(published_off, published_on, "publication count differs");
+    assert_eq!(iterations_off, iterations_on, "master iterations per bite differ");
+    assert_eq!(work_off, work_on, "the work vector differs");
+    let report = report_on.expect("on means a report");
+    assert!(report.exposure.triggered, "a lowered trigger fires on the first bite");
+    assert_eq!(report.exposure.trigger_bite, Some(1));
+    assert_eq!(report.exposure.retained_bites, vec![1]);
+    assert!(!report.exposure.complete, "the phase ends on the failed bite: truncated");
+    assert!(report.exposure.status.starts_with("truncated:"), "{}", report.exposure.status);
+    let bite = &report.bites[0];
+    assert_eq!(bite.master_iterations, iterations_on[0]);
+    assert!(!bite.published);
+    // Record (g): every separation call carries its actual stop, and the
+    // failed ones are followed by a reset with a capsule.
+    assert_eq!(bite.separations.len(), 2, "two attempts: two separation calls");
+    assert!(bite
+        .separations
+        .iter()
+        .all(|call| call.stop == Some("work-cap") && call.iterations == 3));
+    assert_eq!(bite.resets.len(), 1, "one pool restore + disruption between the two");
+    assert!(bite.resets[0].disruption_fired);
+    assert_eq!(bite.resets[0].after_attempt, 0);
+    assert_eq!(report.capsules.len(), 2, "bite entry and after the disruption");
+    assert_eq!(report.capsules[bite.capsule as usize].label, "bite-entry");
+    assert_eq!(report.capsules[bite.resets[0].capsule as usize].label, "after-disruption");
+    assert_eq!(report.capsules[0].poses.len(), 12);
+    assert_eq!(report.capsules[0].pair_weights.len(), pair_count(12));
+    assert_eq!(report.capsules[0].bite, 1);
+    // The master descent's own stream: at the first bite's entry no
+    // tournament has run, so it is still the constructor's `(0, 0)` and the
+    // iteration counter is zero; after the disruption three master
+    // iterations have advanced it.
+    assert_eq!(report.capsules[0].stream.iteration, 0);
+    assert_eq!(report.capsules[1].stream.iteration, 3);
+    assert_eq!(report.capsules[1].stream.bite, 1);
+    // Record (c)-(e): every master iteration has a selected sweep whose
+    // relocates carry rows with a classified other endpoint, and the losers'
+    // work is in the denominator.
+    let sweeps: Vec<_> = bite.separations.iter().flat_map(|call| &call.sweeps).collect();
+    assert_eq!(sweeps.len() as u64, bite.master_iterations);
+    for sweep in &sweeps {
+        assert!(sweep.winner < 8);
+        assert_eq!(sweep.stream.expect("a traced sweep has a key").worker, sweep.winner as u64);
+        assert!(
+            sweep.evaluations_all_workers > sweep.evaluations_winner,
+            "eight workers swept; seven of them are losers with work"
+        );
+        assert_eq!(
+            sweep.relocates.iter().map(|row| row.sample_evaluations).sum::<u64>(),
+            sweep.evaluations_winner,
+            "the winner's relocates account for the winner's evaluations"
+        );
+        for relocate in &sweep.relocates {
+            assert_eq!(sweep.order[relocate.position as usize], relocate.piece);
+            assert!(relocate.raw_before > 0.0, "only colliding pieces are relocated");
+            assert!(relocate.fine_cd.candidate_pairs >= 1);
+            assert!(matches!(relocate.fine_cd.reason, "limits" | "iteration-cap"));
+            assert_eq!(relocate.fine_cd.exit_raw.to_bits(), relocate.raw_after.to_bits());
+            for row in &relocate.rows {
+                assert_ne!(row.1.to_bits(), row.2.to_bits(), "a changed row changed");
+                assert!((row.0 as usize) < pair_count(12) + 12 * 4);
+            }
+        }
+    }
+    assert!(
+        sweeps.iter().any(|sweep| sweep.relocates.iter().any(|row| !row.rows.is_empty())),
+        "an infeasible strip's relocates change rows"
+    );
+
+    // The banded deficit publishes at its entry state - the band test comes
+    // before any sweep - so its bites have zero master iterations, and only a
+    // zero trigger retains them.
+    let (poses_off, depth_off, published_off, iterations_off, work_off, _) =
+        microscope_publishing_run(None);
+    let (poses_on, depth_on, published_on, iterations_on, work_on, report_on) =
+        microscope_publishing_run(Some(MicroscopeConfig {
+            trigger_iterations: 0,
+            retain_after: 3,
+        }));
+    assert_eq!(poses_off, poses_on, "poses differ with the microscope on (publishing run)");
+    assert_eq!(depth_off, depth_on);
+    assert_eq!(published_off, published_on);
+    assert!(published_on >= 1, "the banded deficit publishes");
+    assert_eq!(iterations_off, iterations_on);
+    assert_eq!(work_off, work_on);
+    let report = report_on.expect("on means a report");
+    let published: Vec<_> = report.bites.iter().filter(|bite| bite.published).collect();
+    assert!(!published.is_empty(), "a retained bite published: {:?}", report.exposure);
+    let publication = published[0].publication.as_ref().expect("the publication record");
+    assert!(publication.repair_rows >= 1);
+    assert!(
+        !publication.installed_pose_deltas.is_empty(),
+        "a repair that moved a pose is an installed delta"
+    );
+    assert_eq!(
+        published[0].separations.last().and_then(|call| call.stop),
+        Some("published")
+    );
+}
+
+/// **The other endpoint's scheduling status, on a hand-built sweep order.**
+///
+/// Astra review 3 Q1 rank 2's three classes: the piece a changed row's other
+/// end belongs to is still to be visited (`later`), has already had its turn
+/// (`visited`), or was never in the colliding set this sweep collected
+/// (`absent`); a boundary row has no other piece (`boundary`).
+#[test]
+fn the_microscope_classifies_the_other_endpoint_against_the_sweep_order() {
+    use super::microscope::{
+        boundary_row_id, decode_row_id, endpoint_status, other_endpoint, pair_row_id,
+        row_changes, EndpointStatus, RowKind,
+    };
+    let order = [5usize, 2, 9, 1];
+    // Relocating piece 9, third in the order.
+    let position = 2;
+    assert_eq!(endpoint_status(&order, position, Some(5)), EndpointStatus::Visited);
+    assert_eq!(endpoint_status(&order, position, Some(2)), EndpointStatus::Visited);
+    assert_eq!(endpoint_status(&order, position, Some(1)), EndpointStatus::Later);
+    assert_eq!(endpoint_status(&order, position, Some(7)), EndpointStatus::Absent);
+    assert_eq!(endpoint_status(&order, position, None), EndpointStatus::Boundary);
+    // The first piece of the order has visited nobody; the last has nobody later.
+    assert_eq!(endpoint_status(&order, 0, Some(2)), EndpointStatus::Later);
+    assert_eq!(endpoint_status(&order, 3, Some(9)), EndpointStatus::Visited);
+
+    // Row ids round-trip and name the other endpoint.
+    let count = 12;
+    for first in 0..count {
+        for second in (first + 1)..count {
+            let id = pair_row_id(count, first, second);
+            assert_eq!(id, pair_row_id(count, second, first), "a pair id is unordered");
+            assert_eq!(decode_row_id(count, id), RowKind::Pair { first, second });
+            assert_eq!(other_endpoint(count, id, first), Some(second));
+            assert_eq!(other_endpoint(count, id, second), Some(first));
+        }
+        for side in 0..4 {
+            let id = boundary_row_id(count, first, side);
+            assert_eq!(decode_row_id(count, id), RowKind::Boundary { piece: first, side });
+            assert_eq!(other_endpoint(count, id, first), None);
+        }
+    }
+
+    // Record (e) on a hand-built entry/commit pair for piece 9: a death
+    // (9,5), a persistent change (9,1), a birth (9,7), an unchanged row (9,2)
+    // that is not reported, and a boundary row.
+    let entry = vec![
+        (pair_row_id(count, 9, 5), 0.010),
+        (pair_row_id(count, 9, 1), 0.020),
+        (pair_row_id(count, 9, 2), 0.005),
+        (boundary_row_id(count, 9, 3), 0.0),
+    ];
+    let committed = vec![
+        (pair_row_id(count, 9, 1), 0.001),
+        (pair_row_id(count, 9, 2), 0.005),
+        (pair_row_id(count, 9, 7), 0.030),
+        (boundary_row_id(count, 9, 3), 0.002),
+    ];
+    let changes = row_changes(count, 9, &order, position, &entry, &committed);
+    let mut seen: Vec<(Option<usize>, f64, f64, EndpointStatus)> = changes
+        .iter()
+        .map(|row| (other_endpoint(count, row.0, 9), row.1, row.2, row.3))
+        .collect();
+    seen.sort_by(|left, right| left.0.cmp(&right.0));
+    assert_eq!(
+        seen,
+        vec![
+            (None, 0.0, 0.002, EndpointStatus::Boundary),
+            (Some(1), 0.020, 0.001, EndpointStatus::Later),
+            (Some(5), 0.010, 0.0, EndpointStatus::Visited),
+            (Some(7), 0.0, 0.030, EndpointStatus::Absent),
+        ]
     );
 }
