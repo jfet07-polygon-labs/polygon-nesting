@@ -127,3 +127,18 @@ a hypothesis with a direct test in the replay harness: `--probe=linear` (guided 
 weights, same sampler) from the bite-15 capsule, and the prediction is that the column breaks
 in 15-20 iterations instead of 36. It is also a landscape change, not a constant change, and
 it would go to a prospective spec on its own.
+
+The reading record already has Sparrow's functional form (`docs/grok-review-12-reading-sparrow.md`
+§1, line 85): its per-pair loss is `sqrt(overlap_area_proxy(poles) + eps^2) * shape_penalty`,
+Algorithm 4 of arXiv:2509.13329, with the pole overlap area of Algorithm 3. The overlap area
+of two circles at penetration `d` scales as `d^1.5` for small `d`, so Sparrow's loss scales as
+about `d^0.75`: sub-linear in the penetration. Ours is `v^2`. For a 5 um residual against a
+1.8 mm fresh overlap the ratio of the two costs is `(0.005/1.8)^2 = 8e-6` for us and
+`(0.005/1.8)^0.75 = 0.012` for Sparrow: the weight needed to make a pinned member leave is
+about 1e5 for us and about 1e2 for Sparrow, and at 1.4-1.6x per update that is 30-36 updates
+against 8-12. Sparrow's 17 passes on this bite fit. The pole proxy itself is not licensed
+(forbidden-rescue list), and is not needed: the exponent on our own signed-gap violation is
+our design decision (`guided = w v^2` was Grok review 12's recommendation, line 188 there, for
+"one guided path"), and the replay probe `guided = w v^p` for `p` in {1, 0.75, 0.5} from the
+bite-15 capsule tests it directly, with the prediction that the column breaks in 10-20
+iterations at `p <= 1`.
