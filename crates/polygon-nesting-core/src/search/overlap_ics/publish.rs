@@ -41,7 +41,7 @@ use crate::validation::round_envelope::{
 use sha2::{Digest, Sha256};
 
 use super::diagnostics::{ExactCheckpoint, WorkVector};
-use super::state::{Contract, IcsState, PieceSource, Pose};
+use super::state::{pair_index, Contract, IcsState, PieceSource, Pose};
 
 /// `epsilon_grid = 2 * ceil(sqrt(2) * 1 µm) = 4 µm`, in millimetres.
 ///
@@ -577,8 +577,13 @@ pub fn attempt(
     // **Publish-achieved (H1).** `T` is the bite's own aspiration, `D - step`.
     // On the Legacy profile 82.5 % of all explore master iterations go to
     // bites that reached `Phi = 0`, entered the band, and were refused right
-    // here for `0 < proxy_depth - T <= 4 um` on layouts 0.175-0.180 mm better
-    // than the incumbent (bite22-microscope README section 3). With the knob
+    // here for `0 < proxy_depth - T <= 4 um` (the iteration share is computed
+    // in `docs/quorum/ics-achieved-depth-v1-spec.md`, "Result", from the
+    // signed round's bite records; the refusal census is bite22-microscope
+    // README section 3). **The same round then measured that fewer than one
+    // in ten of the admitted states certify** - the kernel finds a row more
+    // than 4 um short where the proxy reports at most 4 um - so the knob acts
+    // on the wrong gate and stays off. With the knob
     // on, that refusal is the improvement gate on the next line and nothing
     // else; with it off (the default) this line is the closed member's.
     let publish_achieved = super::publish_achieved();
@@ -614,6 +619,13 @@ pub fn attempt(
         repair_depth_giveback_mm: 0.0,
         published_raw_depth_mm: None,
         refusal: None,
+        first_scan_failing_pairs: 0,
+        first_scan_failing_boundaries: 0,
+        blocked_on: None,
+        blocking_shortfall_um: None,
+        first_pair: None,
+        first_pair_kernel_shortfall_um: None,
+        first_pair_proxy_violation_um: None,
     };
 
     let radius = match to_grid_mm(contract.expansion_mm()) {
@@ -675,6 +687,28 @@ pub fn attempt(
     }
 
     let mut result = scan(&sets, two_r, radius, inset);
+
+    checkpoint.first_scan_failing_pairs = result.failing_pairs.len() as u32;
+
+    checkpoint.first_scan_failing_boundaries = result.failing_boundaries.len() as u32;
+
+    if let Some(&(first, second)) = result.failing_pairs.first() {
+
+        let ceiling = 8 * two_r.max(1);
+
+        let kernel = critical_two_r_micron(&sets[first], &sets[second], ceiling)
+
+            .map(|(critical, _)| two_r - critical);
+
+        let row = &state.pair_rows[pair_index(state.poses.len(), first, second)];
+
+        checkpoint.first_pair = Some((first as u32, second as u32));
+
+        checkpoint.first_pair_kernel_shortfall_um = kernel;
+
+        checkpoint.first_pair_proxy_violation_um = Some(row.violation_mm * 1000.0);
+
+    }
     // The witness, taken on the first scan: an eligible state must actually
     // produce a failing far-`y` row under the tightened box, or the T-row was
     // never wired to anything.
@@ -779,10 +813,17 @@ pub fn attempt(
             inset,
         );
         let Some(touched) = corrected else {
-            // **Autopsy, instrument only.** Re-derive which row refused and by
-            // how much, using the same predicates `repair_one_row` just used.
-            // It changes nothing: the refusal below is the one the closed
-            // member has always produced.
+            // **Autopsy, always on.** Re-derive which row refused and by how
+            // much, with the same predicates `repair_one_row` just used, and
+            // record it on the checkpoint. It changes nothing: the refusal
+            // below is the one the closed member has always produced.
+            {
+                let (kind, shortfall) = blocking_row(
+                    &result, &sets, state, &displacement, &limits, two_r, radius, inset,
+                );
+                checkpoint.blocked_on = Some(kind.label());
+                checkpoint.blocking_shortfall_um = shortfall;
+            }
             #[cfg(feature = "t-row-repair")]
             if t_row_eligible {
                 let guard_micron = (limits.epsilon_grid_mm * 1000.0).round() as i64;
@@ -1001,7 +1042,6 @@ pub fn attempt(
 /// the shortfall in micrometres where one exists. Nothing here can change a
 /// trajectory: it is called on the give-up path and its result reaches a
 /// counter and nothing else.
-#[cfg(feature = "t-row-repair")]
 #[derive(Clone, Copy, Debug)]
 enum BlockedOn {
     Boundary,
@@ -1011,7 +1051,18 @@ enum BlockedOn {
     DisplacementCap,
 }
 
-#[cfg(feature = "t-row-repair")]
+impl BlockedOn {
+    fn label(self) -> &'static str {
+        match self {
+            BlockedOn::Boundary => "boundary",
+            BlockedOn::Pair => "pair",
+            BlockedOn::NoNormal => "noNormal",
+            BlockedOn::Saturated => "saturated",
+            BlockedOn::DisplacementCap => "displacementCap",
+        }
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 fn blocking_row(
     scan_result: &KernelScan,

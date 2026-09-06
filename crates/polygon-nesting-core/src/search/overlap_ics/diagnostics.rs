@@ -262,6 +262,23 @@ pub struct ExactCheckpoint {
     /// `Some` only on a dual-valid publication.
     pub published_raw_depth_mm: Option<f64>,
     pub refusal: Option<String>,
+    /// **The give-up autopsy, always on.** How many pair and boundary rows the
+    /// Exclusive kernel found failing on its *first* scan of this state - the
+    /// size of the proxy-versus-kernel disagreement before any repair - and,
+    /// when the repair gave up, the row kind it gave up on and that row's
+    /// shortfall in micrometres. `None` when nothing gave up.
+    pub first_scan_failing_pairs: u32,
+    pub first_scan_failing_boundaries: u32,
+    pub blocked_on: Option<&'static str>,
+    pub blocking_shortfall_um: Option<i64>,
+    /// **The same pair, seen by both authorities, before any repair.** For the
+    /// first pair the kernel's first scan finds failing: the pair, the
+    /// kernel's shortfall `2r - critical 2r` in micrometres, and the proxy's
+    /// own row violation for that pair in micrometres, read from the live
+    /// state the scan was made from. If the two disagree, this is where.
+    pub first_pair: Option<(u32, u32)>,
+    pub first_pair_kernel_shortfall_um: Option<i64>,
+    pub first_pair_proxy_violation_um: Option<f64>,
 }
 
 /// One entry of the anytime quality series. Exact-valid raw source depth only.

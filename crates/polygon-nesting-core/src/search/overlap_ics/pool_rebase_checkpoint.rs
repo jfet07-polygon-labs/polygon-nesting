@@ -878,7 +878,14 @@ fn decode_trace(input: &mut Decoder<'_>) -> Result<Trace, String> {
             repair_depth_giveback_mm,
             published_raw_depth_mm,
             refusal,
-        });
+                    first_scan_failing_pairs: 0,
+            first_scan_failing_boundaries: 0,
+            blocked_on: None,
+            blocking_shortfall_um: None,
+            first_pair: None,
+            first_pair_kernel_shortfall_um: None,
+            first_pair_proxy_violation_um: None,
+});
     }
     let quality_len = input.len()?;
     let mut quality = Vec::with_capacity(quality_len);

@@ -4010,11 +4010,13 @@ pub fn schedule_profile() -> ScheduleProfile {
 /// (`published_depth > target_depth_mm`). The bite22 microscope measured what
 /// that costs on 45 held-out Legacy cells: **82.5 % of all explore master
 /// iterations** are spent on bites that reached `Phi = 0`, entered the 4 um
-/// band, and were refused by exactly that pre-gate, on layouts 0.175-0.180 mm
-/// better than the incumbent, for an excess of `0 < proxy_depth - T <= 4 um`
-/// (`docs/experiments/overlap-ics/bite22-microscope/README.md` section 3: all
-/// but four of the 4,077 above-target refusals across nine cells beat the
-/// incumbent; the improvement gate never fired). Sparrow has no such failure
+/// band, and were refused by exactly that pre-gate
+/// (`docs/quorum/ics-achieved-depth-v1-spec.md`, "Result", computed from the
+/// signed round's own bite records; the refused layouts are the ones
+/// `docs/experiments/overlap-ics/bite22-microscope/README.md` section 3
+/// counts - 4,077 above-target refusals across nine cells, all but four of
+/// them 0.175-0.180 mm better than the incumbent, excess `0 < proxy_depth - T
+/// <= 4 um`, improvement gate never fired). Sparrow has no such failure
 /// because its strip width is a hazard inside its proxy, so loss zero means
 /// feasible at exactly the width asked; here the overhang is a boundary
 /// violation the band already admitted.
