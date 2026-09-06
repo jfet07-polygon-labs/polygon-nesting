@@ -104,3 +104,27 @@ bitcheck ALL_IDENTICAL against the parent build on seeds 0/3/7, suite 844 passed
 validator untouched; measurer: the nine-seed cells). The give-up counts were computed by
 `giveups.py` here, because the workflow's measure schema did not ask for them; the schema now
 does.
+
+## Addendum, same day: `--proxymargin=8` on the nine seeds
+
+Astra's review 2 preferred 8 um because the 4 um band still admits a layout whose pairs sit at
+exactly 5.000 mm when `m = 4` (its proxy violation equals the band), and excludes it when
+`m = 8`. Measured with the same binary, the same seeds, one repetition
+(`analyse-m8-seeds18-26.txt`, `giveups-m8-seeds18-26.txt`, `analyse-m4-vs-m8-seeds18-26.txt`):
+
+| profile | paired median gain vs devbase | wins | worst | give-ups | explore bites / cell | invalid |
+|---|---|---|---|---|---|---|
+| Legacy  | **+0.949 mm** | **8/9** | -2.592 | 1535 -> 0 | 99.8 -> 104.2 | 0 |
+| Wall10s | +0.439 mm | 5/9 | -1.085 | 737 -> 0 | 4.9 -> 5.0 | 0 |
+
+Per seed, Legacy: 18:+0.26 19:+0.49 20:+0.95 21:+1.28 22:+6.11 23:+1.25 24:-2.59 25:+0.54
+26:+2.92; Wall10s: 18:-0.79 19:-0.19 20:+0.71 21:+5.18 22:+0.44 23:-0.90 24:-1.09 25:+0.90
+26:+0.67. Against `m = 4` directly: +0.698 mm (5/9) on Legacy, +0.515 mm (5/9) on Wall10s.
+
+So the verdict above is for `m = 4` only. At `m = 8` the depth falsifier does not trip: both
+profiles improve at the paired median, Legacy by about one bite's worth (four more bites per
+cell). It is a small, real gain, an order of magnitude short of the Sparrow gap, and it is
+what a signed round on the margin would have to carry. The round is still not opened: the
+preflight Astra drafted (`P_M >= P_R` per seed) is written against a premise the data has
+refuted (publications per cell fall when the churn goes, 1042 -> 972 on Legacy), and the next
+brief asks Astra to rewrite it before any scored cell.

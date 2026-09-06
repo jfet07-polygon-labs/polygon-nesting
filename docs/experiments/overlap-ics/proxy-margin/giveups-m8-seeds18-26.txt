@@ -1,0 +1,36 @@
+== legacy: devbase vs proxy-margin8full ==
+  s18: cps  304-> 108  pubs 119->108  cps/pub  2.55-> 1.00  give-ups  158->   0  depth 164.262->164.005
+  s19: cps  364-> 102  pubs 131->102  cps/pub  2.78-> 1.00  give-ups  173->   0  depth 165.478->164.992
+  s20: cps  419-> 105  pubs 127->105  cps/pub  3.30-> 1.00  give-ups  257->   0  depth 164.954->164.005
+  s21: cps  268->  98  pubs  97-> 98  cps/pub  2.76-> 1.00  give-ups  137->   0  depth 167.157->165.880
+  s22: cps  375-> 150  pubs 121->150  cps/pub  3.10-> 1.00  give-ups  164->   0  depth 163.550->157.436
+  s23: cps  275-> 104  pubs 106->104  cps/pub  2.59-> 1.00  give-ups  143->   0  depth 165.260->164.010
+  s24: cps  330->  89  pubs 120-> 89  cps/pub  2.75-> 1.00  give-ups  180->   0  depth 164.510->167.102
+  s25: cps  319-> 104  pubs 116->104  cps/pub  2.75-> 1.00  give-ups  165->   0  depth 164.555->164.011
+  s26: cps  307-> 112  pubs 105->112  cps/pub  2.92-> 1.00  give-ups  158->   0  depth 166.218->163.303
+  TOTAL devbase: checkpoints 2961 publications 1042 cps/pub 2.84 give-ups 1535 invalid 0
+      PUBLISHED: 1042
+      give-up (band/slack): 1535
+      pair refused by validator/kernel: 91
+      piece crosses the strip: 282
+      repair would enlarge the strip: 11
+  TOTAL proxy-margin8full: checkpoints 972 publications 972 cps/pub 1.00 give-ups 0 invalid 0
+      PUBLISHED: 972
+== wall10s: devbase vs proxy-margin8full ==
+  s18: cps   72->  14  pubs  24-> 14  cps/pub  3.00-> 1.00  give-ups   46->   0  depth 159.256->160.049
+  s19: cps  103->  12  pubs  21-> 12  cps/pub  4.90-> 1.00  give-ups   69->   0  depth 159.861->160.050
+  s20: cps   79->  23  pubs  17-> 23  cps/pub  4.65-> 1.00  give-ups   54->   0  depth 159.773->159.063
+  s21: cps  228->  14  pubs  28-> 14  cps/pub  8.14-> 1.00  give-ups  146->   0  depth 165.237->160.058
+  s22: cps   32->  27  pubs  17-> 27  cps/pub  1.88-> 1.00  give-ups   11->   0  depth 160.001->159.562
+  s23: cps   69->  17  pubs  27-> 17  cps/pub  2.56-> 1.00  give-ups   22->   0  depth 159.012->159.915
+  s24: cps  267->  16  pubs  92-> 16  cps/pub  2.90-> 1.00  give-ups  152->   0  depth 159.003->160.089
+  s25: cps  157->  28  pubs  23-> 28  cps/pub  6.83-> 1.00  give-ups  119->   0  depth 160.016->159.111
+  s26: cps  150->  30  pubs  17-> 30  cps/pub  8.82-> 1.00  give-ups  118->   0  depth 160.025->159.353
+  TOTAL devbase: checkpoints 1157 publications 266 cps/pub 4.35 give-ups 737 invalid 0
+      PUBLISHED: 266
+      give-up (band/slack): 737
+      pair refused by validator/kernel: 33
+      piece crosses the strip: 116
+      repair would enlarge the strip: 5
+  TOTAL proxy-margin8full: checkpoints 181 publications 181 cps/pub 1.00 give-ups 0 invalid 0
+      PUBLISHED: 181

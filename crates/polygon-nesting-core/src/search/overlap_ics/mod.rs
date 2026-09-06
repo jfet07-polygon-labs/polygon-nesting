@@ -4097,8 +4097,11 @@ pub fn publish_achieved() -> bool {
 /// 1281; depth paired median -0.181 / -0.076 mm, 4/9 wins on each profile;
 /// explore bites per cell unchanged (889 -> 906, 35 -> 34); sample
 /// evaluations per cell +6 %. The churn is real and the margin removes it,
-/// and it was not the depth bottleneck: the freed exact-call time is spent
+/// and at 4 um it was not a depth lever: the freed exact-call time is spent
 /// again on the rows the margin activates, and the bite rate does not move.
+/// At `--proxymargin=8` (same seeds, same binary; README addendum) give-ups
+/// are 0 on both profiles and depth improves: paired median +0.949 mm, 8/9
+/// wins on Legacy (four more bites per cell), +0.439 mm, 5/9 on Wall10s.
 ///
 /// What it does not touch: `publish.rs`, `raw_source_depth_mm`, the kernel,
 /// the repair, `validate_placements_against_contract`, the 4 um band. The

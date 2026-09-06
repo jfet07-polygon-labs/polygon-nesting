@@ -1,0 +1,10 @@
+== profile legacy | proxy-marginfull vs proxy-margin8full | 9 seeds, 9/9 cells ==
+  proxy-marginfull median  164.510  mean  164.569  best  162.057  worst  165.978  iters/cell   2012  explore bites 101.7
+  proxy-margin8full median  164.010  mean  163.860  best  157.436  worst  167.102  iters/cell   2236  explore bites 104.2
+  paired median gain (A-B) +0.698 mm | B wins 5/9 | worst paired -1.948 | invalid publications 0
+  per seed: 18:-1.95 19:+0.87 20:-0.00 21:-1.88 22:+7.07 23:+1.96 24:-1.12 25:+0.73 26:+0.70
+== profile wall10s | proxy-marginfull vs proxy-margin8full | 9 seeds, 9/9 cells ==
+  proxy-marginfull median  159.890  mean  160.341  best  159.003  worst  164.522  iters/cell   1161  explore bites   4.8
+  proxy-margin8full median  159.915  mean  159.694  best  159.063  worst  160.089  iters/cell    964  explore bites   5.0
+  paired median gain (A-B) -0.025 mm | B wins 4/9 | worst paired -1.086 | invalid publications 0
+  per seed: 18:-0.15 19:+2.12 20:+5.46 21:-1.05 22:+0.52 23:-0.03 24:-1.09 25:-0.08 26:+0.12
