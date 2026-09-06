@@ -123,3 +123,10 @@ second; Sparrow from its own 165.5 layout takes about 95 in six seconds. From Sp
 exploration failed for the first time at 150.646, after 241 iterations). The basin does not
 rescue our separator: at equal state and equal width it is four times slower in bites per
 second, and at Sparrow's terminal density it does not move.
+
+With `--proxymargin=8` (the two margin-8 mirror diagnostics Astra's review 4 asked for; same
+seed, same profile): from Sparrow's 164.361 layout our engine reaches 160.526 (22 of 23 bites
+published, one bite of 530 iterations, 11 attempts, 10 disruptions); from Sparrow's 150.090
+layout it publishes once, at 150.022, and its one explore bite runs 419 iterations over 9
+attempts and 8 disruptions without ever entering the band. The margin does not change the
+mirror result: at equal state, our separator is the slower one.
