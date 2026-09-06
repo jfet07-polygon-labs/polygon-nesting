@@ -644,6 +644,108 @@ fn a_half_millimetre_deficit_is_discarded_rather_than_legalized() {
     assert!(engine.incumbent.from_constructor, "best_exact must not move");
 }
 
+/// Two squares whose layout is exactly valid on the sheet (material gap 5.5 mm,
+/// well clear of every edge) but sits `overhang_mm` proud of the strip top the
+/// bite set itself: the one refusal the bite22 microscope measured 82.5 % of
+/// Legacy explore iterations churning on. `incumbent_mm` is the protected
+/// exact incumbent's depth.
+fn proud_of_target_engine(overhang_mm: f64, incumbent_mm: f64) -> Engine<'static> {
+    let ids = vec!["a".to_owned(), "b".to_owned()];
+    let polygons = vec![polygon(&square(0.0, 0.0, 20.0)), polygon(&square(0.0, 0.0, 20.0))];
+    // The pieces borrow the fixture; leak both so the engine can be returned.
+    let fixture: &'static Fixture = Box::leak(Box::new(Fixture { polygons, ids }));
+    let pieces: &'static [GeneralFastPiece<'static>] = Box::leak(fixture.pieces().into_boxed_slice());
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(pieces).expect("sources");
+    let poses = vec![
+        Pose { tx_mm: 20.0, ty_mm: 20.0, theta_deg: 0.0, mirrored: false },
+        Pose { tx_mm: 45.5, ty_mm: 20.0, theta_deg: 0.0, mirrored: false },
+    ];
+    // Tops at y = 40, so the raw source depth is 40 + 5 = 45 mm.
+    let achieved_depth_mm = 40.0 + contract.sheet_edge_clearance_mm;
+    let config = IcsConfig {
+        target_depth_mm: achieved_depth_mm - overhang_mm,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: 1,
+        descent: DescentConfig::derive(&contract, &sources, 0),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: incumbent_mm,
+        from_constructor: true,
+        placement_fingerprint: String::new(),
+    };
+    Engine::from_poses(pieces, settings, sources, contract, poses, incumbent, config)
+}
+
+/// Restores the process-level knob on every exit, including a panic, so a
+/// failing assertion cannot leak `on` into the tests sharing this process.
+struct PublishAchievedGuard;
+impl Drop for PublishAchievedGuard {
+    fn drop(&mut self) {
+        super::set_publish_achieved(false);
+    }
+}
+
+#[test]
+fn publish_achieved_publishes_a_layout_proud_of_its_own_target_only_when_on() {
+    // Off (the default): a layout 3 um above `T`, inside the 4 um band, valid
+    // on the sheet and 0.5 mm better than the incumbent, is refused before the
+    // exact authority is called - no checkpoint row, no incumbent movement.
+    // This is the refusal the bite22 microscope measured (README section 3).
+    assert!(!super::publish_achieved(), "the knob must default to off");
+    let mut engine = proud_of_target_engine(0.003, 45.5);
+    let totals = engine.totals();
+    assert!(
+        totals.max_violation_mm > 0.0 && totals.max_violation_mm <= 0.004,
+        "the overhang must be the only violation and sit inside the band: {totals:?}"
+    );
+    let off = engine.attempt_publication();
+    assert!(off.publication.is_none() && !off.improved, "off must refuse above `T`");
+    assert!(engine.trace.checkpoints.is_empty(), "off refuses before the exact checkpoint");
+    assert!(engine.incumbent.from_constructor, "best_exact must not move");
+    assert_eq!(engine.state.target_depth_mm, 44.997);
+
+    // On: the same layout publishes at the depth it achieved. Both exact
+    // authorities still run and accept it; nothing was repaired; the strip
+    // was not silently enlarged by anyone but the outer loop's adoption.
+    super::set_publish_achieved(true);
+    let _guard = PublishAchievedGuard;
+    let mut engine = proud_of_target_engine(0.003, 45.5);
+    let on = engine.attempt_publication();
+    let publication = on.publication.expect("on must publish at the achieved depth");
+    assert!(on.improved, "45.0 beats the 45.5 incumbent by more than 1 um");
+    let checkpoint = engine.trace.checkpoints.last().expect("a checkpoint row").clone();
+    assert!(checkpoint.kernel_exclusive_valid, "{checkpoint:?}");
+    assert!(checkpoint.contract_valid, "{checkpoint:?}");
+    assert_eq!(checkpoint.repair_rows, 0, "a sheet-valid layout needs no repair");
+    assert!(checkpoint.refusal.is_none(), "{checkpoint:?}");
+    assert!((publication.raw_source_depth_mm - 45.0).abs() < 1e-9, "{publication:?}");
+    assert!(
+        publication.raw_source_depth_mm > checkpoint.target_depth_mm,
+        "the published depth is above the bite's target, by construction"
+    );
+    assert!((engine.incumbent.raw_source_depth_mm - 45.0).abs() < 1e-9);
+    assert!(!engine.incumbent.from_constructor);
+    // The seam the mechanism relies on: installing adopts the achieved depth as
+    // the next bite's `D`, so `T` was the aspiration and not the acceptance bar.
+    engine.install_publication(&publication);
+    assert!((engine.state.target_depth_mm - 45.0).abs() < 1e-9);
+
+    // On, but not an improvement: the incumbent is only 0.5 um deeper, so the
+    // improvement gate that replaced the target gate refuses it. The knob
+    // relaxes `T`, never the incumbent.
+    let mut engine = proud_of_target_engine(0.003, 45.0005);
+    let not_better = engine.attempt_publication();
+    assert!(not_better.publication.is_none() && !not_better.improved);
+    assert!(engine.incumbent.from_constructor, "best_exact must not move");
+    drop(_guard);
+    assert!(!super::publish_achieved(), "the guard must restore the default");
+}
+
 #[test]
 fn the_search_allowance_is_forced_to_zero_at_publication() {
     let mut settings = test_settings();

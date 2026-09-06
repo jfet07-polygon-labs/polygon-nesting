@@ -574,7 +574,15 @@ pub fn attempt(
         && proxy_depth - state.target_depth_mm <= limits.band_mm;
     #[cfg(not(feature = "t-row-repair"))]
     let t_row_eligible = false;
-    if proxy_depth > state.target_depth_mm && !t_row_eligible {
+    // **Publish-achieved (H1).** `T` is the bite's own aspiration, `D - step`.
+    // On the Legacy profile 82.5 % of all explore master iterations go to
+    // bites that reached `Phi = 0`, entered the band, and were refused right
+    // here for `0 < proxy_depth - T <= 4 um` on layouts 0.175-0.180 mm better
+    // than the incumbent (bite22-microscope README section 3). With the knob
+    // on, that refusal is the improvement gate on the next line and nothing
+    // else; with it off (the default) this line is the closed member's.
+    let publish_achieved = super::publish_achieved();
+    if proxy_depth > state.target_depth_mm && !t_row_eligible && !publish_achieved {
         return None;
     }
     // **The unique install.** A state that is eligible only through the T-row
@@ -904,17 +912,38 @@ pub fn attempt(
         });
     }
     if published_depth > state.target_depth_mm {
-        #[cfg(feature = "t-row-repair")]
-        if t_row_eligible {
-            t_row_census::record(|census| census.refused += 1);
+        // **Publish-achieved (H1), the second `> T` refusal.** Off, the target
+        // is immutable and this is the closed member's refusal. On, an
+        // above-`T` layout is refused only if the repair's giveback ate the
+        // improvement the pre-gate admitted it for: it must still beat the
+        // incumbent by `minimum_improvement_mm`. A layout at or under `T`
+        // takes today's path either way, and the exact checks that follow are
+        // not relaxed by either branch.
+        if !publish_achieved {
+            #[cfg(feature = "t-row-repair")]
+            if t_row_eligible {
+                t_row_census::record(|census| census.refused += 1);
+            }
+            checkpoint.refusal = Some(
+                "repair would have enlarged the locked strip; the target is immutable".to_owned(),
+            );
+            return Some(Attempt {
+                checkpoint,
+                publication: None,
+            });
         }
-        checkpoint.refusal = Some(
-            "repair would have enlarged the locked strip; the target is immutable".to_owned(),
-        );
-        return Some(Attempt {
-            checkpoint,
-            publication: None,
-        });
+        if published_depth > incumbent_depth_mm - limits.minimum_improvement_mm {
+            checkpoint.refusal = Some(format!(
+                "publish-achieved: the layout is {:.6} mm above its target and, after a repair giveback of {:.6} mm, does not beat the incumbent {incumbent_depth_mm:.6} mm by {:.6} mm",
+                published_depth - state.target_depth_mm,
+                checkpoint.repair_depth_giveback_mm,
+                limits.minimum_improvement_mm
+            ));
+            return Some(Attempt {
+                checkpoint,
+                publication: None,
+            });
+        }
     }
     match validate_placements_against_contract(pieces, &placements, settings) {
         Ok(()) => checkpoint.contract_valid = true,

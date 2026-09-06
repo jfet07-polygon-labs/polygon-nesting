@@ -4001,6 +4001,50 @@ pub fn schedule_profile() -> ScheduleProfile {
     }
 }
 
+/// **Publish at the achieved depth (H1).** Opt-in; off is the engine as it was.
+///
+/// Every bite sets itself a target `T = D - step` and then, in
+/// [`publish::attempt`], refuses its own dual-valid layout for landing above
+/// `T` - once before the exact authority is called
+/// (`proxy_depth > target_depth_mm`) and once after the repair
+/// (`published_depth > target_depth_mm`). The bite22 microscope measured what
+/// that costs on 45 held-out Legacy cells: **82.5 % of all explore master
+/// iterations** are spent on bites that reached `Phi = 0`, entered the 4 um
+/// band, and were refused by exactly that pre-gate, on layouts 0.175-0.180 mm
+/// better than the incumbent, for an excess of `0 < proxy_depth - T <= 4 um`
+/// (`docs/experiments/overlap-ics/bite22-microscope/README.md` section 3: all
+/// but four of the 4,077 above-target refusals across nine cells beat the
+/// incumbent; the improvement gate never fired). Sparrow has no such failure
+/// because its strip width is a hazard inside its proxy, so loss zero means
+/// feasible at exactly the width asked; here the overhang is a boundary
+/// violation the band already admitted.
+///
+/// When on, both `> T` refusals are replaced by the improvement gate that
+/// already sits beside them (`incumbent_depth_mm - minimum_improvement_mm`).
+/// Nothing exact is relaxed: the Exclusive kernel, the repair caps and
+/// `validate_placements_against_contract` run unchanged. The outer loop
+/// already adopts the achieved depth (`width_mm = publication.raw_source_depth_mm`,
+/// [`Engine::install_publication`] sets `target_depth_mm` to it), so `T`
+/// becomes the bite's aspiration rather than its acceptance bar: a bite that
+/// closed 0.176 mm instead of 0.180 mm publishes what it achieved and the next
+/// bite is cut from there.
+///
+/// Process-level like [`set_schedule_profile`], and for the same reason: one
+/// cell per process, and a switch beside the code it switches is simpler than
+/// a field through `IcsConfig`, every test literal and the checkpoint
+/// reconstructor. The default is `false`, and with it off the trajectory is
+/// bit-identical to the frozen engine.
+static PUBLISH_ACHIEVED: std::sync::atomic::AtomicBool =
+    std::sync::atomic::AtomicBool::new(false);
+
+pub fn set_publish_achieved(on: bool) {
+    PUBLISH_ACHIEVED.store(on, std::sync::atomic::Ordering::Relaxed);
+}
+
+pub fn publish_achieved() -> bool {
+    PUBLISH_ACHIEVED.load(std::sync::atomic::Ordering::Relaxed)
+}
+
 /// **The bound wall mode never had.**
 ///
 /// `Pacer::Wall::iteration_cap()` returned `None` from the day it was written,

@@ -2557,6 +2557,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
             profile.validate_for(mode == "wall", options.number("wall", 10.0)?)?;
             polygon_nesting_core::search::overlap_ics::set_schedule_profile(profile);
+            // H1, publish at the achieved depth: `--publishachieved=1` replaces
+            // both `> target_depth_mm` refusals in `publish::attempt` with the
+            // improvement gate. Off by default; the default path is the frozen
+            // engine to the bit.
+            polygon_nesting_core::search::overlap_ics::set_publish_achieved(
+                options.integer("publishachieved", 0)? != 0,
+            );
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
             homotopy::set_adaptive_step_ceiling(options.number("adaptivestep", 0.0)?);
             homotopy::set_adaptive_step_floor(options.number("adaptivefloor", 0.0)?);
@@ -3653,6 +3660,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         json!(polygon_nesting_core::search::overlap_ics::explore_patience());
     document["wallIterationCap"] =
         json!(polygon_nesting_core::search::overlap_ics::wall_iteration_cap());
+    // Present exactly when the mechanism is on. The frozen binary's document
+    // has no such key and the bit-identity check hashes the whole document, so
+    // a `false` written unconditionally would fail identity on key presence
+    // alone while changing no trajectory. Absence means off.
+    if polygon_nesting_core::search::overlap_ics::publish_achieved() {
+        document["publishAchieved"] = json!(true);
+    }
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());
     // Instrument only, and present only on a census build: which publication
