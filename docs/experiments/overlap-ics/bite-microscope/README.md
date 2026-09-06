@@ -156,3 +156,24 @@ and the prediction for the bite-15 capsule is a break within a handful of iterat
 exponent. Note what else the exponent touches: only the guided ranking among colliding
 candidates and the tournament's winner selection; raw Phi, the band, the strike meter's
 minimum and the weight growth rule `v / v_max` stay on the violation itself.
+
+## The two detached probes (commit "The replay harness", `--cell=replay`)
+
+The replay rebuilds the state from a capsule and re-runs the separation with the same eight
+worker streams; with `--probe=none` it reproduces the traced sweeps bit for bit (43/43 on bite
+15, 26/26 on bite 17, 37/37 on the margin-0 bite 17: raw, max and winner equal at every
+iteration). The probes diverge at iteration 1 by construction. Documents gzipped beside this
+file (`replay-*.json.gz`). Iterations and evaluations are to band entry, all workers charged,
+continuation evaluations included:
+
+| capsule | control | `cdfinish` (1 um continuation, 64 pairs) | `revisit` (bounded queue) |
+|---|---|---|---|
+| margin 8, bite 15 | 43 it / 685 980 ev | 30 it / 524 855 ev (81 388 continuation) | 35 it / 674 855 ev (114 queued in winners) |
+| margin 8, bite 17 | 26 it / 262 987 ev | 20 it / 245 520 ev (enters the band with the five rows still ~1 um positive) | 15 it / 209 704 ev |
+| margin 0, bite 17 | 37 it / 500 681 ev | 33 it / 626 469 ev (+25 % evaluations) | 32 it / 446 862 ev |
+
+The control's five most persistent rows on bite 15 clear at iterations 37/37/37/37/38; under
+`cdfinish` at 28/28/27/28/28; under `revisit` at 33/32/32/33/34. So: the revisit queue helps
+on every captured bite at less work; the continuation helps in iterations everywhere and
+costs more evaluations without the margin; neither breaks the pinned column early. The
+column still waits for its weights, and the exponent probe is next.
