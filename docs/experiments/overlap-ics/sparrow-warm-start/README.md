@@ -99,3 +99,7 @@ The no-margin path moves the median piece 400-600 mm for 18 mm of depth: the ref
 nine devbase cells, 68 with margin 8) scrambles the layout, and that is why those layouts are
 poor basins even for Sparrow. With the margin the median piece moves 45 mm, the structure of
 the constructor survives, and Sparrow takes the result to about 151.5.
+
+From our **margin-8 Wall10s** incumbents (seeds 18/20/24, starts 160.049 / 159.063 / 160.089)
+Sparrow reaches **150.122** / 151.453 / 154.580: from the seed-18 layout it goes deeper than
+from its own path (150.796).
