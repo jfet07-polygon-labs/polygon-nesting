@@ -84,6 +84,7 @@ use polygon_nesting_core::search::overlap_ics::publish;
 use polygon_nesting_core::search::overlap_ics::publish::{
     placement_fingerprint, raw_depth_of, PublicationLimits,
 };
+use polygon_nesting_core::search::overlap_ics::replay::{ReplayParams, ReplayProbe, TracedSweep};
 use polygon_nesting_core::search::overlap_ics::state::{
     piece_sources, Contract, ExactIncumbent, PieceSource, Pose,
 };
@@ -1839,6 +1840,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             format!("--bitemicroscope is a cutclose-only diagnostic, not a `{cell}` option").into(),
         );
     }
+    // `--capsule`, `--bite`, `--probe`, `--capsuleindex` and `--maxiters`
+    // belong to the `replay` cell alone (`overlap_ics::replay`): a replay
+    // starts from a microscope capsule, which is a known-good layout, and the
+    // forbidden-rescue table forbids that on any scored cell.
+    for key in ["capsule", "bite", "probe", "capsuleindex", "maxiters"] {
+        if options.get(key).is_some() && cell != "replay" {
+            return Err(format!("--{key} is a replay-only option, not a `{cell}` option").into());
+        }
+    }
     let request_path = options.required("request")?.to_owned();
     let request_bytes = fs::read(&request_path)?;
     let request_sha256 = format!("{:x}", Sha256::digest(&request_bytes));
@@ -1952,6 +1962,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // the flag is on and emitted at the tail with its tripwire. `None` means
     // the frozen document.
     let mut bite_microscope: Option<Value> = None;
+    // The `--cell=replay` report, filled by the replay arm only and emitted
+    // at the tail with its tripwire (`overlap_ics::replay`). `None` on every
+    // other cell.
+    let mut replay_document: Option<Value> = None;
 
     let mut document = json!({
         "experiment": "overlap-ics",
@@ -3875,6 +3889,486 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "scanFloorShare": floor_ns / full_ns,
             });
         }
+        // **The replay probes** (`overlap_ics::replay`). DIAGNOSTIC ONLY.
+        //
+        // WHY: `docs/experiments/overlap-ics/sparrow-warm-start/README.md`
+        // shows the hard bite costing us 37-43 master iterations against
+        // Sparrow's 17 passes from the identical layout, and the bite
+        // microscope traced that bite (339/339 fine-CD exits by `limits`,
+        // 282 with residual; 176/492 changed rows on a `visited` endpoint).
+        // Astra review 4 Q3/Q4 prescribe two detached replays of that traced
+        // bite before any live mechanism is built. This cell is those
+        // replays: it rebuilds the state from a capsule, re-runs the same
+        // separation loop from it, and reports whether a probe clears the
+        // persistent blockers and enters the band, at what evaluation cost.
+        //
+        // FORBIDDEN AS A RESULT. A capsule is a known-good layout;
+        // `docs/grok-review-12-reading-sparrow.md` §5.2 (row "fixture as a
+        // seed") forbids starting a scored cell from one. So this cell never
+        // publishes (no exact call: it stops at band entry), is never a
+        // default, and its document carries `replay.tripwire`.
+        "replay" => {
+            let capsule_path = options.required("capsule")?.to_owned();
+            let capsule_bytes = fs::read(&capsule_path)
+                .map_err(|error| format!("--capsule: reading `{capsule_path}`: {error}"))?;
+            let capsule_sha256 = format!("{:x}", Sha256::digest(&capsule_bytes));
+            let capsule_document: Value = serde_json::from_slice(&capsule_bytes)
+                .map_err(|error| format!("--capsule: `{capsule_path}`: {error}"))?;
+            let bite_ordinal = options.integer("bite", 0)?;
+            if bite_ordinal == 0 {
+                return Err("--bite=<ordinal> names the traced bite to replay".into());
+            }
+            let probe = ReplayProbe::parse(options.get("probe").unwrap_or("none"))?;
+            let max_iterations = options.integer("maxiters", 200)?;
+            let workers = options.integer("workers", 8)? as usize;
+
+            // The document must be a trace of THIS request under THIS
+            // contract: every mismatch is a refusal, never a fallback.
+            let document_request_sha = capsule_document["request"]["sha256"]
+                .as_str()
+                .ok_or("--capsule: the document has no request.sha256")?;
+            if document_request_sha != request_sha256 {
+                return Err(format!(
+                    "--capsule: the document traced request {document_request_sha}, not this \
+                     request ({request_sha256})"
+                )
+                .into());
+            }
+            let document_margin = capsule_document["proxyMarginUm"].as_u64().unwrap_or(0);
+            let proxy_margin = options.integer("proxymargin", 0)?;
+            if document_margin != proxy_margin {
+                return Err(format!(
+                    "--capsule: the document was traced at --proxymargin={document_margin}; \
+                     this run named --proxymargin={proxy_margin}. They must agree."
+                )
+                .into());
+            }
+            polygon_nesting_core::search::overlap_ics::set_proxy_margin_um(proxy_margin);
+            let document_seed = capsule_document["seed"]
+                .as_u64()
+                .ok_or("--capsule: the document has no seed")?;
+            if options.get("seed").is_some() && seed != document_seed {
+                return Err(format!(
+                    "--capsule: the document was traced at --seed={document_seed}; this run \
+                     named --seed={seed}"
+                )
+                .into());
+            }
+            let seed = document_seed;
+            let document_workers = capsule_document["schedule"]["workers"].as_u64();
+            if let Some(traced_workers) = document_workers {
+                if traced_workers as usize != workers {
+                    return Err(format!(
+                        "--capsule: the document was traced with {traced_workers} workers; \
+                         this run named --workers={workers}. Identity needs the same tournament."
+                    )
+                    .into());
+                }
+            }
+            let document_pair = capsule_document["contract"]["pairClearanceMm"].as_f64();
+            let document_edge = capsule_document["contract"]["physicalEdgeClearanceMm"].as_f64();
+            if document_pair != Some(contract.pair_clearance_mm())
+                || document_edge != Some(contract.physical_edge_clearance_mm())
+            {
+                return Err(format!(
+                    "--capsule: the document's contract (pair {:?}, edge {:?}) is not this run's \
+                     (pair {}, edge {})",
+                    document_pair,
+                    document_edge,
+                    contract.pair_clearance_mm(),
+                    contract.physical_edge_clearance_mm()
+                )
+                .into());
+            }
+            let profile = match options.get("profile").unwrap_or("legacy") {
+                "legacy" => polygon_nesting_core::search::overlap_ics::ScheduleProfile::Legacy,
+                "wall10s" => polygon_nesting_core::search::overlap_ics::ScheduleProfile::Wall10s,
+                other => return Err(format!("--profile: `{other}`").into()),
+            };
+            polygon_nesting_core::search::overlap_ics::set_schedule_profile(profile);
+            polygon_nesting_core::search::overlap_ics::set_explore_patience(
+                options.integer("patience", 0)? as u64,
+            );
+
+            let microscope = &capsule_document["biteMicroscope"];
+            if microscope.is_null() {
+                return Err("--capsule: the document carries no biteMicroscope block".into());
+            }
+            let document_pieces = microscope["pieces"].as_u64().unwrap_or(0) as usize;
+            if document_pieces != pieces.len() {
+                return Err(format!(
+                    "--capsule: the trace has {document_pieces} pieces; this request has {}",
+                    pieces.len()
+                )
+                .into());
+            }
+            let bites = microscope["bites"]
+                .as_array()
+                .ok_or("--capsule: biteMicroscope.bites is not an array")?;
+            let bite = bites
+                .iter()
+                .find(|bite| bite["ordinal"].as_u64() == Some(bite_ordinal))
+                .ok_or_else(|| {
+                    format!(
+                        "--capsule: bite {bite_ordinal} is not retained; retained: {:?}",
+                        bites
+                            .iter()
+                            .filter_map(|bite| bite["ordinal"].as_u64())
+                            .collect::<Vec<_>>()
+                    )
+                })?;
+            let capsules = microscope["capsules"]
+                .as_array()
+                .ok_or("--capsule: biteMicroscope.capsules is not an array")?;
+            let default_index = bite["capsule"].as_u64().unwrap_or(0);
+            let capsule_index = options.integer("capsuleindex", default_index)?;
+            let capsule = capsules.get(capsule_index as usize).ok_or_else(|| {
+                format!(
+                    "--capsuleindex={capsule_index}: the document has {} capsules",
+                    capsules.len()
+                )
+            })?;
+            if capsule["bite"].as_u64() != Some(bite_ordinal) {
+                return Err(format!(
+                    "--capsuleindex={capsule_index} belongs to bite {:?}, not bite {bite_ordinal}",
+                    capsule["bite"]
+                )
+                .into());
+            }
+            let capsule_label = capsule["label"].as_str().unwrap_or("").to_owned();
+            // The separation this capsule opens: the bite-entry capsule opens
+            // attempt 0; an after-disruption capsule opens the attempt after
+            // the reset that captured it.
+            let separation_attempt = if capsule_label == "bite-entry" {
+                0
+            } else {
+                bite["resets"]
+                    .as_array()
+                    .and_then(|resets| {
+                        resets
+                            .iter()
+                            .find(|reset| reset["capsule"].as_u64() == Some(capsule_index))
+                            .and_then(|reset| reset["afterAttempt"].as_u64())
+                    })
+                    .map_or(0, |after| after + 1)
+            };
+            let separations = bite["separations"].as_array().cloned().unwrap_or_default();
+            let separation = separations
+                .iter()
+                .find(|call| call["attempt"].as_u64() == Some(separation_attempt));
+            let traced_sweeps: Vec<Value> = separation
+                .and_then(|call| call["sweeps"].as_array().cloned())
+                .unwrap_or_default();
+            let traced: Vec<TracedSweep> = traced_sweeps
+                .iter()
+                .map(|sweep| {
+                    Ok(TracedSweep {
+                        iteration: sweep["iteration"]
+                            .as_u64()
+                            .ok_or("--capsule: a sweep has no iteration")?,
+                        raw_after: sweep["rawAfter"]
+                            .as_f64()
+                            .ok_or("--capsule: a sweep has no rawAfter")?,
+                        max_after_mm: sweep["maxAfterMm"]
+                            .as_f64()
+                            .ok_or("--capsule: a sweep has no maxAfterMm")?,
+                        winner: sweep["winner"]
+                            .as_u64()
+                            .ok_or("--capsule: a sweep has no winner")?
+                            as u32,
+                    })
+                })
+                .collect::<Result<Vec<_>, String>>()?;
+            // The control's persistent blocking rows: the five rows most often
+            // in the traced sweeps' end-of-sweep blocking set, ties by row id.
+            let mut persistence: BTreeMap<u32, (u64, u64, f64)> = BTreeMap::new();
+            for sweep in &traced_sweeps {
+                let iteration = sweep["iteration"].as_u64().unwrap_or(0);
+                for row in sweep["blocking"].as_array().into_iter().flatten() {
+                    let (Some(id), Some(residual)) = (row[0].as_u64(), row[1].as_f64()) else {
+                        continue;
+                    };
+                    let entry = persistence.entry(id as u32).or_insert((0, 0, 0.0));
+                    entry.0 += 1;
+                    entry.1 = iteration;
+                    entry.2 = entry.2.max(residual);
+                }
+            }
+            let mut ranked: Vec<(u32, (u64, u64, f64))> = persistence.into_iter().collect();
+            ranked.sort_by(|left, right| right.1 .0.cmp(&left.1 .0).then(left.0.cmp(&right.0)));
+            let watched: Vec<(u32, (u64, u64, f64))> = ranked.into_iter().take(5).collect();
+            let watch_rows: Vec<u32> = watched.iter().map(|row| row.0).collect();
+            // The control, read off the trace: its band entry and the
+            // evaluations it had spent by then.
+            let traced_samples: Vec<Value> = separation
+                .and_then(|call| call["samples"].as_array().cloned())
+                .unwrap_or_default();
+            let traced_band_entry = traced_samples
+                .iter()
+                .find(|sample| sample[5].as_bool() == Some(true))
+                .and_then(|sample| sample[0].as_u64());
+            let traced_evaluations_to_band = traced_band_entry.map(|at| {
+                traced_sweeps
+                    .iter()
+                    .filter(|sweep| sweep["iteration"].as_u64().unwrap_or(u64::MAX) <= at)
+                    .map(|sweep| sweep["evaluationsAllWorkers"].as_u64().unwrap_or(0))
+                    .sum::<u64>()
+            });
+
+            // The state: the request's sources at the capsule's poses, the
+            // rows rebuilt cold, the weights restored bit for bit, the
+            // stream put back. `IcsConfig::target_depth_mm` is the capsule's.
+            let capsule_poses = capsule["poses"]
+                .as_array()
+                .ok_or("--capsule: the capsule has no poses")?;
+            let capsule_mirrored = capsule["mirrored"]
+                .as_array()
+                .ok_or("--capsule: the capsule has no mirrored")?;
+            if capsule_poses.len() != pieces.len() || capsule_mirrored.len() != pieces.len() {
+                return Err(format!(
+                    "--capsule: the capsule holds {} poses / {} mirror bits for {} pieces",
+                    capsule_poses.len(),
+                    capsule_mirrored.len(),
+                    pieces.len()
+                )
+                .into());
+            }
+            let poses: Vec<Pose> = capsule_poses
+                .iter()
+                .zip(capsule_mirrored)
+                .map(|(pose, mirrored)| {
+                    Ok(Pose {
+                        tx_mm: pose[0].as_f64().ok_or("--capsule: a pose has no tx")?,
+                        ty_mm: pose[1].as_f64().ok_or("--capsule: a pose has no ty")?,
+                        theta_deg: pose[2].as_f64().ok_or("--capsule: a pose has no theta")?,
+                        mirrored: mirrored
+                            .as_bool()
+                            .ok_or("--capsule: a mirror bit is not a bool")?,
+                    })
+                })
+                .collect::<Result<Vec<_>, String>>()?;
+            let pair_weights: Vec<f64> = capsule["pairWeights"]
+                .as_array()
+                .ok_or("--capsule: the capsule has no pairWeights")?
+                .iter()
+                .map(|weight| weight.as_f64().ok_or("--capsule: a pair weight is not a number"))
+                .collect::<Result<Vec<_>, _>>()?;
+            let edge_weights: Vec<[f64; 4]> = capsule["edgeWeights"]
+                .as_array()
+                .ok_or("--capsule: the capsule has no edgeWeights")?
+                .iter()
+                .map(|weights| {
+                    let mut out = [0.0f64; 4];
+                    for (slot, weight) in out.iter_mut().zip(weights.as_array().into_iter().flatten())
+                    {
+                        *slot = weight
+                            .as_f64()
+                            .ok_or("--capsule: an edge weight is not a number")?;
+                    }
+                    Ok(out)
+                })
+                .collect::<Result<Vec<_>, String>>()?;
+            let target_depth_mm = capsule["targetDepthMm"]
+                .as_f64()
+                .ok_or("--capsule: the capsule has no targetDepthMm")?;
+            let stream_iteration = capsule["stream"]["iteration"]
+                .as_u64()
+                .ok_or("--capsule: the capsule's stream has no iteration")?;
+            let stream_seed = capsule["stream"]["seed"].as_u64().unwrap_or(seed);
+            if stream_seed != seed {
+                return Err(format!(
+                    "--capsule: the capsule's stream seed {stream_seed} is not the document's \
+                     seed {seed}"
+                )
+                .into());
+            }
+            let proposals = capsule["proposals"].as_u64().unwrap_or(0);
+            // The capsule doc: the worker coordinate a replay sets from the
+            // selected sweep's winner (the tournament re-sets it per slot
+            // anyway; `iteration` is the coordinate that matters).
+            let stream_worker = traced.first().map_or(0, |sweep| u64::from(sweep.winner));
+            let config = IcsConfig {
+                target_depth_mm,
+                proposal_budget: 0,
+                relocate_eval_budget: u64::MAX,
+                checkpoint_every_sweeps: u64::MAX,
+                descent: descent_config(&options, &contract, &sources, seed)?,
+                limits: publication_limits(&options)?,
+            };
+            // The replay never publishes, so the incumbent is a placeholder
+            // that no comparison ever reads.
+            let incumbent = ExactIncumbent {
+                placements: Vec::new(),
+                raw_source_depth_mm: f64::INFINITY,
+                from_constructor: false,
+                placement_fingerprint: "replay-capsule".to_owned(),
+            };
+            let mut engine = Engine::from_poses(
+                &pieces,
+                settings,
+                sources.clone(),
+                contract,
+                poses,
+                incumbent,
+                config,
+            );
+            engine.restore_capsule_weights(&pair_weights, &edge_weights)?;
+            engine.restore_replay_stream(bite_ordinal, stream_worker, stream_iteration, proposals);
+            // The reconstruction check: the rebuilt state's fold against the
+            // capsule's own reading, bit for bit.
+            let rebuilt = engine.totals();
+            let capsule_raw = capsule["raw"].as_f64().unwrap_or(f64::NAN);
+            let capsule_guided = capsule["guided"].as_f64().unwrap_or(f64::NAN);
+            let capsule_max = capsule["maxMm"].as_f64().unwrap_or(f64::NAN);
+            let reconstruction = json!({
+                "rawEqual": rebuilt.raw.to_bits() == capsule_raw.to_bits(),
+                "guidedEqual": rebuilt.guided.to_bits() == capsule_guided.to_bits(),
+                "maxEqual": rebuilt.max_violation_mm.to_bits() == capsule_max.to_bits(),
+                "raw": rebuilt.raw,
+                "guided": rebuilt.guided,
+                "maxMm": rebuilt.max_violation_mm,
+                "capsuleRaw": capsule_raw,
+                "capsuleGuided": capsule_guided,
+                "capsuleMaxMm": capsule_max,
+            });
+            eprintln!(
+                "replay: capsule {capsule_index} ({capsule_label}) of bite {bite_ordinal}, \
+                 attempt {separation_attempt}, {} traced sweeps; reconstruction raw {} guided {} max {}",
+                traced.len(),
+                if reconstruction["rawEqual"] == json!(true) { "EQUAL" } else { "DIFFERS" },
+                if reconstruction["guidedEqual"] == json!(true) { "EQUAL" } else { "DIFFERS" },
+                if reconstruction["maxEqual"] == json!(true) { "EQUAL" } else { "DIFFERS" },
+            );
+
+            let params = ReplayParams {
+                workers,
+                bite: bite_ordinal,
+                max_iterations,
+                probe,
+                strikes: StrikeConfig::control_live(),
+                traced,
+                watch_rows,
+            };
+            let search_started = Instant::now();
+            let report = engine.replay_separation(&params);
+            wall.insert(
+                "searchSeconds".to_owned(),
+                json!(search_started.elapsed().as_secs_f64()),
+            );
+            // The identity gate, printed per iteration. The control must pass
+            // every iteration; a probe is expected to diverge.
+            for row in &report.identity {
+                eprintln!(
+                    "replay identity iteration {:>3}: {} raw {:e} vs {:e}, max {:e} vs {:e}, \
+                     winner {} vs {}",
+                    row.iteration,
+                    if row.equal { "PASS" } else { "FAIL" },
+                    row.raw_trace,
+                    row.raw_replay,
+                    row.max_trace,
+                    row.max_replay,
+                    row.winner_trace,
+                    row.winner_replay,
+                );
+            }
+            eprintln!(
+                "replay identity ({}): {}/{} PASS, {} FAIL{}",
+                probe.label(),
+                report.identity_pass,
+                report.identity.len(),
+                report.identity_fail,
+                report
+                    .diverges_from_trace_at_iteration
+                    .map_or(String::new(), |at| format!(", first divergence at iteration {at}")),
+            );
+            eprintln!(
+                "replay ({}): stop {} after {} iterations; bandEnteredAtIteration {:?}; \
+                 evaluationsToBand {:?}; evaluationsTotal {}; continuationEvaluations {}; \
+                 queuedRelocates {} (winner) / {} (all workers); control band entry {:?} at {:?} evaluations",
+                probe.label(),
+                report.stop,
+                report.iterations.len(),
+                report.band_entered_at_iteration,
+                report.evaluations_to_band,
+                report.evaluations_total,
+                report.continuation_evaluations_total,
+                report.queued_relocates_total,
+                report.queued_relocates_all_workers_total,
+                traced_band_entry,
+                traced_evaluations_to_band,
+            );
+            for row in &report.watched_rows {
+                eprintln!(
+                    "replay ({}): persistent row {} -> {:?}, cleared at {:?} (blocking in {} of {} \
+                     replay states, entry included; entry residual {:.6} mm; end residual {:.6} mm)",
+                    probe.label(),
+                    row.row_id,
+                    row.status,
+                    row.cleared_at_iteration,
+                    row.blocking_iterations,
+                    report.iterations.len() + 1,
+                    row.entry_residual_mm,
+                    row.end_residual_mm,
+                );
+            }
+
+            let mut replay = serde_json::to_value(&report)?;
+            replay["capsule"] = json!({
+                "path": capsule_path,
+                "sha256": capsule_sha256,
+                "index": capsule_index,
+                "label": capsule_label,
+                "bite": bite_ordinal,
+                "separationAttempt": separation_attempt,
+                "targetDepthMm": target_depth_mm,
+                "stream": capsule["stream"].clone(),
+                "proposals": proposals,
+                "raw": capsule_raw,
+                "guided": capsule_guided,
+                "maxMm": capsule_max,
+                "seed": seed,
+                "workers": document_workers,
+                "proxyMarginUm": document_margin,
+                "wallIterationCap": capsule_document["wallIterationCap"].clone(),
+                "explorePatience": capsule_document["explorePatience"].clone(),
+            });
+            replay["reconstruction"] = reconstruction;
+            replay["params"] = json!({
+                "probe": probe.label(),
+                "maxIterations": max_iterations,
+                "workers": workers,
+                "bandMm": report.band_mm,
+                "continuation": report.continuation,
+                "revisit": report.revisit,
+                "strikes": StrikeConfig::control_live().arm(),
+                "explorePatience": polygon_nesting_core::search::overlap_ics::explore_patience(),
+                "stopsAtBandEntry": true,
+                "exactCalls": 0,
+                "revisitStream": "RelocateKey::revisit: the sweep's key with the worker ordinal tagged",
+            });
+            replay["control"] = json!({
+                "tracedMasterIterations": bite["masterIterations"].clone(),
+                "tracedPublished": bite["published"].clone(),
+                "tracedStop": separation.map(|call| call["stop"].clone()).unwrap_or(Value::Null),
+                "tracedIterations": separation.map(|call| call["iterations"].clone()).unwrap_or(Value::Null),
+                "bandEnteredAtIteration": traced_band_entry,
+                "evaluationsToBand": traced_evaluations_to_band,
+                "evaluationsTotal": traced_sweeps
+                    .iter()
+                    .map(|sweep| sweep["evaluationsAllWorkers"].as_u64().unwrap_or(0))
+                    .sum::<u64>(),
+            });
+            replay["persistentRows"] = json!(watched
+                .iter()
+                .map(|(id, (count, last, residual))| json!({
+                    "rowId": id,
+                    "tracedBlockingSweeps": count,
+                    "tracedLastBlockingIteration": last,
+                    "tracedMaxResidualMm": residual,
+                }))
+                .collect::<Vec<_>>());
+            replay_document = Some(replay);
+        }
         other => return Err(format!("unknown cell `{other}`").into()),
     }
 
@@ -3924,6 +4418,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
         report["flag"] = json!("--bitemicroscope=1");
         document["biteMicroscope"] = report;
+    }
+    // Same rule, and louder still: present exactly when `--cell=replay` ran.
+    // The replay started from a capsule's known-good layout and published
+    // nothing; its band entry is a diagnostic reading, never a depth
+    // (`overlap_ics::replay`).
+    if let Some(mut report) = replay_document.take() {
+        report["tripwire"] = json!(
+            "DIAGNOSTIC ONLY: --cell=replay ran; this trajectory started from a bite-microscope \
+             capsule (a known-good layout), published nothing and must never be scored \
+             (forbidden-rescue row: fixture as a seed)"
+        );
+        report["flag"] = json!("--cell=replay");
+        document["replay"] = report;
     }
     document["executableSha256"] = json!(executable_sha256());
     document["buildFeatures"] = json!(build_features());

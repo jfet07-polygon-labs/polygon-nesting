@@ -4091,3 +4091,404 @@ fn the_microscope_classifies_the_other_endpoint_against_the_sweep_order() {
         ]
     );
 }
+
+// --------------------------------------------------------- the replay probes ---
+
+/// **A replay of a microscope capsule reproduces the traced sweeps bit for
+/// bit.** The replay cell's own correctness gate (`super::replay`, "control
+/// identity"): the twelve-square fixed-work trajectory is traced with the
+/// microscope on, its first capsule is rebuilt into a fresh engine from the
+/// same sources at the capsule's poses with the weights and the stream
+/// restored, and `replay_separation` with `--probe=none` must produce the
+/// traced `rawAfter` / `maxAfterMm` / `winner` sequence for every iteration
+/// of the first separation, and the same evaluation counts and blocking
+/// rows. Without this the probes' readings would mean nothing.
+#[test]
+fn a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit() {
+    use super::microscope::MicroscopeConfig;
+    use super::replay::{ReplayParams, ReplayProbe, TracedSweep};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
+        trigger_iterations: 1,
+        retain_after: 3,
+    }));
+    let report = report.expect("on means a report");
+    let bite = &report.bites[0];
+    let capsule = &report.capsules[bite.capsule as usize];
+    assert_eq!(capsule.label, "bite-entry");
+    let separation = &bite.separations[0];
+    let traced: Vec<TracedSweep> = separation
+        .sweeps
+        .iter()
+        .map(|sweep| TracedSweep {
+            iteration: sweep.iteration,
+            raw_after: sweep.raw_after,
+            max_after_mm: sweep.max_after_mm,
+            winner: sweep.winner,
+        })
+        .collect();
+    assert_eq!(traced.len(), 3, "the first separation runs to its three-iteration cap");
+
+    // The rebuild: the same fixture, the capsule's poses, weights and stream.
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses: Vec<Pose> = capsule
+        .poses
+        .iter()
+        .zip(&capsule.mirrored)
+        .map(|(pose, mirrored)| Pose {
+            tx_mm: pose[0],
+            ty_mm: pose[1],
+            theta_deg: pose[2],
+            mirrored: *mirrored,
+        })
+        .collect();
+    let config = IcsConfig {
+        target_depth_mm: capsule.target_depth_mm,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: f64::INFINITY,
+        from_constructor: false,
+        placement_fingerprint: "replay-capsule".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    engine
+        .restore_capsule_weights(&capsule.pair_weights, &capsule.edge_weights)
+        .expect("the capsule has this fixture's shape");
+    engine.restore_replay_stream(
+        capsule.bite,
+        u64::from(traced[0].winner),
+        capsule.stream.iteration,
+        capsule.proposals,
+    );
+    let rebuilt = engine.totals();
+    assert_eq!(rebuilt.raw.to_bits(), capsule.raw.to_bits(), "reconstruction: raw");
+    assert_eq!(rebuilt.guided.to_bits(), capsule.guided.to_bits(), "reconstruction: guided");
+    assert_eq!(
+        rebuilt.max_violation_mm.to_bits(),
+        capsule.max_mm.to_bits(),
+        "reconstruction: max"
+    );
+
+    let replay = engine.replay_separation(&ReplayParams {
+        workers: 8,
+        bite: capsule.bite,
+        max_iterations: 3,
+        probe: ReplayProbe::None,
+        strikes: StrikeConfig::CONTROL,
+        traced,
+        watch_rows: Vec::new(),
+    });
+    assert_eq!(replay.stop, "iteration-cap");
+    assert_eq!(replay.iterations.len(), 3);
+    assert_eq!(replay.identity.len(), 3);
+    assert_eq!(replay.identity_pass, 3, "{:#?}", replay.identity);
+    assert_eq!(replay.identity_fail, 0);
+    assert_eq!(replay.diverges_from_trace_at_iteration, None);
+    for (record, sweep) in replay.iterations.iter().zip(&separation.sweeps) {
+        assert_eq!(record.iteration, sweep.iteration);
+        assert_eq!(record.evaluations_all_workers, sweep.evaluations_all_workers);
+        assert_eq!(record.evaluations_winner, sweep.evaluations_winner);
+        assert_eq!(record.guided_after.to_bits(), sweep.guided_after.to_bits());
+        assert_eq!(record.blocking, sweep.blocking, "the end-of-sweep blocking set");
+        assert_eq!(record.continuation_evaluations, 0);
+        assert_eq!(record.queued_relocates, 0);
+    }
+    assert_eq!(
+        replay.evaluations_total,
+        separation
+            .sweeps
+            .iter()
+            .map(|sweep| sweep.evaluations_all_workers)
+            .sum::<u64>()
+    );
+}
+
+/// **The cdfinish continuation reaches incident zero within 64 pairs.** Two
+/// 60 mm squares (fine-CD translation limit `0.001 * 60` = 60 um) whose
+/// pair row carries a 7 um residual - the trace's median limit-exit residual
+/// is 7.8 um - and a hand-built fine-CD exit by `limits` with 30 um steps
+/// still in hand. The continuation (`relocate.rs::coord_descent_continue`,
+/// Astra review 4 Q4's parameters) must walk on from that saved state at the
+/// 1 um limits, stop on incident zero, charge every evaluation, and stall at
+/// zero pairs when the saved steps are already under the finer limits.
+#[test]
+fn the_cdfinish_continuation_reaches_incident_zero_from_a_seven_micron_residual_within_64_pairs() {
+    use super::relocate::{
+        coord_descent_continue, rotation_limit_for_vertex_displacement, CdAxis, CdContinuation,
+        CdExit, RelocateConfig, SampleEval,
+    };
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let fixture = Fixture {
+        polygons: vec![
+            polygon(&square(0.0, 0.0, 60.0)),
+            polygon(&square(0.0, 0.0, 60.0)),
+        ],
+        ids: vec!["a".to_owned(), "b".to_owned()],
+    };
+    let (sources, contract, mut state) = state_of(&fixture, 300.0);
+    assert_eq!(sources[1].min_bbox_dim_mm, 60.0);
+    // `b` sits 7 um inside the 5 mm pair clearance to the right of `a`.
+    state.poses[1].tx_mm = 10.0 + 60.0 + 5.0 - 0.007;
+    transform_piece(&sources, &mut state.geometry, &state.poses, 1);
+    let mut work = WorkVector::default();
+    rebuild_piece_rows(&mut state, &contract, 1, &mut work);
+    let (raw, weighted) = super::energy::incident_totals(&state, 1);
+    assert!(raw > 0.0, "the pair row must be positive");
+    assert!(
+        (state.pair_rows[0].violation_mm - 0.007).abs() < 1e-9,
+        "residual {} mm",
+        state.pair_rows[0].violation_mm
+    );
+    let exit = CdExit {
+        stalled: true,
+        final_steps: [0.03, 0.03],
+        final_rotation_step_deg: 0.04,
+        translation_limit_mm: 0.06,
+        rotation_limit_deg: 0.05,
+        candidate_pairs: 12,
+        axis: CdAxis::Vertical,
+    };
+    let config = RelocateConfig::default();
+    let continuation = CdContinuation::astra(0.004);
+    assert_eq!(continuation.translation_limit_mm, 0.001);
+    assert_eq!(continuation.max_candidate_pairs, 64);
+    work = WorkVector::default();
+    let start = state.poses[1];
+    let (pose, eval, outcome) = coord_descent_continue(
+        &mut state,
+        &sources,
+        &contract,
+        1,
+        start,
+        SampleEval { raw, weighted },
+        exit,
+        &config,
+        true,
+        counter_hash(&[7, 7, 7]),
+        continuation,
+        &mut work,
+    );
+    assert!(outcome.ran);
+    assert!(outcome.cleared, "{outcome:?}");
+    assert!(!outcome.stalled && !outcome.exhausted, "{outcome:?}");
+    assert_eq!(eval.raw, 0.0);
+    assert_eq!(outcome.exit_raw, 0.0);
+    assert!(
+        outcome.candidate_pairs >= 1 && outcome.candidate_pairs <= 64,
+        "{outcome:?}"
+    );
+    assert_eq!(
+        outcome.evaluations,
+        2 * u64::from(outcome.candidate_pairs),
+        "two evaluations per pair"
+    );
+    assert_eq!(work.sample_evaluations, outcome.evaluations, "every evaluation charged");
+    assert!(outcome.moved);
+    assert_ne!(pose_bits(&[pose]), pose_bits(&[start]));
+    // The finer limits: 1 um translation, and the angle that moves the
+    // farthest vertex (the square's corner, R = 30 * sqrt 2) by 1 um.
+    assert_eq!(outcome.translation_limit_mm, 0.001);
+    let expected_rotation = rotation_limit_for_vertex_displacement(&sources[1], 0.001);
+    assert_eq!(outcome.rotation_limit_deg, expected_rotation.min(0.05));
+    assert!((sources[1].max_radius_mm - 30.0 * 2f64.sqrt()).abs() < 1e-9);
+    // A walk whose saved steps are already under the finer limits stalls at
+    // once and evaluates nothing.
+    let tiny = CdExit {
+        final_steps: [0.0005, 0.0005],
+        final_rotation_step_deg: 0.0001,
+        ..exit
+    };
+    let mut none = WorkVector::default();
+    let (_, _, stalled) = coord_descent_continue(
+        &mut state,
+        &sources,
+        &contract,
+        1,
+        start,
+        SampleEval { raw, weighted },
+        tiny,
+        &config,
+        true,
+        counter_hash(&[7, 7, 7]),
+        continuation,
+        &mut none,
+    );
+    assert!(stalled.ran && stalled.stalled && !stalled.cleared);
+    assert_eq!(stalled.candidate_pairs, 0);
+    assert_eq!(none.sample_evaluations, 0);
+}
+
+/// **The revisit queue: a deferred endpoint is relocated once, at the end of
+/// the sweep, and the queue is bounded.** Two halves. The hand-built half:
+/// three pieces A, B, C with sweep order `[B, A]`; A's relocate leaves the
+/// (A, B) row positive with B already `visited` and hands (A, C) a birth
+/// with C `absent`, so both are queued, once each, and a queue at its bound
+/// refuses. The sweep half: three squares in a strip that holds two, swept
+/// from the identical state with the probe off (bit-identical to the traced
+/// pass) and on (the queued pieces are relocated at the end of the sweep,
+/// each once, within the bound, and the proposal counter advances exactly
+/// as it does live).
+#[test]
+fn the_revisit_queue_relocates_a_deferred_endpoint_once_at_the_end_of_the_sweep() {
+    use super::microscope::{other_endpoint, pair_row_id, row_changes, EndpointStatus};
+    use super::replay::{ReplayProbeConfig, ReplaySweepStats, RevisitOffer, RevisitQueue};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+
+    // The hand-built sweep.
+    let count = 3;
+    let (a, b, c) = (0usize, 1usize, 2usize);
+    let order = vec![b, a];
+    let mut queue = RevisitQueue::new(count, order.len());
+    let entry = vec![(pair_row_id(count, a, b), 0.010)];
+    let committed = vec![
+        (pair_row_id(count, a, b), 0.020),
+        (pair_row_id(count, a, c), 0.003),
+    ];
+    let changes = row_changes(count, a, &order, 1, &entry, &committed);
+    assert_eq!(changes.len(), 2);
+    let mut offers = Vec::new();
+    for change in &changes {
+        assert!(change.2 > 0.0);
+        assert!(matches!(change.3, EndpointStatus::Visited | EndpointStatus::Absent));
+        let other = other_endpoint(count, change.0, a).expect("a pair row");
+        offers.push((other, change.3, queue.offer(other)));
+    }
+    offers.sort_by_key(|offer| offer.0);
+    assert_eq!(
+        offers,
+        vec![
+            (b, EndpointStatus::Visited, RevisitOffer::Queued),
+            (c, EndpointStatus::Absent, RevisitOffer::Queued),
+        ]
+    );
+    assert_eq!(queue.len(), 2);
+    assert_eq!(queue.offer(b), RevisitOffer::AlreadyQueued, "once per sweep per piece");
+    assert_eq!(queue.len(), 2);
+    assert_eq!(queue.offer(a), RevisitOffer::Full, "bounded at the order length");
+    let mut sorted = queue.pieces().to_vec();
+    sorted.sort_unstable();
+    assert_eq!(sorted, vec![b, c]);
+
+    // The sweep: a strip 50 mm wide holds two 20 mm squares and not three,
+    // all three entering from the same pose.
+    let fixture = Fixture::squares(3, 20.0);
+    let pieces = fixture.pieces();
+    let mut settings = GeneralFastSettings::deterministic_test(60.0, 400.0);
+    settings.total_padding_mm = 5.0;
+    settings.sheet_edge_clearance_mm = Some(5.0);
+    settings.search_offset_allowance_mm = 0.0;
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = vec![
+        Pose {
+            tx_mm: 10.0,
+            ty_mm: 10.0,
+            theta_deg: 0.0,
+            mirrored: false
+        };
+        3
+    ];
+    let geometry = build_geometry(&sources, &poses);
+    let mut state = IcsState {
+        poses,
+        geometry,
+        pair_rows: vec![PairRow::default(); pair_count(3)],
+        edge_rows: vec![[EdgeRow::default(); 4]; 3],
+        target_depth_mm: 40.0,
+        near: vec![Vec::new(); 3],
+    };
+    let mut work = WorkVector::default();
+    rebuild_all(&mut state, &contract, &mut work);
+    assert!((0..3).all(|piece| super::energy::incident_raw(&state, piece) > 0.0));
+    let descent = super::descent::Descent::new(
+        DescentConfig::derive(&contract, &sources, 11),
+        vec![true; 3],
+    );
+
+    // Off: the traced pass to the bit.
+    let mut traced_state = state.clone();
+    let mut traced_descent = descent.clone();
+    let mut traced_work = WorkVector::default();
+    let mut trace = super::microscope::SweepTrace::new(3);
+    traced_descent.worker_sweep_traced(
+        &mut traced_state,
+        &sources,
+        &contract,
+        &mut traced_work,
+        &mut trace,
+    );
+    let mut off_state = state.clone();
+    let mut off_descent = descent.clone();
+    let mut off_work = WorkVector::default();
+    let mut off_stats = ReplaySweepStats::default();
+    off_descent.worker_sweep_replay(
+        &mut off_state,
+        &sources,
+        &contract,
+        &mut off_work,
+        &ReplayProbeConfig::default(),
+        &mut off_stats,
+    );
+    assert_eq!(pose_bits(&off_state.poses), pose_bits(&traced_state.poses));
+    assert_eq!(off_work, traced_work);
+    assert_eq!(off_descent.proposals, traced_descent.proposals);
+    assert_eq!(off_stats.queued_relocates, 0);
+    assert_eq!(off_stats.continuation_evaluations, 0);
+    assert_eq!(off_stats.relocates as usize, trace.relocates.len());
+
+    // On: the deferred endpoints are relocated at the end of the sweep.
+    let mut on_state = state.clone();
+    let mut on_descent = descent.clone();
+    let mut on_work = WorkVector::default();
+    let mut on_stats = ReplaySweepStats::default();
+    on_descent.worker_sweep_replay(
+        &mut on_state,
+        &sources,
+        &contract,
+        &mut on_work,
+        &ReplayProbeConfig {
+            continuation: None,
+            revisit: true,
+        },
+        &mut on_stats,
+    );
+    assert!(
+        on_stats.revisit_candidates >= 1,
+        "the third square cannot be clear: some relocate hands a positive row to a visited or \
+         absent endpoint; {on_stats:?}"
+    );
+    assert!(on_stats.queued_relocates >= 1, "{on_stats:?}");
+    assert_eq!(
+        on_stats.queued_relocates,
+        on_stats.revisit_queued_visited + on_stats.revisit_queued_absent,
+        "each queued piece is relocated exactly once"
+    );
+    assert!(
+        on_stats.queued_relocates as usize <= trace.order.len(),
+        "bounded at the order length"
+    );
+    assert_eq!(on_stats.revisit_queue_full, 0);
+    assert_eq!(on_stats.relocates, off_stats.relocates, "the main pass is the same pass");
+    assert_eq!(on_work.relocates, off_work.relocates + on_stats.queued_ran);
+    assert_eq!(
+        on_work.sample_evaluations,
+        off_work.sample_evaluations + on_stats.queued_evaluations
+    );
+    assert_eq!(on_descent.proposals, off_descent.proposals, "no counter key moves");
+    assert_eq!(on_descent.stream_key(), off_descent.stream_key());
+}

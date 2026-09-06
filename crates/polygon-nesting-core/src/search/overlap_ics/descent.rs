@@ -30,11 +30,12 @@ use super::energy::{fold, gls_update, Totals};
 use super::cluster_budget::{
     AtomicOrderTrace, ClusterField, PartitionArm, PartitionDecision, PartitionTrace,
 };
-use super::microscope::SweepTrace;
+use super::microscope::{other_endpoint, row_changes, EndpointStatus, SweepTrace};
 use super::relocate::{
-    colliding_permutation, relocate, relocate_probed, RelocateConfig, RelocateKey,
-    RelocateOutcome, RelocateProbe, SampleOrigin,
+    colliding_permutation, relocate, relocate_probed, relocate_replay, RelocateConfig,
+    RelocateKey, RelocateOutcome, RelocateProbe, SampleOrigin,
 };
+use super::replay::{ReplayProbeConfig, ReplaySweepStats, RevisitOffer, RevisitQueue};
 use super::state::{Contract, IcsState, PieceSource};
 
 /// The frozen knobs of the sweep.
@@ -318,6 +319,18 @@ impl Descent {
     pub fn set_stream(&mut self, bite: u64, worker: u64) {
         self.bite = bite;
         self.worker = worker;
+    }
+
+    /// **Replay only** (`super::replay`): puts the master descent's stream
+    /// back where a microscope capsule recorded it - the trajectory-global
+    /// `iteration` counter, the proposal ordinal, and the bite/worker pair
+    /// the capsule's doc says a replay derives rather than copies. The live
+    /// schedule never calls this; a fresh engine starts at zero.
+    pub fn restore_replay_stream(&mut self, bite: u64, worker: u64, iteration: u64, proposals: u64) {
+        self.bite = bite;
+        self.worker = worker;
+        self.iteration = iteration;
+        self.proposals = proposals;
     }
 
     pub fn stream_key(&self) -> RelocateKey {
@@ -702,6 +715,158 @@ impl Descent {
         );
         let totals = fold(state);
         pass.finish(0, totals)
+    }
+
+    /// **Replay only** (`super::replay`): [`Descent::worker_sweep_traced`]'s
+    /// pass with the two Astra review 4 Q3 probes available on it, and
+    /// nothing else changed. With both probes off it is that pass to the
+    /// bit, which is the replay's own identity gate.
+    pub fn worker_sweep_replay(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        work: &mut WorkVector,
+        probe: &ReplayProbeConfig,
+        stats: &mut ReplaySweepStats,
+    ) -> SweepOutcome {
+        let pass = self.gauss_seidel_replay(state, sources, contract, work, probe, stats);
+        let totals = fold(state);
+        pass.finish(0, totals)
+    }
+
+    /// [`Descent::gauss_seidel_inner`] with the replay probes.
+    ///
+    /// * **cdfinish** - every relocate goes through
+    ///   [`relocate_replay`], which continues a fine walk that exited on its
+    ///   limits with incident raw Φ still positive
+    ///   (`relocate.rs::coord_descent_continue`).
+    /// * **revisit** - the deferred-endpoint queue. When a committed relocate
+    ///   changes a row that is still positive afterwards and whose other
+    ///   endpoint has already had its turn (`visited`) or was never in the
+    ///   sweep's colliding set (`absent`), that endpoint is queued - at most
+    ///   once per sweep per piece, the queue bounded at the order length -
+    ///   and the queued pieces are relocated at the end of the sweep with the
+    ///   ordinary [`relocate`] (ordinary CD unchanged) under the sweep's
+    ///   [`RelocateKey::revisit`] stream. Queued relocates do not queue
+    ///   further pieces, so one sweep is at most two passes over the order.
+    ///   A row that a relocate *cleared* queues nothing: the endpoint would
+    ///   be skipped as clear anyway.
+    ///
+    /// The proposal ordinal and the iteration counter advance exactly as in
+    /// the live pass, so a queued relocate changes no later counter key.
+    fn gauss_seidel_replay(
+        &mut self,
+        state: &mut IcsState,
+        sources: &[PieceSource],
+        contract: &Contract,
+        work: &mut WorkVector,
+        probe_config: &ReplayProbeConfig,
+        stats: &mut ReplaySweepStats,
+    ) -> GaussSeidelPass {
+        let count = state.poses.len();
+        let entry_proposals = self.proposals;
+        let raw_before = fold(state).raw;
+        let key = self.stream_key();
+        colliding_permutation(state, key, &mut self.order);
+        let order = std::mem::take(&mut self.order);
+        let mut pass = GaussSeidelPass {
+            raw_before,
+            ..GaussSeidelPass::default()
+        };
+        let mut queue = RevisitQueue::new(count, order.len());
+        let account = |pass: &mut GaussSeidelPass, outcome: &RelocateOutcome| {
+            if outcome.ran {
+                pass.relocated += 1;
+            }
+            if outcome.moved {
+                pass.accepted += 1;
+                pass.max_displacement_mm =
+                    pass.max_displacement_mm.max(outcome.displacement_mm);
+                if outcome.origin == SampleOrigin::Container {
+                    pass.container_commits += 1;
+                }
+            }
+        };
+        for (position, piece) in order.iter().enumerate() {
+            let mut probe = RelocateProbe::default();
+            let (outcome, continued) = relocate_replay(
+                state,
+                sources,
+                contract,
+                &self.allow_rotation,
+                *piece,
+                &self.config.relocate,
+                key,
+                work,
+                probe_config.continuation,
+                &mut probe,
+            );
+            stats.observe_relocate(&outcome, &probe, &continued);
+            if probe_config.revisit && outcome.ran {
+                let changes = row_changes(
+                    count,
+                    *piece,
+                    &order,
+                    position,
+                    &probe.entry_rows,
+                    &probe.committed_rows,
+                );
+                for change in changes {
+                    if change.2 <= 0.0 {
+                        continue;
+                    }
+                    if !matches!(change.3, EndpointStatus::Visited | EndpointStatus::Absent) {
+                        continue;
+                    }
+                    let Some(other) = other_endpoint(count, change.0, *piece) else {
+                        continue;
+                    };
+                    stats.revisit_candidates += 1;
+                    match queue.offer(other) {
+                        RevisitOffer::AlreadyQueued => {}
+                        RevisitOffer::Full => stats.revisit_queue_full += 1,
+                        RevisitOffer::Queued => match change.3 {
+                            EndpointStatus::Visited => stats.revisit_queued_visited += 1,
+                            _ => stats.revisit_queued_absent += 1,
+                        },
+                    }
+                }
+            }
+            self.record(&outcome);
+            account(&mut pass, &outcome);
+        }
+        if !queue.is_empty() {
+            let revisit_key = key.revisit();
+            for &piece in queue.pieces() {
+                let evaluations_before = work.sample_evaluations;
+                let outcome = relocate(
+                    state,
+                    sources,
+                    contract,
+                    &self.allow_rotation,
+                    piece,
+                    &self.config.relocate,
+                    revisit_key,
+                    work,
+                );
+                stats.queued_relocates += 1;
+                if outcome.ran {
+                    stats.queued_ran += 1;
+                    if outcome.after.raw <= 0.0 {
+                        stats.queued_cleared += 1;
+                    }
+                }
+                stats.queued_evaluations += work.sample_evaluations - evaluations_before;
+                self.record(&outcome);
+                account(&mut pass, &outcome);
+            }
+        }
+        self.order = order;
+        self.proposals = entry_proposals + count as u64;
+        work.piece_proposals += count as u64;
+        self.iteration += 1;
+        pass
     }
 
     /// The pass itself: collect the colliding set once, permute it from the

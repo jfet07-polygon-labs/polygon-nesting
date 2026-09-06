@@ -147,6 +147,18 @@ pub struct RelocateKey {
 }
 
 impl RelocateKey {
+    /// The key a replay's end-of-sweep revisit relocates under: the same
+    /// `(seed, bite, iteration)` with the worker ordinal tagged, so the
+    /// revisit is still a pure function of the sweep's coordinates and still
+    /// distinct from the ordinary turn. Replay path only
+    /// (`descent.rs::gauss_seidel_replay`).
+    pub fn revisit(self) -> Self {
+        Self {
+            worker: counter_hash(&[self.worker, REVISIT_STREAM_TAG]),
+            ..self
+        }
+    }
+
     /// The per-piece root of the stream.
     pub fn piece_key(self, piece: usize) -> u64 {
         counter_hash(&[
@@ -165,6 +177,11 @@ impl RelocateKey {
 const RELOCATE_STREAM_TAG: u64 = 0x5245_4C4F_4341_5445; // "RELOCATE"
 const PERMUTATION_STREAM_TAG: u64 = 0x5045_524D_5554_4531; // "PERMUTE1"
 const AXIS_STREAM_TAG: u64 = 0x4344_4158_4953_5F31; // "CDAXIS_1"
+/// The replay probe's deferred-endpoint revisit draws from a stream distinct
+/// from the one the piece's ordinary turn in the same sweep drew from, so a
+/// `visited` endpoint is not handed the identical 75 container/focused poses
+/// a second time. Replay path only ([`RelocateKey::revisit`]).
+const REVISIT_STREAM_TAG: u64 = 0x5245_5649_5349_5431; // "REVISIT1"
 
 /// One sample's score: the lexicographic `Clear < Collision{loss}` of
 /// `eval/sample_eval.rs`, on our two incident totals.
@@ -297,6 +314,11 @@ pub struct CdExit {
     pub rotation_limit_deg: f64,
     /// `+/-` candidate pairs the walk evaluated.
     pub candidate_pairs: u32,
+    /// The axis the walk held at its exit: the last piece of the saved walk
+    /// state (pose, steps, axis, stream position) a detached continuation
+    /// needs. The stream position is `candidate_pairs` and the stream itself
+    /// is recomputable from the relocate key. Written at the exit only.
+    pub axis: CdAxis,
 }
 
 /// **What the bite microscope reads off one relocate, and nothing the
@@ -568,8 +590,12 @@ fn evaluate(
 }
 
 /// The five coordinate-descent axes of `sample/coord_descent.rs::CDAxis`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum CdAxis {
+/// Public only so a [`CdExit`] can carry the axis the walk held when it
+/// stopped, which is the one piece of walk state the replay probe's
+/// continuation ([`coord_descent_continue`]) cannot recompute.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum CdAxis {
+    #[default]
     Horizontal,
     Vertical,
     ForwardDiagonal,
@@ -735,6 +761,7 @@ pub fn coord_descent_inner(
         translation_limit_mm: translation_limit,
         rotation_limit_deg: rotation_limit,
         candidate_pairs,
+        axis,
     };
     (pose, eval, exit)
 }
@@ -823,6 +850,285 @@ pub fn relocate_probed(
         work,
         Some(probe),
     )
+}
+
+// ------------------------------------------------------ the replay probes --
+
+/// **The fine-CD continuation of GPT-6 Astra review 4 Q3 probe 1 / Q4**, as
+/// a detached replay probe and nothing else. Replay path only
+/// (`super::replay`); the live [`relocate`] never constructs one.
+///
+/// After the ordinary fine walk has exited on its limits with nonzero
+/// incident raw Φ, the *same* walk is continued from its accepted pose and
+/// saved walk state (steps, rotation step, axis, stream position) with
+/// translation limits `min(existing, band / 4)` = 1 um, an angular limit
+/// giving at most `vertex_displacement_limit_mm` at the farthest source
+/// vertex from the centroid, and at most `max_candidate_pairs` further
+/// `+/-` pairs. It stops on incident zero, on the finer limits, or on the
+/// budget; the weighted comparison and accept-equal are the walk's own and
+/// every evaluation is charged through [`evaluate`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct CdContinuation {
+    pub translation_limit_mm: f64,
+    pub vertex_displacement_limit_mm: f64,
+    pub max_candidate_pairs: u32,
+}
+
+impl CdContinuation {
+    /// Astra's parameters: `band / 4` = 1 um on the 4 um band, 1 um at the
+    /// farthest vertex, 64 pairs.
+    pub fn astra(band_mm: f64) -> Self {
+        Self {
+            translation_limit_mm: band_mm / 4.0,
+            vertex_displacement_limit_mm: band_mm / 4.0,
+            max_candidate_pairs: 64,
+        }
+    }
+}
+
+/// What one continuation did. `ran == false` means the relocate did not
+/// qualify (its fine walk hit the iteration cap, or exited clear).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ContinuationOutcome {
+    pub ran: bool,
+    pub candidate_pairs: u32,
+    pub evaluations: u64,
+    pub entry_raw: f64,
+    pub exit_raw: f64,
+    /// The incident maximum at the continued (committed) pose.
+    pub exit_max_mm: f64,
+    /// Incident raw Φ reached zero.
+    pub cleared: bool,
+    /// Every step fell under the finer limits.
+    pub stalled: bool,
+    /// The pair budget was spent without clearing or stalling.
+    pub exhausted: bool,
+    /// The continued pose differs from the fine walk's exit pose.
+    pub moved: bool,
+    pub translation_limit_mm: f64,
+    pub rotation_limit_deg: f64,
+}
+
+/// The rotation limit that moves the farthest source vertex from the
+/// centroid by at most `displacement_mm`: `displacement / R_i` radians.
+pub fn rotation_limit_for_vertex_displacement(source: &PieceSource, displacement_mm: f64) -> f64 {
+    let radius = source.max_radius_mm.max(f64::MIN_POSITIVE);
+    (displacement_mm / radius).to_degrees()
+}
+
+/// **The continued walk.** The body of [`coord_descent_inner`]'s loop,
+/// entered with the saved state instead of a fresh one and with three extra
+/// stops (incident zero, finer limits, pair budget). Kept as its own function
+/// rather than a parameter of the live walk so the live walk's text is
+/// untouched.
+#[allow(clippy::too_many_arguments)]
+pub fn coord_descent_continue(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    piece: usize,
+    start: Pose,
+    start_eval: SampleEval,
+    exit: CdExit,
+    config: &RelocateConfig,
+    allow_rotation: bool,
+    stream: u64,
+    continuation: CdContinuation,
+    work: &mut WorkVector,
+) -> (Pose, SampleEval, ContinuationOutcome) {
+    let translation_limit = exit
+        .translation_limit_mm
+        .min(continuation.translation_limit_mm);
+    let rotation_limit = exit.rotation_limit_deg.min(rotation_limit_for_vertex_displacement(
+        &sources[piece],
+        continuation.vertex_displacement_limit_mm,
+    ));
+    let mut steps = (exit.final_steps[0], exit.final_steps[1]);
+    let mut rotation_step = exit.final_rotation_step_deg;
+    let mut axis = exit.axis;
+    let mut pose = start;
+    let mut eval = start_eval;
+    let evaluations_before = work.sample_evaluations;
+    let mut outcome = ContinuationOutcome {
+        ran: true,
+        entry_raw: start_eval.raw,
+        translation_limit_mm: translation_limit,
+        rotation_limit_deg: rotation_limit,
+        ..ContinuationOutcome::default()
+    };
+    // The stream position continues where the fine walk stopped: its next
+    // axis draw would have been ordinal `candidate_pairs + 1`.
+    let first_ordinal = exit.candidate_pairs as usize;
+    for step_ordinal in first_ordinal..first_ordinal + continuation.max_candidate_pairs as usize {
+        let stalled = steps.0 < translation_limit
+            && steps.1 < translation_limit
+            && (rotation_step < rotation_limit || !allow_rotation);
+        if stalled {
+            outcome.stalled = true;
+            break;
+        }
+        outcome.candidate_pairs += 1;
+        let candidates = match axis {
+            CdAxis::Horizontal => [
+                translate(pose, steps.0, 0.0),
+                translate(pose, -steps.0, 0.0),
+            ],
+            CdAxis::Vertical => [
+                translate(pose, 0.0, steps.1),
+                translate(pose, 0.0, -steps.1),
+            ],
+            CdAxis::ForwardDiagonal => [
+                translate(pose, steps.0, steps.1),
+                translate(pose, -steps.0, -steps.1),
+            ],
+            CdAxis::BackwardDiagonal => [
+                translate(pose, -steps.0, steps.1),
+                translate(pose, steps.0, -steps.1),
+            ],
+            CdAxis::Wiggle => [
+                wiggle_pose(&sources[piece], pose, rotation_step),
+                wiggle_pose(&sources[piece], pose, -rotation_step),
+            ],
+        };
+        let first = evaluate(state, sources, contract, piece, candidates[0], work);
+        let second = evaluate(state, sources, contract, piece, candidates[1], work);
+        let (candidate_pose, candidate_eval) = if eval_cmp(second, first) == Ordering::Less {
+            (candidates[1], second)
+        } else {
+            (candidates[0], first)
+        };
+        let order = eval_cmp(candidate_eval, eval);
+        let better = order == Ordering::Less;
+        if order != Ordering::Greater {
+            pose = candidate_pose;
+            eval = candidate_eval;
+        }
+        let multiplier = if better {
+            config.step_success
+        } else {
+            config.step_fail
+        };
+        match axis {
+            CdAxis::Horizontal => steps.0 *= multiplier,
+            CdAxis::Vertical => steps.1 *= multiplier,
+            CdAxis::ForwardDiagonal | CdAxis::BackwardDiagonal => {
+                let root = multiplier.sqrt();
+                steps.0 *= root;
+                steps.1 *= root;
+            }
+            CdAxis::Wiggle => rotation_step *= multiplier,
+        }
+        if !better {
+            axis = draw_axis(
+                counter_hash(&[stream, AXIS_STREAM_TAG, step_ordinal as u64 + 1]),
+                allow_rotation,
+            );
+        }
+        // Stop on incident zero: the piece is clear, there is nothing left to
+        // descend.
+        if eval.raw <= 0.0 {
+            outcome.cleared = true;
+            break;
+        }
+    }
+    if !outcome.stalled && !outcome.cleared {
+        outcome.exhausted = outcome.candidate_pairs >= continuation.max_candidate_pairs;
+    }
+    outcome.evaluations = work.sample_evaluations - evaluations_before;
+    outcome.exit_raw = eval.raw;
+    outcome.moved = pose.tx_mm.to_bits() != start.tx_mm.to_bits()
+        || pose.ty_mm.to_bits() != start.ty_mm.to_bits()
+        || pose.theta_deg.to_bits() != start.theta_deg.to_bits();
+    (pose, eval, outcome)
+}
+
+/// [`relocate_probed`] followed, when `continuation` is named and the fine
+/// walk exited on its limits with incident raw Φ still positive, by
+/// [`coord_descent_continue`] from the committed pose and the saved walk
+/// state, and a second commit. Replay path only (`super::replay`); the live
+/// sweep never calls it. With `continuation == None` this is exactly
+/// [`relocate_probed`].
+///
+/// The probe's `committed_rows`, `dx_mm`/`dy_mm` and the outcome's `after`,
+/// `moved`, `displacement_mm`, `rotation_deg` and `sample_evaluations`
+/// describe the pose that is actually left installed, i.e. the continued
+/// one; `fine_exit` stays the ordinary walk's exit so a reader can see what
+/// the continuation started from.
+#[allow(clippy::too_many_arguments)]
+pub fn relocate_replay(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    allow_rotation: &[bool],
+    piece: usize,
+    config: &RelocateConfig,
+    key: RelocateKey,
+    work: &mut WorkVector,
+    continuation: Option<CdContinuation>,
+    probe: &mut RelocateProbe,
+) -> (RelocateOutcome, ContinuationOutcome) {
+    let entry_pose = state.poses[piece];
+    let evaluations_before = work.sample_evaluations;
+    let mut outcome = relocate_inner(
+        state,
+        sources,
+        contract,
+        allow_rotation,
+        piece,
+        config,
+        key,
+        work,
+        Some(probe),
+    );
+    let Some(continuation) = continuation else {
+        return (outcome, ContinuationOutcome::default());
+    };
+    if !outcome.ran || !probe.fine_exit.stalled || outcome.after.raw <= 0.0 {
+        return (outcome, ContinuationOutcome::default());
+    }
+    let source = &sources[piece];
+    let stream = counter_hash(&[key.piece_key(piece), u64::MAX, 2]);
+    let accepted = state.poses[piece];
+    let (pose, eval, mut continued) = coord_descent_continue(
+        state,
+        sources,
+        contract,
+        piece,
+        accepted,
+        outcome.after,
+        probe.fine_exit,
+        config,
+        allow_rotation[piece],
+        stream,
+        continuation,
+        work,
+    );
+    // The second commit, exactly as the first: the walk's last evaluation
+    // may have installed a rejected candidate.
+    state.poses[piece] = pose;
+    transform_piece(sources, &mut state.geometry, &state.poses, piece);
+    work.pose_transforms += 1;
+    rebuild_piece_rows(state, contract, piece, work);
+    probe.committed_rows = super::microscope::incident_rows(state, piece);
+    continued.exit_max_mm = probe
+        .committed_rows
+        .iter()
+        .fold(0.0f64, |acc, row| acc.max(row.1));
+    let entry_centre = transformed_centroid(source, entry_pose);
+    let final_centre = transformed_centroid(source, pose);
+    probe.dx_mm = final_centre[0] - entry_centre[0];
+    probe.dy_mm = final_centre[1] - entry_centre[1];
+    outcome.after = eval;
+    outcome.displacement_mm = libm::hypot(
+        final_centre[0] - entry_centre[0],
+        final_centre[1] - entry_centre[1],
+    );
+    outcome.rotation_deg = pose.theta_deg - entry_pose.theta_deg;
+    outcome.moved = pose.tx_mm.to_bits() != entry_pose.tx_mm.to_bits()
+        || pose.ty_mm.to_bits() != entry_pose.ty_mm.to_bits()
+        || pose.theta_deg.to_bits() != entry_pose.theta_deg.to_bits();
+    outcome.sample_evaluations = work.sample_evaluations - evaluations_before;
+    (outcome, continued)
 }
 
 #[allow(clippy::too_many_arguments)]

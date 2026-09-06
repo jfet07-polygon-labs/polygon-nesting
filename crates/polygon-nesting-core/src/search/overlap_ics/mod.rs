@@ -96,6 +96,12 @@ pub mod profile;
 pub mod publish;
 /// The routine move: Algorithm 5-6's global relocate of one colliding piece.
 pub mod relocate;
+/// **The replay probes** (`--cell=replay`): re-run a traced separation from
+/// a bite-microscope capsule with Astra review 4 Q3's two detached probes
+/// (fine-CD continuation, deferred-endpoint revisit). Diagnostic only; never
+/// a default; the live sweep, relocate and walk are untouched. See the
+/// module doc for why it exists.
+pub mod replay;
 pub mod state;
 
 #[cfg(test)]
