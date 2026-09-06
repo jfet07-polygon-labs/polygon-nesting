@@ -1,0 +1,10 @@
+== profile legacy | devbase vs proxy-margin8 | 3 seeds, 3/3 cells ==
+  devbase      median  164.954  mean  164.898  best  164.262  worst  165.478  iters/cell   2779  explore bites  98.7
+  proxy-margin8 median  164.006  mean  164.289  best  164.005  worst  164.858  iters/cell   2241  explore bites 101.3
+  paired median gain (A-B) +0.621 mm | B wins 3/3 | worst paired +0.256 | invalid publications 0
+  per seed: 18:+0.26 19:+0.62 20:+0.95
+== profile wall10s | devbase vs proxy-margin8 | 3 seeds, 3/3 cells ==
+  devbase      median  159.773  mean  159.630  best  159.256  worst  159.861  iters/cell   1135  explore bites   5.0
+  proxy-margin8 median  159.946  mean  159.691  best  159.050  worst  160.079  iters/cell   1048  explore bites   5.0
+  paired median gain (A-B) -0.218 mm | B wins 1/3 | worst paired -0.690 | invalid publications 0
+  per seed: 18:-0.69 19:-0.22 20:+0.72

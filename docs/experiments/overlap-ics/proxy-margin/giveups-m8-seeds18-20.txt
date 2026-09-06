@@ -1,0 +1,24 @@
+== legacy: devbase vs proxy-margin8 ==
+  s18: cps  304-> 110  pubs 119->110  cps/pub  2.55-> 1.00  give-ups  158->   0  depth 164.262->164.006
+  s19: cps  364-> 106  pubs 131->106  cps/pub  2.78-> 1.00  give-ups  173->   0  depth 165.478->164.858
+  s20: cps  419-> 105  pubs 127->105  cps/pub  3.30-> 1.00  give-ups  257->   0  depth 164.954->164.005
+  TOTAL devbase: checkpoints 1087 publications 377 cps/pub 2.88 give-ups 588 invalid 0
+      PUBLISHED: 377
+      give-up (band/slack): 588
+      pair refused by validator/kernel: 50
+      piece crosses the strip: 67
+      repair would enlarge the strip: 5
+  TOTAL proxy-margin8: checkpoints 321 publications 321 cps/pub 1.00 give-ups 0 invalid 0
+      PUBLISHED: 321
+== wall10s: devbase vs proxy-margin8 ==
+  s18: cps   72->  16  pubs  24-> 16  cps/pub  3.00-> 1.00  give-ups   46->   0  depth 159.256->159.946
+  s19: cps  103->  11  pubs  21-> 11  cps/pub  4.90-> 1.00  give-ups   69->   0  depth 159.861->160.079
+  s20: cps   79->  23  pubs  17-> 23  cps/pub  4.65-> 1.00  give-ups   54->   0  depth 159.773->159.050
+  TOTAL devbase: checkpoints 254 publications 62 cps/pub 4.10 give-ups 169 invalid 0
+      PUBLISHED: 62
+      give-up (band/slack): 169
+      pair refused by validator/kernel: 6
+      piece crosses the strip: 14
+      repair would enlarge the strip: 3
+  TOTAL proxy-margin8: checkpoints 50 publications 50 cps/pub 1.00 give-ups 0 invalid 0
+      PUBLISHED: 50
