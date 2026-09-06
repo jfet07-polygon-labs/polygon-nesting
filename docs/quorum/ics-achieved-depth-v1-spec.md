@@ -181,3 +181,42 @@ selected-seed exclusion, replacement repetition, post hoc wall restriction, or
 addition of bounded evaluation after the first scored cell. A defect discovered
 after scoring begins invalidates the affected result; the seeds remain
 consumed. Results and any refusal are appended, never amended.
+
+---
+
+# Result: stopped at preflight 5, the conversion census
+
+Not amended; appended, as the specification requires.
+
+The battery never started. Before it, the implementation of H1
+(`mech/publish-achieved`, cherry-picked as the H arm's policy) was run on three
+consumed seeds per profile at ten seconds, and every above-target state it
+admitted to the exact authority was counted against what it certified:
+
+| cell | above-target exact attempts | certified | conversion |
+| --- | ---: | ---: | ---: |
+| legacy s18 | 178 | 22 | 12.4 % |
+| legacy s19 | 282 | 26 | 9.2 % |
+| legacy s20 | 572 | 21 | 3.7 % |
+| wall10s s18 | 199 | 16 | 8.0 % |
+| wall10s s19 | 189 | 3 | 1.6 % |
+| wall10s s20 | 214 | 6 | 2.8 % |
+
+The precondition was a median per-seed conversion of at least 50 %. The
+measured median is under 10 %. **The premise of H1 - that the target-only
+refusals were discarding dual-valid layouts - is false**, exactly as review 1
+§Q1 warned it might be: they were discarded *improving proxy states*.
+
+Of 1,634 above-target attempts, 1,400 were refused by the Exclusive kernel with
+*"a failing row is outside the 4 um band or has no sheet slack"* - the kernel
+finds a row more than 4 um short where the proxy's `max_violation_mm` is at or
+under 4 um - and 94 certified. In seed 20's bite 22, H1 turned 315 band entries
+into 247 exact-authority calls where the frozen engine made 2, and the bite
+still needed 1,141 master iterations and 22 attempts to publish, exactly as
+before; the run then finished 5.5 mm worse.
+
+What this establishes is not that H1 is a rescue - it is not - but that it acts
+on the wrong gate. **The proxy's zero is not exact-legal**, and the bites are
+not churning on a target check; they are churning on a discrepancy between the
+signed-gap proxy and the Exclusive kernel that the 4 um band papers over. That
+is the next round's subject.
