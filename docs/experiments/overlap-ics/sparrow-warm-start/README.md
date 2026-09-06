@@ -103,3 +103,23 @@ the constructor survives, and Sparrow takes the result to about 151.5.
 From our **margin-8 Wall10s** incumbents (seeds 18/20/24, starts 160.049 / 159.063 / 160.089)
 Sparrow reaches **150.122** / 151.453 / 154.580: from the seed-18 layout it goes deeper than
 from its own path (150.796).
+
+## Addendum 3: the mirror experiment (our engine started from Sparrow's layouts)
+
+The diagnostic `--start=<placements.json>` flag (commit "Instrument: --start", cutclose only,
+contract-validated, tripwire `startedFrom` in the document; `score.py` refuses such documents)
+starts our trajectory from a given layout. Sparrow's own layouts, converted by
+`tools/from-sparrow-solution.py`, pass both the contract validator and the Exclusive kernel.
+Legacy profile, seed 20, ten seconds, no margin:
+
+| our engine started from | start depth | depth at 10 s | explore bites | publications |
+|---|---|---|---|---|
+| Sparrow's layout after 2 s (`-t 2`) | 164.361 | 159.778 | 28 | 31 |
+| Sparrow's final layout (`-t 10`) | 150.090 | 150.005 | 0 | 2 |
+
+From the good basin our engine takes 28 bites of 0.1 % in the 7.5 s of explore, about 3.7 per
+second; Sparrow from its own 165.5 layout takes about 95 in six seconds. From Sparrow's
+150.090 layout our engine cannot complete one 0.1 % bite in ten seconds (Sparrow's own
+exploration failed for the first time at 150.646, after 241 iterations). The basin does not
+rescue our separator: at equal state and equal width it is four times slower in bites per
+second, and at Sparrow's terminal density it does not move.
