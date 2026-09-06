@@ -112,10 +112,10 @@ starts our trajectory from a given layout. Sparrow's own layouts, converted by
 `tools/from-sparrow-solution.py`, pass both the contract validator and the Exclusive kernel.
 Legacy profile, seed 20, ten seconds, no margin:
 
-| our engine started from | start depth | depth at 10 s | explore bites | publications |
-|---|---|---|---|---|
-| Sparrow's layout after 2 s (`-t 2`) | 164.361 | 159.778 | 28 | 31 |
-| Sparrow's final layout (`-t 10`) | 150.090 | 150.005 | 0 | 2 |
+| our engine started from | start depth | depth at 10 s | explore bites published / attempted | publications | explore iterations per bite median / mean / max | attempts, disruptions |
+|---|---|---|---|---|---|---|
+| Sparrow's layout after 2 s (`-t 2`) | 164.361 | 159.778 | 28 / 29 | 31 | 13 / 38.6 / 348 | 15, 14 |
+| Sparrow's final layout (`-t 10`) | 150.090 | 150.005 | 0 / 1 | 2 | 447 (the one bite, never published) | 9, 8 |
 
 From the good basin our engine takes 28 bites of 0.1 % in the 7.5 s of explore, about 3.7 per
 second; Sparrow from its own 165.5 layout takes about 95 in six seconds. From Sparrow's
