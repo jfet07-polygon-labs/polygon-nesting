@@ -62,3 +62,14 @@ python3 tools/to-sparrow-solution.py <cell.json> docs/experiments/sparrow-mixed6
 ```
 `tools/from-sparrow-solution.py` does the inverse (Sparrow solution -> our placements JSON) for
 the mirror experiment, which needs a diagnostic `--start` flag in the benchmark.
+
+## Addendum: the median bite costs the same; the tail is everything
+
+`first-bites.txt` lines up the first twenty bites on the identical constructor layout. Bites
+1-16 cost the same in both engines (Sparrow 1,4,2,2,2,2,1,5,2,3,5,1,2,4,2,2 passes; ours
+3,1,2,1,1,1,2,3,2,1,6,3,2,6,6,4 master iterations). Bite 17, at 180.07 mm, is hard for both:
+Sparrow spends 17 passes and its next three bites cost 13, 1, 1; ours spends 37 iterations and
+its next three cost 11, 11, 14. At width >= 175 on seed 20 the medians are equal (2 and 2) and
+the means are 3.5 against 32.2, max 17 against 1145. So the separator is not slower on the
+ordinary bite. It is slower on the hard bite, and the way it resolves a hard bite leaves a
+layout on which the following bites are hard too. That is the mechanism to find.
