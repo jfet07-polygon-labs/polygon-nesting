@@ -1,0 +1,64 @@
+# Sparrow warm-started from our layouts: the separator is the whole gap
+
+2026-09-06, on `e4069df`. Sparrow (`/var/lib/t3/tmp/sparrow-bench`, rev `14f4868f`, the x86 build
+recorded in `docs/experiments/sparrow-mixed61/README.md`) accepts a solution file as a warm
+start (`util/io.rs::read_spp_input` tries `ExtSPOutput` first and falls back silently to the
+instance; the file must carry `solution.layout.density`, which is why the first attempt was
+ignored). Reading and running Sparrow is authorised; nothing here is ported. Every Sparrow run
+below is `--global-time 10 --rng-seed 0 --min-item-separation 5 --workers 8`, bench lock held,
+and reports the explore-phase best at 8 s (the log's `[EXPL] finished` line). Our layouts were
+converted with `tools/to-sparrow-solution.py` (rigid fit to 1e-12 mm; Sparrow's own validator
+accepts every one with minimum pair distance >= 5.000). These are diagnostic runs of Sparrow,
+not results of ours: the forbidden-rescue row "fixture as a seed" applies to any use of them
+as a start for a scored cell.
+
+## The runs
+
+| Sparrow started from | width at start | explore best at 8 s | separates |
+|---|---|---|---|
+| its own LBF (archived run, `docs/experiments/sparrow-mixed61/log-10s-x86.txt`) | 214.027 | 150.796 | 351 |
+| **our constructor** (seed-independent, `ours-constructor-182.976.sparrow-solution.json`) | 182.976 | **149.195** | 206 |
+| our Legacy incumbent, seed 18 | 164.262 | 152.692 | 74 |
+| our Legacy incumbent, seed 20 | 164.954 | 155.966 | 57 |
+| our Legacy incumbent, seed 22 | 163.550 | 154.639 | 57 |
+| our Legacy incumbent, seed 24 | 164.510 | 157.268 | 46 |
+| our Legacy incumbent, seed 26 | 166.218 | 156.378 | 62 |
+| our Wall10s incumbent, seed 18 | 159.256 | 155.012 | 28 |
+| our Wall10s incumbent, seed 20 | 159.773 | 156.451 | 22 |
+| our Wall10s incumbent, seed 24 | 159.003 | 152.919 | 40 |
+
+Timeline from our constructor (`logs/sparrow-from-constructor.log.gz`): 89 bites in the first
+second (182.976 -> 167.6), 54 in the second (-> 158.7), 25 (-> 154.8), 21 (-> 151.6), 12
+(-> 149.8), then 149.2. Ours from the identical layout, Legacy profile, nine dev seeds: about
+100 bites in 7.5 s of explore, 182.976 -> 163.6..167.2 (`../proxy-margin/README.md`).
+
+## What it says
+
+1. **The constructor's layout is a good basin.** Sparrow reaches 149.195 from it, deeper than
+   from its own LBF. Our constructor is not the problem.
+2. **Our bites damage the basin.** From our layouts at 164-166 mm Sparrow reaches only
+   152.7-157.3; from its own layout at 165.5 mm (taken after 2 s of its own path,
+   `logs/sparrow-own-2s.log.gz`) it reaches 150.8. Whatever our separator does on the way from
+   183 to 165 leaves a layout that even Sparrow's separator cannot take much below 155.
+3. **Our separator is the whole ten-second gap.** Same start, same split-and-close bite of
+   0.1 %, same 5 mm contract, eight workers each: Sparrow does 183 -> 158.7 in two seconds;
+   ours does 183 -> 165 in seven and a half. `first-bites.txt` lines the first twenty bites
+   up: Sparrow's cost one pass each at width >= 175 (median 1, mean about 1.2); ours cost a
+   median of 3 master iterations and a mean of 17 at the same widths, on the same initial
+   layout.
+
+So the question for the next round is not "which schedule" or "which exact gate" but why one
+master iteration of ours resolves a 0.18 mm squeeze so much less completely than one Sparrow
+pass, and why the layouts it leaves behind are worse. The per-iteration anatomy (workers,
+sweep, sampler, coordinate descent, GLS, band) is transcribed with file:line citations in the
+Astra brief 3 record; the candidate causes are the ones that brief lists.
+
+## Reproduce
+
+```
+python3 tools/to-sparrow-solution.py <cell.json> docs/experiments/sparrow-mixed61/input.json out.json
+# (then set solution.density, solution.layout.density, run_time_sec; see tools/batch.sh)
+(cd /var/lib/t3/tmp/sparrow-bench && ./target/release/sparrow -i out.json -t 10 -s 0 --min-item-separation 5 --workers 8)
+```
+`tools/from-sparrow-solution.py` does the inverse (Sparrow solution -> our placements JSON) for
+the mirror experiment, which needs a diagnostic `--start` flag in the benchmark.
