@@ -4216,6 +4216,306 @@ fn a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit() {
     );
 }
 
+/// The twelve-square fixed-work trajectory's first capsule, replayed under
+/// `probe` for `max_iterations`: the engine rebuilt from the same sources at
+/// the capsule's poses with the weights and the stream restored, exactly as
+/// `a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit`
+/// builds it. Returns the report and the traced first separation's sweeps.
+fn replay_first_capsule_under(
+    probe: super::replay::ReplayProbe,
+    max_iterations: u64,
+) -> (super::replay::ReplayReport, Vec<super::microscope::SweepRecord>) {
+    use super::microscope::MicroscopeConfig;
+    use super::replay::{ReplayParams, TracedSweep};
+    let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
+        trigger_iterations: 1,
+        retain_after: 3,
+    }));
+    let report = report.expect("on means a report");
+    let bite = &report.bites[0];
+    let capsule = &report.capsules[bite.capsule as usize];
+    assert_eq!(capsule.label, "bite-entry");
+    let sweeps = bite.separations[0].sweeps.clone();
+    let traced: Vec<TracedSweep> = sweeps
+        .iter()
+        .map(|sweep| TracedSweep {
+            iteration: sweep.iteration,
+            raw_after: sweep.raw_after,
+            max_after_mm: sweep.max_after_mm,
+            winner: sweep.winner,
+        })
+        .collect();
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses: Vec<Pose> = capsule
+        .poses
+        .iter()
+        .zip(&capsule.mirrored)
+        .map(|(pose, mirrored)| Pose {
+            tx_mm: pose[0],
+            ty_mm: pose[1],
+            theta_deg: pose[2],
+            mirrored: *mirrored,
+        })
+        .collect();
+    let config = IcsConfig {
+        target_depth_mm: capsule.target_depth_mm,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: f64::INFINITY,
+        from_constructor: false,
+        placement_fingerprint: "replay-capsule".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    engine
+        .restore_capsule_weights(&capsule.pair_weights, &capsule.edge_weights)
+        .expect("the capsule has this fixture's shape");
+    engine.restore_replay_stream(
+        capsule.bite,
+        u64::from(traced[0].winner),
+        capsule.stream.iteration,
+        capsule.proposals,
+    );
+    let replay = engine.replay_separation(&ReplayParams {
+        workers: 8,
+        bite: capsule.bite,
+        max_iterations,
+        probe,
+        strikes: StrikeConfig::CONTROL,
+        traced,
+        watch_rows: Vec::new(),
+    });
+    (replay, sweeps)
+}
+
+/// **`--probe=exponent:2` is `--probe=none` to the bit.** The exponent
+/// probe's own identity gate (`super::replay`, probe 3): through its own
+/// code path (`relocate_inner_with_exponent`, `fold_with_exponent`, the
+/// `v * v` special case) the replay at `p = 2` must reproduce the traced
+/// sweeps' `rawAfter` / `maxAfterMm` / `winner` exactly as the control
+/// does, and its every per-iteration reading - guided, evaluations,
+/// blocking rows - must equal the control replay's. A reading at any other
+/// exponent means nothing without this. The probe is then shown to be live:
+/// at `p = 1` the guided entry reading is a different number, and the
+/// `--probe=exponent:<p>` parser refuses non-positive and non-finite `p`.
+#[test]
+fn the_exponent_probe_at_two_replays_the_traced_sweeps_bit_for_bit() {
+    use super::replay::ReplayProbe;
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (at_two, sweeps) = replay_first_capsule_under(ReplayProbe::Exponent(2.0), 3);
+    assert_eq!(sweeps.len(), 3, "the first separation runs to its three-iteration cap");
+    assert_eq!(at_two.probe, ReplayProbe::Exponent(2.0));
+    assert_eq!(at_two.exponent, Some(2.0));
+    assert!(at_two.continuation.is_none());
+    assert!(!at_two.revisit);
+    assert_eq!(at_two.stop, "iteration-cap");
+    assert_eq!(at_two.iterations.len(), 3);
+    assert_eq!(at_two.identity.len(), 3);
+    assert_eq!(at_two.identity_pass, 3, "{:#?}", at_two.identity);
+    assert_eq!(at_two.identity_fail, 0);
+    assert_eq!(at_two.diverges_from_trace_at_iteration, None);
+    for (record, sweep) in at_two.iterations.iter().zip(&sweeps) {
+        assert_eq!(record.iteration, sweep.iteration);
+        assert_eq!(record.raw_after.to_bits(), sweep.raw_after.to_bits());
+        assert_eq!(record.max_after_mm.to_bits(), sweep.max_after_mm.to_bits());
+        assert_eq!(record.winner, sweep.winner);
+        assert_eq!(record.guided_after.to_bits(), sweep.guided_after.to_bits());
+        assert_eq!(record.evaluations_all_workers, sweep.evaluations_all_workers);
+        assert_eq!(record.evaluations_winner, sweep.evaluations_winner);
+        assert_eq!(record.blocking, sweep.blocking, "the end-of-sweep blocking set");
+    }
+
+    // Against the control replay itself: the same readings, bit for bit.
+    let (control, _) = replay_first_capsule_under(ReplayProbe::None, 3);
+    assert_eq!(control.identity_pass, 3);
+    assert_eq!(at_two.entry_raw.to_bits(), control.entry_raw.to_bits());
+    assert_eq!(at_two.entry_guided.to_bits(), control.entry_guided.to_bits());
+    assert_eq!(at_two.entry_max_mm.to_bits(), control.entry_max_mm.to_bits());
+    assert_eq!(at_two.entry_blocking, control.entry_blocking);
+    assert_eq!(at_two.evaluations_total, control.evaluations_total);
+    assert_eq!(at_two.stats_total, control.stats_total);
+    for (probe, none) in at_two.iterations.iter().zip(&control.iterations) {
+        assert_eq!(probe.raw_after.to_bits(), none.raw_after.to_bits());
+        assert_eq!(probe.guided_after.to_bits(), none.guided_after.to_bits());
+        assert_eq!(probe.max_after_mm.to_bits(), none.max_after_mm.to_bits());
+        assert_eq!(probe.winner, none.winner);
+        assert_eq!(probe.contested, none.contested);
+        assert_eq!(probe.blocking, none.blocking);
+        assert_eq!(probe.evaluations_all_workers, none.evaluations_all_workers);
+        assert_eq!(probe.evaluations_winner, none.evaluations_winner);
+        assert_eq!(probe.continuation_evaluations, 0);
+        assert_eq!(probe.queued_relocates, 0);
+    }
+
+    // The probe is live at another exponent: the entry state has positive
+    // rows with weights at or above the floor, so `sum w v` is not
+    // `sum w v^2` (a violation is never exactly 1 mm on this fixture).
+    let (at_one, _) = replay_first_capsule_under(ReplayProbe::Exponent(1.0), 1);
+    assert!(at_one.entry_raw > 0.0);
+    assert_eq!(at_one.entry_raw.to_bits(), control.entry_raw.to_bits());
+    assert_eq!(at_one.entry_max_mm.to_bits(), control.entry_max_mm.to_bits());
+    assert_ne!(at_one.entry_guided.to_bits(), control.entry_guided.to_bits());
+    assert_eq!(at_one.exponent, Some(1.0));
+    assert_eq!(at_one.probe.label(), "exponent:1");
+
+    // The parser.
+    assert_eq!(ReplayProbe::parse("exponent:0.5"), Ok(ReplayProbe::Exponent(0.5)));
+    assert_eq!(ReplayProbe::parse("exponent:2"), Ok(ReplayProbe::Exponent(2.0)));
+    assert_eq!(ReplayProbe::parse("none"), Ok(ReplayProbe::None));
+    assert!(ReplayProbe::parse("exponent:0").is_err());
+    assert!(ReplayProbe::parse("exponent:-1").is_err());
+    assert!(ReplayProbe::parse("exponent:nan").is_err());
+    assert!(ReplayProbe::parse("exponent:inf").is_err());
+    assert!(ReplayProbe::parse("exponent:").is_err());
+    assert!(ReplayProbe::parse("linear").is_err());
+}
+
+/// **`incident_totals_with_exponent` is `sum w v^p`, and the clear-beats-
+/// colliding rule is untouched.** A two-piece state with two hand-set
+/// incident rows on piece 0 - the pair row at 10 um with weight 3 and one
+/// boundary row at 4 um with weight 5 - folded at `p = 1` and `p = 0.5`
+/// against the hand computation, at `p = 2` against the live fold bit for
+/// bit, and `fold_with_exponent` alongside. Then the ranking: a clear
+/// sample still beats every colliding one at any exponent (`eval_cmp` reads
+/// `raw`, which the probe does not touch), while between two colliding
+/// samples the order can flip with the exponent - which is the whole
+/// hypothesis: a heavily weighted micrometre residual against a light
+/// millimetre overlap.
+#[test]
+fn incident_totals_with_exponent_is_sum_w_v_to_the_p_and_keeps_clear_beats_colliding() {
+    use super::energy::{
+        fold_with_exponent, guided_term_with_exponent, incident_totals,
+        incident_totals_with_exponent,
+    };
+    use super::relocate::{eval_cmp, SampleEval};
+    use std::cmp::Ordering;
+    let fixture = Fixture::squares(2, 20.0);
+    let pieces = fixture.pieces();
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = vec![
+        Pose {
+            tx_mm: 10.0,
+            ty_mm: 10.0,
+            theta_deg: 0.0,
+            mirrored: false
+        };
+        2
+    ];
+    let geometry = build_geometry(&sources, &poses);
+    let mut state = IcsState {
+        poses,
+        geometry,
+        pair_rows: vec![PairRow::default(); pair_count(2)],
+        edge_rows: vec![[EdgeRow::default(); 4]; 2],
+        target_depth_mm: 40.0,
+        near: vec![Vec::new(); 2],
+    };
+    // The hand-built rows. The near set is the index the fold walks, kept
+    // symmetric as `rebuild_piece_rows` would.
+    state.pair_rows[0].violation_mm = 0.010;
+    state.pair_rows[0].weight = 3.0;
+    state.near[0] = vec![1];
+    state.near[1] = vec![0];
+    state.edge_rows[0][0].violation_mm = 0.004;
+    state.edge_rows[0][0].weight = 5.0;
+
+    let close = |left: f64, right: f64| (left - right).abs() <= 1e-12 * right.abs().max(1.0);
+    let raw_expected = 0.010 * 0.010 + 0.004 * 0.004;
+
+    // p = 1: 3 * 0.010 + 5 * 0.004 = 0.05.
+    let (raw, guided) = incident_totals_with_exponent(&state, 0, 1.0);
+    assert!(close(raw, raw_expected), "raw {raw}");
+    assert!(close(guided, 0.05), "p = 1 guided {guided}");
+    // p = 0.5: 3 * sqrt(0.010) + 5 * sqrt(0.004) = 0.3 + 0.316227766...
+    let (raw, guided) = incident_totals_with_exponent(&state, 0, 0.5);
+    assert!(close(raw, raw_expected), "raw {raw}");
+    let expected_half = 3.0 * 0.010f64.sqrt() + 5.0 * 0.004f64.sqrt();
+    assert!(close(guided, expected_half), "p = 0.5 guided {guided} vs {expected_half}");
+    assert!(close(guided, 0.616_227_766_016_837_9), "p = 0.5 guided {guided}");
+    // p = 2: the live fold, bit for bit.
+    let live = incident_totals(&state, 0);
+    let at_two = incident_totals_with_exponent(&state, 0, 2.0);
+    assert_eq!(at_two.0.to_bits(), live.0.to_bits());
+    assert_eq!(at_two.1.to_bits(), live.1.to_bits());
+    assert!(close(live.1, 3.0 * 1e-4 + 5.0 * 1.6e-5), "live guided {}", live.1);
+    // Piece 1 sees the pair row alone.
+    let (raw, guided) = incident_totals_with_exponent(&state, 1, 1.0);
+    assert!(close(raw, 1e-4), "raw {raw}");
+    assert!(close(guided, 0.03), "piece 1 p = 1 guided {guided}");
+    // The whole-state fold: raw and max are the live fold's, guided at p.
+    let live_fold = fold(&state);
+    let fold_one = fold_with_exponent(&state, 1.0);
+    assert_eq!(fold_one.raw.to_bits(), live_fold.raw.to_bits());
+    assert_eq!(fold_one.max_violation_mm.to_bits(), live_fold.max_violation_mm.to_bits());
+    assert!(close(fold_one.guided, 0.05), "fold p = 1 guided {}", fold_one.guided);
+    let fold_two = fold_with_exponent(&state, 2.0);
+    assert_eq!(fold_two, live_fold, "p = 2 is the live fold to the bit");
+    // The term itself special-cases p = 2 to the product.
+    for (weight, violation) in [(1.0, 0.3), (1.7e5, 5.6e-3), (2.5, 1.8)] {
+        assert_eq!(
+            guided_term_with_exponent(weight, violation, 2.0).to_bits(),
+            (weight * (violation * violation)).to_bits()
+        );
+        assert!(close(guided_term_with_exponent(weight, violation, 1.0), weight * violation));
+    }
+
+    // The ranking. A clear sample beats every colliding one at any exponent,
+    // and two clear samples are equal - `eval_cmp` reads `raw` for that,
+    // which the probe leaves as `sum v^2`.
+    let clear = SampleEval {
+        raw: 0.0,
+        weighted: 0.0,
+    };
+    for exponent in [2.0, 1.0, 0.75, 0.5] {
+        let (raw, weighted) = incident_totals_with_exponent(&state, 0, exponent);
+        let colliding = SampleEval { raw, weighted };
+        assert!(!colliding.is_clear());
+        assert_eq!(eval_cmp(clear, colliding), Ordering::Less, "p = {exponent}");
+        assert_eq!(eval_cmp(colliding, clear), Ordering::Greater, "p = {exponent}");
+        assert_eq!(eval_cmp(clear, clear), Ordering::Equal);
+    }
+    // Between two colliding samples the exponent decides: a 5.6 um residual
+    // on a row weighted 1e5 (the pinned column's rows at iteration 37 of
+    // bite 15) against a fresh 1.8 mm overlap at weight 1. At p = 2 the
+    // pinned residual costs 3.14 and the fresh overlap 3.24: the residual
+    // is still, barely, the cheaper pose (the trace's escape came one
+    // update later). At p = 1 (560 vs 1.8) and p = 0.5 (7483 vs 1.34) the
+    // fresh overlap is far cheaper - the escape the hypothesis predicts at
+    // far lower weight - so the rule "min weighted among colliding" is the
+    // live one and only its input moved.
+    let pinned = |exponent: f64| SampleEval {
+        raw: 5.6e-3 * 5.6e-3,
+        weighted: guided_term_with_exponent(1.0e5, 5.6e-3, exponent),
+    };
+    let fresh = |exponent: f64| SampleEval {
+        raw: 1.8 * 1.8,
+        weighted: guided_term_with_exponent(1.0, 1.8, exponent),
+    };
+    assert_eq!(eval_cmp(pinned(2.0), fresh(2.0)), Ordering::Less);
+    assert_eq!(eval_cmp(pinned(1.0), fresh(1.0)), Ordering::Greater);
+    assert_eq!(eval_cmp(pinned(0.5), fresh(0.5)), Ordering::Greater);
+    // At weight 20 (Sparrow's escape weight in the addendum) the flip is
+    // already there at p = 0.5 and nowhere near at p = 2.
+    let pinned_light = |exponent: f64| SampleEval {
+        raw: 5.6e-3 * 5.6e-3,
+        weighted: guided_term_with_exponent(20.0, 5.6e-3, exponent),
+    };
+    assert_eq!(eval_cmp(pinned_light(2.0), fresh(2.0)), Ordering::Less);
+    assert_eq!(eval_cmp(pinned_light(0.5), fresh(0.5)), Ordering::Greater);
+}
+
 /// **The cdfinish continuation reaches incident zero within 64 pairs.** Two
 /// 60 mm squares (fine-CD translation limit `0.001 * 60` = 60 um) whose
 /// pair row carries a 7 um residual - the trace's median limit-exit residual
@@ -4464,6 +4764,7 @@ fn the_revisit_queue_relocates_a_deferred_endpoint_once_at_the_end_of_the_sweep(
         &ReplayProbeConfig {
             continuation: None,
             revisit: true,
+            exponent: None,
         },
         &mut on_stats,
     );

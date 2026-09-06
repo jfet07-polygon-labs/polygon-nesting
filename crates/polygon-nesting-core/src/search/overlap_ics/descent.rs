@@ -25,7 +25,7 @@
 //! 2 puts a deadline read.
 
 use super::diagnostics::WorkVector;
-use super::energy::{fold, gls_update, Totals};
+use super::energy::{fold, fold_with_exponent, gls_update, Totals};
 #[cfg(feature = "conflict-cluster-budget")]
 use super::cluster_budget::{
     AtomicOrderTrace, ClusterField, PartitionArm, PartitionDecision, PartitionTrace,
@@ -718,9 +718,12 @@ impl Descent {
     }
 
     /// **Replay only** (`super::replay`): [`Descent::worker_sweep_traced`]'s
-    /// pass with the two Astra review 4 Q3 probes available on it, and
-    /// nothing else changed. With both probes off it is that pass to the
-    /// bit, which is the replay's own identity gate.
+    /// pass with the two Astra review 4 Q3 probes and the exponent probe
+    /// available on it, and nothing else changed. With every probe off it
+    /// is that pass to the bit, which is the replay's own identity gate.
+    /// Under the exponent probe the slot's totals - what the replay
+    /// tournament ranks the workers on - are `fold_with_exponent`: guided
+    /// as `sum w v^p`, raw and max the fold's own.
     pub fn worker_sweep_replay(
         &mut self,
         state: &mut IcsState,
@@ -731,7 +734,10 @@ impl Descent {
         stats: &mut ReplaySweepStats,
     ) -> SweepOutcome {
         let pass = self.gauss_seidel_replay(state, sources, contract, work, probe, stats);
-        let totals = fold(state);
+        let totals = match probe.exponent {
+            Some(exponent) => fold_with_exponent(state, exponent),
+            None => fold(state),
+        };
         pass.finish(0, totals)
     }
 
@@ -752,6 +758,13 @@ impl Descent {
     ///   further pieces, so one sweep is at most two passes over the order.
     ///   A row that a relocate *cleared* queues nothing: the endpoint would
     ///   be skipped as clear anyway.
+    /// * **exponent** - every relocate goes through
+    ///   [`relocate_replay`] with `exponent = Some(p)`, which is
+    ///   `relocate.rs::relocate_inner_with_exponent`: the identical member
+    ///   whose candidate ranking is `sum w v^p` instead of `sum w v^2`
+    ///   (`energy::incident_totals_with_exponent`). The colliding-set test,
+    ///   the order, the streams and the counters are the live ones. The
+    ///   probes are exclusive, so the queue and the continuation are off.
     ///
     /// The proposal ordinal and the iteration counter advance exactly as in
     /// the live pass, so a queued relocate changes no later counter key.
@@ -800,6 +813,7 @@ impl Descent {
                 key,
                 work,
                 probe_config.continuation,
+                probe_config.exponent,
                 &mut probe,
             );
             stats.observe_relocate(&outcome, &probe, &continued);

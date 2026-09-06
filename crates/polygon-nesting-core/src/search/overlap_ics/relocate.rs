@@ -53,7 +53,7 @@ use std::cmp::Ordering;
 
 use super::descent::{counter_hash, rotated_halton};
 use super::diagnostics::WorkVector;
-use super::energy::{incident_totals, rebuild_piece_rows};
+use super::energy::{incident_totals, incident_totals_with_exponent, rebuild_piece_rows};
 use super::state::{
     apply_pose, compose_proposal, pose_sin_cos, transform_piece, Contract, IcsState, PieceSource,
     Pose,
@@ -1046,8 +1046,10 @@ pub fn coord_descent_continue(
 /// walk exited on its limits with incident raw Φ still positive, by
 /// [`coord_descent_continue`] from the committed pose and the saved walk
 /// state, and a second commit. Replay path only (`super::replay`); the live
-/// sweep never calls it. With `continuation == None` this is exactly
-/// [`relocate_probed`].
+/// sweep never calls it. With `continuation == None` and `exponent == None`
+/// this is exactly [`relocate_probed`]. With `exponent == Some(p)` it is
+/// [`relocate_inner_with_exponent`]: the same member ranked on `w v^p`
+/// (the exponent probe; at `p = 2` bit-identical to [`relocate_probed`]).
 ///
 /// The probe's `committed_rows`, `dx_mm`/`dy_mm` and the outcome's `after`,
 /// `moved`, `displacement_mm`, `rotation_deg` and `sample_evaluations`
@@ -1065,8 +1067,31 @@ pub fn relocate_replay(
     key: RelocateKey,
     work: &mut WorkVector,
     continuation: Option<CdContinuation>,
+    exponent: Option<f64>,
     probe: &mut RelocateProbe,
 ) -> (RelocateOutcome, ContinuationOutcome) {
+    // The exponent probe: the identical member ranked on `w v^p`. The
+    // probes are exclusive (`replay::ReplayProbeConfig::of`), so the
+    // continuation is never named beside it and is not applied here.
+    if let Some(exponent) = exponent {
+        debug_assert!(
+            continuation.is_none(),
+            "the exponent probe and the continuation are never named together"
+        );
+        let outcome = relocate_inner_with_exponent(
+            state,
+            sources,
+            contract,
+            allow_rotation,
+            piece,
+            config,
+            key,
+            work,
+            exponent,
+            probe,
+        );
+        return (outcome, ContinuationOutcome::default());
+    }
     let entry_pose = state.poses[piece];
     let evaluations_before = work.sample_evaluations;
     let mut outcome = relocate_inner(
@@ -1129,6 +1154,344 @@ pub fn relocate_replay(
         || pose.theta_deg.to_bits() != entry_pose.theta_deg.to_bits();
     outcome.sample_evaluations = work.sample_evaluations - evaluations_before;
     (outcome, continued)
+}
+
+// ------------------------------------------------- the replay exponent probe --
+
+/// [`evaluate`] scored on `w v^p` (`energy::incident_totals_with_exponent`).
+/// Replay path only (`--probe=exponent:<p>`, `super::replay`); the live
+/// walk never calls it. Same install, same row refresh, same counters; only
+/// the `weighted` half of the score is taken at the exponent, so the
+/// lexicographic `Clear < Collision{loss}` of [`eval_cmp`] keeps its
+/// `raw == 0` clause unchanged.
+///
+/// WHY (`docs/experiments/overlap-ics/sparrow-warm-start/README.md`, and the
+/// bite microscope's addendum "how the column broke"): the pinned column
+/// escapes when a micrometre residual's weighted cost exceeds a
+/// millimetre-scale fresh overlap, and under `w v^2` that takes weights of
+/// ~1e5 (36 GLS updates) where Sparrow's ~`sqrt(penetration)` needs ~20.
+/// The exponent in the ranking is the hypothesis under test.
+fn evaluate_with_exponent(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    piece: usize,
+    pose: Pose,
+    exponent: f64,
+    work: &mut WorkVector,
+) -> SampleEval {
+    if !pose.tx_mm.is_finite() || !pose.ty_mm.is_finite() || !pose.theta_deg.is_finite() {
+        return SampleEval::INVALID;
+    }
+    state.poses[piece] = pose;
+    transform_piece(sources, &mut state.geometry, &state.poses, piece);
+    work.pose_transforms += 1;
+    rebuild_piece_rows(state, contract, piece, work);
+    work.sample_evaluations += 1;
+    let (raw, weighted) = incident_totals_with_exponent(state, piece, exponent);
+    SampleEval { raw, weighted }
+}
+
+/// [`coord_descent_inner`] with every evaluation through
+/// [`evaluate_with_exponent`]: the identical walk (axes, steps, stream,
+/// accept-not-worse, first-of-a-tie) whose comparisons rank on `w v^p`.
+/// Kept as its own function rather than a parameter of the live walk so the
+/// live walk's text is untouched. Replay path only.
+#[allow(clippy::too_many_arguments)]
+pub fn coord_descent_inner_with_exponent(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    piece: usize,
+    start: Pose,
+    start_eval: SampleEval,
+    stage: CoordDescentStage,
+    config: &RelocateConfig,
+    allow_rotation: bool,
+    stream: u64,
+    exponent: f64,
+    work: &mut WorkVector,
+) -> (Pose, SampleEval, CdExit) {
+    let min_dim = sources[piece].min_bbox_dim_mm.max(f64::MIN_POSITIVE);
+    let translation_limit = min_dim * stage.translation_limit_ratio;
+    let rotation_limit = stage.rotation_limit_deg;
+    let mut steps = (
+        min_dim * stage.translation_init_ratio,
+        min_dim * stage.translation_init_ratio,
+    );
+    let mut rotation_step = stage.rotation_init_deg;
+    let mut pose = start;
+    let mut eval = start_eval;
+    let mut axis = draw_axis(counter_hash(&[stream, AXIS_STREAM_TAG, 0]), allow_rotation);
+    let mut exit_stalled = false;
+    let mut candidate_pairs = 0u32;
+    for step_ordinal in 0..MAX_CD_STEPS {
+        let stalled = steps.0 < translation_limit
+            && steps.1 < translation_limit
+            && (rotation_step < rotation_limit || !allow_rotation);
+        if stalled {
+            exit_stalled = true;
+            break;
+        }
+        candidate_pairs += 1;
+        let candidates = match axis {
+            CdAxis::Horizontal => [
+                translate(pose, steps.0, 0.0),
+                translate(pose, -steps.0, 0.0),
+            ],
+            CdAxis::Vertical => [
+                translate(pose, 0.0, steps.1),
+                translate(pose, 0.0, -steps.1),
+            ],
+            CdAxis::ForwardDiagonal => [
+                translate(pose, steps.0, steps.1),
+                translate(pose, -steps.0, -steps.1),
+            ],
+            CdAxis::BackwardDiagonal => [
+                translate(pose, -steps.0, steps.1),
+                translate(pose, steps.0, -steps.1),
+            ],
+            CdAxis::Wiggle => [
+                wiggle_pose(&sources[piece], pose, rotation_step),
+                wiggle_pose(&sources[piece], pose, -rotation_step),
+            ],
+        };
+        let first =
+            evaluate_with_exponent(state, sources, contract, piece, candidates[0], exponent, work);
+        let second =
+            evaluate_with_exponent(state, sources, contract, piece, candidates[1], exponent, work);
+        // `min_by_key` on their side; the first of a tie wins on ours too.
+        let (candidate_pose, candidate_eval) = if eval_cmp(second, first) == Ordering::Less {
+            (candidates[1], second)
+        } else {
+            (candidates[0], first)
+        };
+        let order = eval_cmp(candidate_eval, eval);
+        let better = order == Ordering::Less;
+        if order != Ordering::Greater {
+            pose = candidate_pose;
+            eval = candidate_eval;
+        }
+        let multiplier = if better {
+            config.step_success
+        } else {
+            config.step_fail
+        };
+        match axis {
+            CdAxis::Horizontal => steps.0 *= multiplier,
+            CdAxis::Vertical => steps.1 *= multiplier,
+            CdAxis::ForwardDiagonal | CdAxis::BackwardDiagonal => {
+                let root = multiplier.sqrt();
+                steps.0 *= root;
+                steps.1 *= root;
+            }
+            CdAxis::Wiggle => rotation_step *= multiplier,
+        }
+        if !better {
+            axis = draw_axis(
+                counter_hash(&[stream, AXIS_STREAM_TAG, step_ordinal as u64 + 1]),
+                allow_rotation,
+            );
+        }
+    }
+    let exit = CdExit {
+        stalled: exit_stalled,
+        final_steps: [steps.0, steps.1],
+        final_rotation_step_deg: rotation_step,
+        translation_limit_mm: translation_limit,
+        rotation_limit_deg: rotation_limit,
+        candidate_pairs,
+        axis,
+    };
+    (pose, eval, exit)
+}
+
+/// [`relocate_inner`] observed by the probe, with the entry score, every
+/// sample and both coordinate-descent stages ranked on `w v^p`
+/// ([`evaluate_with_exponent`], [`coord_descent_inner_with_exponent`]).
+/// Same pool, same uniqueness rule, same streams, same commit, same
+/// counters; the `raw <= 0` skip and the `raw == 0` clause of the ranking
+/// are the live ones. Replay path only; at `p = 2` this is
+/// [`relocate_probed`] to the bit.
+#[allow(clippy::too_many_arguments)]
+pub fn relocate_inner_with_exponent(
+    state: &mut IcsState,
+    sources: &[PieceSource],
+    contract: &Contract,
+    allow_rotation: &[bool],
+    piece: usize,
+    config: &RelocateConfig,
+    key: RelocateKey,
+    work: &mut WorkVector,
+    exponent: f64,
+    probe: &mut RelocateProbe,
+) -> RelocateOutcome {
+    let entry_pose = state.poses[piece];
+    let (entry_raw, entry_weighted) = incident_totals_with_exponent(state, piece, exponent);
+    let entry_eval = SampleEval {
+        raw: entry_raw,
+        weighted: entry_weighted,
+    };
+    if entry_raw <= 0.0 {
+        return RelocateOutcome::skipped(piece, entry_eval);
+    }
+    probe.entry_rows = super::microscope::incident_rows(state, piece);
+    work.relocates += 1;
+    let evaluations_before = work.sample_evaluations;
+    let source = &sources[piece];
+    let rotates = allow_rotation[piece];
+    let min_dim = source.min_bbox_dim_mm.max(f64::MIN_POSITIVE);
+    let stream = key.piece_key(piece);
+
+    let mut pool = BestSamples::new(
+        config.finalists,
+        min_dim * config.unique_translation_ratio,
+        config.unique_angle_deg,
+    );
+    pool.report(Candidate {
+        pose: entry_pose,
+        eval: entry_eval,
+        origin: SampleOrigin::StayPut,
+    });
+
+    let focused_box = state.geometry.piece_bounds[piece];
+    let orientation_step = if config.sampled_orientations == 0 {
+        0.0
+    } else {
+        360.0 / config.sampled_orientations as f64
+    };
+
+    for ordinal in 0..config.focused_samples {
+        let pose = draw_sample(
+            source,
+            contract,
+            state.target_depth_mm,
+            entry_pose,
+            rotates,
+            orientation_step,
+            config.sampled_orientations,
+            Some(focused_box),
+            stream,
+            ordinal as u64,
+        );
+        let eval = evaluate_with_exponent(state, sources, contract, piece, pose, exponent, work);
+        work.focused_samples += 1;
+        pool.report(Candidate {
+            pose,
+            eval,
+            origin: SampleOrigin::Focused,
+        });
+    }
+    for ordinal in 0..config.container_samples {
+        let pose = draw_sample(
+            source,
+            contract,
+            state.target_depth_mm,
+            entry_pose,
+            rotates,
+            orientation_step,
+            config.sampled_orientations,
+            None,
+            stream,
+            (config.focused_samples + ordinal) as u64,
+        );
+        let eval = evaluate_with_exponent(state, sources, contract, piece, pose, exponent, work);
+        work.container_samples += 1;
+        pool.report(Candidate {
+            pose,
+            eval,
+            origin: SampleOrigin::Container,
+        });
+    }
+
+    // Stage 1: a coarse walk from every finalist.
+    let finalists: Vec<Candidate> = pool.samples.clone();
+    for (walk, finalist) in finalists.iter().enumerate() {
+        let (pose, eval, _) = coord_descent_inner_with_exponent(
+            state,
+            sources,
+            contract,
+            piece,
+            finalist.pose,
+            finalist.eval,
+            config.coarse,
+            config,
+            rotates,
+            counter_hash(&[stream, walk as u64, 1]),
+            exponent,
+            work,
+        );
+        pool.report(Candidate {
+            pose,
+            eval,
+            origin: finalist.origin,
+        });
+    }
+
+    // Stage 2: one finer walk from the winner.
+    let best = pool.best().unwrap_or(Candidate {
+        pose: entry_pose,
+        eval: entry_eval,
+        origin: SampleOrigin::StayPut,
+    });
+    let (final_pose, final_eval, fine_exit) = coord_descent_inner_with_exponent(
+        state,
+        sources,
+        contract,
+        piece,
+        best.pose,
+        best.eval,
+        config.fine,
+        config,
+        rotates,
+        counter_hash(&[stream, u64::MAX, 2]),
+        exponent,
+        work,
+    );
+
+    // The install of the best pose found, always, exactly as the live member.
+    state.poses[piece] = final_pose;
+    transform_piece(sources, &mut state.geometry, &state.poses, piece);
+    work.pose_transforms += 1;
+    rebuild_piece_rows(state, contract, piece, work);
+
+    let entry_centre = transformed_centroid(source, entry_pose);
+    let final_centre = transformed_centroid(source, final_pose);
+    let displacement_mm = libm::hypot(
+        final_centre[0] - entry_centre[0],
+        final_centre[1] - entry_centre[1],
+    );
+    probe.committed_rows = super::microscope::incident_rows(state, piece);
+    probe.fine_exit = fine_exit;
+    probe.dx_mm = final_centre[0] - entry_centre[0];
+    probe.dy_mm = final_centre[1] - entry_centre[1];
+    let moved = final_pose.tx_mm.to_bits() != entry_pose.tx_mm.to_bits()
+        || final_pose.ty_mm.to_bits() != entry_pose.ty_mm.to_bits()
+        || final_pose.theta_deg.to_bits() != entry_pose.theta_deg.to_bits();
+    if moved {
+        work.accepted_moves += 1;
+    }
+    match best.origin {
+        SampleOrigin::Container => {
+            work.container_winners += 1;
+            if moved {
+                work.container_commits += 1;
+            }
+        }
+        SampleOrigin::Focused => work.focused_winners += 1,
+        SampleOrigin::StayPut => work.stay_put_winners += 1,
+    }
+    RelocateOutcome {
+        piece,
+        ran: true,
+        moved,
+        origin: best.origin,
+        displacement_mm,
+        rotation_deg: final_pose.theta_deg - entry_pose.theta_deg,
+        before: entry_eval,
+        after: final_eval,
+        sample_evaluations: work.sample_evaluations - evaluations_before,
+    }
 }
 
 #[allow(clippy::too_many_arguments)]

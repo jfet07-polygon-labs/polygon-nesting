@@ -36,6 +36,28 @@
 //!    sweep with ordinary CD unchanged (`descent.rs::gauss_seidel_replay`).
 //!    Does it remove the blockers transferred to unavailable endpoints at
 //!    equal evaluation work?
+//! 3. **the exponent probe** (`--probe=exponent:<p>`), from the microscope
+//!    README's addendum "how the column broke" and its Sparrow correction:
+//!    neither detached probe broke the pinned column early, and the trace
+//!    says why - the column's members leave only when their rows' GLS
+//!    weights reach ~1e5 (36 updates at ~1.5x), because the guided objective
+//!    is `w v^2` and a 5 um residual is `8e-6` of a 1.8 mm fresh overlap.
+//!    Sparrow's loss at the pinned revision is ~`sqrt(penetration)`, so the
+//!    same escape needs a weight of ~20 (3-5 updates); it breaks the same
+//!    column on the same layout in 17 passes. The hypothesis is that the
+//!    exponent on the violation in the **guided ranking** sets the escape
+//!    time. The probe computes every guided quantity on the replay path as
+//!    `sum w v^p` instead of `sum w v^2`: the candidate ranking inside the
+//!    relocate (`relocate.rs::relocate_inner_with_exponent`, through
+//!    `energy::incident_totals_with_exponent`) and the tournament's winner
+//!    selection (`energy::fold_with_exponent`). Nothing else: raw Φ
+//!    (`sum v^2`) stays for the band test, the strike meter's minimum and
+//!    the `v / v_max` weight growth in `gls_update`, and the lexicographic
+//!    "any clear pose beats every colliding pose" stays. `p = 2` must
+//!    reproduce `--probe=none` bit for bit (the probe's own identity gate;
+//!    `v * v` is special-cased for it). It is a landscape change, not a
+//!    constant change: a live version would go to a prospective spec of
+//!    its own.
 //!
 //! # What a replay is
 //!
@@ -87,13 +109,17 @@ use super::state::IcsState;
 use super::{restore_keeping_weights, Engine, Phase};
 use crate::search::overlap_ics_meter::strike_meter::{StrikeConfig, StrikeMeter};
 
-/// Which probe a replay runs. `None` is the control.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "kebab-case")]
+/// Which probe a replay runs. `None` is the control. Serialized as its
+/// [`ReplayProbe::label`] (`none`, `cdfinish`, `revisit`, `exponent:<p>`).
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ReplayProbe {
     None,
     Cdfinish,
     Revisit,
+    /// `--probe=exponent:<p>`: the guided ranking and the tournament's
+    /// winner on `sum w v^p` (module doc, probe 3). `p` is a finite
+    /// positive `f64`; `p = 2` is the identity gate.
+    Exponent(f64),
 }
 
 impl ReplayProbe {
@@ -102,24 +128,52 @@ impl ReplayProbe {
             "none" => Ok(Self::None),
             "cdfinish" => Ok(Self::Cdfinish),
             "revisit" => Ok(Self::Revisit),
-            other => Err(format!("--probe must be none|cdfinish|revisit, not `{other}`")),
+            other => match other.strip_prefix("exponent:") {
+                Some(exponent) => {
+                    let exponent: f64 = exponent.trim().parse().map_err(|error| {
+                        format!("--probe=exponent:<p>: `{exponent}` is not a number ({error})")
+                    })?;
+                    if !exponent.is_finite() || exponent <= 0.0 {
+                        return Err(format!(
+                            "--probe=exponent:<p>: p must be a finite positive number, not {exponent}"
+                        ));
+                    }
+                    Ok(Self::Exponent(exponent))
+                }
+                None => Err(format!(
+                    "--probe must be none|cdfinish|revisit|exponent:<p>, not `{other}`"
+                )),
+            },
         }
     }
 
-    pub fn label(self) -> &'static str {
+    pub fn label(self) -> String {
         match self {
-            Self::None => "none",
-            Self::Cdfinish => "cdfinish",
-            Self::Revisit => "revisit",
+            Self::None => "none".to_owned(),
+            Self::Cdfinish => "cdfinish".to_owned(),
+            Self::Revisit => "revisit".to_owned(),
+            Self::Exponent(exponent) => format!("exponent:{exponent}"),
         }
     }
 }
 
-/// What the replay sweep is asked to do beyond the traced pass.
+impl Serialize for ReplayProbe {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.label())
+    }
+}
+
+/// What the replay sweep is asked to do beyond the traced pass. The three
+/// probes are exclusive: exactly one of `continuation`, `revisit` and
+/// `exponent` is set, or none for the control.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ReplayProbeConfig {
     pub continuation: Option<CdContinuation>,
     pub revisit: bool,
+    /// `Some(p)`: rank on `sum w v^p` (`energy::fold_with_exponent`,
+    /// `energy::incident_totals_with_exponent`). `Some(2.0)` is the
+    /// control's ranking to the bit, through the probe's own code path.
+    pub exponent: Option<f64>,
 }
 
 impl ReplayProbeConfig {
@@ -129,10 +183,17 @@ impl ReplayProbeConfig {
             ReplayProbe::Cdfinish => Self {
                 continuation: Some(CdContinuation::astra(band_mm)),
                 revisit: false,
+                exponent: None,
             },
             ReplayProbe::Revisit => Self {
                 continuation: None,
                 revisit: true,
+                exponent: None,
+            },
+            ReplayProbe::Exponent(exponent) => Self {
+                continuation: None,
+                revisit: false,
+                exponent: Some(exponent),
             },
         }
     }
@@ -368,6 +429,8 @@ pub struct ReplayReport {
     pub band_mm: f64,
     pub continuation: Option<ContinuationParams>,
     pub revisit: bool,
+    /// The exponent probe's `p`; `null` for the other probes and the control.
+    pub exponent: Option<f64>,
     pub entry_raw: f64,
     pub entry_guided: f64,
     pub entry_max_mm: f64,
@@ -473,7 +536,12 @@ impl<'a> Engine<'a> {
         let band = self.config.limits.band_mm;
         let probe = ReplayProbeConfig::of(params.probe, band);
         let workers = params.workers.max(1);
-        let entry = energy::fold(&self.state);
+        // The entry reading's `guided` is the quantity the probe ranks on;
+        // `raw` and `max` are the fold's own either way.
+        let entry = match probe.exponent {
+            Some(exponent) => energy::fold_with_exponent(&self.state, exponent),
+            None => energy::fold(&self.state),
+        };
         let entry_blocking = blocking_rows(&self.state);
         let mut snapshot = self.state.clone();
         let mut meter = StrikeMeter::for_phase(params.strikes, Phase::Explore, entry.raw);
@@ -627,6 +695,7 @@ impl<'a> Engine<'a> {
             band_mm: band,
             continuation: probe.continuation.map(ContinuationParams::from),
             revisit: probe.revisit,
+            exponent: probe.exponent,
             entry_raw: entry.raw,
             entry_guided: entry.guided,
             entry_max_mm: entry.max_violation_mm,
@@ -652,10 +721,12 @@ impl<'a> Engine<'a> {
 
     /// [`Engine::tournament`]'s steps 1-7 with [`Descent::worker_sweep_replay`]
     /// in every slot: clone, set the stream ordinal, sweep in scoped threads,
-    /// join in ordinal order, select the minimum guided Φ stable by ordinal,
-    /// install, one GLS pass. Returns the post-GLS totals, the winner, the
-    /// contested flag, the summed and the winner's probe stats, and the
-    /// summed and the winner's sample evaluations.
+    /// join in ordinal order, select the minimum guided Φ stable by ordinal
+    /// (under the exponent probe each slot's guided Φ is `sum w v^p`, from
+    /// [`Descent::worker_sweep_replay`]), install, one GLS pass (unchanged:
+    /// the weight growth stays on `v / v_max`). Returns the post-GLS
+    /// totals, the winner, the contested flag, the summed and the winner's
+    /// probe stats, and the summed and the winner's sample evaluations.
     #[allow(clippy::type_complexity)]
     fn replay_tournament(
         &mut self,
@@ -733,7 +804,12 @@ impl<'a> Engine<'a> {
         self.trace.sweeps += 1;
         energy::gls_update(&mut self.state);
         self.trace.work.weight_updates += 1;
-        let totals = energy::fold(&self.state);
+        // `guided_after` is the probe's ranking quantity; raw and max are
+        // the fold's own (the identity gate compares those and the winner).
+        let totals = match probe.exponent {
+            Some(exponent) => energy::fold_with_exponent(&self.state, exponent),
+            None => energy::fold(&self.state),
+        };
         (
             totals,
             winner,

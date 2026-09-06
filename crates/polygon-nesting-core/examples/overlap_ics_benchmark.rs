@@ -3901,6 +3901,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // replays: it rebuilds the state from a capsule, re-runs the same
         // separation loop from it, and reports whether a probe clears the
         // persistent blockers and enters the band, at what evaluation cost.
+        // The third probe, `--probe=exponent:<p>`, is the microscope
+        // README's addendum "how the column broke": neither detached probe
+        // broke the pinned column early because the escape is a weight
+        // race under `w v^2` (weights ~1e5, 36 updates) where Sparrow's
+        // ~sqrt(penetration) needs ~20; the probe ranks the candidates and
+        // the tournament on `w v^p` and nothing else. `exponent:2` must
+        // reproduce `none` bit for bit (the identity count printed below).
         //
         // FORBIDDEN AS A RESULT. A capsule is a known-good layout;
         // `docs/grok-review-12-reading-sparrow.md` §5.2 (row "fixture as a
@@ -4340,6 +4347,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "bandMm": report.band_mm,
                 "continuation": report.continuation,
                 "revisit": report.revisit,
+                "exponent": report.exponent,
                 "strikes": StrikeConfig::control_live().arm(),
                 "explorePatience": polygon_nesting_core::search::overlap_ics::explore_patience(),
                 "stopsAtBandEntry": true,
@@ -4424,11 +4432,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // nothing; its band entry is a diagnostic reading, never a depth
     // (`overlap_ics::replay`).
     if let Some(mut report) = replay_document.take() {
-        report["tripwire"] = json!(
-            "DIAGNOSTIC ONLY: --cell=replay ran; this trajectory started from a bite-microscope \
-             capsule (a known-good layout), published nothing and must never be scored \
-             (forbidden-rescue row: fixture as a seed)"
-        );
+        let probe_label = report["probe"].as_str().unwrap_or("?").to_owned();
+        report["tripwire"] = json!(format!(
+            "DIAGNOSTIC ONLY: --cell=replay ran (probe {probe_label}); this trajectory started \
+             from a bite-microscope capsule (a known-good layout), published nothing and must \
+             never be scored (forbidden-rescue row: fixture as a seed)"
+        ));
         report["flag"] = json!("--cell=replay");
         document["replay"] = report;
     }

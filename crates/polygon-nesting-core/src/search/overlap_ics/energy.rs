@@ -465,6 +465,105 @@ pub fn incident_raw(state: &IcsState, piece: usize) -> f64 {
     incident_totals(state, piece).0
 }
 
+// ------------------------------------------------- the replay exponent probe --
+
+/// **The guided term at exponent `p`: `w * v^p`.** Replay path only
+/// (`super::replay`, `--probe=exponent:<p>`); the live fold never calls it.
+///
+/// WHY. `docs/experiments/overlap-ics/sparrow-warm-start/README.md` lines the
+/// two engines up on the identical layout and the hard bite costs us 37-43
+/// master iterations against Sparrow's 17 passes. The bite microscope's
+/// addendum "how the column broke" (`docs/experiments/overlap-ics/
+/// bite-microscope/README.md`) read the escape off the trace: the pinned
+/// column's members leave only when their rows' GLS weights reach ~1e5 (36
+/// updates at ~1.5x), because our guided objective is `w v^2` and a 5 um
+/// residual is `(0.005/1.8)^2 = 8e-6` of a 1.8 mm fresh overlap. Sparrow's
+/// loss at the pinned revision is ~`sqrt(penetration)`, so the same escape
+/// needs a weight of ~20 (3-5 updates). The hypothesis is that the exponent
+/// on the violation in the **guided ranking** sets the escape time; this
+/// term is the one place the replay probe changes it. Raw Φ (`v^2`), the
+/// band, the strike meter's minimum and the `v / v_max` weight growth stay
+/// on the violation itself.
+///
+/// `p = 2` is special-cased to `v * v` so that `--probe=exponent:2`
+/// reproduces `--probe=none` bit for bit (the probe's own identity gate):
+/// `powf(2.0)` is not guaranteed to round like a product.
+#[inline]
+pub fn guided_term_with_exponent(weight: f64, violation: f64, exponent: f64) -> f64 {
+    if exponent == 2.0 {
+        weight * (violation * violation)
+    } else {
+        weight * violation.powf(exponent)
+    }
+}
+
+/// [`fold`] with the guided total taken as `sum w v^p`
+/// ([`guided_term_with_exponent`]); `raw` and `max_violation_mm` are the
+/// fold's own, unchanged. Same fixed order, same skip of non-positive rows.
+/// Replay path only: the tournament's winner selection under the exponent
+/// probe (`super::replay`).
+pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
+    let mut totals = Totals::default();
+    for row in &state.pair_rows {
+        let violation = row.violation_mm;
+        if violation <= 0.0 {
+            continue;
+        }
+        totals.raw += violation * violation;
+        totals.guided += guided_term_with_exponent(row.weight, violation, exponent);
+        if violation > totals.max_violation_mm {
+            totals.max_violation_mm = violation;
+        }
+    }
+    for rows in &state.edge_rows {
+        for row in rows {
+            let violation = row.violation_mm;
+            if violation <= 0.0 {
+                continue;
+            }
+            totals.raw += violation * violation;
+            totals.guided += guided_term_with_exponent(row.weight, violation, exponent);
+            if violation > totals.max_violation_mm {
+                totals.max_violation_mm = violation;
+            }
+        }
+    }
+    totals
+}
+
+/// [`incident_totals`] with the guided half taken as `sum w v^p`
+/// ([`guided_term_with_exponent`]); the raw half is `sum v^2` unchanged, so
+/// the lexicographic rule "any clear pose beats every colliding pose"
+/// (`relocate::eval_cmp`, on `raw`) is untouched and only the order among
+/// colliding poses moves. Same rows in the same order as the live fold.
+/// Replay path only: the candidate ranking inside `relocate_replay` under
+/// the exponent probe.
+pub fn incident_totals_with_exponent(state: &IcsState, piece: usize, exponent: f64) -> (f64, f64) {
+    let count = state.poses.len();
+    let mut raw = 0.0;
+    let mut guided = 0.0;
+    for &other in &state.near[piece] {
+        let other = other as usize;
+        let (first, second) = if other < piece {
+            (other, piece)
+        } else {
+            (piece, other)
+        };
+        let row = &state.pair_rows[pair_index(count, first, second)];
+        if row.violation_mm > 0.0 {
+            raw += row.violation_mm * row.violation_mm;
+            guided += guided_term_with_exponent(row.weight, row.violation_mm, exponent);
+        }
+    }
+    for row in &state.edge_rows[piece] {
+        if row.violation_mm > 0.0 {
+            raw += row.violation_mm * row.violation_mm;
+            guided += guided_term_with_exponent(row.weight, row.violation_mm, exponent);
+        }
+    }
+    (raw, guided)
+}
+
 /// The negative gradient of the incident guided energy at one piece:
 /// `(force_x, force_y, torque)`, with the torque `tau = (p - c) x (w v n)`
 /// about the piece's transformed **centroid**.
