@@ -142,3 +142,17 @@ our design decision (`guided = w v^2` was Grok review 12's recommendation, line 
 "one guided path"), and the replay probe `guided = w v^p` for `p` in {1, 0.75, 0.5} from the
 bite-15 capsule tests it directly, with the prediction that the column breaks in 10-20
 iterations at `p <= 1`.
+
+Correction from the pinned source (`src/quantify/overlap_proxy.rs` and `src/quantify/mod.rs` at
+`14f4868f`, read on GitHub; nothing ported): per pole pair `pd = r1 + r2 - d`, contribution
+`pd_decay * min(r1, r2)` with `pd_decay = pd` for `pd >= eps` and `eps^2 / (-pd + 2 eps)`
+below it (positive even without overlap: a smooth tail beyond contact), summed and multiplied
+by pi; then `loss = sqrt(overlap + eps^2) * penalty` with `penalty` the geometric mean of the
+two convex-hull square-root areas. So for a colliding pair Sparrow's loss is about
+`sqrt(pd)`, not `pd^0.75`: a 5 um residual against a 1.8 mm fresh overlap costs
+`(0.005/1.8)^0.5 = 0.053` of it for Sparrow and `8e-6` of it for us. The escape weight is
+about 20 for Sparrow, about 1e5 for us. The replay probe should therefore include `p = 0.5`,
+and the prediction for the bite-15 capsule is a break within a handful of iterations at that
+exponent. Note what else the exponent touches: only the guided ranking among colliding
+candidates and the tournament's winner selection; raw Phi, the band, the strike meter's
+minimum and the weight growth rule `v / v_max` stay on the violation itself.
