@@ -4516,6 +4516,229 @@ fn incident_totals_with_exponent_is_sum_w_v_to_the_p_and_keeps_clear_beats_colli
     assert_eq!(eval_cmp(pinned_light(0.5), fresh(0.5)), Ordering::Greater);
 }
 
+/// Restores the process-level guided exponent on every exit, including a
+/// panic, so a failing assertion cannot leak `p != 2` into the tests sharing
+/// this process (the same shape as `ProxyMarginGuard`).
+struct GuidedExponentGuard;
+impl Drop for GuidedExponentGuard {
+    fn drop(&mut self) {
+        super::clear_guided_exponent();
+    }
+}
+
+/// **The guided exponent knob defaults to the frozen engine's `2`, to the
+/// bit.** The static is seeded with the literal `0x4000_0000_0000_0000`
+/// because `to_bits` is not `const` on the MSRV path; this is the check the
+/// comment on it promises.
+#[test]
+fn guided_exponent_default_bits_are_two() {
+    let _knobs = knob_lock();
+    assert_eq!(super::DEFAULT_GUIDED_EXPONENT.to_bits(), 0x4000_0000_0000_0000);
+    assert_eq!(super::DEFAULT_GUIDED_EXPONENT, 2.0);
+    assert_eq!(
+        super::guided_exponent().to_bits(),
+        2.0f64.to_bits(),
+        "the knob must default to the frozen engine's p = 2"
+    );
+}
+
+/// **The knob round-trips inside `0 < p <= 2` and refuses everything else
+/// without moving.** `0` scores every colliding row alike, a negative power
+/// rewards penetration, `p > 2` makes the pinned column's trickle worse than
+/// today, and a non-finite `p` is not a number; each refusal must leave the
+/// knob exactly where it was.
+#[test]
+fn the_guided_exponent_knob_round_trips_and_refuses_out_of_range() {
+    let _knobs = knob_lock();
+    let _guard = GuidedExponentGuard;
+    assert_eq!(super::guided_exponent(), 2.0);
+    super::set_guided_exponent(1.0).expect("p = 1 is Astra's named value");
+    assert_eq!(super::guided_exponent().to_bits(), 1.0f64.to_bits());
+    super::set_guided_exponent(0.75).expect("p = 0.75 is the probe's best");
+    assert_eq!(super::guided_exponent().to_bits(), 0.75f64.to_bits());
+    for bad in [0.0, -1.0, 3.0, 2.000_000_1, f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        let refused = super::set_guided_exponent(bad);
+        assert!(refused.is_err(), "p = {bad} must be refused");
+        assert_eq!(
+            super::guided_exponent().to_bits(),
+            0.75f64.to_bits(),
+            "a refused p = {bad} must not move the knob"
+        );
+    }
+    super::set_guided_exponent(2.0).expect("p = 2 is the frozen engine");
+    assert_eq!(super::guided_exponent().to_bits(), 2.0f64.to_bits());
+    super::set_guided_exponent(0.5).expect("p = 0.5");
+    super::clear_guided_exponent();
+    assert_eq!(super::guided_exponent().to_bits(), 2.0f64.to_bits());
+}
+
+/// **Off, the knob is the frozen fold bit for bit; on at `p = 1`, the guided
+/// quantity is `sum w v` and nothing else moves.** A real state - three
+/// 20 mm squares overlapping each other and the bottom-left edges, rows
+/// rebuilt by the engine and weights grown by two GLS updates so they are
+/// neither unit nor equal - folded by the loop the frozen engine ran (copied
+/// here verbatim, `square = v * v; raw += square; guided += w * square`)
+/// against `fold` and `incident_totals` at the default knob: every field
+/// identical to the bit, for the whole state and for each piece. Then the
+/// knob at `p = 1`: `raw` and `max_violation_mm` keep their bits, `guided`
+/// is `sum w v` in the same order and is `fold_with_exponent(_, 1.0)` to the
+/// bit, and it differs from the frozen value (so the test is not vacuous).
+/// When the guard drops the fold is the frozen one again.
+#[test]
+fn the_guided_exponent_knob_is_the_frozen_fold_off_and_sum_w_v_at_one() {
+    use super::energy::{fold_with_exponent, incident_totals, incident_totals_with_exponent, Totals};
+    use super::state::pair_index;
+    let _knobs = knob_lock();
+    let _guard = GuidedExponentGuard;
+    assert_eq!(super::guided_exponent(), 2.0, "the knob must default to off");
+
+    let fixture = Fixture::squares(3, 20.0);
+    let (_, _, mut state) = state_of_poses(
+        &fixture,
+        vec![pose_at(3.0, 2.0), pose_at(18.0, 9.0), pose_at(9.5, 21.0)],
+        60.0,
+    );
+    super::energy::gls_update(&mut state);
+    super::energy::gls_update(&mut state);
+    // Every row as `(violation, weight)`, in the fold's order: pair rows by
+    // pair ID, then each piece's four boundary rows.
+    let rows = |state: &IcsState| -> Vec<(f64, f64)> {
+        state
+            .pair_rows
+            .iter()
+            .map(|row| (row.violation_mm, row.weight))
+            .chain(state.edge_rows.iter().flatten().map(|row| (row.violation_mm, row.weight)))
+            .collect()
+    };
+    let active_rows = rows(&state).iter().filter(|(violation, _)| *violation > 0.0).count();
+    assert!(active_rows >= 4, "the fixture must carry pair and boundary violations: {active_rows}");
+    let weights: std::collections::BTreeSet<u64> = rows(&state)
+        .iter()
+        .filter(|(violation, _)| *violation > 0.0)
+        .map(|(_, weight)| weight.to_bits())
+        .collect();
+    assert!(weights.len() >= 2, "the weights must not all be equal: {weights:?}");
+
+    // The frozen engine's fold, verbatim.
+    let frozen = |state: &IcsState| {
+        let mut totals = Totals::default();
+        for row in &state.pair_rows {
+            let violation = row.violation_mm;
+            if violation <= 0.0 {
+                continue;
+            }
+            let square = violation * violation;
+            totals.raw += square;
+            totals.guided += row.weight * square;
+            if violation > totals.max_violation_mm {
+                totals.max_violation_mm = violation;
+            }
+        }
+        for rows in &state.edge_rows {
+            for row in rows {
+                let violation = row.violation_mm;
+                if violation <= 0.0 {
+                    continue;
+                }
+                let square = violation * violation;
+                totals.raw += square;
+                totals.guided += row.weight * square;
+                if violation > totals.max_violation_mm {
+                    totals.max_violation_mm = violation;
+                }
+            }
+        }
+        totals
+    };
+    // The frozen engine's incident fold, verbatim (the `0..count` walk).
+    let frozen_incident = |state: &IcsState, piece: usize| {
+        let count = state.poses.len();
+        let mut raw = 0.0;
+        let mut guided = 0.0;
+        for other in 0..count {
+            if other == piece {
+                continue;
+            }
+            let (first, second) = if other < piece { (other, piece) } else { (piece, other) };
+            let row = &state.pair_rows[pair_index(count, first, second)];
+            if row.violation_mm > 0.0 {
+                let square = row.violation_mm * row.violation_mm;
+                raw += square;
+                guided += row.weight * square;
+            }
+        }
+        for row in &state.edge_rows[piece] {
+            if row.violation_mm > 0.0 {
+                let square = row.violation_mm * row.violation_mm;
+                raw += square;
+                guided += row.weight * square;
+            }
+        }
+        (raw, guided)
+    };
+    let check_off = |state: &IcsState| {
+        let expected = frozen(state);
+        let live = fold(state);
+        assert_eq!(live.raw.to_bits(), expected.raw.to_bits());
+        assert_eq!(live.guided.to_bits(), expected.guided.to_bits());
+        assert_eq!(live.max_violation_mm.to_bits(), expected.max_violation_mm.to_bits());
+        assert_eq!(live, expected, "off, the knob is the frozen fold to the bit");
+        for piece in 0..state.poses.len() {
+            let (raw, guided) = frozen_incident(state, piece);
+            let live = incident_totals(state, piece);
+            assert_eq!(live.0.to_bits(), raw.to_bits(), "piece {piece} raw");
+            assert_eq!(live.1.to_bits(), guided.to_bits(), "piece {piece} guided");
+        }
+        expected
+    };
+    let off = check_off(&state);
+    assert!(off.guided > 0.0 && off.raw > 0.0);
+
+    // On at p = 1: sum w v, same order; raw and max untouched.
+    super::set_guided_exponent(1.0).expect("p = 1");
+    let close = |left: f64, right: f64| (left - right).abs() <= 1e-12 * right.abs().max(1.0);
+    let mut linear = 0.0;
+    for (violation, weight) in rows(&state) {
+        if violation > 0.0 {
+            linear += weight * violation;
+        }
+    }
+    let on = fold(&state);
+    assert_eq!(on.raw.to_bits(), off.raw.to_bits(), "raw Phi is not the knob's");
+    assert_eq!(on.max_violation_mm.to_bits(), off.max_violation_mm.to_bits());
+    assert!(close(on.guided, linear), "p = 1 guided {} vs sum w v {linear}", on.guided);
+    assert_ne!(on.guided.to_bits(), off.guided.to_bits(), "p = 1 must move the guided fold");
+    let named = fold_with_exponent(&state, 1.0);
+    assert_eq!(on, named, "the knob at p = 1 is the replay variant at p = 1 to the bit");
+    for piece in 0..state.poses.len() {
+        let (raw, guided) = incident_totals(&state, piece);
+        let (frozen_raw, _) = frozen_incident(&state, piece);
+        assert_eq!(raw.to_bits(), frozen_raw.to_bits(), "piece {piece} raw");
+        let mut incident_linear = 0.0;
+        for &other in &state.near[piece] {
+            let other = other as usize;
+            let (first, second) = if other < piece { (other, piece) } else { (piece, other) };
+            let row = &state.pair_rows[pair_index(state.poses.len(), first, second)];
+            if row.violation_mm > 0.0 {
+                incident_linear += row.weight * row.violation_mm;
+            }
+        }
+        for row in &state.edge_rows[piece] {
+            if row.violation_mm > 0.0 {
+                incident_linear += row.weight * row.violation_mm;
+            }
+        }
+        assert!(close(guided, incident_linear), "piece {piece} p = 1 guided {guided} vs {incident_linear}");
+        let named = incident_totals_with_exponent(&state, piece, 1.0);
+        assert_eq!(guided.to_bits(), named.1.to_bits(), "piece {piece} knob vs named p");
+    }
+
+    // Back off: the frozen fold again.
+    super::clear_guided_exponent();
+    let again = check_off(&state);
+    assert_eq!(again, off);
+}
+
 /// **The cdfinish continuation reaches incident zero within 64 pairs.** Two
 /// 60 mm squares (fine-CD translation limit `0.001 * 60` = 60 um) whose
 /// pair row carries a 7 um residual - the trace's median limit-exit residual

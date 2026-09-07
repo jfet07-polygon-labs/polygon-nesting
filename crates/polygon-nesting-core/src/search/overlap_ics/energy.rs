@@ -378,80 +378,36 @@ pub fn rebuild_piece_rows(
     );
 }
 
-/// The fixed-order scalar fold over every cached row.
+/// The fixed-order scalar fold over every cached row, at the process's guided
+/// exponent ([`super::guided_exponent`], `2.0` unless `--guidedexponent`
+/// named another).
 ///
 /// Pair rows in pair-ID order first, then boundary rows in piece order, then
 /// the four edges in `L, R, B, T` order. No reassociation, no parallel
 /// reduction, no `sum()` over an unordered iterator.
+///
+/// This is [`fold_with_exponent`] at the knob's value: one implementation,
+/// shared with the replay probe, which names its own `p`. At the default the
+/// guided term is `w * (v * v)` - the product, never `powf` - so the frozen
+/// engine's trajectory is reproduced bit for bit.
 pub fn fold(state: &IcsState) -> Totals {
-    let mut totals = Totals::default();
-    for row in &state.pair_rows {
-        let violation = row.violation_mm;
-        if violation <= 0.0 {
-            continue;
-        }
-        let square = violation * violation;
-        totals.raw += square;
-        totals.guided += row.weight * square;
-        if violation > totals.max_violation_mm {
-            totals.max_violation_mm = violation;
-        }
-    }
-    for rows in &state.edge_rows {
-        for row in rows {
-            let violation = row.violation_mm;
-            if violation <= 0.0 {
-                continue;
-            }
-            let square = violation * violation;
-            totals.raw += square;
-            totals.guided += row.weight * square;
-            if violation > totals.max_violation_mm {
-                totals.max_violation_mm = violation;
-            }
-        }
-    }
-    totals
+    fold_with_exponent(state, super::guided_exponent())
 }
 
 /// The raw **and** guided energy incident on one piece: its `n-1` pair rows and
-/// its four boundary rows, folded in the same fixed order.
+/// its four boundary rows, folded in the same fixed order, at the process's
+/// guided exponent ([`super::guided_exponent`]).
 ///
 /// This pair is a relocate's whole objective. Grok review 12 Round 2 §6.3 makes
 /// the sample score lexicographic - "incident Φ = 0 beats any positive; else min
 /// incident **weighted** Φ" - which is Algorithm 5/6's `Clear < Collision{loss}`
 /// on our field, and it needs both halves of the fold at once. Computing them
 /// together also means one pass over the same `n+3` rows instead of two.
+///
+/// This is [`incident_totals_with_exponent`] at the knob's value; see
+/// [`fold`] for the identity at the default.
 pub fn incident_totals(state: &IcsState, piece: usize) -> (f64, f64) {
-    let count = state.poses.len();
-    let mut raw = 0.0;
-    let mut guided = 0.0;
-    // `near[piece]` is ascending and holds exactly the non-zero rows, so this
-    // visits the same rows in the same order the `0..count` walk did once its
-    // `violation_mm > 0.0` test had thrown the rest away. The sum is therefore
-    // identical bit for bit, not merely equal.
-    for &other in &state.near[piece] {
-        let other = other as usize;
-        let (first, second) = if other < piece {
-            (other, piece)
-        } else {
-            (piece, other)
-        };
-        let row = &state.pair_rows[pair_index(count, first, second)];
-        if row.violation_mm > 0.0 {
-            let square = row.violation_mm * row.violation_mm;
-            raw += square;
-            guided += row.weight * square;
-        }
-    }
-    for row in &state.edge_rows[piece] {
-        if row.violation_mm > 0.0 {
-            let square = row.violation_mm * row.violation_mm;
-            raw += square;
-            guided += row.weight * square;
-        }
-    }
-    (raw, guided)
+    incident_totals_with_exponent(state, piece, super::guided_exponent())
 }
 
 /// The guided energy incident on one piece.
@@ -465,10 +421,12 @@ pub fn incident_raw(state: &IcsState, piece: usize) -> f64 {
     incident_totals(state, piece).0
 }
 
-// ------------------------------------------------- the replay exponent probe --
+// ------------------------------------------------------ the guided exponent --
 
-/// **The guided term at exponent `p`: `w * v^p`.** Replay path only
-/// (`super::replay`, `--probe=exponent:<p>`); the live fold never calls it.
+/// **The guided term at exponent `p`: `w * v^p`.** The one place the guided
+/// quantity is defined; [`fold`] and [`incident_totals`] take `p` from the
+/// process knob (`super::set_guided_exponent`, `--guidedexponent=<p>`) and
+/// the replay probe (`super::replay`, `--probe=exponent:<p>`) names its own.
 ///
 /// WHY. `docs/experiments/overlap-ics/sparrow-warm-start/README.md` lines the
 /// two engines up on the identical layout and the hard bite costs us 37-43
@@ -479,14 +437,19 @@ pub fn incident_raw(state: &IcsState, piece: usize) -> f64 {
 /// updates at ~1.5x), because our guided objective is `w v^2` and a 5 um
 /// residual is `(0.005/1.8)^2 = 8e-6` of a 1.8 mm fresh overlap. Sparrow's
 /// loss at the pinned revision is ~`sqrt(penetration)`, so the same escape
-/// needs a weight of ~20 (3-5 updates). The hypothesis is that the exponent
-/// on the violation in the **guided ranking** sets the escape time; this
-/// term is the one place the replay probe changes it. Raw Φ (`v^2`), the
-/// band, the strike meter's minimum and the `v / v_max` weight growth stay
-/// on the violation itself.
+/// needs a weight of ~20 (3-5 updates). The exponent on the violation in the
+/// **guided ranking** sets the escape time: the replay probe measured the
+/// three traced bites at 685 980 / 262 987 / 500 681 all-worker evaluations
+/// at `p = 2` against 462 936 / 212 530 / 213 938 at `p = 1` and 288 357 /
+/// 64 418 / 175 440 at `p = 0.75` (GPT-6 Astra review 5 Q3, review 5b). This
+/// term is the one place the exponent enters. Raw Φ (`v^2`), the band, the
+/// strike meter's minimum and the `v / v_max` weight growth stay on the
+/// violation itself. The exponent is a landscape change of our own design
+/// (Grok review 12 line 188 chose `v^2` for "one guided path"), not
+/// Sparrow's pole proxy: `v` is still the source-ring signed-gap residual.
 ///
-/// `p = 2` is special-cased to `v * v` so that `--probe=exponent:2`
-/// reproduces `--probe=none` bit for bit (the probe's own identity gate):
+/// `p = 2` is special-cased to `v * v` so that the default knob and
+/// `--probe=exponent:2` reproduce the frozen engine bit for bit:
 /// `powf(2.0)` is not guaranteed to round like a product.
 #[inline]
 pub fn guided_term_with_exponent(weight: f64, violation: f64, exponent: f64) -> f64 {
@@ -497,12 +460,11 @@ pub fn guided_term_with_exponent(weight: f64, violation: f64, exponent: f64) -> 
     }
 }
 
-/// [`fold`] with the guided total taken as `sum w v^p`
-/// ([`guided_term_with_exponent`]); `raw` and `max_violation_mm` are the
-/// fold's own, unchanged. Same fixed order, same skip of non-positive rows.
-/// Replay path only: the tournament's winner selection under the exponent
-/// probe (`super::replay`).
-pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
+/// The one fold, generic in the guided term so the `p = 2` instantiation
+/// carries no per-row branch and no `powf` - the loop the frozen engine ran,
+/// with `raw += v * v; guided += w * (v * v)` in the same order.
+#[inline(always)]
+fn fold_by(state: &IcsState, term: impl Fn(f64, f64) -> f64) -> Totals {
     let mut totals = Totals::default();
     for row in &state.pair_rows {
         let violation = row.violation_mm;
@@ -510,7 +472,7 @@ pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
             continue;
         }
         totals.raw += violation * violation;
-        totals.guided += guided_term_with_exponent(row.weight, violation, exponent);
+        totals.guided += term(row.weight, violation);
         if violation > totals.max_violation_mm {
             totals.max_violation_mm = violation;
         }
@@ -522,7 +484,7 @@ pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
                 continue;
             }
             totals.raw += violation * violation;
-            totals.guided += guided_term_with_exponent(row.weight, violation, exponent);
+            totals.guided += term(row.weight, violation);
             if violation > totals.max_violation_mm {
                 totals.max_violation_mm = violation;
             }
@@ -531,14 +493,14 @@ pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
     totals
 }
 
-/// [`incident_totals`] with the guided half taken as `sum w v^p`
-/// ([`guided_term_with_exponent`]); the raw half is `sum v^2` unchanged, so
-/// the lexicographic rule "any clear pose beats every colliding pose"
-/// (`relocate::eval_cmp`, on `raw`) is untouched and only the order among
-/// colliding poses moves. Same rows in the same order as the live fold.
-/// Replay path only: the candidate ranking inside `relocate_replay` under
-/// the exponent probe.
-pub fn incident_totals_with_exponent(state: &IcsState, piece: usize, exponent: f64) -> (f64, f64) {
+/// The one incident fold, generic in the guided term like [`fold_by`].
+///
+/// `near[piece]` is ascending and holds exactly the non-zero rows, so this
+/// visits the same rows in the same order the `0..count` walk did once its
+/// `violation_mm > 0.0` test had thrown the rest away. The sum is therefore
+/// identical bit for bit, not merely equal.
+#[inline(always)]
+fn incident_by(state: &IcsState, piece: usize, term: impl Fn(f64, f64) -> f64) -> (f64, f64) {
     let count = state.poses.len();
     let mut raw = 0.0;
     let mut guided = 0.0;
@@ -552,16 +514,44 @@ pub fn incident_totals_with_exponent(state: &IcsState, piece: usize, exponent: f
         let row = &state.pair_rows[pair_index(count, first, second)];
         if row.violation_mm > 0.0 {
             raw += row.violation_mm * row.violation_mm;
-            guided += guided_term_with_exponent(row.weight, row.violation_mm, exponent);
+            guided += term(row.weight, row.violation_mm);
         }
     }
     for row in &state.edge_rows[piece] {
         if row.violation_mm > 0.0 {
             raw += row.violation_mm * row.violation_mm;
-            guided += guided_term_with_exponent(row.weight, row.violation_mm, exponent);
+            guided += term(row.weight, row.violation_mm);
         }
     }
     (raw, guided)
+}
+
+/// The fold with the guided total taken as `sum w v^p`
+/// ([`guided_term_with_exponent`]); `raw` and `max_violation_mm` are the
+/// fold's own, unchanged. Same fixed order, same skip of non-positive rows.
+/// [`fold`] is this at the process knob; the replay's tournament under
+/// `--probe=exponent:<p>` (`super::replay`) is this at the probe's `p`.
+pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
+    if exponent == 2.0 {
+        fold_by(state, |weight, violation| weight * (violation * violation))
+    } else {
+        fold_by(state, |weight, violation| weight * violation.powf(exponent))
+    }
+}
+
+/// The incident fold with the guided half taken as `sum w v^p`
+/// ([`guided_term_with_exponent`]); the raw half is `sum v^2` unchanged, so
+/// the lexicographic rule "any clear pose beats every colliding pose"
+/// (`relocate::eval_cmp`, on `raw`) is untouched and only the order among
+/// colliding poses moves. [`incident_totals`] is this at the process knob;
+/// the candidate ranking inside `relocate_replay` under the exponent probe
+/// is this at the probe's `p`.
+pub fn incident_totals_with_exponent(state: &IcsState, piece: usize, exponent: f64) -> (f64, f64) {
+    if exponent == 2.0 {
+        incident_by(state, piece, |weight, violation| weight * (violation * violation))
+    } else {
+        incident_by(state, piece, |weight, violation| weight * violation.powf(exponent))
+    }
 }
 
 /// The negative gradient of the incident guided energy at one piece:

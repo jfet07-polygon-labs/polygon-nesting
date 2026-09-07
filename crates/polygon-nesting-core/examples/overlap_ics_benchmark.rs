@@ -358,6 +358,28 @@ impl Options {
             None => Ok(fallback),
         }
     }
+
+    /// `--guidedexponent=<p>`: the exponent the guided objective ranks on
+    /// (`sum w v^p`; `overlap_ics::set_guided_exponent`). Absent means the
+    /// frozen engine's `2`. A value that is not a number, or outside
+    /// `0 < p <= 2`, is refused here with a clear reason, so a typo never
+    /// runs a cell silently at the default.
+    fn guided_exponent(&self) -> Result<f64, String> {
+        match self.get("guidedexponent") {
+            Some(value) => {
+                let exponent: f64 = value.trim().parse().map_err(|error| {
+                    format!("--guidedexponent: `{value}` is not a number ({error})")
+                })?;
+                if !exponent.is_finite() || exponent <= 0.0 || exponent > 2.0 {
+                    return Err(format!(
+                        "--guidedexponent: `{value}` must satisfy 0 < p <= 2 (2 is the frozen engine)"
+                    ));
+                }
+                Ok(exponent)
+            }
+            None => Ok(polygon_nesting_core::search::overlap_ics::DEFAULT_GUIDED_EXPONENT),
+        }
+    }
 }
 
 // ------------------------------------------------------------------ output ---
@@ -2798,6 +2820,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             polygon_nesting_core::search::overlap_ics::set_proxy_margin_um(
                 options.integer("proxymargin", 0)?,
             );
+            // Guided exponent: `--guidedexponent=<p>` ranks the relocate's
+            // candidates and the tournament's winner on `sum w v^p` instead of
+            // `sum w v^2` (the bite microscope's pinned column, GPT-6 Astra
+            // review 5 Q3). Default 2; the default path is the frozen engine
+            // to the bit.
+            polygon_nesting_core::search::overlap_ics::set_guided_exponent(
+                options.guided_exponent()?,
+            )?;
             homotopy::set_explore_shrink_step(options.number("shrinkstep", 0.0)?);
             homotopy::set_adaptive_step_ceiling(options.number("adaptivestep", 0.0)?);
             homotopy::set_adaptive_step_floor(options.number("adaptivefloor", 0.0)?);
@@ -3951,6 +3981,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .into());
             }
             polygon_nesting_core::search::overlap_ics::set_proxy_margin_um(proxy_margin);
+            // Same rule for the guided exponent: the control replay folds at
+            // the process knob (`energy::fold` / `incident_totals`), so the
+            // reconstruction reproduces the trace only when the two agree.
+            // `--probe=exponent:<p>` names its own `p` on top of this and is
+            // unchanged.
+            let document_exponent = capsule_document["guidedExponent"]
+                .as_f64()
+                .unwrap_or(polygon_nesting_core::search::overlap_ics::DEFAULT_GUIDED_EXPONENT);
+            let guided_exponent = options.guided_exponent()?;
+            if document_exponent != guided_exponent {
+                return Err(format!(
+                    "--capsule: the document was traced at --guidedexponent={document_exponent}; \
+                     this run named --guidedexponent={guided_exponent}. They must agree."
+                )
+                .into());
+            }
+            polygon_nesting_core::search::overlap_ics::set_guided_exponent(guided_exponent)?;
             let document_seed = capsule_document["seed"]
                 .as_u64()
                 .ok_or("--capsule: the document has no seed")?;
@@ -4409,6 +4456,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let proxy_margin_um = polygon_nesting_core::search::overlap_ics::proxy_margin_um();
     if proxy_margin_um != 0 {
         document["proxyMarginUm"] = json!(proxy_margin_um);
+    }
+    // Same rule: present exactly when the guided exponent is not the frozen
+    // engine's 2. Absence means `sum w v^2`.
+    let guided_exponent = polygon_nesting_core::search::overlap_ics::guided_exponent();
+    if guided_exponent != polygon_nesting_core::search::overlap_ics::DEFAULT_GUIDED_EXPONENT {
+        document["guidedExponent"] = json!(guided_exponent);
     }
     // Same rule, and the loudest of the three: present exactly when the
     // trajectory did not start from the constructor's layout. A scorer must

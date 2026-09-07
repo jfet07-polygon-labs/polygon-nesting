@@ -4322,6 +4322,91 @@ pub fn proxy_margin_mm() -> f64 {
     proxy_margin_um() as f64 / 1000.0
 }
 
+/// **The guided exponent: the objective the separation *ranks on* is
+/// `sum w v^p`, not `sum w v^2`.** Default `2.0`, which is today's engine to
+/// the bit. `--guidedexponent=<p>` in the benchmark.
+///
+/// WHY. The bite microscope (`docs/experiments/overlap-ics/bite-microscope/
+/// README.md`, all addenda) traced the hard explore bite: a pinned column of
+/// pieces standing from the sheet's bottom edge to the strip top. Under
+/// `sum w v^2` the state trickles with 8-11 blocking rows at 5-40 um for
+/// thirty iterations while the column's rows' GLS weights climb to ~1e5,
+/// because a 5 um residual squared is `(0.005/1.8)^2 = 8e-6` of a 1.8 mm
+/// fresh overlap, and only then does a member leave. Sparrow's loss at the
+/// pinned revision is ~`sqrt(penetration)` and it resolves the same bite
+/// from the same parent in 8 passes against our 43. The replay probe
+/// `--probe=exponent:<p>` certified the three traced capsules at these
+/// all-worker evaluation counts: p = 2 (control) 685 980 / 262 987 /
+/// 500 681; p = 1 462 936 / 212 530 / 213 938; p = 0.75 288 357 / 64 418 /
+/// 175 440; p = 0.5 230 022 / 71 071 / 174 352 (the identity gate at p = 2
+/// held bit for bit: 43/43, 26/26, 37/37 iterations), and none of eight
+/// ordinary-bite capsules costs more evaluations at p = 0.75. Under `p < 2`
+/// the objective is concave per row: the sweep concentrates violation on
+/// 1-3 rows, costs 4 000-7 000 evaluations per iteration instead of 16 000,
+/// plateaus, then a multi-millimetre jump breaks the state. GPT-6 Astra
+/// review 5 Q3 (`docs/astra-review-5-the-pinned-column.md`) ranked the
+/// exponent first among the mechanisms and named `p = 1`; review 5b
+/// (`docs/astra-review-5b-the-exponent.md`) generalised it to a prospective
+/// `p`. This knob is that mechanism on the live path.
+///
+/// **What it is and is not.** The exponent is a landscape change of our own
+/// design: Grok review 12 line 188 chose `guided = w * v^2` for "one guided
+/// path, no two GLS dialects", and this knob keeps the one path and moves
+/// its exponent. It is *not* Sparrow's pole proxy - the violation `v` stays
+/// the source-ring signed-gap residual in `f64`, and only the power the
+/// ranking raises it to changes. It is applied in exactly the two functions
+/// that define the guided quantity, `energy::fold` and
+/// `energy::incident_totals`, and nowhere else: raw Φ (`sum v^2`), the
+/// max violation, the publication band, the strike meter's minimum,
+/// `gls_update`'s `v / v_max` growth, `publish.rs`, the kernel and
+/// `validate_placements_against_contract` are untouched. The lexicographic
+/// rule "any clear pose beats every colliding pose" (`relocate::eval_cmp`
+/// reads `raw`) stays; only the order *among* colliding poses moves.
+/// `binary_close.rs` compares its table energy against **raw** Φ
+/// (`cold_raw_phi`) and the corpus oracle `independent_score` is linear in
+/// the violation, so neither carries the exponent.
+///
+/// The range is `0 < p <= 2`: `p > 2` would make the trickle worse than
+/// today and `p <= 0` is not an objective (`v^0 = 1` scores every colliding
+/// row alike; a negative power rewards penetration).
+///
+/// Process-level like [`set_proxy_margin_um`]: one cell per process, and a
+/// switch beside the code it switches. Stored as the `f64`'s bits in an
+/// `AtomicU64`; the replay probe `--probe=exponent:<p>` names its own `p`
+/// explicitly on its path and does not read this knob.
+pub const DEFAULT_GUIDED_EXPONENT: f64 = 2.0;
+
+// `2.0f64.to_bits()`, written out because `to_bits` is not const on this
+// toolchain's MSRV path; `guided_exponent_default_bits_are_two` checks it.
+static GUIDED_EXPONENT: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0x4000_0000_0000_0000);
+
+/// Names the exponent for this process. Refuses `p <= 0`, `p > 2` and any
+/// non-finite value, leaving the knob where it was.
+pub fn set_guided_exponent(exponent: f64) -> Result<(), String> {
+    if !exponent.is_finite() || exponent <= 0.0 || exponent > 2.0 {
+        return Err(format!(
+            "guided exponent must satisfy 0 < p <= 2 (2 is the frozen engine), got `{exponent}`"
+        ));
+    }
+    GUIDED_EXPONENT.store(exponent.to_bits(), std::sync::atomic::Ordering::Relaxed);
+    Ok(())
+}
+
+/// Returns the knob to the frozen engine's `p = 2`.
+pub fn clear_guided_exponent() {
+    GUIDED_EXPONENT.store(
+        DEFAULT_GUIDED_EXPONENT.to_bits(),
+        std::sync::atomic::Ordering::Relaxed,
+    );
+}
+
+/// The exponent the guided quantity is folded at: `2.0` unless
+/// [`set_guided_exponent`] named another.
+pub fn guided_exponent() -> f64 {
+    f64::from_bits(GUIDED_EXPONENT.load(std::sync::atomic::Ordering::Relaxed))
+}
+
 /// **The bound wall mode never had.**
 ///
 /// `Pacer::Wall::iteration_cap()` returned `None` from the day it was written,
