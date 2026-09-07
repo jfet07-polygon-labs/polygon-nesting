@@ -199,3 +199,39 @@ Same parent (up to Sparrow's own re-legalisation of it), same cut, same 0.1 %: 8
 against 43 and 7 against 37. Sparrow also shows a 45-pass bite six bites later on the margin-0
 parent, so the column is hard for it too, five times less so. From these parents it reaches
 151.404 and 152.668 at 8 s.
+
+## The exponent probe (commit "The exponent probe", `--probe=exponent:<p>`)
+
+Guided = sum w v^p in the candidate ranking and the tournament's winner selection only; raw
+Phi, the band, the strike minimum and the weight growth untouched; p = 2 reproduces the traced
+sweeps bit for bit (43/43, 26/26, 37/37). Evaluations are all workers, to band entry:
+
+| capsule | p = 2 (control) | p = 1 | p = 0.75 | p = 0.5 |
+|---|---|---|---|---|
+| margin 8, bite 15 | 43 it / 685 980 | 32 it / 462 936 | 40 it / **288 357** | 49 it / 230 022 |
+| margin 8, bite 17 | 26 it / 262 987 | 30 it / 212 530 | **13 it / 64 418** | 18 it / 71 071 |
+| margin 0, bite 17 | 37 it / 500 681 | **19 it / 213 938** | 30 it / 175 440 | 45 it / 174 352 |
+
+Astra's threshold for a probe to lead (review 5 Q4) was certification within half the control's
+evaluations: p = 0.75 and p = 0.5 meet it on all three capsules, p = 1 on one. The
+continuation and revisit probes met it on none.
+
+What the exponent changes is the character of the descent, not only the speed of the escape.
+Under p = 2 the state trickles: 8-11 blocking rows per iteration at 5-40 um, 16 000
+evaluations per iteration, and the pinned column waits thirty iterations for its weights.
+Under p < 2 the objective is concave in each row, so the sweep concentrates the violation on
+one or two rows instead of spreading it: 1-3 blocking rows per iteration at 150-200 um, 4 000
+to 7 000 evaluations per iteration (fewer colliding pieces, so fewer relocates), a plateau, then
+a multi-millimetre jump that breaks the state, then convergence. The jump comes earlier at
+p <= 1 on two of the three capsules (bite 17: iteration 12 at p = 0.75 against never at
+p = 2; margin-0 bite 17: 14 at p = 1 against 19), later on bite 15 in iterations but at a third
+of the evaluations. In the live engine evaluations are the wall (about 16 000 per master
+iteration at 4.7 M per second, 3.4 ms of a 3.7 ms iteration), so the evaluation column is the
+one that predicts time.
+
+The prediction written before the probe ("the column breaks in 10-20 iterations at p <= 1,
+in a handful at 0.5") is confirmed on bite 17 and refuted on bite 15 in iterations; in
+evaluations it is exceeded everywhere. The exponent is one parameter fitted on three capsules
+of one seed, which is why the live knob is `--guidedexponent=<p>` with p fixed prospectively
+and screened on seeds 18-26 at more than one value before any prospective specification names
+one.
