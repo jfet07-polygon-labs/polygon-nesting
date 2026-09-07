@@ -1,0 +1,2 @@
+cells 108, pairs 54, samples 240, max load over all cell windows 8.33
+flagged pairs (re-run whole): none

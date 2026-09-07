@@ -230,3 +230,53 @@ FREEZE_V1_DONE
 - Scoring commands, fixed now:
   `python3 spec-score.py /var/lib/t3/tmp/astra/v1 v1 --control A --treatment B --knobs A='proxymargin=8' B='proxymargin=8,guidedexponent=1' --seeds 27..35 --frozen /var/lib/t3/tmp/astra/base base --json v1-score.json`
   (and once more with `--originals` if any pair is re-run under the contamination rule).
+
+# Result: NOT PROMOTED — the Legacy tail fails on seeds 29 and 31; Wall10s passes all four conditions; the package improves the frozen record on both profiles
+
+Appended 2026-09-07 after scoring; nothing above was edited. The round ran 10:18:20–10:36:26 UTC
+from the committed manifest, 108 cells, no pair re-run: the load sampler's maximum inside any
+cell window was 8.33 and no cargo invocation ran during the round (`evidence/contamination.txt`).
+Scored with the fixed command (`evidence/v1-score.txt`, `v1-score.json`; cells under
+`evidence/cells/`).
+
+| required, per profile | Legacy | Wall10s |
+|---|---|---|
+| 1 depth: median g | **+2.343 mm** (7/9) PASS | **+0.851 mm** (6/9) PASS |
+| 2 tail: min g ≥ −1.000 | **−3.336 (seed 29), −1.929 (seed 31): FAIL** | −0.523 (seed 28) PASS |
+| 3 engineering | total evaluations −1.6 %, explore evaluations per published bite −9.9 %, elapsed per published bite −7.5 %, bites 110.5 → 119.4, fraction 99.10 → 99.17 %: PASS | −10.5 %, −15.8 %, −5.3 %, 4.00 → 4.22, 80.00 → 80.85 %: PASS |
+| 4 integrity | 0 invalid, all verified: PASS | PASS |
+
+**Verdict under the specification: DO NOT PROMOTE** (failed: Legacy tail). Per-seed medians
+(control | treatment), Legacy: 27 164.005 | 159.028; 28 164.004 | 161.662; 29 160.809 | 164.145;
+30 164.343 | 162.963; 31 160.364 | 162.293; 32 164.009 | 161.018; 33 163.063 | 159.016;
+34 163.243 | 159.019; 35 159.009 | 158.987. Wall10s: 27 159.031 | 154.421; 28 159.053 | 159.576;
+29 159.418 | 158.156; 30 159.126 | 159.497; 31 159.432 | 154.941; 32 159.664 | 159.021;
+33 159.997 | 159.028; 34 159.873 | 159.022; 35 159.014 | 159.060.
+
+What the two failing seeds are: the repetitions within each (seed, arm) agree to a tenth of a
+millimetre (seed 29: control 160.81 / 160.64 / 161.28, treatment 163.16 / 164.14 / 164.16; seed
+31: control 160.37 / 160.36 / 160.35, treatment 162.31 / 162.29 / 162.29), so these are not
+repetition noise but the two basins the Legacy profile lands in per seed (164 or 159–161), and
+on these two seeds the control's trajectory reaches the deeper basin and the treatment's does
+not. The treatment wins the other seven seeds by 0.02–4.98 mm. The tail guard was written for
+exactly this and it is not amended.
+
+**Reported, not required.**
+- *The package against the frozen record* (p = 2, margin 0, the archived 27 cells per profile,
+  executable `4df261ed…`): Legacy median +5.015 mm (8/9, min −0.143), Wall10s +1.821 mm (7/9, min
+  −0.022); both pass the depth and tail conditions: **the margin-8 + p = 1 package improves the
+  frozen record on both profiles.** This comparison cannot isolate the exponent (the margin is in
+  both arms of the required comparison and only in the treatment here) or separate package
+  effects from measurement-period effects.
+- *Sparrow* (residual-gap claim only): Wall10s treatment median of seed medians 159.022 mm, gap
+  to 150.165 = 8.857 mm, against the frozen reference's 9.550 (reduction 0.693 mm); Legacy
+  161.018, gap 10.853 (frozen 14.770, reduction 3.917). Seed medians at or below 150.165: 0/9 on
+  both profiles (individual cells: Wall10s seeds 27 and 31 sit at 154.4 and 154.9).
+- *Forecast outcomes*: the halving is missed (explore evaluations per published explore bite
+  −9.9 % Legacy, −15.8 % Wall10s); the −30 % development work target is missed.
+- *Diagnostics*: the 18 unscored control-arm microscope cells are appended below when they land.
+
+**Integrity notes.** Executable `frozen-1e913f4` (sha256 `8734404a…`) in every document;
+request sha256 and contract equal across the 108 cells and the frozen record; exactly three
+repetitions per (arm, profile, seed); zero invalid publications; zero checkpoint refusals of any
+kind in both arms; the three identity checks passed before the first cell.
