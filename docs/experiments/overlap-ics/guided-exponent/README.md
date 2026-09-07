@@ -229,3 +229,14 @@ as-run (primary) and the replacement archive: p = 1 (only p = 1 is eligible).** 
 single-repetition, no-margin finding of +4.26 mm at p = 0.75 on three Legacy seeds did not
 survive three repetitions with the margin on both profiles, which is what the rule was for.
 The prospective specification names p = 1.
+
+## The prospective round (seeds 27–35): `docs/quorum/ics-guided-exponent-v1-spec.md`
+
+Specified and frozen before any cell (b63699d), run 10:18–10:36 UTC on 2026-09-07 from the
+committed pair manifest, scored with `screen/spec-score.py`: **not promoted**, on the Legacy tail
+alone (seeds 29 and 31 lose 3.34 and 1.93 mm to the control, deterministically across
+repetitions; the other seven seeds gain 0.02–4.98 mm, paired median +2.343 mm), while Wall10s
+passes all four required conditions (+0.851 mm, worst −0.523, work down on every measure). The
+margin-8 + p = 1 package beats the archived frozen record on both profiles (+5.015 / +1.821 mm,
+no seed below −0.143) and takes the Wall10s gap to Sparrow from 9.550 to 8.857 mm. The result is
+appended to the specification; nothing in it was amended.
