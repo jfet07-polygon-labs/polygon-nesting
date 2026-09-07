@@ -249,3 +249,32 @@ band, all workers; `replay-easy-*.json.gz`):
 
 The easy bites stay easy or get cheaper; no capsule of the eight costs more evaluations at
 p = 0.75 than at p = 2, and only bite 16 at p = 1 costs one iteration more.
+
+## Scoring the exponent probe against the targets Astra registered before seeing it
+
+Review 5b (`docs/astra-review-5b-the-exponent.md`, Q6) was written after the continuation and
+revisit probes and before the exponent results, and registered, for the bite-15 capsule
+(margin 8, eight workers, 50 sweeps maximum): column-break deadlines 20 / 16 / 12 and first
+band-entry deadlines 27 / 23 / 19 for p = 1 / 0.75 / 0.5, plus the separate halving target of
+at most 342 990 evaluations and 21 sweeps. Against those:
+
+| p | band entry (deadline) | evaluations (target 342 990) | verdict on the registered forecast |
+|---|---|---|---|
+| 1 | 32 (27) | 462 936 | misses both |
+| 0.75 | 40 (23) | 288 357 | misses the iteration deadline, meets the evaluation target |
+| 0.5 | 49 (19) | 230 022 | misses the iteration deadline, meets the evaluation target |
+
+On bite 17 (margin 8) p = 0.75 enters the band at 13 with 64 418 evaluations and p = 0.5 at 18
+with 71 071; on the margin-0 bite 17, p = 1 enters at 19 with 213 938 (its deadline there,
+scaled, would be about 23). So the fast-escape forecast, the weight race resolving in a
+handful of updates, is **refuted on the trigger bite and supported on the two others**; the
+efficiency result holds on all three at p <= 0.75 and on one at p = 1. What the traces show
+in place of an early escape on bite 15 is Astra's own "conflict concentration" hazard turned
+into the benefit: under a sublinear objective the sweep keeps one or two rows at 150-200 um
+instead of eight to eleven at 5-40 um, fewer pieces collide, each iteration costs a quarter
+of the evaluations, and the state still needs a jump to finish. That is "faster band entry
+through a different contact arrangement", which review 5b says "supports a different causal
+account". The column-break definition from committed geometry, the sweep-24 diagnostic fork
+and the extended replay identity that review 5b asks for are not yet built; the live knob is
+being built first, per its Q9: `--guidedexponent`, control 2 against treatment 1 only, in the
+108-cell screen with margin 8 and the profile caps in both arms.
