@@ -728,3 +728,37 @@ python3 verify-1c-reformation.py && python3 verify-2-moves.py && python3 verify-
 python3 verify-2c-gap-quartiles.py && python3 verify-3-parents.py && python3 verify-3b-rollbacks.py &&
 python3 verify-3c-misc.py && python3 verify-4-ends.py && python3 verify-4b-jump-pieces.py` (the
 independent recomputation of every table and text number above, from the documents only).
+
+### Corrections from review 9 (appended; the section above is not edited)
+
+- "43 of 50 (A) and 29.5 of 47 (B) of the entry's pieces" are entry pieces remaining anywhere in the
+  blocking graph, not the largest component's retention; the largest entry and handed-back
+  components share 20 and 12 pieces at the median.
+- The jump at iteration 5–11 occurs in all eight published fifth cuts too, and 7 of the 20 failed
+  control attempts (and the control's publication) later improve their pre-jump minimum: "the
+  control never beats its early minimum" holds for its thirteen early-plateau failures, not for the
+  arm. The raw incumbent survives the jump in the saved minimum; selection abandons an active
+  continuation, it does not erase the best geometry, which connects the jump to the rollback.
+- "Insufficient remaining work" is *supported* in two of thirty-four deadline stops, not
+  *explained by* them: a late raw minimum does not establish that more work would have finished
+  the cut; three are unresolved; A 31 contradicts only the account "it was still converging".
+- "60 % wasted" is "60 % spent after the final raw minimum": the expenditure is established, its
+  removability is not (weight learning and exploration can matter without an immediate raw
+  record).
+- The endpoint reading (no loser within 50 µm of the band; best loser within 5 % of the winner)
+  counts against the narrow selection hypothesis (feasible or nearly feasible candidates thrown
+  away) and only weakly against the one left open (a discarded configuration would develop better
+  under continuation); the fourth criterion stays untested for durability. Selection can cause
+  conflict recreation; the two explanations are not exclusive.
+- Same-seed arms "do not provide the same geometric start"; unequal fingerprints and low row
+  overlap do not establish independence or the absence of inherited structure; the crossed results
+  suggest upstream contributions and an interaction but the unequal horizons prevent apportioning.
+- Next (review 9 Q24–Q27): the selection-boundary branch at the first sweep whose actual winner has
+  raw above twice the previous running minimum, capturing every worker's complete state after the
+  sweeps and before selection and the weight update, branching on the actual winner (which must
+  reproduce the archived continuation) and on predeclared selectors (minimum raw; lexicographic
+  (max residual, raw, ordinal)) with equal remaining work and matched streams; the row-level
+  explanation of the tournament's preference at the jump; the rollback-weight probe (restore the
+  argmin geometry with the weights reset to the floor against the current weights, at an existing
+  rollback, same budget and streams); a common-parent development instrument with predeclared
+  budget checkpoints; the prospective test stays the whole-run Wall10s comparison under the guard.
