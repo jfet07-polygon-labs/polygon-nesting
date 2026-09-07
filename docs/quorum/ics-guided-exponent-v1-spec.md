@@ -326,3 +326,31 @@ accident. It does not speak to the two failing Legacy seeds' verdicts, which are
 the whole ten seconds by which basin the trajectory reaches, not by this one bite: on seed 29
 the treatment resolves the control's hard bite in 72 iterations against 89, and still finishes
 the cell 3.3 mm shallower.
+
+## Corrections from review 7 (appended; the result above is not edited)
+
+- "The repetitions within each (seed, arm) agree to a tenth of a millimetre" is inaccurate:
+  seed 29's within-arm ranges are 0.637 mm (control) and 0.999 mm (treatment); the separation
+  between the arms is nevertheless complete on seeds 29 and 31 (every treatment repetition
+  worse than every control repetition, by more than 1.87 and 1.91 mm), so the tail failures
+  stand without that claim.
+- "Two basins" is a hypothesis, not a finding: "different retained packing configurations and
+  retry histories are plausible contributors, but the endpoint depths do not establish exactly
+  two basins or isolate the cause of these regressions". Review 7's wording of the outcome:
+  "At ten seconds, p = 1 changes the search trajectory, with favourable but nonuniform depth
+  effects. Wall10s passes all four per-profile conditions; Legacy fails the tail condition on
+  seeds 29 and 31."
+- The seed-29 replay reading (72 against 89 iterations) runs both trajectories past Legacy's
+  live cap of 50 and from the control's entry, which is not the treatment's own entry; it
+  supports cheaper detached continuation from that state, not either live attempt's retries.
+  From the scored cells: on seed 29's bite 21 the treatment spends 281 iterations and 5
+  disruptions against the control's 126 and 2, and publishes 101–102 explore bites per cell
+  against 120–121.
+- The three statements the branch may carry (review 7, Q16): (a) "ICS-guided-exponent-v1: not
+  promoted; the required Legacy tail condition failed." (b) "On Wall10s, p = 1 passed every
+  per-profile condition of the prospective ICS-guided-exponent-v1 round against contemporaneous
+  p = 2 control, with margin 8 in both arms. The round's joint promotion requirement failed."
+  (c) "In the prospectively specified comparison against the archived frozen record, the
+  margin-8 + p = 1 package passed the depth and tail conditions on both profiles", always with
+  "the historical comparison cannot isolate the exponent or separate package effects from
+  measurement-period effects" beside it.
