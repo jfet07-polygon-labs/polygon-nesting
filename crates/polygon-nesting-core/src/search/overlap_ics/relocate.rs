@@ -223,10 +223,22 @@ pub fn eval_cmp(left: SampleEval, right: SampleEval) -> Ordering {
         (true, true) => Ordering::Equal,
         (true, false) => Ordering::Less,
         (false, true) => Ordering::Greater,
-        (false, false) => left
-            .weighted
-            .partial_cmp(&right.weighted)
-            .unwrap_or(Ordering::Equal),
+        (false, false) => match left.weighted.partial_cmp(&right.weighted) {
+            Some(ordering) => ordering,
+            // Unordered means a NaN. It must never read as an accepted
+            // equality (GPT-6 Astra review 6, Q13: "do not allow NaN to become
+            // an accepted equality"): the NaN side is the worse one, and two
+            // NaNs make the left one worse, so `cd_accepts` and the pool's
+            // ranking never keep a NaN and always leave one. Every finite path
+            // is untouched, since `partial_cmp` is `Some` for finite scores.
+            None => {
+                if left.weighted.is_nan() {
+                    Ordering::Greater
+                } else {
+                    Ordering::Less
+                }
+            }
+        },
     }
 }
 

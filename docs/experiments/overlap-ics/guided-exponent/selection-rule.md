@@ -47,3 +47,9 @@ overlap a cell.
 **What is not decided here.** The prospective specification `ICS-guided-exponent-v1` (seeds
 27–35) is written after the selection and names the selected p; nothing in this rule is
 changed after the C cells are read.
+
+**Applied, 2026-09-07 10:06 UTC, before any C cell was scored.** The arm ran 09:54:13–10:03:16
+UTC with the sampler live throughout (112 samples in the window). Three C cells contain a
+sample above 10.0 (legacy-r1-s18: 11.42; legacy-r1-s19: 10.32; wall10s-r0-s26: 11.78); they are
+kept in `screen/exp1-C-contaminated-originals/` and re-run whole with the same script and
+binary. No other cell is touched.

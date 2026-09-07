@@ -1056,7 +1056,7 @@ impl<'a> Engine<'a> {
             ics_time!(profile, merge_gls_ns, {
                 let mut winner = 0usize;
                 for ordinal in 1..workers {
-                    if outcomes[ordinal].totals.guided < outcomes[winner].totals.guided {
+                    if guided_beats(outcomes[ordinal].totals.guided, outcomes[winner].totals.guided) {
                         winner = ordinal;
                     }
                 }
@@ -4322,6 +4322,19 @@ pub fn proxy_margin_mm() -> f64 {
     proxy_margin_um() as f64 / 1000.0
 }
 
+/// **The tournament's "beats": a strictly lower guided total wins, and a
+/// NaN never does.** On every finite path this is `candidate < incumbent`,
+/// the comparison the frozen engine ran; the two extra clauses only decide
+/// what happens if a total is NaN (GPT-6 Astra review 6, Q13: reject
+/// nonfinite scores before comparison), which no measured trajectory has
+/// produced: a NaN candidate never replaces the incumbent, and a NaN incumbent
+/// is replaced by any non-NaN candidate, so worker 0's slot cannot carry a NaN
+/// through the tournament by default.
+#[inline]
+pub fn guided_beats(candidate: f64, incumbent: f64) -> bool {
+    !candidate.is_nan() && (incumbent.is_nan() || candidate < incumbent)
+}
+
 /// **The guided exponent: the objective the separation *ranks on* is
 /// `sum w v^p`, not `sum w v^2`.** Default `2.0`, which is today's engine to
 /// the bit. `--guidedexponent=<p>` in the benchmark.
@@ -4341,7 +4354,9 @@ pub fn proxy_margin_mm() -> f64 {
 /// 175 440; p = 0.5 230 022 / 71 071 / 174 352 (the identity gate at p = 2
 /// held bit for bit: 43/43, 26/26, 37/37 iterations), and none of eight
 /// ordinary-bite capsules costs more evaluations at p = 0.75. Under `p < 2`
-/// the objective is concave per row: the sweep concentrates violation on
+/// the quadratic amplification is gone (`p = 1` is linear per row, below 1
+/// the row term is concave; GPT-6 Astra review 6 corrected an earlier
+/// "p < 2 is concave" here): the sweep concentrates violation on
 /// 1-3 rows, costs 4 000-7 000 evaluations per iteration instead of 16 000,
 /// plateaus, then a multi-millimetre jump breaks the state. GPT-6 Astra
 /// review 5 Q3 (`docs/astra-review-5-the-pinned-column.md`) ranked the

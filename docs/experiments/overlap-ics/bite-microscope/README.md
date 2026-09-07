@@ -219,7 +219,10 @@ continuation and revisit probes met it on none.
 What the exponent changes is the character of the descent, not only the speed of the escape.
 Under p = 2 the state trickles: 8-11 blocking rows per iteration at 5-40 um, 16 000
 evaluations per iteration, and the pinned column waits thirty iterations for its weights.
-Under p < 2 the objective is concave in each row, so the sweep concentrates the violation on
+Under p < 2 the quadratic amplification is gone (p = 1 is linear in each row, below 1 the row
+term is concave; Astra review 6 corrected the earlier "p < 2 is concave": for equal weights and
+a fixed total violation V spread over m rows the cost is m^(1-p) V^p, so p = 2 favours
+spreading, p = 1 is indifferent, p < 1 favours concentration), and the sweep concentrates the violation on
 one or two rows instead of spreading it: 1-3 blocking rows per iteration at 150-200 um, 4 000
 to 7 000 evaluations per iteration (fewer colliding pieces, so fewer relocates), a plateau, then
 a multi-millimetre jump that breaks the state, then convergence. The jump comes earlier at
@@ -314,7 +317,11 @@ registered targets:**
 
 Every treatment meets its column-break deadline on the entry-graph reading and breaks the
 column at weights three to four orders of magnitude below the control's (113 against 1.6e5 at
-p = 1; 12 against 1.6e5 at p ≤ 0.75); none meets its band-entry deadline; the halving holds at
+p = 1; 12 against 1.6e5 at p ≤ 0.75). Review 6 adds the verdict the two readings force: the
+reading that reproduces the registered "37" is the longest-lived one, and under that reading
+p = 1 breaks at 26 and misses its deadline of 20; one cannot take the longest-lived reading for
+the control and the entry-graph reading for the treatment (under the entry-graph reading the
+control breaks at 29, not 37). None meets its band-entry deadline; the halving holds at
 p ≤ 0.75 and not at p = 1. In review 5b's own reading rules this is "earlier release at much
 smaller actual old-row weights" without "band entry within the table", i.e. the acceptance
 explanation is supported and the fast-cleanup forecast is not: at p = 1 the escape comes 13
@@ -329,14 +336,14 @@ eight workers ran 64 relocates and the fork re-scored every candidate under all 
 at the same poses and weights: a candidate beats the stay pose in **2** relocates under p = 2,
 **36** under p = 1 (all of them finalists), **63** under p = 0.75 and **64** under p = 0.5.
 For the entry column's members 2, 8 and 45 the crossover is complete: in every worker's
-relocate of pieces 2 and 8 (and most of 45) a finalist beats the stay under p = 1, none under
-p = 2. The arithmetic is the one the README's escape-weight section predicted: the stay pose of
+relocate of pieces 2, 8 and 45 (8 of 8 workers each) a finalist beats the stay under p = 1,
+none under p = 2. The arithmetic is the one the README's escape-weight section predicted: the stay pose of
 piece 2 scores 0.3–0.5 under `Σ w v²` (weights ~2e4 on 3–5 µm residuals) and 108–135 under
 `Σ w v`, while the finalist that beats it carries a fresh overlap of raw 750–1 200 mm²
 (10–30 mm of penetration, 700–1 000 mm away, at weight 1) which prices at 750–1 200 under
 `v²` and 27–35 under `v`. So at these weights the quadratic price keeps the column's pieces
-pinned and the linear price lets them leave. Members 0 and 6 stay under p = 1 in every worker;
-43 and 44 leave in some. Under the deciding p = 2 the core members commit micro-moves of at
+pinned and the linear price lets them leave. Member 0 stays under p = 1 in every worker, 6 leaves in 2 of
+8, 43 and 44 in some (review 6 corrected the earlier "0 and 6 stay everywhere"). Under the deciding p = 2 the core members commit micro-moves of at
 most 0.15 mm or stay.
 
 **Certification.** `--certify=1` runs the unchanged publication path
@@ -353,4 +360,8 @@ evaluations; p = 0.75 at 8 with weight 6.2, band 13, 64 418; p = 0.5 at 12 with 
 band 18, 71 071. Bite 17 of the margin-0 document: p = 2 forms a three-path column (members
 0, 2, 6, 8, 43, 45, 48) at 4 and breaks it at 21 with weight 2.6e4, band 37; p = 1 breaks a
 2–8–45 column at 17 with weight 121, band 19; p = 0.75 and p = 0.5 **never form a bottom-to-top
-column** ("column avoided") and enter the band at 30 and 45.
+column** at the observed committed sweep boundaries before band entry ("column avoided",
+which review 6 reads as changed trajectory formation, never as an escape or as escape time
+zero) and enter the band at 30 and 45. This document's column at p = 2 forms at iteration 4,
+not at entry: by review 6's Q14 the entry exposure is absent there and the formation depends
+on the trajectory, so its break at 21 is a trajectory description, not a matched escape.

@@ -5464,3 +5464,35 @@ fn the_fork_rescores_identical_candidates_under_four_exponents_and_changes_nothi
         assert_eq!(found.committed.origin, committed.origin);
     }
 }
+
+
+/// GPT-6 Astra review 6, Q13: a NaN score must never become an accepted
+/// equality. `eval_cmp` orders the NaN side as the worse one, so the
+/// coordinate descent never accepts a NaN candidate and always leaves a NaN
+/// current pose for a finite one; the tournament's `guided_beats` never
+/// lets a NaN total win and lets any finite total replace a NaN incumbent.
+/// Finite scores compare exactly as before.
+#[test]
+fn a_nan_score_is_never_an_accepted_equality() {
+    use super::relocate::{cd_accepts, eval_cmp, SampleEval};
+    use std::cmp::Ordering;
+    let finite = SampleEval { raw: 1.0, weighted: 1.0 };
+    let better = SampleEval { raw: 1.0, weighted: 0.5 };
+    let nan = SampleEval { raw: 1.0, weighted: f64::NAN };
+    assert_eq!(eval_cmp(nan, finite), Ordering::Greater);
+    assert_eq!(eval_cmp(finite, nan), Ordering::Less);
+    assert_eq!(eval_cmp(nan, nan), Ordering::Greater, "two NaNs are never equal");
+    assert!(!cd_accepts(finite, nan), "a NaN candidate is never accepted");
+    assert!(cd_accepts(nan, finite), "a finite candidate always leaves a NaN pose");
+    assert!(!cd_accepts(nan, nan));
+    assert_eq!(eval_cmp(better, finite), Ordering::Less);
+    assert_eq!(eval_cmp(finite, finite), Ordering::Equal);
+    assert!(cd_accepts(finite, finite), "finite equality is still accepted");
+    assert!(!super::guided_beats(f64::NAN, 1.0));
+    assert!(super::guided_beats(1.0, f64::NAN));
+    assert!(!super::guided_beats(f64::NAN, f64::NAN));
+    assert!(super::guided_beats(0.5, 1.0));
+    assert!(!super::guided_beats(1.0, 1.0));
+    assert!(!super::guided_beats(2.0, 1.0));
+    assert!(super::guided_beats(1.0, f64::INFINITY));
+}
