@@ -35,7 +35,7 @@ use super::relocate::{
     colliding_permutation, relocate, relocate_probed, relocate_replay, RelocateConfig,
     RelocateKey, RelocateOutcome, RelocateProbe, SampleOrigin,
 };
-use super::replay::{ReplayProbeConfig, ReplaySweepStats, RevisitOffer, RevisitQueue};
+use super::replay::{ForkSink, ReplayProbeConfig, ReplaySweepStats, RevisitOffer, RevisitQueue};
 use super::state::{Contract, IcsState, PieceSource};
 
 /// The frozen knobs of the sweep.
@@ -724,6 +724,12 @@ impl Descent {
     /// Under the exponent probe the slot's totals - what the replay
     /// tournament ranks the workers on - are `fold_with_exponent`: guided
     /// as `sum w v^p`, raw and max the fold's own.
+    ///
+    /// `trace` is the microscope's own sweep trace (the committed relocates
+    /// with their changed rows, `microscope::row_changes`): the replay
+    /// document's `relocates[]` and the extended identity gate read it.
+    /// `fork` is the fork sweep's sink (`replay::ForkSink`); both observe
+    /// and neither is read by the sweep.
     pub fn worker_sweep_replay(
         &mut self,
         state: &mut IcsState,
@@ -732,8 +738,11 @@ impl Descent {
         work: &mut WorkVector,
         probe: &ReplayProbeConfig,
         stats: &mut ReplaySweepStats,
+        trace: Option<&mut SweepTrace>,
+        fork: Option<&mut ForkSink>,
     ) -> SweepOutcome {
-        let pass = self.gauss_seidel_replay(state, sources, contract, work, probe, stats);
+        let pass =
+            self.gauss_seidel_replay(state, sources, contract, work, probe, stats, trace, fork);
         let totals = match probe.exponent {
             Some(exponent) => fold_with_exponent(state, exponent),
             None => fold(state),
@@ -768,6 +777,11 @@ impl Descent {
     ///
     /// The proposal ordinal and the iteration counter advance exactly as in
     /// the live pass, so a queued relocate changes no later counter key.
+    /// `trace` records the main pass's relocates exactly as
+    /// [`Descent::gauss_seidel_inner`] does for the microscope (the queued
+    /// relocates of the revisit probe run through the live `relocate` and
+    /// are not traced); `fork` is handed to every main-pass relocate.
+    #[allow(clippy::too_many_arguments)]
     fn gauss_seidel_replay(
         &mut self,
         state: &mut IcsState,
@@ -776,6 +790,8 @@ impl Descent {
         work: &mut WorkVector,
         probe_config: &ReplayProbeConfig,
         stats: &mut ReplaySweepStats,
+        mut trace: Option<&mut SweepTrace>,
+        mut fork: Option<&mut ForkSink>,
     ) -> GaussSeidelPass {
         let count = state.poses.len();
         let entry_proposals = self.proposals;
@@ -783,6 +799,9 @@ impl Descent {
         let key = self.stream_key();
         colliding_permutation(state, key, &mut self.order);
         let order = std::mem::take(&mut self.order);
+        if let Some(trace) = trace.as_deref_mut() {
+            trace.begin(key, &order);
+        }
         let mut pass = GaussSeidelPass {
             raw_before,
             ..GaussSeidelPass::default()
@@ -815,8 +834,19 @@ impl Descent {
                 probe_config.continuation,
                 probe_config.exponent,
                 &mut probe,
+                fork.as_deref_mut(),
             );
+            if outcome.ran {
+                // The relocate that just ran pushed the sink's last record.
+                if let Some(record) = fork.as_deref_mut().and_then(|sink| sink.relocates.last_mut())
+                {
+                    record.position = position as u32;
+                }
+            }
             stats.observe_relocate(&outcome, &probe, &continued);
+            if let Some(trace) = trace.as_deref_mut() {
+                trace.observe_relocate(position, &outcome, &probe);
+            }
             if probe_config.revisit && outcome.ran {
                 let changes = row_changes(
                     count,

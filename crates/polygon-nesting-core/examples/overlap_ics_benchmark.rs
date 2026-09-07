@@ -84,7 +84,9 @@ use polygon_nesting_core::search::overlap_ics::publish;
 use polygon_nesting_core::search::overlap_ics::publish::{
     placement_fingerprint, raw_depth_of, PublicationLimits,
 };
-use polygon_nesting_core::search::overlap_ics::replay::{ReplayParams, ReplayProbe, TracedSweep};
+use polygon_nesting_core::search::overlap_ics::replay::{
+    ReplayParams, ReplayProbe, TracedRelocate, TracedSweep,
+};
 use polygon_nesting_core::search::overlap_ics::state::{
     piece_sources, Contract, ExactIncumbent, PieceSource, Pose,
 };
@@ -1866,7 +1868,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // belong to the `replay` cell alone (`overlap_ics::replay`): a replay
     // starts from a microscope capsule, which is a known-good layout, and the
     // forbidden-rescue table forbids that on any scored cell.
-    for key in ["capsule", "bite", "probe", "capsuleindex", "maxiters"] {
+    for key in ["capsule", "bite", "probe", "capsuleindex", "maxiters", "fork", "certify"] {
         if options.get(key).is_some() && cell != "replay" {
             return Err(format!("--{key} is a replay-only option, not a `{cell}` option").into());
         }
@@ -3952,6 +3954,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // ~sqrt(penetration) needs ~20; the probe ranks the candidates and
         // the tournament on `w v^p` and nothing else. `exponent:2` must
         // reproduce `none` bit for bit (the identity count printed below).
+        // The committed-geometry instrument (Astra review 5b Q6-Q8,
+        // `docs/astra-review-5b-the-exponent.md`) adds to every replay
+        // document the winner's committed relocates, the column read off
+        // the blocking graph (`replay.column`, `replay.columnLongestLived`),
+        // pose/weight/stream fingerprints in the identity gate, the
+        // resolved seed, and two flags: `--fork=<sweep>` (re-score sweep
+        // <sweep>+1's candidates under the four exponents, then stop) and
+        // `--certify=1` (call the unchanged live publication path once at
+        // band entry and record its answer).
         //
         // FORBIDDEN AS A RESULT. A capsule is a known-good layout;
         // `docs/grok-review-12-reading-sparrow.md` §5.2 (row "fixture as a
@@ -3972,6 +3983,31 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let probe = ReplayProbe::parse(options.get("probe").unwrap_or("none"))?;
             let max_iterations = options.integer("maxiters", 200)?;
             let workers = options.integer("workers", 8)? as usize;
+            // `--fork=<sweep>`: the fixed diagnostic fork of Astra 5b Q8, in
+            // sweep <sweep> + 1; `--certify=1`: the detached publication check
+            // of Astra 5b Q6 at band entry (`overlap_ics::replay`).
+            let fork = match options.get("fork") {
+                None => None,
+                Some(value) => {
+                    let sweep: u64 = value
+                        .parse()
+                        .map_err(|_| format!("--fork=<sweep>: `{value}` is not a sweep number"))?;
+                    if !matches!(probe, ReplayProbe::None | ReplayProbe::Exponent(_)) {
+                        return Err(format!(
+                            "--fork runs only with --probe=none or --probe=exponent:<p>, not \
+                             `{}` (the fork re-scores the exponent path's candidates)",
+                            probe.label()
+                        )
+                        .into());
+                    }
+                    Some(sweep)
+                }
+            };
+            let certify = match options.get("certify") {
+                None | Some("0") => false,
+                Some("1") => true,
+                Some(other) => return Err(format!("--certify must be 0 or 1, not `{other}`").into()),
+            };
 
             // The document must be a trace of THIS request under THIS
             // contract: every mismatch is a refusal, never a fallback.
@@ -4130,6 +4166,61 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let traced: Vec<TracedSweep> = traced_sweeps
                 .iter()
                 .map(|sweep| {
+                    // The extended identity gate's reference: the sweep's
+                    // committed relocates (piece, displacement bits, changed
+                    // rows), its evaluation counts and its stream key.
+                    let relocates = sweep["relocates"]
+                        .as_array()
+                        .map(|relocates| {
+                            relocates
+                                .iter()
+                                .map(|relocate| {
+                                    Ok(TracedRelocate {
+                                        piece: relocate["piece"]
+                                            .as_u64()
+                                            .ok_or("--capsule: a relocate has no piece")?
+                                            as u32,
+                                        dx_mm: relocate["dxMm"]
+                                            .as_f64()
+                                            .ok_or("--capsule: a relocate has no dxMm")?,
+                                        dy_mm: relocate["dyMm"]
+                                            .as_f64()
+                                            .ok_or("--capsule: a relocate has no dyMm")?,
+                                        dtheta_deg: relocate["dthetaDeg"]
+                                            .as_f64()
+                                            .ok_or("--capsule: a relocate has no dthetaDeg")?,
+                                        rows: relocate["rows"]
+                                            .as_array()
+                                            .into_iter()
+                                            .flatten()
+                                            .map(|row| {
+                                                Ok((
+                                                    row[0].as_u64().ok_or(
+                                                        "--capsule: a row change has no rowId",
+                                                    )? as u32,
+                                                    row[1].as_f64().ok_or(
+                                                        "--capsule: a row change has no before",
+                                                    )?,
+                                                    row[2].as_f64().ok_or(
+                                                        "--capsule: a row change has no after",
+                                                    )?,
+                                                ))
+                                            })
+                                            .collect::<Result<Vec<_>, String>>()?,
+                                    })
+                                })
+                                .collect::<Result<Vec<_>, String>>()
+                        })
+                        .transpose()?
+                        .unwrap_or_default();
+                    let stream = sweep["stream"].as_object().map(|stream| {
+                        polygon_nesting_core::search::overlap_ics::microscope::StreamKey {
+                            seed: stream.get("seed").and_then(Value::as_u64).unwrap_or(0),
+                            bite: stream.get("bite").and_then(Value::as_u64).unwrap_or(0),
+                            iteration: stream.get("iteration").and_then(Value::as_u64).unwrap_or(0),
+                            worker: stream.get("worker").and_then(Value::as_u64).unwrap_or(0),
+                        }
+                    });
                     Ok(TracedSweep {
                         iteration: sweep["iteration"]
                             .as_u64()
@@ -4144,6 +4235,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             .as_u64()
                             .ok_or("--capsule: a sweep has no winner")?
                             as u32,
+                        evaluations_all_workers: sweep["evaluationsAllWorkers"]
+                            .as_u64()
+                            .ok_or("--capsule: a sweep has no evaluationsAllWorkers")?,
+                        evaluations_winner: sweep["evaluationsWinner"]
+                            .as_u64()
+                            .ok_or("--capsule: a sweep has no evaluationsWinner")?,
+                        stream,
+                        relocates,
                     })
                 })
                 .collect::<Result<Vec<_>, String>>()?;
@@ -4316,6 +4415,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 strikes: StrikeConfig::control_live(),
                 traced,
                 watch_rows,
+                fork,
+                certify,
             };
             let search_started = Instant::now();
             let report = engine.replay_separation(&params);
@@ -4328,7 +4429,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             for row in &report.identity {
                 eprintln!(
                     "replay identity iteration {:>3}: {} raw {:e} vs {:e}, max {:e} vs {:e}, \
-                     winner {} vs {}",
+                     winner {} vs {}; scalars {}, relocates {} ({} vs {}{}), evaluations {} \
+                     ({}/{} vs {}/{}), stream {:?}; poses {} weights {} stream {}",
                     row.iteration,
                     if row.equal { "PASS" } else { "FAIL" },
                     row.raw_trace,
@@ -4337,10 +4439,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     row.max_replay,
                     row.winner_trace,
                     row.winner_replay,
+                    row.scalars_equal,
+                    row.relocates_equal,
+                    row.relocates_replay,
+                    row.relocates_trace,
+                    row.relocates_first_difference
+                        .as_ref()
+                        .map_or(String::new(), |difference| format!("; {difference}")),
+                    row.evaluations_equal,
+                    row.evaluations_all_workers,
+                    row.evaluations_winner,
+                    row.evaluations_all_workers_trace,
+                    row.evaluations_winner_trace,
+                    row.stream_equal,
+                    row.poses_fingerprint,
+                    row.weights_fingerprint,
+                    row.stream_fingerprint,
                 );
             }
+            let relocates_equal_rows =
+                report.identity.iter().filter(|row| row.relocates_equal).count();
+            let evaluations_equal_rows =
+                report.identity.iter().filter(|row| row.evaluations_equal).count();
+            let stream_equal_rows = report
+                .identity
+                .iter()
+                .filter(|row| row.stream_equal == Some(true))
+                .count();
             eprintln!(
-                "replay identity ({}): {}/{} PASS, {} FAIL{}",
+                "replay identity ({}): {}/{} PASS, {} FAIL{} (extended gate: scalars, relocates \
+                 {}/{}, evaluations {}/{}; stream {}/{})",
                 probe.label(),
                 report.identity_pass,
                 report.identity.len(),
@@ -4348,7 +4476,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 report
                     .diverges_from_trace_at_iteration
                     .map_or(String::new(), |at| format!(", first divergence at iteration {at}")),
+                relocates_equal_rows,
+                report.identity.len(),
+                evaluations_equal_rows,
+                report.identity.len(),
+                stream_equal_rows,
+                report.identity.len(),
             );
+            eprintln!("{}", report.column.summary("column"));
+            eprintln!("{}", report.column_longest_lived.summary("column longest-lived"));
+            if let Some(fork) = &report.fork {
+                eprintln!("{}", fork.summary());
+            }
+            if let Some(certification) = &report.certification {
+                eprintln!(
+                    "replay certification (attempted {}, published {}, refusal {:?}, depthMm {:?}, \
+                     proxyDepthMm {:.6}, targetDepthMm {:.6}, exactCalls {}, reason {:?})",
+                    certification.attempted,
+                    certification.published,
+                    certification.refusal,
+                    certification.depth_mm,
+                    certification.proxy_depth_mm,
+                    certification.target_depth_mm,
+                    certification.exact_calls,
+                    certification.reason,
+                );
+            }
             eprintln!(
                 "replay ({}): stop {} after {} iterations; bandEnteredAtIteration {:?}; \
                  evaluationsToBand {:?}; evaluationsTotal {}; continuationEvaluations {}; \
@@ -4399,6 +4552,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "proxyMarginUm": document_margin,
                 "wallIterationCap": capsule_document["wallIterationCap"].clone(),
                 "explorePatience": capsule_document["explorePatience"].clone(),
+                // The exponent the frozen engine ran the capture under: the
+                // guided objective is `w v^2` and there is no live knob yet;
+                // when one exists this field reads it.
+                "capturedExponent": 2.0,
+                "pieces": pieces.len(),
             });
             replay["reconstruction"] = reconstruction;
             replay["params"] = json!({
@@ -4412,9 +4570,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "strikes": StrikeConfig::control_live().arm(),
                 "explorePatience": polygon_nesting_core::search::overlap_ics::explore_patience(),
                 "stopsAtBandEntry": true,
-                "exactCalls": 0,
+                "exactCalls": report.certification.as_ref().map_or(0, |c| c.exact_calls),
+                "fork": fork,
+                "certify": certify,
                 "revisitStream": "RelocateKey::revisit: the sweep's key with the worker ordinal tagged",
             });
+            // Astra 5b Q7 item 5: the trajectory actually replayed is the
+            // capsule's seed, whatever `--seed` the top level prints.
+            document["resolvedSeed"] = json!(seed);
             replay["control"] = json!({
                 "tracedMasterIterations": bite["masterIterations"].clone(),
                 "tracedPublished": bite["published"].clone(),

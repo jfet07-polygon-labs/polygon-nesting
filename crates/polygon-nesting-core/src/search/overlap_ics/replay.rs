@@ -59,6 +59,31 @@
 //!    constant change: a live version would go to a prospective spec of
 //!    its own.
 //!
+//! 4. **the committed geometry** (this commit; `--fork=<sweep>`,
+//!    `--certify=1`, and fields on every replay document): GPT-6 Astra
+//!    review 5b (`docs/astra-review-5b-the-exponent.md`, Q6-Q8) scored the
+//!    exponent probe against registered deadlines that name a *column
+//!    break* iteration, and asked that the break be read off **committed
+//!    geometry and row identities**, not off a persistent-row table: the
+//!    blocking graph, its bottom-to-top paths, the releases of the
+//!    column's rows (temporary ones recorded separately), `column avoided`
+//!    when the treatment never forms one ([`analyse_column`]). It asked
+//!    for the replay's identity gate to compare **pose, weight and stream
+//!    fingerprints, committed relocates and evaluation counts** and not
+//!    only three scalars (Q7 item 4; [`IdentityRow`]), for one **fixed
+//!    diagnostic fork** at the end of control sweep 24 where the four core
+//!    members were unmoved, re-scoring identical candidate poses under all
+//!    four exponents at the same weights (Q8; [`ForkRelocate`],
+//!    `relocate.rs::relocate_inner_with_exponent`), for an explicit
+//!    **resolved seed** (Q7 item 5; the benchmark's `resolvedSeed`), and
+//!    for a **detached check of the unchanged publication path** before
+//!    any band entry is called a certification (Q6's qualification;
+//!    [`CertificationReport`], through [`Engine::attempt_publication`]
+//!    unchanged). All of it is observation: the fork changes no
+//!    trajectory, the column is computed after the run from the states it
+//!    left behind, and the certification runs after the replay has already
+//!    stopped.
+//!
 //! # What a replay is
 //!
 //! A [`super::microscope::Capsule`] holds the poses, the mirror bits, the
@@ -95,17 +120,23 @@
 //! known-good layout, and a replay capsule is exactly such a layout. So this
 //! cell is never a default, it never publishes, and its document carries
 //! `replay.tripwire` so `score.py` can refuse it. A replay's band entry is
-//! not a depth and not a treatment score.
+//! not a depth and not a treatment score. `--certify=1` calls the exact
+//! authorities once, after the replay has stopped, and records what they
+//! said; it installs nothing and the document stays refused by the same
+//! tripwire.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Serialize;
 
 use super::descent::Descent;
-use super::energy::{self, Totals};
-use super::microscope::{blocking_rows, BlockingRow, RowId};
+use super::energy::{self, incident_totals_with_exponent, Totals};
+use super::microscope::{
+    blocking_rows, boundary_row_id, decode_row_id, BlockingRow, RelocateRecord, RowId, RowKind,
+    StreamKey, SweepRecord, SweepTrace,
+};
 use super::relocate::{CdContinuation, ContinuationOutcome, RelocateOutcome, RelocateProbe};
-use super::state::IcsState;
+use super::state::{IcsState, Pose, EDGE_BOTTOM, EDGE_TOP};
 use super::{restore_keeping_weights, Engine, Phase};
 use crate::search::overlap_ics_meter::strike_meter::{StrikeConfig, StrikeMeter};
 
@@ -331,14 +362,64 @@ impl ReplaySweepStats {
     }
 }
 
+/// One committed relocate of a traced sweep, as the identity gate compares
+/// it: the piece, the committed displacement bit for bit, and the changed
+/// rows (`microscope::row_changes`, status dropped).
+#[derive(Clone, Debug, PartialEq)]
+pub struct TracedRelocate {
+    pub piece: u32,
+    pub dx_mm: f64,
+    pub dy_mm: f64,
+    pub dtheta_deg: f64,
+    /// `(rowId, violationBefore, violationAfter)`.
+    pub rows: Vec<(RowId, f64, f64)>,
+}
+
 /// One traced sweep, as read from the microscope document: the identity
-/// reference.
-#[derive(Clone, Copy, Debug, PartialEq)]
+/// reference. The three scalars are the original gate; the relocates, the
+/// evaluation counts and the stream key are the extended gate (Astra 5b Q7
+/// item 4).
+#[derive(Clone, Debug, PartialEq)]
 pub struct TracedSweep {
     pub iteration: u64,
     pub raw_after: f64,
     pub max_after_mm: f64,
     pub winner: u32,
+    pub evaluations_all_workers: u64,
+    pub evaluations_winner: u64,
+    /// The key the winner's sweep drew from (`sweeps[].stream`), if the
+    /// trace has it.
+    pub stream: Option<StreamKey>,
+    pub relocates: Vec<TracedRelocate>,
+}
+
+impl From<&SweepRecord> for TracedSweep {
+    fn from(sweep: &SweepRecord) -> Self {
+        Self {
+            iteration: sweep.iteration,
+            raw_after: sweep.raw_after,
+            max_after_mm: sweep.max_after_mm,
+            winner: sweep.winner,
+            evaluations_all_workers: sweep.evaluations_all_workers,
+            evaluations_winner: sweep.evaluations_winner,
+            stream: sweep.stream,
+            relocates: sweep
+                .relocates
+                .iter()
+                .map(|relocate| TracedRelocate {
+                    piece: relocate.piece,
+                    dx_mm: relocate.dx_mm,
+                    dy_mm: relocate.dy_mm,
+                    dtheta_deg: relocate.dtheta_deg,
+                    rows: relocate
+                        .rows
+                        .iter()
+                        .map(|change| (change.0, change.1, change.2))
+                        .collect(),
+                })
+                .collect(),
+        }
+    }
 }
 
 /// What a replay is asked to do.
@@ -355,11 +436,26 @@ pub struct ReplayParams {
     /// Rows whose clearing the report tracks: the control's most persistent
     /// blocking rows.
     pub watch_rows: Vec<RowId>,
+    /// `--fork=<sweep>`: run the probe through sweep `<sweep>`, then in sweep
+    /// `<sweep> + 1` re-score every relocate's candidates under the four
+    /// exponents ([`FORK_EXPONENTS`]) without changing the trajectory, and
+    /// stop (`stop = "fork"`). Only with `--probe=none|exponent:<p>`.
+    pub fork: Option<u64>,
+    /// `--certify=1`: at band entry, call the unchanged live publication
+    /// path once on the band-entry state and record what it said.
+    pub certify: bool,
 }
 
-/// `[iteration, rawTrace, rawReplay, maxTrace, maxReplay, winnerTrace,
-/// winnerReplay, equal]` for one iteration the trace also has.
-#[derive(Clone, Copy, Debug, Serialize)]
+/// The identity comparison of one replay iteration against the traced
+/// sweep with the same iteration number. `equal` is the conjunction of the
+/// original scalar test (`rawAfter`, `maxAfterMm`, `winner` bit for bit),
+/// `relocatesEqual` and `evaluationsEqual`. The fingerprints are the
+/// replay's own: the trace does not carry every pose, so the pose
+/// comparison goes through `relocatesEqual` (same pieces in the same order,
+/// same `dx/dy/dtheta` bits, same changed rows with the same before/after
+/// bits); the stream fingerprint is compared with the one derived from the
+/// traced sweep's `stream` key (`streamEqual`, reported beside `equal`).
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdentityRow {
     pub iteration: u64,
@@ -369,8 +465,98 @@ pub struct IdentityRow {
     pub max_replay: f64,
     pub winner_trace: u32,
     pub winner_replay: u32,
+    /// The original three-scalar test.
+    pub scalars_equal: bool,
+    /// FNV-1a 64 over every piece's `x, y, theta` bits after the iteration,
+    /// in piece order ([`poses_fingerprint`]).
+    pub poses_fingerprint: String,
+    /// FNV-1a 64 over every pair row weight in pair-id order, then every
+    /// edge weight in piece order, `L R B T` ([`weights_fingerprint`]).
+    pub weights_fingerprint: String,
+    /// FNV-1a 64 over the master descent's stream bookkeeping after the
+    /// iteration: `(seed, bite, iteration, worker, proposals)`
+    /// ([`stream_fingerprint`]).
+    pub stream_fingerprint: String,
+    /// The same fingerprint derived from the traced sweep's `stream` key
+    /// (`iteration + 1`, its `worker`) and the proposal ordinal the sweep
+    /// must have left (`entry + k * pieces`); `null` if the trace has no
+    /// stream key.
+    pub stream_fingerprint_trace: Option<String>,
+    pub stream_equal: Option<bool>,
+    pub evaluations_all_workers: u64,
+    pub evaluations_winner: u64,
+    pub evaluations_all_workers_trace: u64,
+    pub evaluations_winner_trace: u64,
+    pub relocates_replay: u64,
+    pub relocates_trace: u64,
+    pub relocates_equal: bool,
+    /// Where the relocates first differ, for a reader; `null` when equal.
+    pub relocates_first_difference: Option<String>,
+    pub evaluations_equal: bool,
     pub equal: bool,
 }
+
+/// `[rowId, violationBeforeMm, violationAfterMm]` of one changed row of a
+/// committed relocate: `microscope::RowChange` without the endpoint
+/// status.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct RowDelta(pub RowId, pub f64, pub f64);
+
+/// One committed relocate of the winner's sweep, as the replay document
+/// carries it: the microscope's `RelocateRecord` (the same row-change
+/// collection, `microscope::row_changes`) reduced to the committed
+/// geometry.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReplayRelocate {
+    pub piece: u32,
+    pub origin: &'static str,
+    pub dx_mm: f64,
+    pub dy_mm: f64,
+    pub dtheta_deg: f64,
+    pub moved: bool,
+    pub raw_before: f64,
+    pub raw_after: f64,
+    pub guided_before: f64,
+    pub guided_after: f64,
+    pub max_before_mm: f64,
+    pub max_after_mm: f64,
+    pub rows: Vec<RowDelta>,
+}
+
+impl From<&RelocateRecord> for ReplayRelocate {
+    fn from(record: &RelocateRecord) -> Self {
+        Self {
+            piece: record.piece,
+            origin: record.origin,
+            dx_mm: record.dx_mm,
+            dy_mm: record.dy_mm,
+            dtheta_deg: record.dtheta_deg,
+            moved: record.moved,
+            raw_before: record.raw_before,
+            raw_after: record.raw_after,
+            guided_before: record.guided_before,
+            guided_after: record.guided_after,
+            max_before_mm: record.max_before_mm,
+            max_after_mm: record.max_after_mm,
+            rows: record
+                .rows
+                .iter()
+                .map(|change| RowDelta(change.0, change.1, change.2))
+                .collect(),
+        }
+    }
+}
+
+/// `[rowId, violationMm, weight]` of one column row after an iteration.
+/// The violation is the row's signed value from the state (a released
+/// boundary row reads negative), the weight the row's actual GLS weight.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct ColumnRowReading(pub RowId, pub f64, pub f64);
+
+/// `[piece, xMm, yMm, thetaDeg]` of one core member after an iteration.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct CorePose(pub u32, pub f64, pub f64, pub f64);
 
 /// One master iteration of the replay.
 #[derive(Clone, Debug, Serialize)]
@@ -393,6 +579,20 @@ pub struct ReplayIteration {
     pub queued_relocates_all_workers: u64,
     pub stats_all_workers: ReplaySweepStats,
     pub stats_winner: ReplaySweepStats,
+    /// The winner's committed relocates in sweep order (the queued
+    /// relocates of the revisit probe are not traced and not listed).
+    pub relocates: Vec<ReplayRelocate>,
+    /// The column's rows after this iteration ([`ColumnReport::rows`]);
+    /// empty when no column formed.
+    pub column_rows: Vec<ColumnRowReading>,
+    /// The core members' poses after this iteration.
+    pub core_poses: Vec<CorePose>,
+    pub poses_fingerprint: String,
+    pub weights_fingerprint: String,
+    pub stream_fingerprint: String,
+    /// The master descent's stream key after the iteration.
+    pub stream: StreamKey,
+    pub proposals: u64,
 }
 
 /// Where a watched row stands at the end of the replay.
@@ -418,6 +618,956 @@ pub struct WatchedRow {
     pub end_residual_mm: f64,
 }
 
+// ------------------------------------------------------------ fingerprints --
+
+const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+const FNV_PRIME: u64 = 0x0000_0100_0000_01b3;
+
+/// FNV-1a 64 over the little-endian bytes of a sequence of 64-bit words.
+pub fn fnv1a_words(words: impl IntoIterator<Item = u64>) -> u64 {
+    let mut hash = FNV_OFFSET;
+    for word in words {
+        for byte in word.to_le_bytes() {
+            hash ^= u64::from(byte);
+            hash = hash.wrapping_mul(FNV_PRIME);
+        }
+    }
+    hash
+}
+
+fn hex16(hash: u64) -> String {
+    format!("{hash:016x}")
+}
+
+/// The pose fingerprint: every piece's `x, y, theta` bit patterns in piece
+/// order.
+pub fn poses_fingerprint(poses: &[Pose]) -> String {
+    hex16(fnv1a_words(poses.iter().flat_map(|pose| {
+        [
+            pose.tx_mm.to_bits(),
+            pose.ty_mm.to_bits(),
+            pose.theta_deg.to_bits(),
+        ]
+    })))
+}
+
+/// The weight fingerprint: every pair row weight in pair-id order, then
+/// every edge weight in piece order, `L R B T`.
+pub fn weights_fingerprint(state: &IcsState) -> String {
+    hex16(fnv1a_words(
+        state
+            .pair_rows
+            .iter()
+            .map(|row| row.weight.to_bits())
+            .chain(
+                state
+                    .edge_rows
+                    .iter()
+                    .flat_map(|rows| rows.iter().map(|row| row.weight.to_bits())),
+            ),
+    ))
+}
+
+/// The stream fingerprint: the descent's stream bookkeeping,
+/// `(seed, bite, iteration, worker, proposals)`.
+pub fn stream_fingerprint(key: StreamKey, proposals: u64) -> String {
+    hex16(fnv1a_words([
+        key.seed,
+        key.bite,
+        key.iteration,
+        key.worker,
+        proposals,
+    ]))
+}
+
+// ------------------------------------------------------------- the column --
+
+/// **The column, from committed geometry and row identities** (Astra 5b
+/// Q6: "a core-member rearrangement releases the original bottom-to-top
+/// branches, which do not re-form before band entry. Record temporary
+/// releases separately. If the treatment prevents the column from forming,
+/// report column avoided").
+///
+/// Definitions, as [`analyse_column`] computes them:
+///
+/// * The **blocking graph** at an iteration has the pieces and the four
+///   strip edges as vertices and the rows with violation `> 0` as edges: a
+///   pair row joins two pieces, a boundary row joins a piece to its edge.
+/// * The **column** is a simple path in the entry blocking graph
+///   (iteration 0, the capsule's own blocking rows) from the bottom edge
+///   (some piece's `B` row) to the top edge (some piece's `T` row). All such
+///   paths are enumerated (`paths`, at most [`COLUMN_PATH_CAP`],
+///   `pathsTruncated` if more); the column's **rows** are their union and
+///   the **core members** the pieces on them. If no path exists at entry,
+///   the first iteration with one gives `formed-at-iteration`; if none ever
+///   forms before the stop, `status = "avoided"`.
+/// * A column row is **released** at iteration `k` if its violation is
+///   `> 0` at `k - 1` and `<= 0` at `k`. The release is **temporary** if
+///   the row is `> 0` again at a later iteration before the stop,
+///   **permanent** otherwise.
+/// * The **break** is the first iteration `k` at which a permanent release
+///   of a column row happens and the original column rows still positive
+///   at `k` no longer connect bottom to top. `reformedAfterBreak` says
+///   whether the original rows reconnect bottom to top at any later
+///   iteration (then Astra's "do not re-form before band entry" fails and
+///   the reader sees it); `firstDisconnectedAtIteration` is the first
+///   iteration at which the original rows do not connect, whatever kind of
+///   release caused it.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ColumnReport {
+    /// `formed-at-entry`, `formed-at-iteration` or `avoided`.
+    pub status: &'static str,
+    pub formed_at_iteration: Option<u64>,
+    pub paths: Vec<Vec<RowId>>,
+    pub paths_truncated: bool,
+    pub rows: Vec<RowId>,
+    pub core_members: Vec<u32>,
+    /// Consecutive iterations from the formation (inclusive) over which the
+    /// original rows keep connecting bottom to top: the column's residence.
+    pub residence_iterations: u64,
+    pub break_iteration: Option<u64>,
+    pub break_release: Option<BreakRelease>,
+    pub first_disconnected_at_iteration: Option<u64>,
+    pub reformed_after_first_disconnection: bool,
+    pub temporary_releases: Vec<TemporaryRelease>,
+    pub permanent_releases: Vec<PermanentRelease>,
+    pub reformed_after_break: bool,
+    pub band_entry_iteration: Option<u64>,
+    /// The last iteration the analysis saw (the stop).
+    pub last_iteration: u64,
+    /// Per iteration from entry (index 0): do the original column rows
+    /// still positive connect bottom to top?
+    pub original_rows_connected: Vec<bool>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BreakRelease {
+    pub row_id: RowId,
+    pub iteration: u64,
+    /// The winner's relocate that committed the release (the last relocate
+    /// of the sweep whose changed rows take this row to `<= 0`); `null` if
+    /// the sweep's relocates were not available.
+    pub relocate: Option<ReleaseRelocate>,
+    /// `[rowId, weight]` for every column row after the break iteration.
+    pub row_weights_at_break: Vec<(RowId, f64)>,
+    pub max_column_row_weight_at_break: f64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReleaseRelocate {
+    pub piece: u32,
+    pub dx_mm: f64,
+    pub dy_mm: f64,
+    pub dtheta_deg: f64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TemporaryRelease {
+    pub row_id: RowId,
+    pub released_at: u64,
+    pub reformed_at: u64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PermanentRelease {
+    pub row_id: RowId,
+    pub iteration: u64,
+}
+
+/// The most bottom-to-top paths [`analyse_column`] enumerates.
+pub const COLUMN_PATH_CAP: usize = 256;
+
+/// What [`analyse_column`] reads: the positive rows per iteration from the
+/// entry state (index 0), and optionally the row weights per iteration
+/// (row-id indexed, index 0 = entry) and the winner's relocates per
+/// iteration (index 0 = iteration 1). Empty weight or relocate slices are
+/// allowed (a hand-built test state has neither).
+pub struct ColumnInput<'a> {
+    pub count: usize,
+    pub blocking: &'a [Vec<BlockingRow>],
+    pub weights: &'a [Vec<f64>],
+    pub relocates: &'a [Vec<ReplayRelocate>],
+    pub band_entry_iteration: Option<u64>,
+}
+
+/// The two vertices of a row in the blocking graph: pieces are `0..count`,
+/// the four strip edges `count + side`.
+fn row_vertices(count: usize, id: RowId) -> (usize, usize) {
+    match decode_row_id(count, id) {
+        RowKind::Pair { first, second } => (first, second),
+        RowKind::Boundary { piece, side } => (piece, count + side),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn walk_paths(
+    at: usize,
+    top: usize,
+    adjacency: &[Vec<(usize, RowId)>],
+    visited: &mut [bool],
+    path: &mut Vec<RowId>,
+    paths: &mut Vec<Vec<RowId>>,
+    cap: usize,
+    truncated: &mut bool,
+) {
+    if at == top {
+        if paths.len() < cap {
+            paths.push(path.clone());
+        } else {
+            *truncated = true;
+        }
+        return;
+    }
+    visited[at] = true;
+    for &(next, id) in &adjacency[at] {
+        if visited[next] || *truncated {
+            continue;
+        }
+        path.push(id);
+        walk_paths(next, top, adjacency, visited, path, paths, cap, truncated);
+        path.pop();
+    }
+    visited[at] = false;
+}
+
+/// Every simple path from the bottom edge to the top edge through `rows`,
+/// each as its row ids in path order, at most `cap` of them (the second
+/// value says whether more exist).
+pub fn bottom_to_top_paths(count: usize, rows: &[RowId], cap: usize) -> (Vec<Vec<RowId>>, bool) {
+    let vertices = count + 4;
+    let bottom = count + EDGE_BOTTOM;
+    let top = count + EDGE_TOP;
+    let mut adjacency: Vec<Vec<(usize, RowId)>> = vec![Vec::new(); vertices];
+    for &id in rows {
+        let (u, v) = row_vertices(count, id);
+        adjacency[u].push((v, id));
+        adjacency[v].push((u, id));
+    }
+    for list in &mut adjacency {
+        list.sort_unstable_by_key(|entry| entry.1);
+    }
+    let mut paths = Vec::new();
+    let mut truncated = false;
+    let mut visited = vec![false; vertices];
+    let mut path: Vec<RowId> = Vec::new();
+    walk_paths(
+        bottom,
+        top,
+        &adjacency,
+        &mut visited,
+        &mut path,
+        &mut paths,
+        cap,
+        &mut truncated,
+    );
+    (paths, truncated)
+}
+
+/// Does the bottom edge reach the top edge through `rows`?
+pub fn bottom_to_top_connected(count: usize, rows: &[RowId]) -> bool {
+    let vertices = count + 4;
+    let bottom = count + EDGE_BOTTOM;
+    let top = count + EDGE_TOP;
+    let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); vertices];
+    for &id in rows {
+        let (u, v) = row_vertices(count, id);
+        adjacency[u].push(v);
+        adjacency[v].push(u);
+    }
+    let mut seen = vec![false; vertices];
+    let mut stack = vec![bottom];
+    seen[bottom] = true;
+    while let Some(at) = stack.pop() {
+        if at == top {
+            return true;
+        }
+        for &next in &adjacency[at] {
+            if !seen[next] {
+                seen[next] = true;
+                stack.push(next);
+            }
+        }
+    }
+    false
+}
+
+fn positive_ids(rows: &[BlockingRow]) -> Vec<RowId> {
+    rows.iter()
+        .filter(|row| row.1 > 0.0)
+        .map(|row| row.0)
+        .collect()
+}
+
+fn column_avoided(input: &ColumnInput<'_>) -> ColumnReport {
+    ColumnReport {
+        status: "avoided",
+        formed_at_iteration: None,
+        paths: Vec::new(),
+        paths_truncated: false,
+        rows: Vec::new(),
+        core_members: Vec::new(),
+        residence_iterations: 0,
+        break_iteration: None,
+        break_release: None,
+        first_disconnected_at_iteration: None,
+        reformed_after_first_disconnection: false,
+        temporary_releases: Vec::new(),
+        permanent_releases: Vec::new(),
+        reformed_after_break: false,
+        band_entry_iteration: input.band_entry_iteration,
+        last_iteration: input.blocking.len().saturating_sub(1) as u64,
+        original_rows_connected: Vec::new(),
+    }
+}
+
+/// **The column analysis** (see [`ColumnReport`] for the definitions). Pure:
+/// reads the per-iteration positive rows the replay left behind and
+/// nothing else, so a hand-built sequence of blocking sets is analysed the
+/// same way as a replay's. The column is the entry blocking graph's
+/// bottom-to-top path set, or the first iteration's that has one.
+pub fn analyse_column(input: &ColumnInput<'_>) -> ColumnReport {
+    (0..input.blocking.len())
+        .find_map(|formed_at| analyse_column_from(input, formed_at))
+        .unwrap_or_else(|| column_avoided(input))
+}
+
+/// [`analyse_column`] with the column taken from the iteration whose
+/// bottom-to-top path set **lives longest**: for every iteration with a
+/// path set, the residence is the number of consecutive iterations from
+/// it over which that set's rows still connect bottom to top; the longest
+/// residence wins, the earliest on a tie. On the bite-15 capsule the
+/// entry graph's only bottom-to-top path is 2-8-45 (released at 29) while
+/// the README's 0-6-43/44 column, the one Astra's "break 37" names, first
+/// connects bottom to top at iteration 1 and stays for 36 iterations; this
+/// reading is the one that finds it without naming its pieces.
+pub fn analyse_longest_lived_column(input: &ColumnInput<'_>) -> ColumnReport {
+    let mut best: Option<ColumnReport> = None;
+    for formed_at in 0..input.blocking.len() {
+        let Some(report) = analyse_column_from(input, formed_at) else {
+            continue;
+        };
+        let longer = best
+            .as_ref()
+            .is_none_or(|incumbent| report.residence_iterations > incumbent.residence_iterations);
+        if longer {
+            best = Some(report);
+        }
+    }
+    best.unwrap_or_else(|| column_avoided(input))
+}
+
+/// The analysis with the column defined by the bottom-to-top paths of
+/// iteration `formed_at`; `None` if that iteration has none.
+fn analyse_column_from(input: &ColumnInput<'_>, formed_at: usize) -> Option<ColumnReport> {
+    let count = input.count;
+    let frames: Vec<Vec<RowId>> = input.blocking.iter().map(|rows| positive_ids(rows)).collect();
+    let last_iteration = frames.len().saturating_sub(1) as u64;
+    let (paths, truncated) = bottom_to_top_paths(count, frames.get(formed_at)?, COLUMN_PATH_CAP);
+    if paths.is_empty() {
+        return None;
+    }
+    let formed_at = formed_at as u64;
+    let status = if formed_at == 0 {
+        "formed-at-entry"
+    } else {
+        "formed-at-iteration"
+    };
+    let rows: Vec<RowId> = paths
+        .iter()
+        .flatten()
+        .copied()
+        .collect::<BTreeSet<RowId>>()
+        .into_iter()
+        .collect();
+    let core_members: Vec<u32> = rows
+        .iter()
+        .flat_map(|&id| match decode_row_id(count, id) {
+            RowKind::Pair { first, second } => vec![first as u32, second as u32],
+            RowKind::Boundary { piece, .. } => vec![piece as u32],
+        })
+        .collect::<BTreeSet<u32>>()
+        .into_iter()
+        .collect();
+    // Per iteration: which column rows are positive, and whether the
+    // original rows still connect bottom to top.
+    let positive: Vec<Vec<bool>> = frames
+        .iter()
+        .map(|frame| rows.iter().map(|id| frame.contains(id)).collect())
+        .collect();
+    let original_rows_connected: Vec<bool> = positive
+        .iter()
+        .map(|flags| {
+            let live: Vec<RowId> = rows
+                .iter()
+                .zip(flags)
+                .filter(|(_, on)| **on)
+                .map(|(id, _)| *id)
+                .collect();
+            bottom_to_top_connected(count, &live)
+        })
+        .collect();
+    // Releases, from the formation onward.
+    let mut temporary_releases = Vec::new();
+    let mut permanent_releases = Vec::new();
+    for (index, &id) in rows.iter().enumerate() {
+        for k in (formed_at as usize + 1)..frames.len() {
+            if positive[k - 1][index] && !positive[k][index] {
+                let reformed = ((k + 1)..frames.len()).find(|&later| positive[later][index]);
+                match reformed {
+                    Some(later) => temporary_releases.push(TemporaryRelease {
+                        row_id: id,
+                        released_at: k as u64,
+                        reformed_at: later as u64,
+                    }),
+                    None => permanent_releases.push(PermanentRelease {
+                        row_id: id,
+                        iteration: k as u64,
+                    }),
+                }
+            }
+        }
+    }
+    temporary_releases.sort_by_key(|release| (release.released_at, release.row_id));
+    permanent_releases.sort_by_key(|release| (release.iteration, release.row_id));
+    let first_disconnected = original_rows_connected
+        .iter()
+        .enumerate()
+        .skip(formed_at as usize)
+        .find(|(_, connected)| !**connected)
+        .map(|(iteration, _)| iteration as u64);
+    let reformed_after = |from: u64| {
+        original_rows_connected
+            .iter()
+            .skip(from as usize + 1)
+            .any(|connected| *connected)
+    };
+    let reformed_after_first_disconnection = first_disconnected.is_some_and(reformed_after);
+    let residence_iterations = original_rows_connected
+        .iter()
+        .skip(formed_at as usize)
+        .take_while(|connected| **connected)
+        .count() as u64;
+    let break_release = permanent_releases
+        .iter()
+        .find(|release| !original_rows_connected[release.iteration as usize])
+        .copied();
+    let break_iteration = break_release.map(|release| release.iteration);
+    let reformed_after_break = break_iteration.is_some_and(reformed_after);
+    let break_release = break_release.map(|release| {
+        let k = release.iteration as usize;
+        let weights = input.weights.get(k);
+        let row_weights_at_break: Vec<(RowId, f64)> = rows
+            .iter()
+            .map(|&id| {
+                (
+                    id,
+                    weights
+                        .and_then(|weights| weights.get(id as usize))
+                        .copied()
+                        .unwrap_or(f64::NAN),
+                )
+            })
+            .collect();
+        let max_column_row_weight_at_break = row_weights_at_break
+            .iter()
+            .fold(0.0f64, |acc, (_, weight)| {
+                if weight.is_nan() {
+                    acc
+                } else {
+                    acc.max(*weight)
+                }
+            });
+        let relocate = input
+            .relocates
+            .get(k - 1)
+            .and_then(|sweep| {
+                sweep.iter().rev().find(|relocate| {
+                    relocate
+                        .rows
+                        .iter()
+                        .any(|delta| delta.0 == release.row_id && delta.2 <= 0.0)
+                })
+            })
+            .map(|relocate| ReleaseRelocate {
+                piece: relocate.piece,
+                dx_mm: relocate.dx_mm,
+                dy_mm: relocate.dy_mm,
+                dtheta_deg: relocate.dtheta_deg,
+            });
+        BreakRelease {
+            row_id: release.row_id,
+            iteration: release.iteration,
+            relocate,
+            row_weights_at_break,
+            max_column_row_weight_at_break,
+        }
+    });
+    Some(ColumnReport {
+        status,
+        formed_at_iteration: Some(formed_at),
+        paths,
+        paths_truncated: truncated,
+        rows,
+        core_members,
+        residence_iterations,
+        break_iteration,
+        break_release,
+        first_disconnected_at_iteration: first_disconnected,
+        reformed_after_first_disconnection,
+        temporary_releases,
+        permanent_releases,
+        reformed_after_break,
+        band_entry_iteration: input.band_entry_iteration,
+        last_iteration,
+        original_rows_connected,
+    })
+}
+
+impl ColumnReport {
+    /// The one-line stderr summary; `label` is `column` or
+    /// `column longest-lived`.
+    pub fn summary(&self, label: &str) -> String {
+        format!(
+            "replay {} (status {}, formed at {:?}, paths {}{}, rows {}, core members {:?}, \
+             residence {}, break at {:?}, max column weight at break {}, first disconnected at \
+             {:?}, reformed after first disconnection {}, temporary releases {}, permanent \
+             releases {}, reformed after break {}, band entry {:?})",
+            label,
+            self.status,
+            self.formed_at_iteration,
+            self.paths.len(),
+            if self.paths_truncated { "+" } else { "" },
+            self.rows.len(),
+            self.core_members,
+            self.residence_iterations,
+            self.break_iteration,
+            self.break_release
+                .as_ref()
+                .map_or("n/a".to_owned(), |release| format!(
+                    "{:.3e} (row {} by piece {:?})",
+                    release.max_column_row_weight_at_break,
+                    release.row_id,
+                    release.relocate.map(|relocate| relocate.piece)
+                )),
+            self.first_disconnected_at_iteration,
+            self.reformed_after_first_disconnection,
+            self.temporary_releases.len(),
+            self.permanent_releases.len(),
+            self.reformed_after_break,
+            self.band_entry_iteration,
+        )
+    }
+}
+
+// --------------------------------------------------------------- the fork --
+
+/// The four exponents the fork re-scores under, in the order of
+/// [`ForkGuided`]'s fields.
+pub const FORK_EXPONENTS: [f64; 4] = [2.0, 1.0, 0.75, 0.5];
+
+/// One pose's guided incident total under the four exponents, at the same
+/// installed pose and the same weights: `energy::incident_totals_with_exponent`
+/// four times over the state's rows.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+pub struct ForkGuided {
+    #[serde(rename = "2")]
+    pub p2: f64,
+    #[serde(rename = "1")]
+    pub p1: f64,
+    #[serde(rename = "0.75")]
+    pub p075: f64,
+    #[serde(rename = "0.5")]
+    pub p05: f64,
+}
+
+impl ForkGuided {
+    /// `(raw, guided under the four exponents)` at the state's current pose
+    /// of `piece`. No counter moves.
+    pub fn of(state: &IcsState, piece: usize) -> (f64, Self) {
+        let (raw, p2) = incident_totals_with_exponent(state, piece, FORK_EXPONENTS[0]);
+        let (_, p1) = incident_totals_with_exponent(state, piece, FORK_EXPONENTS[1]);
+        let (_, p075) = incident_totals_with_exponent(state, piece, FORK_EXPONENTS[2]);
+        let (_, p05) = incident_totals_with_exponent(state, piece, FORK_EXPONENTS[3]);
+        (raw, Self { p2, p1, p075, p05 })
+    }
+
+    pub fn at(self, index: usize) -> f64 {
+        [self.p2, self.p1, self.p075, self.p05][index]
+    }
+}
+
+/// `[rowId, violationMm, weight]` of one incident row at a fork pose: the
+/// piece's near rows in ascending other-piece order, then its four edge
+/// rows `L R B T` (signed), i.e. exactly the rows and the order
+/// `incident_totals_with_exponent` folds.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+pub struct ForkRow(pub RowId, pub f64, pub f64);
+
+/// The incident rows of `piece` at its current pose, as [`ForkRow`]s.
+pub fn fork_rows(state: &IcsState, piece: usize) -> Vec<ForkRow> {
+    let count = state.poses.len();
+    let mut rows = Vec::with_capacity(state.near[piece].len() + 4);
+    for &other in &state.near[piece] {
+        let id = super::microscope::pair_row_id(count, piece, other as usize);
+        let row = &state.pair_rows[id as usize];
+        rows.push(ForkRow(id, row.violation_mm, row.weight));
+    }
+    for (side, row) in state.edge_rows[piece].iter().enumerate() {
+        rows.push(ForkRow(
+            boundary_row_id(count, piece, side),
+            row.violation_mm,
+            row.weight,
+        ));
+    }
+    rows
+}
+
+/// One candidate pose of a forked relocate: one of the 25 focused or 50
+/// container samples, or a finalist's pose after its coarse walk.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkCandidate {
+    /// `focused`, `container` or `finalist`.
+    pub kind: &'static str,
+    pub x_mm: f64,
+    pub y_mm: f64,
+    pub theta_deg: f64,
+    pub raw: f64,
+    pub guided: ForkGuided,
+    /// The incident rows, finalists only (the samples would triple the
+    /// document).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rows: Vec<ForkRow>,
+}
+
+/// The stay pose (the relocate's entry pose) scored the same way.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkStay {
+    pub x_mm: f64,
+    pub y_mm: f64,
+    pub theta_deg: f64,
+    pub raw: f64,
+    pub guided: ForkGuided,
+    pub rows: Vec<ForkRow>,
+}
+
+/// The pose the relocate actually committed (the probe's own exponent
+/// decided it), scored under the four exponents.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkCommitted {
+    pub dx_mm: f64,
+    pub dy_mm: f64,
+    pub dtheta_deg: f64,
+    pub moved: bool,
+    pub origin: &'static str,
+    pub raw: f64,
+    pub guided: ForkGuided,
+    pub rows: Vec<ForkRow>,
+}
+
+/// Per exponent, the index into `candidates` of the candidate that beats
+/// the stay pose under the lexicographic rule "`raw == 0` beats any
+/// positive; else lower guided", the best such candidate (first of a tie);
+/// `null` when the stay pose wins.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+pub struct ForkBestUnder {
+    #[serde(rename = "2")]
+    pub p2: Option<u32>,
+    #[serde(rename = "1")]
+    pub p1: Option<u32>,
+    #[serde(rename = "0.75")]
+    pub p075: Option<u32>,
+    #[serde(rename = "0.5")]
+    pub p05: Option<u32>,
+}
+
+impl ForkBestUnder {
+    pub fn at(self, index: usize) -> Option<u32> {
+        [self.p2, self.p1, self.p075, self.p05][index]
+    }
+}
+
+/// One relocate of the fork sweep, every worker.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkRelocate {
+    pub worker: u32,
+    pub piece: u32,
+    /// Position in the worker's sweep order.
+    pub position: u32,
+    pub stay: ForkStay,
+    pub candidates: Vec<ForkCandidate>,
+    pub best_under: ForkBestUnder,
+    pub committed: ForkCommitted,
+}
+
+/// The lexicographic rule of `relocate::eval_cmp` on `(raw, guided)`:
+/// `Less` if `left` is strictly better.
+fn fork_cmp(left: (f64, f64), right: (f64, f64)) -> std::cmp::Ordering {
+    use std::cmp::Ordering;
+    match (left.0 <= 0.0, right.0 <= 0.0) {
+        (true, true) => Ordering::Equal,
+        (true, false) => Ordering::Less,
+        (false, true) => Ordering::Greater,
+        (false, false) => left.1.partial_cmp(&right.1).unwrap_or(Ordering::Equal),
+    }
+}
+
+impl ForkRelocate {
+    /// Opens the record at the relocate's entry: the state is at the entry
+    /// pose with its rows current.
+    pub fn begin(worker: u32, piece: usize, entry: Pose, state: &IcsState) -> Self {
+        let (raw, guided) = ForkGuided::of(state, piece);
+        Self {
+            worker,
+            piece: piece as u32,
+            position: 0,
+            stay: ForkStay {
+                x_mm: entry.tx_mm,
+                y_mm: entry.ty_mm,
+                theta_deg: entry.theta_deg,
+                raw,
+                guided,
+                rows: fork_rows(state, piece),
+            },
+            candidates: Vec::new(),
+            best_under: ForkBestUnder::default(),
+            committed: ForkCommitted {
+                dx_mm: 0.0,
+                dy_mm: 0.0,
+                dtheta_deg: 0.0,
+                moved: false,
+                origin: "stayPut",
+                raw,
+                guided,
+                rows: Vec::new(),
+            },
+        }
+    }
+
+    /// Scores the pose currently installed in the state for `piece`.
+    pub fn observe_candidate(&mut self, kind: &'static str, pose: Pose, state: &IcsState) {
+        let piece = self.piece as usize;
+        let (raw, guided) = ForkGuided::of(state, piece);
+        self.candidates.push(ForkCandidate {
+            kind,
+            x_mm: pose.tx_mm,
+            y_mm: pose.ty_mm,
+            theta_deg: pose.theta_deg,
+            raw,
+            guided,
+            rows: if kind == "finalist" {
+                fork_rows(state, piece)
+            } else {
+                Vec::new()
+            },
+        });
+    }
+
+    /// Closes the record after the relocate's final install.
+    pub fn finish(
+        &mut self,
+        dx_mm: f64,
+        dy_mm: f64,
+        dtheta_deg: f64,
+        moved: bool,
+        origin: &'static str,
+        state: &IcsState,
+    ) {
+        let piece = self.piece as usize;
+        let (raw, guided) = ForkGuided::of(state, piece);
+        self.committed = ForkCommitted {
+            dx_mm,
+            dy_mm,
+            dtheta_deg,
+            moved,
+            origin,
+            raw,
+            guided,
+            rows: fork_rows(state, piece),
+        };
+        let mut best = [None; 4];
+        for (index, slot) in best.iter_mut().enumerate() {
+            let stay = (self.stay.raw, self.stay.guided.at(index));
+            let mut winner: Option<(u32, (f64, f64))> = None;
+            for (candidate_index, candidate) in self.candidates.iter().enumerate() {
+                let score = (candidate.raw, candidate.guided.at(index));
+                if !score.0.is_finite() || !score.1.is_finite() {
+                    continue;
+                }
+                let better = match winner {
+                    None => true,
+                    Some((_, incumbent)) => {
+                        fork_cmp(score, incumbent) == std::cmp::Ordering::Less
+                    }
+                };
+                if better {
+                    winner = Some((candidate_index as u32, score));
+                }
+            }
+            *slot = winner
+                .filter(|(_, score)| fork_cmp(*score, stay) == std::cmp::Ordering::Less)
+                .map(|(candidate_index, _)| candidate_index);
+        }
+        self.best_under = ForkBestUnder {
+            p2: best[0],
+            p1: best[1],
+            p075: best[2],
+            p05: best[3],
+        };
+    }
+}
+
+/// One worker's fork records for the fork sweep.
+#[derive(Clone, Debug, Default)]
+pub struct ForkSink {
+    pub worker: u32,
+    pub relocates: Vec<ForkRelocate>,
+}
+
+/// The fork sweep's report.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkReport {
+    /// The sweep the fork ran in (`--fork + 1`).
+    pub sweep: u64,
+    pub exponents: [f64; 4],
+    pub relocates: Vec<ForkRelocate>,
+    /// Relocates with a candidate beating the stay pose, per exponent.
+    pub would_move: ForkWouldMove,
+    /// The probe's own exponent that decided the trajectory (2 for the
+    /// control).
+    pub deciding_exponent: f64,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+pub struct ForkWouldMove {
+    #[serde(rename = "2")]
+    pub p2: u64,
+    #[serde(rename = "1")]
+    pub p1: u64,
+    #[serde(rename = "0.75")]
+    pub p075: u64,
+    #[serde(rename = "0.5")]
+    pub p05: u64,
+}
+
+impl ForkReport {
+    pub fn summary(&self) -> String {
+        format!(
+            "replay fork (sweep {}: {} relocates; would move under p=2: {}, p=1: {}, p=0.75: {}, \
+             p=0.5: {})",
+            self.sweep,
+            self.relocates.len(),
+            self.would_move.p2,
+            self.would_move.p1,
+            self.would_move.p075,
+            self.would_move.p05,
+        )
+    }
+}
+
+// ------------------------------------------------------- the certification --
+
+/// The exact checkpoint the live path recorded, copied field for field
+/// from `diagnostics::ExactCheckpoint`.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CheckpointFields {
+    pub proposal_ordinal: u64,
+    pub target_depth_mm: f64,
+    pub max_violation_mm: f64,
+    pub proxy_raw_depth_mm: f64,
+    pub kernel_exclusive_valid: bool,
+    pub contract_valid: bool,
+    pub repair_rows: u64,
+    pub repair_max_displacement_mm: f64,
+    pub repair_depth_giveback_mm: f64,
+    pub published_raw_depth_mm: Option<f64>,
+    pub refusal: Option<String>,
+    pub first_scan_failing_pairs: u32,
+    pub first_scan_failing_boundaries: u32,
+    pub blocked_on: Option<&'static str>,
+    pub blocking_shortfall_um: Option<i64>,
+    pub first_pair: Option<(u32, u32)>,
+    pub first_pair_kernel_shortfall_um: Option<i64>,
+    pub first_pair_proxy_violation_um: Option<f64>,
+}
+
+impl From<&super::diagnostics::ExactCheckpoint> for CheckpointFields {
+    fn from(checkpoint: &super::diagnostics::ExactCheckpoint) -> Self {
+        Self {
+            proposal_ordinal: checkpoint.proposal_ordinal,
+            target_depth_mm: checkpoint.target_depth_mm,
+            max_violation_mm: checkpoint.max_violation_mm,
+            proxy_raw_depth_mm: checkpoint.proxy_raw_depth_mm,
+            kernel_exclusive_valid: checkpoint.kernel_exclusive_valid,
+            contract_valid: checkpoint.contract_valid,
+            repair_rows: checkpoint.repair_rows,
+            repair_max_displacement_mm: checkpoint.repair_max_displacement_mm,
+            repair_depth_giveback_mm: checkpoint.repair_depth_giveback_mm,
+            published_raw_depth_mm: checkpoint.published_raw_depth_mm,
+            refusal: checkpoint.refusal.clone(),
+            first_scan_failing_pairs: checkpoint.first_scan_failing_pairs,
+            first_scan_failing_boundaries: checkpoint.first_scan_failing_boundaries,
+            blocked_on: checkpoint.blocked_on,
+            blocking_shortfall_um: checkpoint.blocking_shortfall_um,
+            first_pair: checkpoint.first_pair,
+            first_pair_kernel_shortfall_um: checkpoint.first_pair_kernel_shortfall_um,
+            first_pair_proxy_violation_um: checkpoint.first_pair_proxy_violation_um,
+        }
+    }
+}
+
+/// **The detached publication check** (`--certify=1`; Astra 5b Q6: "the
+/// implemented replay stops at band entry and makes no exact calls. Its
+/// numbers establish neither certification nor publication. Require a
+/// detached check of the unchanged publication path before promoting any
+/// band-entry result to the certification claim").
+///
+/// After the replay has stopped at band entry, [`Engine::attempt_publication`]
+/// is called once on the band-entry state: the very method the live loop
+/// calls when its band test passes (`mod.rs::separate`, "The band test
+/// comes first"), which runs `publish::attempt` and, inside it, the
+/// untouched `validate_placements_against_contract`. It reads the state
+/// through `&self.state`, so the state is not cloned and not moved; the
+/// engine's incumbent and checkpoint trace receive the result as they
+/// would live, and nothing is installed. The incumbent of a replay engine
+/// is a placeholder at infinite depth, so the improvement gate
+/// (`proxy > incumbent - 1 um`) never refuses here and `improvedIncumbent`
+/// says only that the exact authorities accepted; the proxy-above-target
+/// refusal, the kernel, the repair and the contract validation are the
+/// live ones.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CertificationReport {
+    pub attempted: bool,
+    /// Why not, when `attempted` is false.
+    pub reason: Option<String>,
+    pub published: bool,
+    /// The checkpoint's refusal, or the entry-gate reason when the live
+    /// path refused before calling the exact authorities.
+    pub refusal: Option<String>,
+    /// The published raw source depth, when published.
+    pub depth_mm: Option<f64>,
+    pub proxy_depth_mm: f64,
+    pub target_depth_mm: f64,
+    pub incumbent_depth_mm: f64,
+    pub improved_incumbent: bool,
+    /// `work.exact_checkpoints` charged by the call.
+    pub exact_calls: u64,
+    pub max_violation_mm: f64,
+    pub checkpoint: Option<CheckpointFields>,
+    pub path: &'static str,
+}
+
 /// The replay's result.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -435,7 +1585,10 @@ pub struct ReplayReport {
     pub entry_guided: f64,
     pub entry_max_mm: f64,
     pub entry_blocking: Vec<BlockingRow>,
-    /// `band-entry`, `iteration-cap` or `struck`.
+    pub entry_poses_fingerprint: String,
+    pub entry_weights_fingerprint: String,
+    pub entry_stream_fingerprint: String,
+    /// `band-entry`, `iteration-cap`, `struck` or `fork`.
     pub stop: &'static str,
     pub iterations: Vec<ReplayIteration>,
     pub band_entered_at_iteration: Option<u64>,
@@ -457,6 +1610,14 @@ pub struct ReplayReport {
     pub watched_rows: Vec<WatchedRow>,
     /// `rowId -> iterationCleared` for the watched rows that cleared.
     pub persistent_rows_cleared: BTreeMap<String, u64>,
+    /// The spec's column: the entry blocking graph's bottom-to-top paths
+    /// ([`analyse_column`]).
+    pub column: ColumnReport,
+    /// The longest-lived column ([`analyse_longest_lived_column`]).
+    pub column_longest_lived: ColumnReport,
+    pub fork: Option<ForkReport>,
+    /// `null` unless `--certify=1`.
+    pub certification: Option<CertificationReport>,
 }
 
 /// The continuation's parameters, as the report prints them.
@@ -479,12 +1640,62 @@ impl From<CdContinuation> for ContinuationParams {
 }
 
 /// One competitive worker's private world for one replay iteration: the
-/// live `Slot` without its feature-gated instruments, plus the probe stats.
+/// live `Slot` without its feature-gated instruments, plus the probe stats,
+/// the microscope's sweep trace (the committed relocates) and, in the fork
+/// sweep, the fork sink.
 struct ReplaySlot {
     state: IcsState,
     descent: Descent,
     work: super::diagnostics::WorkVector,
     stats: ReplaySweepStats,
+    trace: SweepTrace,
+    fork: Option<ForkSink>,
+}
+
+/// What one replay tournament hands back.
+struct ReplayTournament {
+    totals: Totals,
+    winner: usize,
+    contested: bool,
+    all_stats: ReplaySweepStats,
+    winner_stats: ReplaySweepStats,
+    all_evaluations: u64,
+    winner_evaluations: u64,
+    winner_trace: SweepTrace,
+    forks: Vec<ForkSink>,
+}
+
+/// The state's rows after an iteration, row-id indexed: the signed
+/// violations and the weights, and the poses. Kept in memory for the
+/// column readings and emitted only for the column's rows and the core
+/// members.
+struct RowSnapshot {
+    violations: Vec<f64>,
+    weights: Vec<f64>,
+    poses: Vec<Pose>,
+}
+
+impl RowSnapshot {
+    fn of(state: &IcsState) -> Self {
+        let rows = state.pair_rows.len() + 4 * state.edge_rows.len();
+        let mut violations = Vec::with_capacity(rows);
+        let mut weights = Vec::with_capacity(rows);
+        for row in &state.pair_rows {
+            violations.push(row.violation_mm);
+            weights.push(row.weight);
+        }
+        for rows in &state.edge_rows {
+            for row in rows {
+                violations.push(row.violation_mm);
+                weights.push(row.weight);
+            }
+        }
+        Self {
+            violations,
+            weights,
+            poses: state.poses.clone(),
+        }
+    }
 }
 
 impl<'a> Engine<'a> {
@@ -530,12 +1741,18 @@ impl<'a> Engine<'a> {
     /// **The replayed separation.** [`Engine::separate`]'s explore loop from
     /// the engine's current state, with the replay tournament in place of
     /// the live one and two stated differences: it stops at band entry
-    /// without calling the exact authorities, and its cap is
+    /// without calling the exact authorities (unless `--certify=1`, which
+    /// calls them once *after* the stop), and its cap is
     /// `params.max_iterations`. See the module doc.
     pub fn replay_separation(&mut self, params: &ReplayParams) -> ReplayReport {
         let band = self.config.limits.band_mm;
         let probe = ReplayProbeConfig::of(params.probe, band);
         let workers = params.workers.max(1);
+        let count = self.state.poses.len();
+        debug_assert!(
+            params.fork.is_none() || (probe.continuation.is_none() && !probe.revisit),
+            "the fork runs only under --probe=none|exponent:<p>"
+        );
         // The entry reading's `guided` is the quantity the probe ranks on;
         // `raw` and `max` are the fold's own either way.
         let entry = match probe.exponent {
@@ -543,6 +1760,12 @@ impl<'a> Engine<'a> {
             None => energy::fold(&self.state),
         };
         let entry_blocking = blocking_rows(&self.state);
+        let entry_proposals = self.descent.proposals;
+        let entry_poses_fingerprint = poses_fingerprint(&self.state.poses);
+        let entry_weights_fingerprint = weights_fingerprint(&self.state);
+        let entry_stream_fingerprint =
+            stream_fingerprint(self.descent.stream_key().into(), entry_proposals);
+        let mut snapshots: Vec<RowSnapshot> = vec![RowSnapshot::of(&self.state)];
         let mut snapshot = self.state.clone();
         let mut meter = StrikeMeter::for_phase(params.strikes, Phase::Explore, entry.raw);
         let mut batch_sample_evaluations = 0u64;
@@ -552,6 +1775,7 @@ impl<'a> Engine<'a> {
         let mut band_entered_at = None;
         let mut evaluations_cumulative = 0u64;
         let mut evaluations_to_band = None;
+        let mut fork_report: Option<ForkReport> = None;
         let stop = loop {
             let totals = energy::fold(&self.state);
             let new_minimum = meter
@@ -565,7 +1789,8 @@ impl<'a> Engine<'a> {
             }
             // The band test comes first, exactly as in the live loop. The
             // live loop would now call `attempt_publication`; the replay
-            // stops here and reports.
+            // stops here and reports (and, under `--certify=1`, makes that
+            // one call after the stop: `certify_band_entry`).
             if totals.max_violation_mm <= band {
                 band_entered_at = Some(iterations);
                 evaluations_to_band = Some(evaluations_cumulative);
@@ -582,37 +1807,84 @@ impl<'a> Engine<'a> {
             if iterations >= params.max_iterations {
                 break "iteration-cap";
             }
+            let forking = params.fork == Some(iterations);
             let samples_before = self.trace.work.sample_evaluations;
-            let (totals, winner, contested, all_stats, winner_stats, all_evaluations, winner_evaluations) =
-                self.replay_tournament(workers, params.bite, &probe);
+            let tournament = self.replay_tournament(workers, params.bite, &probe, forking);
             iterations += 1;
             batch_sample_evaluations = self.trace.work.sample_evaluations - samples_before;
-            evaluations_cumulative += all_evaluations;
+            evaluations_cumulative += tournament.all_evaluations;
+            let stream: StreamKey = self.descent.stream_key().into();
+            let proposals = self.descent.proposals;
+            snapshots.push(RowSnapshot::of(&self.state));
             records.push(ReplayIteration {
                 iteration: iterations,
-                raw_after: totals.raw,
-                guided_after: totals.guided,
-                max_after_mm: totals.max_violation_mm,
-                winner: winner as u32,
-                contested,
+                raw_after: tournament.totals.raw,
+                guided_after: tournament.totals.guided,
+                max_after_mm: tournament.totals.max_violation_mm,
+                winner: tournament.winner as u32,
+                contested: tournament.contested,
                 new_minimum: false,
                 blocking: blocking_rows(&self.state),
-                evaluations_all_workers: all_evaluations,
-                evaluations_winner: winner_evaluations,
-                continuation_evaluations: all_stats.continuation_evaluations,
-                queued_relocates: winner_stats.queued_relocates,
-                queued_relocates_all_workers: all_stats.queued_relocates,
-                stats_all_workers: all_stats,
-                stats_winner: winner_stats,
+                evaluations_all_workers: tournament.all_evaluations,
+                evaluations_winner: tournament.winner_evaluations,
+                continuation_evaluations: tournament.all_stats.continuation_evaluations,
+                queued_relocates: tournament.winner_stats.queued_relocates,
+                queued_relocates_all_workers: tournament.all_stats.queued_relocates,
+                stats_all_workers: tournament.all_stats,
+                stats_winner: tournament.winner_stats,
+                relocates: tournament
+                    .winner_trace
+                    .relocates
+                    .iter()
+                    .map(ReplayRelocate::from)
+                    .collect(),
+                column_rows: Vec::new(),
+                core_poses: Vec::new(),
+                poses_fingerprint: poses_fingerprint(&self.state.poses),
+                weights_fingerprint: weights_fingerprint(&self.state),
+                stream_fingerprint: stream_fingerprint(stream, proposals),
+                stream,
+                proposals,
             });
+            if forking {
+                let mut relocates: Vec<ForkRelocate> = Vec::new();
+                for sink in tournament.forks {
+                    relocates.extend(sink.relocates);
+                }
+                let mut would_move = ForkWouldMove::default();
+                for relocate in &relocates {
+                    would_move.p2 += u64::from(relocate.best_under.p2.is_some());
+                    would_move.p1 += u64::from(relocate.best_under.p1.is_some());
+                    would_move.p075 += u64::from(relocate.best_under.p075.is_some());
+                    would_move.p05 += u64::from(relocate.best_under.p05.is_some());
+                }
+                fork_report = Some(ForkReport {
+                    sweep: iterations,
+                    exponents: FORK_EXPONENTS,
+                    relocates,
+                    would_move,
+                    deciding_exponent: probe.exponent.unwrap_or(2.0),
+                });
+                // The band reading the next turn would have made, so a fork
+                // that lands in the band still reports it.
+                let totals = energy::fold(&self.state);
+                if totals.max_violation_mm <= band {
+                    band_entered_at = Some(iterations);
+                    evaluations_to_band = Some(evaluations_cumulative);
+                }
+                break "fork";
+            }
         };
+
+        // The detached publication check, after the stop.
+        let certification = params.certify.then(|| self.certify_band_entry(stop));
 
         // The identity comparison against the trace.
         let mut identity = Vec::new();
         let mut identity_pass = 0u64;
         let mut identity_fail = 0u64;
         let mut diverges_at = None;
-        for record in &records {
+        for (index, record) in records.iter().enumerate() {
             let Some(traced) = params
                 .traced
                 .iter()
@@ -620,9 +1892,33 @@ impl<'a> Engine<'a> {
             else {
                 continue;
             };
-            let equal = traced.raw_after.to_bits() == record.raw_after.to_bits()
+            let scalars_equal = traced.raw_after.to_bits() == record.raw_after.to_bits()
                 && traced.max_after_mm.to_bits() == record.max_after_mm.to_bits()
                 && traced.winner == record.winner;
+            let evaluations_equal = traced.evaluations_all_workers
+                == record.evaluations_all_workers
+                && traced.evaluations_winner == record.evaluations_winner;
+            let relocates_first_difference =
+                first_relocate_difference(&record.relocates, &traced.relocates);
+            let relocates_equal = relocates_first_difference.is_none();
+            // The traced sweep's key is the one it drew from; after it the
+            // master holds the winner's clone one iteration on, and the
+            // proposal ordinal has advanced by one per piece per sweep.
+            let stream_fingerprint_trace = traced.stream.map(|key| {
+                stream_fingerprint(
+                    StreamKey {
+                        seed: key.seed,
+                        bite: key.bite,
+                        iteration: key.iteration + 1,
+                        worker: key.worker,
+                    },
+                    entry_proposals + (index as u64 + 1) * count as u64,
+                )
+            });
+            let stream_equal = stream_fingerprint_trace
+                .as_ref()
+                .map(|trace| *trace == record.stream_fingerprint);
+            let equal = scalars_equal && relocates_equal && evaluations_equal;
             if equal {
                 identity_pass += 1;
             } else {
@@ -639,6 +1935,21 @@ impl<'a> Engine<'a> {
                 max_replay: record.max_after_mm,
                 winner_trace: traced.winner,
                 winner_replay: record.winner,
+                scalars_equal,
+                poses_fingerprint: record.poses_fingerprint.clone(),
+                weights_fingerprint: record.weights_fingerprint.clone(),
+                stream_fingerprint: record.stream_fingerprint.clone(),
+                stream_fingerprint_trace,
+                stream_equal,
+                evaluations_all_workers: record.evaluations_all_workers,
+                evaluations_winner: record.evaluations_winner,
+                evaluations_all_workers_trace: traced.evaluations_all_workers,
+                evaluations_winner_trace: traced.evaluations_winner,
+                relocates_replay: record.relocates.len() as u64,
+                relocates_trace: traced.relocates.len() as u64,
+                relocates_equal,
+                relocates_first_difference,
+                evaluations_equal,
                 equal,
             });
         }
@@ -681,6 +1992,47 @@ impl<'a> Engine<'a> {
             });
         }
 
+        // The column, from the states the replay left behind.
+        let blocking_frames: Vec<Vec<BlockingRow>> = std::iter::once(entry_blocking.clone())
+            .chain(records.iter().map(|record| record.blocking.clone()))
+            .collect();
+        let weight_frames: Vec<Vec<f64>> = snapshots
+            .iter()
+            .map(|snapshot| snapshot.weights.clone())
+            .collect();
+        let relocate_frames: Vec<Vec<ReplayRelocate>> =
+            records.iter().map(|record| record.relocates.clone()).collect();
+        let column_input = ColumnInput {
+            count,
+            blocking: &blocking_frames,
+            weights: &weight_frames,
+            relocates: &relocate_frames,
+            band_entry_iteration: band_entered_at,
+        };
+        let column = analyse_column(&column_input);
+        let column_longest_lived = analyse_longest_lived_column(&column_input);
+        for (record, snapshot) in records.iter_mut().zip(snapshots.iter().skip(1)) {
+            record.column_rows = column
+                .rows
+                .iter()
+                .map(|&id| {
+                    ColumnRowReading(
+                        id,
+                        snapshot.violations[id as usize],
+                        snapshot.weights[id as usize],
+                    )
+                })
+                .collect();
+            record.core_poses = column
+                .core_members
+                .iter()
+                .map(|&piece| {
+                    let pose = snapshot.poses[piece as usize];
+                    CorePose(piece, pose.tx_mm, pose.ty_mm, pose.theta_deg)
+                })
+                .collect();
+        }
+
         let mut stats_total = ReplaySweepStats::default();
         let mut queued_winner_total = 0u64;
         for record in &records {
@@ -700,6 +2052,9 @@ impl<'a> Engine<'a> {
             entry_guided: entry.guided,
             entry_max_mm: entry.max_violation_mm,
             entry_blocking,
+            entry_poses_fingerprint,
+            entry_weights_fingerprint,
+            entry_stream_fingerprint,
             stop,
             band_entered_at_iteration: band_entered_at,
             evaluations_to_band,
@@ -715,7 +2070,85 @@ impl<'a> Engine<'a> {
             diverges_from_trace_at_iteration: diverges_at,
             watched_rows,
             persistent_rows_cleared,
+            column,
+            column_longest_lived,
+            fork: fork_report,
+            certification,
             iterations: records,
+        }
+    }
+
+    /// The detached publication check of [`CertificationReport`]: the
+    /// unchanged [`Engine::attempt_publication`] once, on the state the
+    /// replay stopped at, only when it stopped at band entry.
+    fn certify_band_entry(&mut self, stop: &'static str) -> CertificationReport {
+        let totals = energy::fold(&self.state);
+        let proxy_depth_mm =
+            super::state::raw_source_depth_mm(&self.state.geometry, &self.contract);
+        let target_depth_mm = self.state.target_depth_mm;
+        let incumbent_depth_mm = self.incumbent.raw_source_depth_mm;
+        let path = "Engine::attempt_publication -> publish::attempt -> \
+                    validate_placements_against_contract (unchanged)";
+        if stop != "band-entry" {
+            return CertificationReport {
+                attempted: false,
+                reason: Some(format!(
+                    "the replay did not enter the band (stop = {stop}); the live path is only \
+                     called where the live loop would call it"
+                )),
+                published: false,
+                refusal: None,
+                depth_mm: None,
+                proxy_depth_mm,
+                target_depth_mm,
+                incumbent_depth_mm,
+                improved_incumbent: false,
+                exact_calls: 0,
+                max_violation_mm: totals.max_violation_mm,
+                checkpoint: None,
+                path,
+            };
+        }
+        let checkpoints_before = self.trace.checkpoints.len();
+        let exact_before = self.trace.work.exact_checkpoints;
+        let outcome = self.attempt_publication();
+        let exact_calls = self.trace.work.exact_checkpoints - exact_before;
+        let checkpoint = (self.trace.checkpoints.len() > checkpoints_before)
+            .then(|| CheckpointFields::from(&self.trace.checkpoints[checkpoints_before]));
+        let refusal = match (&outcome.publication, &checkpoint) {
+            (Some(_), _) => None,
+            (None, Some(checkpoint)) => Some(checkpoint.refusal.clone().unwrap_or_else(|| {
+                "the exact authorities refused without a named reason".to_owned()
+            })),
+            (None, None) => Some(if !(totals.max_violation_mm <= self.config.limits.band_mm) {
+                "refused before the exact call: the band test failed".to_owned()
+            } else if proxy_depth_mm > target_depth_mm {
+                format!(
+                    "refused before the exact call: proxy depth {proxy_depth_mm:.6} is above the \
+                     target {target_depth_mm:.6} (the closed member's own refusal)"
+                )
+            } else {
+                "refused before the exact call: the improvement gate or the unchanged-state gate"
+                    .to_owned()
+            }),
+        };
+        CertificationReport {
+            attempted: true,
+            reason: None,
+            published: outcome.publication.is_some(),
+            refusal,
+            depth_mm: outcome
+                .publication
+                .as_ref()
+                .map(|publication| publication.raw_source_depth_mm),
+            proxy_depth_mm,
+            target_depth_mm,
+            incumbent_depth_mm,
+            improved_incumbent: outcome.improved,
+            exact_calls,
+            max_violation_mm: totals.max_violation_mm,
+            checkpoint,
+            path,
         }
     }
 
@@ -724,16 +2157,17 @@ impl<'a> Engine<'a> {
     /// join in ordinal order, select the minimum guided Φ stable by ordinal
     /// (under the exponent probe each slot's guided Φ is `sum w v^p`, from
     /// [`Descent::worker_sweep_replay`]), install, one GLS pass (unchanged:
-    /// the weight growth stays on `v / v_max`). Returns the post-GLS
-    /// totals, the winner, the contested flag, the summed and the winner's
-    /// probe stats, and the summed and the winner's sample evaluations.
-    #[allow(clippy::type_complexity)]
+    /// the weight growth stays on `v / v_max`). Every slot records its
+    /// committed relocates through the microscope's `SweepTrace` (the
+    /// winner's is kept) and, when `forking`, carries a [`ForkSink`].
     fn replay_tournament(
         &mut self,
         workers: usize,
         bite: u64,
         probe: &ReplayProbeConfig,
-    ) -> (Totals, usize, bool, ReplaySweepStats, ReplaySweepStats, u64, u64) {
+        forking: bool,
+    ) -> ReplayTournament {
+        let count = self.state.poses.len();
         let mut slots: Vec<ReplaySlot> = Vec::with_capacity(workers);
         for ordinal in 0..workers {
             let mut descent = self.descent.clone();
@@ -743,6 +2177,11 @@ impl<'a> Engine<'a> {
                 descent,
                 work: super::diagnostics::WorkVector::default(),
                 stats: ReplaySweepStats::default(),
+                trace: SweepTrace::new(count),
+                fork: forking.then(|| ForkSink {
+                    worker: ordinal as u32,
+                    relocates: Vec::new(),
+                }),
             });
         }
         let sources: &[super::state::PieceSource] = &self.sources;
@@ -757,6 +2196,8 @@ impl<'a> Engine<'a> {
                 &mut slot.work,
                 probe,
                 &mut slot.stats,
+                Some(&mut slot.trace),
+                slot.fork.as_mut(),
             ));
         } else {
             std::thread::scope(|scope| {
@@ -771,6 +2212,8 @@ impl<'a> Engine<'a> {
                                 &mut slot.work,
                                 probe,
                                 &mut slot.stats,
+                                Some(&mut slot.trace),
+                                slot.fork.as_mut(),
                             )
                         })
                     })
@@ -796,9 +2239,14 @@ impl<'a> Engine<'a> {
         let contested = outcomes
             .iter()
             .any(|other| other.totals.guided != outcomes[0].totals.guided);
+        let forks: Vec<ForkSink> = slots
+            .iter_mut()
+            .filter_map(|slot| slot.fork.take())
+            .collect();
         let slot = slots.swap_remove(winner);
         let winner_stats = slot.stats;
         let winner_evaluations = slot.work.sample_evaluations;
+        let winner_trace = slot.trace;
         self.state = slot.state;
         self.descent = slot.descent;
         self.trace.sweeps += 1;
@@ -810,7 +2258,7 @@ impl<'a> Engine<'a> {
             Some(exponent) => energy::fold_with_exponent(&self.state, exponent),
             None => energy::fold(&self.state),
         };
-        (
+        ReplayTournament {
             totals,
             winner,
             contested,
@@ -818,6 +2266,67 @@ impl<'a> Engine<'a> {
             winner_stats,
             all_evaluations,
             winner_evaluations,
-        )
+            winner_trace,
+            forks,
+        }
     }
+}
+
+/// Where the replay's committed relocates first differ from the traced
+/// sweep's: `None` when they match one for one (same piece order, same
+/// `dx/dy/dtheta` bits, same changed rows with the same before/after bits).
+fn first_relocate_difference(
+    replay: &[ReplayRelocate],
+    traced: &[TracedRelocate],
+) -> Option<String> {
+    if replay.len() != traced.len() {
+        return Some(format!(
+            "relocate count {} (replay) vs {} (trace)",
+            replay.len(),
+            traced.len()
+        ));
+    }
+    for (index, (ours, theirs)) in replay.iter().zip(traced).enumerate() {
+        if ours.piece != theirs.piece {
+            return Some(format!(
+                "relocate {index}: piece {} vs {}",
+                ours.piece, theirs.piece
+            ));
+        }
+        if ours.dx_mm.to_bits() != theirs.dx_mm.to_bits()
+            || ours.dy_mm.to_bits() != theirs.dy_mm.to_bits()
+            || ours.dtheta_deg.to_bits() != theirs.dtheta_deg.to_bits()
+        {
+            return Some(format!(
+                "relocate {index} (piece {}): displacement ({:e}, {:e}, {:e}) vs ({:e}, {:e}, {:e})",
+                ours.piece,
+                ours.dx_mm,
+                ours.dy_mm,
+                ours.dtheta_deg,
+                theirs.dx_mm,
+                theirs.dy_mm,
+                theirs.dtheta_deg
+            ));
+        }
+        if ours.rows.len() != theirs.rows.len() {
+            return Some(format!(
+                "relocate {index} (piece {}): {} changed rows vs {}",
+                ours.piece,
+                ours.rows.len(),
+                theirs.rows.len()
+            ));
+        }
+        for (row, (mine, its)) in ours.rows.iter().zip(&theirs.rows).enumerate() {
+            if mine.0 != its.0
+                || mine.1.to_bits() != its.1.to_bits()
+                || mine.2.to_bits() != its.2.to_bits()
+            {
+                return Some(format!(
+                    "relocate {index} (piece {}), changed row {row}: [{}, {:e}, {:e}] vs [{}, {:e}, {:e}]",
+                    ours.piece, mine.0, mine.1, mine.2, its.0, its.1, its.2
+                ));
+            }
+        }
+    }
+    None
 }

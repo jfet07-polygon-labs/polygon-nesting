@@ -1056,6 +1056,12 @@ pub fn coord_descent_continue(
 /// describe the pose that is actually left installed, i.e. the continued
 /// one; `fine_exit` stays the ordinary walk's exit so a reader can see what
 /// the continuation started from.
+///
+/// `fork` (`--fork=<sweep>`, `replay::ForkSink`): in the fork sweep every
+/// relocate goes through [`relocate_inner_with_exponent`] at the probe's
+/// own exponent (`2` for the control, which is [`relocate_probed`] to the
+/// bit) so the sink can re-score the identical candidate poses under the
+/// four exponents; the fork never decides anything.
 #[allow(clippy::too_many_arguments)]
 pub fn relocate_replay(
     state: &mut IcsState,
@@ -1069,14 +1075,15 @@ pub fn relocate_replay(
     continuation: Option<CdContinuation>,
     exponent: Option<f64>,
     probe: &mut RelocateProbe,
+    fork: Option<&mut super::replay::ForkSink>,
 ) -> (RelocateOutcome, ContinuationOutcome) {
     // The exponent probe: the identical member ranked on `w v^p`. The
     // probes are exclusive (`replay::ReplayProbeConfig::of`), so the
     // continuation is never named beside it and is not applied here.
-    if let Some(exponent) = exponent {
+    if exponent.is_some() || fork.is_some() {
         debug_assert!(
             continuation.is_none(),
-            "the exponent probe and the continuation are never named together"
+            "the exponent probe and the fork are never named beside the continuation"
         );
         let outcome = relocate_inner_with_exponent(
             state,
@@ -1087,8 +1094,9 @@ pub fn relocate_replay(
             config,
             key,
             work,
-            exponent,
+            exponent.unwrap_or(2.0),
             probe,
+            fork,
         );
         return (outcome, ContinuationOutcome::default());
     }
@@ -1313,6 +1321,20 @@ pub fn coord_descent_inner_with_exponent(
 /// counters; the `raw <= 0` skip and the `raw == 0` clause of the ranking
 /// are the live ones. Replay path only; at `p = 2` this is
 /// [`relocate_probed`] to the bit.
+///
+/// **The fork** (`fork`, `replay::ForkSink`; Astra 5b Q8: "re-score
+/// identical candidate poses under all four exponents there"): with a
+/// sink, the stay pose, every focused and container sample and every
+/// finalist's pose after its coarse walk are scored under `{2, 1, 0.75,
+/// 0.5}` (`replay::ForkGuided::of`, four `incident_totals_with_exponent`
+/// reads of the state's rows at the pose the walk has just installed),
+/// and the committed pose after the final install. A finalist's pose is
+/// re-installed for its reading (the coarse walk's last evaluation may
+/// have left a rejected candidate in the state) through a scratch work
+/// vector, so no counter moves; the fine walk starts from the finalist's
+/// pose and evaluation as values and installs its own candidates, so the
+/// re-install changes nothing it reads. The sink observes; the ranking
+/// stays `exponent`'s.
 #[allow(clippy::too_many_arguments)]
 pub fn relocate_inner_with_exponent(
     state: &mut IcsState,
@@ -1325,6 +1347,7 @@ pub fn relocate_inner_with_exponent(
     work: &mut WorkVector,
     exponent: f64,
     probe: &mut RelocateProbe,
+    fork: Option<&mut super::replay::ForkSink>,
 ) -> RelocateOutcome {
     let entry_pose = state.poses[piece];
     let (entry_raw, entry_weighted) = incident_totals_with_exponent(state, piece, exponent);
@@ -1336,6 +1359,9 @@ pub fn relocate_inner_with_exponent(
         return RelocateOutcome::skipped(piece, entry_eval);
     }
     probe.entry_rows = super::microscope::incident_rows(state, piece);
+    let mut fork_record = fork
+        .as_ref()
+        .map(|sink| super::replay::ForkRelocate::begin(sink.worker, piece, entry_pose, state));
     work.relocates += 1;
     let evaluations_before = work.sample_evaluations;
     let source = &sources[piece];
@@ -1376,6 +1402,11 @@ pub fn relocate_inner_with_exponent(
         );
         let eval = evaluate_with_exponent(state, sources, contract, piece, pose, exponent, work);
         work.focused_samples += 1;
+        if let Some(record) = fork_record.as_mut() {
+            if eval != SampleEval::INVALID {
+                record.observe_candidate("focused", pose, state);
+            }
+        }
         pool.report(Candidate {
             pose,
             eval,
@@ -1397,6 +1428,11 @@ pub fn relocate_inner_with_exponent(
         );
         let eval = evaluate_with_exponent(state, sources, contract, piece, pose, exponent, work);
         work.container_samples += 1;
+        if let Some(record) = fork_record.as_mut() {
+            if eval != SampleEval::INVALID {
+                record.observe_candidate("container", pose, state);
+            }
+        }
         pool.report(Candidate {
             pose,
             eval,
@@ -1421,6 +1457,18 @@ pub fn relocate_inner_with_exponent(
             exponent,
             work,
         );
+        if let Some(record) = fork_record.as_mut() {
+            // The walk's last evaluation may have installed a rejected
+            // candidate: put the finalist's pose back for its reading, on a
+            // scratch work vector so no counter moves.
+            if eval != SampleEval::INVALID {
+                let mut scratch = WorkVector::default();
+                state.poses[piece] = pose;
+                transform_piece(sources, &mut state.geometry, &state.poses, piece);
+                rebuild_piece_rows(state, contract, piece, &mut scratch);
+                record.observe_candidate("finalist", pose, state);
+            }
+        }
         pool.report(Candidate {
             pose,
             eval,
@@ -1480,6 +1528,17 @@ pub fn relocate_inner_with_exponent(
         }
         SampleOrigin::Focused => work.focused_winners += 1,
         SampleOrigin::StayPut => work.stay_put_winners += 1,
+    }
+    if let (Some(sink), Some(mut record)) = (fork, fork_record) {
+        record.finish(
+            probe.dx_mm,
+            probe.dy_mm,
+            final_pose.theta_deg - entry_pose.theta_deg,
+            moved,
+            best.origin.label(),
+            state,
+        );
+        sink.relocates.push(record);
     }
     RelocateOutcome {
         piece,

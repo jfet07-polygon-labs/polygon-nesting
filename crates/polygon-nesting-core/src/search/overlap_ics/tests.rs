@@ -4118,16 +4118,7 @@ fn a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit() {
     let capsule = &report.capsules[bite.capsule as usize];
     assert_eq!(capsule.label, "bite-entry");
     let separation = &bite.separations[0];
-    let traced: Vec<TracedSweep> = separation
-        .sweeps
-        .iter()
-        .map(|sweep| TracedSweep {
-            iteration: sweep.iteration,
-            raw_after: sweep.raw_after,
-            max_after_mm: sweep.max_after_mm,
-            winner: sweep.winner,
-        })
-        .collect();
+    let traced: Vec<TracedSweep> = separation.sweeps.iter().map(TracedSweep::from).collect();
     assert_eq!(traced.len(), 3, "the first separation runs to its three-iteration cap");
 
     // The rebuild: the same fixture, the capsule's poses, weights and stream.
@@ -4190,6 +4181,8 @@ fn a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit() {
         strikes: StrikeConfig::CONTROL,
         traced,
         watch_rows: Vec::new(),
+        fork: None,
+        certify: false,
     });
     assert_eq!(replay.stop, "iteration-cap");
     assert_eq!(replay.iterations.len(), 3);
@@ -4225,6 +4218,15 @@ fn replay_first_capsule_under(
     probe: super::replay::ReplayProbe,
     max_iterations: u64,
 ) -> (super::replay::ReplayReport, Vec<super::microscope::SweepRecord>) {
+    replay_first_capsule_under_with(probe, max_iterations, None)
+}
+
+/// [`replay_first_capsule_under`] with `--fork=<sweep>`.
+fn replay_first_capsule_under_with(
+    probe: super::replay::ReplayProbe,
+    max_iterations: u64,
+    fork: Option<u64>,
+) -> (super::replay::ReplayReport, Vec<super::microscope::SweepRecord>) {
     use super::microscope::MicroscopeConfig;
     use super::replay::{ReplayParams, TracedSweep};
     let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
@@ -4236,15 +4238,7 @@ fn replay_first_capsule_under(
     let capsule = &report.capsules[bite.capsule as usize];
     assert_eq!(capsule.label, "bite-entry");
     let sweeps = bite.separations[0].sweeps.clone();
-    let traced: Vec<TracedSweep> = sweeps
-        .iter()
-        .map(|sweep| TracedSweep {
-            iteration: sweep.iteration,
-            raw_after: sweep.raw_after,
-            max_after_mm: sweep.max_after_mm,
-            winner: sweep.winner,
-        })
-        .collect();
+    let traced: Vec<TracedSweep> = sweeps.iter().map(TracedSweep::from).collect();
     let fixture = Fixture::squares(12, 20.0);
     let pieces = fixture.pieces();
     let settings = test_settings();
@@ -4295,6 +4289,8 @@ fn replay_first_capsule_under(
         strikes: StrikeConfig::CONTROL,
         traced,
         watch_rows: Vec::new(),
+        fork,
+        certify: false,
     });
     (replay, sweeps)
 }
@@ -4966,6 +4962,8 @@ fn the_revisit_queue_relocates_a_deferred_endpoint_once_at_the_end_of_the_sweep(
         &mut off_work,
         &ReplayProbeConfig::default(),
         &mut off_stats,
+        None,
+        None,
     );
     assert_eq!(pose_bits(&off_state.poses), pose_bits(&traced_state.poses));
     assert_eq!(off_work, traced_work);
@@ -4990,6 +4988,8 @@ fn the_revisit_queue_relocates_a_deferred_endpoint_once_at_the_end_of_the_sweep(
             exponent: None,
         },
         &mut on_stats,
+        None,
+        None,
     );
     assert!(
         on_stats.revisit_candidates >= 1,
@@ -5015,4 +5015,452 @@ fn the_revisit_queue_relocates_a_deferred_endpoint_once_at_the_end_of_the_sweep(
     );
     assert_eq!(on_descent.proposals, off_descent.proposals, "no counter key moves");
     assert_eq!(on_descent.stream_key(), off_descent.stream_key());
+}
+
+// -------------------------------------------- the replay's committed geometry ---
+
+/// **The full identity gate (Astra 5b Q7 item 4).** `--probe=none` and
+/// `--probe=exponent:2` in one process: every per-iteration pose, weight
+/// and stream fingerprint identical, every evaluation count identical, and
+/// both pass the extended gate against the trace - scalars, committed
+/// relocates one for one (piece order, `dx/dy/dtheta` bits, changed rows)
+/// and evaluation counts, with the stream key derived from the traced
+/// sweep's agreeing too. Equal aggregate scalars alone were never full
+/// state identity; this is.
+#[test]
+fn the_extended_identity_gate_holds_and_none_and_exponent_two_share_every_fingerprint() {
+    use super::replay::ReplayProbe;
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (control, sweeps) = replay_first_capsule_under(ReplayProbe::None, 3);
+    let (at_two, _) = replay_first_capsule_under(ReplayProbe::Exponent(2.0), 3);
+    assert_eq!(sweeps.len(), 3);
+    for report in [&control, &at_two] {
+        assert_eq!(report.identity.len(), 3);
+        assert_eq!(report.identity_pass, 3, "{:#?}", report.identity);
+        assert_eq!(report.identity_fail, 0);
+        for row in &report.identity {
+            assert!(row.scalars_equal, "{row:?}");
+            assert!(row.relocates_equal, "{row:?}");
+            assert!(row.evaluations_equal, "{row:?}");
+            assert_eq!(row.stream_equal, Some(true), "{row:?}");
+            assert!(row.equal);
+            assert_eq!(row.relocates_first_difference, None);
+            assert!(row.relocates_trace > 0, "the traced sweep relocates something");
+            assert_eq!(row.relocates_replay, row.relocates_trace);
+            assert_eq!(row.poses_fingerprint.len(), 16);
+            assert_eq!(row.weights_fingerprint.len(), 16);
+            assert_eq!(row.stream_fingerprint.len(), 16);
+        }
+    }
+    assert_eq!(control.entry_poses_fingerprint, at_two.entry_poses_fingerprint);
+    assert_eq!(control.entry_weights_fingerprint, at_two.entry_weights_fingerprint);
+    assert_eq!(control.entry_stream_fingerprint, at_two.entry_stream_fingerprint);
+    for (none, two) in control.iterations.iter().zip(&at_two.iterations) {
+        assert_eq!(none.poses_fingerprint, two.poses_fingerprint);
+        assert_eq!(none.weights_fingerprint, two.weights_fingerprint);
+        assert_eq!(none.stream_fingerprint, two.stream_fingerprint);
+        assert_eq!(none.stream, two.stream);
+        assert_eq!(none.proposals, two.proposals);
+        assert_eq!(none.evaluations_all_workers, two.evaluations_all_workers);
+        assert_eq!(none.evaluations_winner, two.evaluations_winner);
+        assert_eq!(none.relocates, two.relocates);
+    }
+    // The fingerprints are live: a sweep that commits a move changes the
+    // pose fingerprint, and every GLS pass changes the weight fingerprint.
+    let mut poses: Vec<&str> = vec![control.entry_poses_fingerprint.as_str()];
+    poses.extend(control.iterations.iter().map(|it| it.poses_fingerprint.as_str()));
+    poses.dedup();
+    assert!(poses.len() > 1, "{poses:?}");
+    let mut weights: Vec<&str> = vec![control.entry_weights_fingerprint.as_str()];
+    weights.extend(control.iterations.iter().map(|it| it.weights_fingerprint.as_str()));
+    let distinct: std::collections::BTreeSet<&str> = weights.iter().copied().collect();
+    assert_eq!(distinct.len(), weights.len(), "{weights:?}");
+    // And the relocate comparison is live: the traced relocates against a
+    // sweep with one displacement bit flipped are not equal.
+    let mut traced: Vec<super::replay::TracedSweep> =
+        sweeps.iter().map(super::replay::TracedSweep::from).collect();
+    let first = traced[0]
+        .relocates
+        .first_mut()
+        .expect("the first traced sweep relocates something");
+    let replayed = &control.iterations[0].relocates[0];
+    assert_eq!(replayed.piece, first.piece);
+    assert_eq!(replayed.dx_mm.to_bits(), first.dx_mm.to_bits());
+    first.dx_mm = f64::from_bits(first.dx_mm.to_bits() ^ 1);
+    assert_ne!(replayed.dx_mm.to_bits(), first.dx_mm.to_bits());
+    assert_eq!(control.certification, None, "no --certify=1, no exact call");
+    assert!(control.fork.is_none());
+}
+
+/// **The column, from committed geometry (Astra 5b Q6), on hand-built
+/// states.** Four pieces; the row ids are the microscope's. A bottom-to-top
+/// path of positive rows is found at entry; a release followed by
+/// re-formation is a temporary release and sets no break; a permanent
+/// release that breaks every original path sets `breakIteration`, with
+/// the releasing relocate and the column rows' weights at the break; a
+/// state with no bottom-to-top path reports `avoided`; a path that first
+/// appears later reports `formed-at-iteration`; and the longest-lived
+/// reading picks the column that stays.
+#[test]
+fn the_column_is_read_off_the_blocking_graph_and_its_releases() {
+    use super::microscope::{boundary_row_id, pair_row_id, BlockingRow};
+    use super::replay::{
+        analyse_column, analyse_longest_lived_column, bottom_to_top_connected,
+        bottom_to_top_paths, ColumnInput, ReplayRelocate, RowDelta,
+    };
+    use super::state::{pair_count, EDGE_BOTTOM, EDGE_LEFT, EDGE_TOP};
+    let count = 4usize;
+    let bottom_0 = boundary_row_id(count, 0, EDGE_BOTTOM);
+    let pair_01 = pair_row_id(count, 0, 1);
+    let top_1 = boundary_row_id(count, 1, EDGE_TOP);
+    let pair_23 = pair_row_id(count, 2, 3);
+    let bottom_2 = boundary_row_id(count, 2, EDGE_BOTTOM);
+    let top_3 = boundary_row_id(count, 3, EDGE_TOP);
+    let left_3 = boundary_row_id(count, 3, EDGE_LEFT);
+    let frame = |ids: &[u32]| -> Vec<BlockingRow> {
+        ids.iter().map(|&id| BlockingRow(id, 0.01)).collect()
+    };
+
+    // The graph primitives.
+    let (paths, truncated) = bottom_to_top_paths(count, &[bottom_0, pair_01, top_1, pair_23], 256);
+    assert_eq!(paths, vec![vec![bottom_0, pair_01, top_1]]);
+    assert!(!truncated);
+    assert!(bottom_to_top_connected(count, &[bottom_0, pair_01, top_1]));
+    assert!(!bottom_to_top_connected(count, &[bottom_0, pair_01]));
+    assert!(!bottom_to_top_connected(count, &[bottom_0, pair_23, left_3]));
+
+    // Entry path B-0-1-T; pair(0,1) released at 2 and back at 3 (temporary);
+    // edge(1,T) released at 4 for good (the break).
+    let frames = vec![
+        frame(&[bottom_0, pair_01, top_1, pair_23]),
+        frame(&[bottom_0, pair_01, top_1]),
+        frame(&[bottom_0, top_1]),
+        frame(&[bottom_0, pair_01, top_1]),
+        frame(&[bottom_0, pair_01]),
+        frame(&[bottom_0, pair_01]),
+    ];
+    let rows_total = pair_count(count) + 4 * count;
+    let weights: Vec<Vec<f64>> = (0..frames.len())
+        .map(|k| (0..rows_total).map(|id| 1.0 + k as f64 * 10.0 + id as f64 * 0.001).collect())
+        .collect();
+    let relocate = |piece: u32, rows: Vec<RowDelta>| ReplayRelocate {
+        piece,
+        origin: "focused",
+        dx_mm: 1.5,
+        dy_mm: -0.25,
+        dtheta_deg: 0.0,
+        moved: true,
+        raw_before: 1e-4,
+        raw_after: 0.0,
+        guided_before: 1e-4,
+        guided_after: 0.0,
+        max_before_mm: 0.01,
+        max_after_mm: 0.0,
+        rows,
+    };
+    let relocates: Vec<Vec<ReplayRelocate>> = vec![
+        Vec::new(),
+        vec![relocate(0, vec![RowDelta(pair_01, 0.01, 0.0)])],
+        vec![relocate(0, vec![RowDelta(pair_01, 0.0, 0.01)])],
+        vec![
+            relocate(2, vec![RowDelta(pair_23, 0.0, 0.002)]),
+            relocate(1, vec![RowDelta(top_1, 0.01, -0.003)]),
+        ],
+        Vec::new(),
+    ];
+    let input = ColumnInput {
+        count,
+        blocking: &frames,
+        weights: &weights,
+        relocates: &relocates,
+        band_entry_iteration: Some(5),
+    };
+    let column = analyse_column(&input);
+    assert_eq!(column.status, "formed-at-entry");
+    assert_eq!(column.formed_at_iteration, Some(0));
+    assert_eq!(column.paths, vec![vec![bottom_0, pair_01, top_1]]);
+    let mut expected_rows = vec![bottom_0, pair_01, top_1];
+    expected_rows.sort_unstable();
+    assert_eq!(column.rows, expected_rows);
+    assert_eq!(column.core_members, vec![0, 1]);
+    assert_eq!(column.residence_iterations, 2);
+    assert_eq!(column.original_rows_connected, vec![true, true, false, true, false, false]);
+    assert_eq!(column.first_disconnected_at_iteration, Some(2));
+    assert!(column.reformed_after_first_disconnection);
+    assert_eq!(column.temporary_releases.len(), 1);
+    assert_eq!(column.temporary_releases[0].row_id, pair_01);
+    assert_eq!(column.temporary_releases[0].released_at, 2);
+    assert_eq!(column.temporary_releases[0].reformed_at, 3);
+    assert_eq!(column.permanent_releases.len(), 1);
+    assert_eq!(column.permanent_releases[0].row_id, top_1);
+    assert_eq!(column.permanent_releases[0].iteration, 4);
+    assert_eq!(column.break_iteration, Some(4));
+    assert!(!column.reformed_after_break);
+    assert_eq!(column.band_entry_iteration, Some(5));
+    assert_eq!(column.last_iteration, 5);
+    let release = column.break_release.as_ref().expect("a break names its release");
+    assert_eq!(release.row_id, top_1);
+    assert_eq!(release.iteration, 4);
+    let relocate = release.relocate.expect("the releasing relocate is found");
+    assert_eq!(relocate.piece, 1);
+    assert_eq!(relocate.dx_mm, 1.5);
+    assert_eq!(relocate.dy_mm, -0.25);
+    assert_eq!(release.row_weights_at_break.len(), 3);
+    for (id, weight) in &release.row_weights_at_break {
+        assert_eq!(*weight, weights[4][*id as usize]);
+    }
+    assert_eq!(
+        release.max_column_row_weight_at_break,
+        weights[4][expected_rows[2] as usize]
+    );
+    // The column rows are the blocking rows read by the replay; the
+    // longest-lived reading agrees here (one column only).
+    assert_eq!(analyse_longest_lived_column(&input), column);
+
+    // A temporary release alone sets no break.
+    let frames = vec![
+        frame(&[bottom_0, pair_01, top_1]),
+        frame(&[bottom_0, top_1]),
+        frame(&[bottom_0, pair_01, top_1]),
+        frame(&[bottom_0, pair_01, top_1]),
+    ];
+    let column = analyse_column(&ColumnInput {
+        count,
+        blocking: &frames,
+        weights: &[],
+        relocates: &[],
+        band_entry_iteration: None,
+    });
+    assert_eq!(column.status, "formed-at-entry");
+    assert_eq!(column.break_iteration, None);
+    assert!(column.break_release.is_none());
+    assert_eq!(column.temporary_releases.len(), 1);
+    assert!(column.permanent_releases.is_empty());
+    assert_eq!(column.first_disconnected_at_iteration, Some(1));
+    assert!(column.reformed_after_first_disconnection);
+    assert_eq!(column.residence_iterations, 1);
+
+    // No bottom-to-top path, ever: avoided.
+    let frames = vec![
+        frame(&[bottom_0, pair_23, left_3]),
+        frame(&[bottom_0, pair_01]),
+        frame(&[pair_01, top_1]),
+    ];
+    let column = analyse_column(&ColumnInput {
+        count,
+        blocking: &frames,
+        weights: &[],
+        relocates: &[],
+        band_entry_iteration: Some(3),
+    });
+    assert_eq!(column.status, "avoided");
+    assert_eq!(column.formed_at_iteration, None);
+    assert!(column.rows.is_empty());
+    assert!(column.core_members.is_empty());
+    assert_eq!(column.break_iteration, None);
+    assert_eq!(column.band_entry_iteration, Some(3));
+    assert_eq!(column.last_iteration, 2);
+    assert_eq!(analyse_longest_lived_column(&ColumnInput {
+        count,
+        blocking: &frames,
+        weights: &[],
+        relocates: &[],
+        band_entry_iteration: Some(3),
+    })
+    .status, "avoided");
+
+    // A path that forms later: formed-at-iteration.
+    let frames = vec![
+        frame(&[bottom_0, pair_01]),
+        frame(&[bottom_0, pair_01, top_1]),
+        frame(&[bottom_0, pair_01, top_1]),
+    ];
+    let column = analyse_column(&ColumnInput {
+        count,
+        blocking: &frames,
+        weights: &[],
+        relocates: &[],
+        band_entry_iteration: None,
+    });
+    assert_eq!(column.status, "formed-at-iteration");
+    assert_eq!(column.formed_at_iteration, Some(1));
+    assert_eq!(column.core_members, vec![0, 1]);
+    assert_eq!(column.residence_iterations, 2);
+
+    // Two columns: the entry one dies at 1, the later one lives on. The
+    // spec's reading takes the entry one; the longest-lived reading takes
+    // the other, with its own break.
+    let frames = vec![
+        frame(&[bottom_0, pair_01, top_1]),
+        frame(&[bottom_0, pair_01, bottom_2, pair_23, top_3]),
+        frame(&[bottom_2, pair_23, top_3]),
+        frame(&[bottom_2, pair_23, top_3]),
+        frame(&[bottom_2, pair_23, top_3]),
+        frame(&[bottom_2, top_3]),
+    ];
+    let input = ColumnInput {
+        count,
+        blocking: &frames,
+        weights: &[],
+        relocates: &[],
+        band_entry_iteration: Some(5),
+    };
+    let entry = analyse_column(&input);
+    assert_eq!(entry.status, "formed-at-entry");
+    assert_eq!(entry.core_members, vec![0, 1]);
+    assert_eq!(entry.residence_iterations, 1);
+    assert_eq!(entry.break_iteration, Some(1));
+    let longest = analyse_longest_lived_column(&input);
+    assert_eq!(longest.status, "formed-at-iteration");
+    assert_eq!(longest.formed_at_iteration, Some(1));
+    assert_eq!(longest.core_members, vec![2, 3]);
+    assert_eq!(longest.residence_iterations, 4);
+    assert_eq!(longest.break_iteration, Some(5));
+    assert_eq!(longest.permanent_releases.len(), 1);
+    assert_eq!(longest.permanent_releases[0].row_id, pair_23);
+    assert!(longest.temporary_releases.is_empty());
+}
+
+/// **The sweep fork (Astra 5b Q8).** With `--fork=1` the replay runs sweep
+/// 1 as usual, forks sweep 2 and stops there (`stop = "fork"`); every
+/// forked relocate carries its stay pose, its sampled candidates and its
+/// finalists scored under the four exponents at the same poses and
+/// weights; every guided value at `p = 2` is `sum w * (v * v)` over the
+/// recorded incident rows bit for bit (the fold of
+/// `incident_totals_with_exponent(.., 2.0)`), the other three are
+/// `sum w v^p` through `guided_term_with_exponent`; and the trajectory is
+/// the unforked run's to the fingerprint, in the sweep before the fork
+/// and in the fork sweep itself.
+#[test]
+fn the_fork_rescores_identical_candidates_under_four_exponents_and_changes_nothing() {
+    use super::energy::guided_term_with_exponent;
+    use super::replay::{ForkRow, ReplayProbe, FORK_EXPONENTS};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (forked, _) = replay_first_capsule_under_with(ReplayProbe::None, 3, Some(1));
+    let (control, _) = replay_first_capsule_under(ReplayProbe::None, 3);
+    assert_eq!(forked.stop, "fork");
+    assert_eq!(forked.iterations.len(), 2);
+    let fork = forked.fork.as_ref().expect("the fork sweep's report");
+    assert_eq!(fork.sweep, 2);
+    assert_eq!(fork.exponents, FORK_EXPONENTS);
+    assert_eq!(fork.deciding_exponent, 2.0);
+    assert!(!fork.relocates.is_empty());
+    let fold = |rows: &[ForkRow], exponent: f64| -> (f64, f64) {
+        let mut raw = 0.0;
+        let mut guided = 0.0;
+        for row in rows {
+            if row.1 > 0.0 {
+                raw += row.1 * row.1;
+                guided += guided_term_with_exponent(row.2, row.1, exponent);
+            }
+        }
+        (raw, guided)
+    };
+    let fold_by_hand = |rows: &[ForkRow]| -> f64 {
+        rows.iter()
+            .filter(|row| row.1 > 0.0)
+            .fold(0.0, |acc, row| acc + row.2 * (row.1 * row.1))
+    };
+    let mut finalists_seen = 0usize;
+    let mut moved_seen = 0usize;
+    for relocate in &fork.relocates {
+        assert!((relocate.worker as usize) < 8);
+        assert!(relocate.stay.raw > 0.0, "a relocate runs only on a colliding piece");
+        let (raw, guided_2) = fold(&relocate.stay.rows, 2.0);
+        assert_eq!(raw.to_bits(), relocate.stay.raw.to_bits());
+        assert_eq!(guided_2.to_bits(), relocate.stay.guided.p2.to_bits());
+        assert_eq!(fold_by_hand(&relocate.stay.rows).to_bits(), relocate.stay.guided.p2.to_bits());
+        for (index, exponent) in FORK_EXPONENTS.iter().enumerate() {
+            assert_eq!(
+                fold(&relocate.stay.rows, *exponent).1.to_bits(),
+                relocate.stay.guided.at(index).to_bits()
+            );
+        }
+        let samples = relocate
+            .candidates
+            .iter()
+            .filter(|candidate| candidate.kind != "finalist")
+            .count();
+        let finalists = relocate.candidates.len() - samples;
+        assert!(samples <= 75, "{samples}");
+        assert!(finalists <= 3, "{finalists}");
+        finalists_seen += finalists;
+        for candidate in &relocate.candidates {
+            assert!(candidate.raw.is_finite() && candidate.raw >= 0.0);
+            if candidate.kind == "finalist" {
+                let (raw, guided_2) = fold(&candidate.rows, 2.0);
+                assert_eq!(raw.to_bits(), candidate.raw.to_bits());
+                assert_eq!(guided_2.to_bits(), candidate.guided.p2.to_bits());
+                assert_eq!(fold_by_hand(&candidate.rows).to_bits(), candidate.guided.p2.to_bits());
+                for (index, exponent) in FORK_EXPONENTS.iter().enumerate() {
+                    assert_eq!(
+                        fold(&candidate.rows, *exponent).1.to_bits(),
+                        candidate.guided.at(index).to_bits()
+                    );
+                }
+            } else {
+                assert!(candidate.rows.is_empty(), "samples carry no rows");
+                assert!(matches!(candidate.kind, "focused" | "container"));
+            }
+            if candidate.raw == 0.0 {
+                assert_eq!(candidate.guided.p2, 0.0);
+                assert_eq!(candidate.guided.p05, 0.0);
+            }
+        }
+        for index in 0..4 {
+            if let Some(best) = relocate.best_under.at(index) {
+                assert!((best as usize) < relocate.candidates.len());
+                let candidate = &relocate.candidates[best as usize];
+                let beats = (candidate.raw <= 0.0 && relocate.stay.raw > 0.0)
+                    || (candidate.raw > 0.0
+                        && candidate.guided.at(index) < relocate.stay.guided.at(index));
+                assert!(beats, "{relocate:?}");
+            }
+        }
+        let (raw, guided_2) = fold(&relocate.committed.rows, 2.0);
+        assert_eq!(raw.to_bits(), relocate.committed.raw.to_bits());
+        assert_eq!(guided_2.to_bits(), relocate.committed.guided.p2.to_bits());
+        if !relocate.committed.moved {
+            assert_eq!(relocate.committed.raw.to_bits(), relocate.stay.raw.to_bits());
+            assert_eq!(relocate.committed.guided, relocate.stay.guided);
+        } else {
+            moved_seen += 1;
+        }
+    }
+    assert!(finalists_seen > 0);
+    assert!(moved_seen > 0, "the fork sweep commits at least one move on this fixture");
+    assert_eq!(fork.would_move.p2 as usize, fork.relocates.iter().filter(|r| r.best_under.p2.is_some()).count());
+
+    // The trajectory: identical to the unforked run through the fork sweep.
+    for (with, without) in forked.iterations.iter().zip(&control.iterations) {
+        assert_eq!(with.iteration, without.iteration);
+        assert_eq!(with.poses_fingerprint, without.poses_fingerprint);
+        assert_eq!(with.weights_fingerprint, without.weights_fingerprint);
+        assert_eq!(with.stream_fingerprint, without.stream_fingerprint);
+        assert_eq!(with.evaluations_all_workers, without.evaluations_all_workers);
+        assert_eq!(with.evaluations_winner, without.evaluations_winner);
+        assert_eq!(with.raw_after.to_bits(), without.raw_after.to_bits());
+        assert_eq!(with.winner, without.winner);
+        assert_eq!(with.relocates, without.relocates);
+        assert_eq!(with.blocking, without.blocking);
+    }
+    assert_eq!(forked.identity.len(), 2);
+    assert_eq!(forked.identity_pass, 2, "{:#?}", forked.identity);
+    assert_eq!(forked.evaluations_total, control.iterations[..2].iter().map(|it| it.evaluations_all_workers).sum::<u64>());
+    // The forked relocates are the fork sweep's: the winner's committed
+    // relocates appear among them with the same displacement bits.
+    let winner = forked.iterations[1].winner;
+    for committed in &forked.iterations[1].relocates {
+        let found = fork.relocates.iter().find(|relocate| {
+            relocate.worker == winner && relocate.piece == committed.piece
+        });
+        let found = found.expect("the winner's relocate was forked");
+        assert_eq!(found.committed.dx_mm.to_bits(), committed.dx_mm.to_bits());
+        assert_eq!(found.committed.dy_mm.to_bits(), committed.dy_mm.to_bits());
+        assert_eq!(found.committed.dtheta_deg.to_bits(), committed.dtheta_deg.to_bits());
+        assert_eq!(found.committed.moved, committed.moved);
+        assert_eq!(found.committed.origin, committed.origin);
+    }
 }
