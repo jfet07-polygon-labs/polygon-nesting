@@ -278,3 +278,79 @@ account". The column-break definition from committed geometry, the sweep-24 diag
 and the extended replay identity that review 5b asks for are not yet built; the live knob is
 being built first, per its Q9: `--guidedexponent`, control 2 against treatment 1 only, in the
 108-cell screen with margin 8 and the profile caps in both arms.
+
+## The column from committed geometry, the fork at sweep 24, the certification (review 5b Q6–Q8)
+
+The replay-geometry instrument (commits "The replay's committed geometry" and "The pinned
+fractional power"; `column-break.py`, documents under `geometry/`, log `geometry/demo-log.txt`
+and `geometry/column-break-output.txt`) adds to every replay the winner's committed relocates
+per iteration, the column's rows with their actual GLS weights, the core members' poses, the
+extended identity gate (poses, weights and stream fingerprints, relocates and evaluation counts
+against the trace: 43/43 on bite 15 at p = 2 and at `--probe=none`), `resolvedSeed`, the
+`--fork=<sweep>` re-scoring and the `--certify=1` detached publication check.
+
+**Two readings of "the column".** Review 5b asked for the column break "from committed
+geometry and row identities". The instrument defines the blocking graph (pieces and the four
+strip edges as vertices, rows with violation > 0 as edges) and reads the column two ways.
+*Entry graph:* the bottom-to-top paths that exist in the capsule's own blocking rows. On bite
+15 there is exactly one, edge(2,B)–pair(2,8)–pair(8,45)–edge(45,T), members 2, 8, 45; the
+0–6–43/44 column this README described is not bottom-to-top at entry (edge(44,T) is not yet
+positive) and connects at iteration 1. *Longest-lived:* the same analysis with the formation
+iteration chosen by residence; at p = 2 it is the union of both chains (8 rows, members 0, 2,
+6, 8, 43, 45), formed at 6, resident 31 iterations, and it breaks at 37, which is the number
+review 5b registered as "reproduce 37". A break is the first permanent release of a column row
+after which the original rows no longer connect bottom to top; releases that re-form before
+band entry are listed separately as temporary.
+
+**Bite 15 (margin 8, eight workers, 50 iterations maximum, one run per exponent) against the
+registered targets:**
+
+| p | column break, entry graph (deadline) | column break, longest-lived | band entry (deadline) | evaluations to band (halving target 342 990) | max column-row weight at the break | temporary releases |
+|---|---|---|---|---|---|---|
+| 2 | 29 (reproduce) | **37** (reproduce 37) | 43 (43) | 685 980 | 1.6e5 / 2.5e5 | 2 |
+| 1 | **16** (20) | 26 | 32 (27) | 462 936 (misses) | **113** / 576 | 9 |
+| 0.75 | **12** (16) | 12 | 40 (23) | 288 357 (meets) | **12.4** | 12 |
+| 0.5 | **11** (12) | 11 | 49 (19) | 230 022 (meets) | **11.8** | 10 |
+
+Every treatment meets its column-break deadline on the entry-graph reading and breaks the
+column at weights three to four orders of magnitude below the control's (113 against 1.6e5 at
+p = 1; 12 against 1.6e5 at p ≤ 0.75); none meets its band-entry deadline; the halving holds at
+p ≤ 0.75 and not at p = 1. In review 5b's own reading rules this is "earlier release at much
+smaller actual old-row weights" without "band entry within the table", i.e. the acceptance
+explanation is supported and the fast-cleanup forecast is not: at p = 1 the escape comes 13
+iterations earlier and the band 11 earlier; at p = 0.75 the escape comes 17 earlier and the band
+only 3 earlier, while the evaluations fall by 58 % because the iterations after the break are
+cheap. The treatments also release and re-form column rows four to six times more often than
+the control (the conflict-concentration hazard turned into churn).
+
+**The fork at the end of control sweep 24** (`geom-b15-fork24.json`; identity 25/25 up to the
+fork; column-row weights there 1.9e4–3.9e4, twelve blocking rows, max 31 µm). In sweep 25 the
+eight workers ran 64 relocates and the fork re-scored every candidate under all four exponents
+at the same poses and weights: a candidate beats the stay pose in **2** relocates under p = 2,
+**36** under p = 1 (all of them finalists), **63** under p = 0.75 and **64** under p = 0.5.
+For the entry column's members 2, 8 and 45 the crossover is complete: in every worker's
+relocate of pieces 2 and 8 (and most of 45) a finalist beats the stay under p = 1, none under
+p = 2. The arithmetic is the one the README's escape-weight section predicted: the stay pose of
+piece 2 scores 0.3–0.5 under `Σ w v²` (weights ~2e4 on 3–5 µm residuals) and 108–135 under
+`Σ w v`, while the finalist that beats it carries a fresh overlap of raw 750–1 200 mm²
+(10–30 mm of penetration, 700–1 000 mm away, at weight 1) which prices at 750–1 200 under
+`v²` and 27–35 under `v`. So at these weights the quadratic price keeps the column's pieces
+pinned and the linear price lets them leave. Members 0 and 6 stay under p = 1 in every worker;
+43 and 44 leave in some. Under the deciding p = 2 the core members commit micro-moves of at
+most 0.15 mm or stay.
+
+**Certification.** `--certify=1` runs the unchanged publication path
+(`Engine::attempt_publication` → `publish::attempt` → `validate_placements_against_contract`)
+on the band-entry state, records the checkpoint in the refused document and installs nothing.
+On bite 15 the band-entry states publish at p = 1 (180.0066 mm, target 180.0146; contract and
+Exclusive kernel valid, zero repair rows, one exact call), at p = 0.75 and at p = 0.5 (180.0056
+mm both). The band-entry readings above are therefore certifiable depths, which review 5b's
+qualification required before promoting them.
+
+**The other two capsules.** Bite 17 (margin 8): p = 2 breaks the column (again 2–8–45) at 25
+with weight 1.4e5 and enters the band at 26; p = 1 at 19 with weight 104, band 30, 212 530
+evaluations; p = 0.75 at 8 with weight 6.2, band 13, 64 418; p = 0.5 at 12 with weight 11,
+band 18, 71 071. Bite 17 of the margin-0 document: p = 2 forms a three-path column (members
+0, 2, 6, 8, 43, 45, 48) at 4 and breaks it at 21 with weight 2.6e4, band 37; p = 1 breaks a
+2–8–45 column at 17 with weight 121, band 19; p = 0.75 and p = 0.5 **never form a bottom-to-top
+column** ("column avoided") and enter the band at 30 and 45.

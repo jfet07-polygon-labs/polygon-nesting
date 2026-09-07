@@ -192,3 +192,12 @@ p = 1 with margin 8 against p = 2 with margin 8; the no-margin measure above gav
 churn; the exponent shortens the trickle), and the prospective successor must carry margin 8
 in both arms as review 4 prescribed. The p = 0.75 development finding stands beside it, not
 in it.
+
+**The trace evidence for the mechanism gate** is in `../bite-microscope/README.md`, section
+"The column from committed geometry, the fork at sweep 24, the certification": every treatment
+breaks the pinned column at weights three to four orders of magnitude below the control's and
+within review 5b's column-break deadlines; the fork at the end of control sweep 24 shows 36 of
+64 relocates (all of the entry column's members 2 and 8) with a finalist that beats the stay
+pose under p = 1 and 2 under p = 2, at the same poses and weights; the band-entry states
+certify through the unchanged publication path. The band-entry deadlines and, at p = 1, the
+evaluation halving are missed.

@@ -1,0 +1,134 @@
+== column-break.py
+geom-b15-fork24.json: probe=exponent:2 exponent=2.0 bite=15 proxyMarginUm=8 maxIterations=43 resolvedSeed=20 fork=24 certify=False
+  stop=fork iterations=25 bandEnteredAtIteration=None evaluationsToBand=None evaluationsTotal=442904 identity=25/25 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=3 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=None (no permanent release disconnected the original rows)
+    firstDisconnectedAt=3 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=None lastIteration=25
+  column (longest-lived): status=formed-at-iteration formedAt=6 residence=20 paths=2 rows=[pair(0,6), pair(2,8), pair(6,43), pair(8,45), edge(0,B), edge(2,B), edge(43,T), edge(45,T)] coreMembers=[0, 2, 6, 8, 43, 45]
+    breakIteration=None (no permanent release disconnected the original rows)
+    firstDisconnectedAt=None reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=None lastIteration=25
+  fork: sweep=25 relocates=64 wouldMove p=2: 2, p=1: 36, p=0.75: 63, p=0.5: 64 (decidingExponent=2.0)
+geom-b15-p05-certify.json: probe=exponent:0.5 exponent=0.5 bite=15 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=True
+  stop=band-entry iterations=49 bandEnteredAtIteration=49 evaluationsToBand=230022 evaluationsTotal=230022 identity=0/43 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=11 release=edge(2,B) at 11 by piece 2 dx 0.212 dy 0.017 dtheta -0.4; maxColumnRowWeightAtBreak=1.1761e+01; rowWeightsAtBreak=pair(2,8): 1.1761e+01, pair(8,45): 5.3074e+00, edge(2,B): 8.5654e+00, edge(45,T): 3.3785e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=49 lastIteration=49
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=11 release=edge(2,B) at 11 by piece 2 dx 0.212 dy 0.017 dtheta -0.4; maxColumnRowWeightAtBreak=1.1761e+01; rowWeightsAtBreak=pair(2,8): 1.1761e+01, pair(8,45): 5.3074e+00, edge(2,B): 8.5654e+00, edge(45,T): 3.3785e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=49 lastIteration=49
+  certification: {"attempted": true, "checkpoint": {"blockedOn": null, "blockingShortfallUm": null, "contractValid": true, "firstPair": null, "firstPairKernelShortfallUm": null, "firstPairProxyViolationUm": null, "firstScanFailingBoundaries": 0, "firstScanFailingPairs": 0, "kernelExclusiveValid": true, "maxViolationMm": 0.0, "proposalOrdinal": 5002, "proxyRawDepthMm": 180.00562207358428, "publishedRawDepthMm": 180.00562207358428, "refusal": null, "repairDepthGivebackMm": 0.0, "repairMaxDisplacementMm": 0.0, "repairRows": 0, "targetDepthMm": 180.01461612037394}, "depthMm": 180.00562207358428, "exactCalls": 1, "improvedIncumbent": true, "incumbentDepthMm": null, "maxViolationMm": 0.0, "path": "Engine::attempt_publication -> publish::attempt -> validate_placements_against_contract (unchanged)", "proxyDepthMm": 180.00562207358428, "published": true, "reason": null, "refusal": null, "targetDepthMm": 180.01461612037394}
+geom-b15-p05.json: probe=exponent:0.5 exponent=0.5 bite=15 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=49 bandEnteredAtIteration=49 evaluationsToBand=230022 evaluationsTotal=230022 identity=0/43 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=11 release=edge(2,B) at 11 by piece 2 dx 0.212 dy 0.017 dtheta -0.4; maxColumnRowWeightAtBreak=1.1761e+01; rowWeightsAtBreak=pair(2,8): 1.1761e+01, pair(8,45): 5.3074e+00, edge(2,B): 8.5654e+00, edge(45,T): 3.3785e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=49 lastIteration=49
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=11 release=edge(2,B) at 11 by piece 2 dx 0.212 dy 0.017 dtheta -0.4; maxColumnRowWeightAtBreak=1.1761e+01; rowWeightsAtBreak=pair(2,8): 1.1761e+01, pair(8,45): 5.3074e+00, edge(2,B): 8.5654e+00, edge(45,T): 3.3785e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=49 lastIteration=49
+geom-b15-p075-certify.json: probe=exponent:0.75 exponent=0.75 bite=15 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=True
+  stop=band-entry iterations=40 bandEnteredAtIteration=40 evaluationsToBand=288357 evaluationsTotal=288357 identity=0/40 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=12 release=edge(2,B) at 12 by piece 2 dx 0.008 dy 0.006 dtheta 0.0; maxColumnRowWeightAtBreak=1.2394e+01; rowWeightsAtBreak=pair(2,8): 1.0615e+01, pair(8,45): 1.1173e+01, edge(2,B): 1.2394e+01, edge(45,T): 6.5417e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=40 lastIteration=40
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=12 release=edge(2,B) at 12 by piece 2 dx 0.008 dy 0.006 dtheta 0.0; maxColumnRowWeightAtBreak=1.2394e+01; rowWeightsAtBreak=pair(2,8): 1.0615e+01, pair(8,45): 1.1173e+01, edge(2,B): 1.2394e+01, edge(45,T): 6.5417e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=40 lastIteration=40
+  certification: {"attempted": true, "checkpoint": {"blockedOn": null, "blockingShortfallUm": null, "contractValid": true, "firstPair": null, "firstPairKernelShortfallUm": null, "firstPairProxyViolationUm": null, "firstScanFailingBoundaries": 0, "firstScanFailingPairs": 0, "kernelExclusiveValid": true, "maxViolationMm": 0.0, "proposalOrdinal": 4453, "proxyRawDepthMm": 180.00562207358428, "publishedRawDepthMm": 180.00562207358428, "refusal": null, "repairDepthGivebackMm": 0.0, "repairMaxDisplacementMm": 0.0, "repairRows": 0, "targetDepthMm": 180.01461612037394}, "depthMm": 180.00562207358428, "exactCalls": 1, "improvedIncumbent": true, "incumbentDepthMm": null, "maxViolationMm": 0.0, "path": "Engine::attempt_publication -> publish::attempt -> validate_placements_against_contract (unchanged)", "proxyDepthMm": 180.00562207358428, "published": true, "reason": null, "refusal": null, "targetDepthMm": 180.01461612037394}
+geom-b15-p075.json: probe=exponent:0.75 exponent=0.75 bite=15 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=40 bandEnteredAtIteration=40 evaluationsToBand=288357 evaluationsTotal=288357 identity=0/40 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=12 release=edge(2,B) at 12 by piece 2 dx 0.008 dy 0.006 dtheta 0.0; maxColumnRowWeightAtBreak=1.2394e+01; rowWeightsAtBreak=pair(2,8): 1.0615e+01, pair(8,45): 1.1173e+01, edge(2,B): 1.2394e+01, edge(45,T): 6.5417e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=40 lastIteration=40
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=12 release=edge(2,B) at 12 by piece 2 dx 0.008 dy 0.006 dtheta 0.0; maxColumnRowWeightAtBreak=1.2394e+01; rowWeightsAtBreak=pair(2,8): 1.0615e+01, pair(8,45): 1.1173e+01, edge(2,B): 1.2394e+01, edge(45,T): 6.5417e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=40 lastIteration=40
+geom-b15-p1-certify.json: probe=exponent:1 exponent=1.0 bite=15 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=True
+  stop=band-entry iterations=32 bandEnteredAtIteration=32 evaluationsToBand=462936 evaluationsTotal=462936 identity=0/32 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=5 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=16 release=edge(2,B) at 16 by piece 2 dx 2.793 dy 0.075 dtheta 0.0; maxColumnRowWeightAtBreak=1.1301e+02; rowWeightsAtBreak=pair(2,8): 5.9964e+01, pair(8,45): 8.2282e+01, edge(2,B): 6.7631e+01, edge(45,T): 1.1301e+02
+    firstDisconnectedAt=5 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=32 lastIteration=32
+  column (longest-lived): status=formed-at-iteration formedAt=12 residence=10 paths=2 rows=[pair(0,6), pair(6,43), pair(6,44), edge(0,B), edge(43,T), edge(44,T)] coreMembers=[0, 6, 43, 44]
+    breakIteration=26 release=edge(0,B) at 26 by piece 0 dx -0.006 dy 0.014 dtheta 0.0; maxColumnRowWeightAtBreak=5.7626e+02; rowWeightsAtBreak=pair(0,6): 5.7626e+02, pair(6,43): 3.4939e+02, pair(6,44): 1.1988e+02, edge(0,B): 3.9589e+02, edge(43,T): 3.0556e+02, edge(44,T): 2.2337e+02
+    firstDisconnectedAt=22 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=32 lastIteration=32
+  certification: {"attempted": true, "checkpoint": {"blockedOn": null, "blockingShortfallUm": null, "contractValid": true, "firstPair": null, "firstPairKernelShortfallUm": null, "firstPairProxyViolationUm": null, "firstScanFailingBoundaries": 0, "firstScanFailingPairs": 0, "kernelExclusiveValid": true, "maxViolationMm": 0.0007997447095942078, "proposalOrdinal": 3965, "proxyRawDepthMm": 180.0065648990851, "publishedRawDepthMm": 180.0065648990851, "refusal": null, "repairDepthGivebackMm": 0.0, "repairMaxDisplacementMm": 0.0, "repairRows": 0, "targetDepthMm": 180.01461612037394}, "depthMm": 180.0065648990851, "exactCalls": 1, "improvedIncumbent": true, "incumbentDepthMm": null, "maxViolationMm": 0.0007997447095942078, "path": "Engine::attempt_publication -> publish::attempt -> validate_placements_against_contract (unchanged)", "proxyDepthMm": 180.0065648990851, "published": true, "reason": null, "refusal": null, "targetDepthMm": 180.01461612037394}
+geom-b15-p1.json: probe=exponent:1 exponent=1.0 bite=15 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=32 bandEnteredAtIteration=32 evaluationsToBand=462936 evaluationsTotal=462936 identity=0/32 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=5 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=16 release=edge(2,B) at 16 by piece 2 dx 2.793 dy 0.075 dtheta 0.0; maxColumnRowWeightAtBreak=1.1301e+02; rowWeightsAtBreak=pair(2,8): 5.9964e+01, pair(8,45): 8.2282e+01, edge(2,B): 6.7631e+01, edge(45,T): 1.1301e+02
+    firstDisconnectedAt=5 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=32 lastIteration=32
+  column (longest-lived): status=formed-at-iteration formedAt=12 residence=10 paths=2 rows=[pair(0,6), pair(6,43), pair(6,44), edge(0,B), edge(43,T), edge(44,T)] coreMembers=[0, 6, 43, 44]
+    breakIteration=26 release=edge(0,B) at 26 by piece 0 dx -0.006 dy 0.014 dtheta 0.0; maxColumnRowWeightAtBreak=5.7626e+02; rowWeightsAtBreak=pair(0,6): 5.7626e+02, pair(6,43): 3.4939e+02, pair(6,44): 1.1988e+02, edge(0,B): 3.9589e+02, edge(43,T): 3.0556e+02, edge(44,T): 2.2337e+02
+    firstDisconnectedAt=22 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=32 lastIteration=32
+geom-b15-p2.json: probe=exponent:2 exponent=2.0 bite=15 proxyMarginUm=8 maxIterations=43 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=43 bandEnteredAtIteration=43 evaluationsToBand=685980 evaluationsTotal=685980 identity=43/43 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=3 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=29 release=pair(2,8) at 29 by piece 2 dx 6.746 dy 0.039 dtheta 0.0; maxColumnRowWeightAtBreak=1.6250e+05; rowWeightsAtBreak=pair(2,8): 4.1985e+04, pair(8,45): 8.9632e+04, edge(2,B): 5.2372e+04, edge(45,T): 1.6250e+05
+    firstDisconnectedAt=3 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=43 lastIteration=43
+  column (longest-lived): status=formed-at-iteration formedAt=6 residence=31 paths=2 rows=[pair(0,6), pair(2,8), pair(6,43), pair(8,45), edge(0,B), edge(2,B), edge(43,T), edge(45,T)] coreMembers=[0, 2, 6, 8, 43, 45]
+    breakIteration=37 release=pair(0,6) at 37 by piece 6 dx -3.356 dy 6.381 dtheta 200.4; maxColumnRowWeightAtBreak=2.4774e+05; rowWeightsAtBreak=pair(0,6): 2.4774e+05, pair(2,8): 2.7854e+04, pair(6,43): 1.9063e+05, pair(8,45): 5.9464e+04, edge(0,B): 1.9207e+05, edge(2,B): 3.4745e+04, edge(43,T): 1.7816e+05, edge(45,T): 1.0781e+05
+    firstDisconnectedAt=37 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=43 lastIteration=43
+geom-b17-p05.json: probe=exponent:0.5 exponent=0.5 bite=17 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=18 bandEnteredAtIteration=18 evaluationsToBand=71071 evaluationsTotal=71071 identity=0/18 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=12 release=edge(45,T) at 12 by piece 45 dx -1.351 dy -0.242 dtheta 0.0; maxColumnRowWeightAtBreak=1.1173e+01; rowWeightsAtBreak=pair(2,8): 5.0420e+00, pair(8,45): 1.1173e+01, edge(2,B): 3.0951e+00, edge(45,T): 6.5540e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=18 lastIteration=18
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=12 release=edge(45,T) at 12 by piece 45 dx -1.351 dy -0.242 dtheta 0.0; maxColumnRowWeightAtBreak=1.1173e+01; rowWeightsAtBreak=pair(2,8): 5.0420e+00, pair(8,45): 1.1173e+01, edge(2,B): 3.0951e+00, edge(45,T): 6.5540e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=18 lastIteration=18
+geom-b17-p075.json: probe=exponent:0.75 exponent=0.75 bite=17 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=13 bandEnteredAtIteration=13 evaluationsToBand=64418 evaluationsTotal=64418 identity=0/13 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=8 release=edge(2,B) at 8 by piece 2 dx -0.055 dy 0.175 dtheta 0.0; maxColumnRowWeightAtBreak=6.1902e+00; rowWeightsAtBreak=pair(2,8): 6.1902e+00, pair(8,45): 3.0951e+00, edge(2,B): 3.8000e+00, edge(45,T): 2.3074e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=13 lastIteration=13
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=8 release=edge(2,B) at 8 by piece 2 dx -0.055 dy 0.175 dtheta 0.0; maxColumnRowWeightAtBreak=6.1902e+00; rowWeightsAtBreak=pair(2,8): 6.1902e+00, pair(8,45): 3.0951e+00, edge(2,B): 3.8000e+00, edge(45,T): 2.3074e+00
+    firstDisconnectedAt=1 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=13 lastIteration=13
+geom-b17-p1.json: probe=exponent:1 exponent=1.0 bite=17 proxyMarginUm=8 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=30 bandEnteredAtIteration=30 evaluationsToBand=212530 evaluationsTotal=212530 identity=0/26 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=2 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=19 release=pair(8,45) at 19 by piece 45 dx -5.303 dy 0.000 dtheta -0.0; maxColumnRowWeightAtBreak=1.0394e+02; rowWeightsAtBreak=pair(2,8): 8.6898e+01, pair(8,45): 9.4475e+01, edge(2,B): 1.0394e+02, edge(45,T): 9.8259e+01
+    firstDisconnectedAt=2 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=30 lastIteration=30
+  column (longest-lived): status=formed-at-iteration formedAt=5 residence=3 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=19 release=pair(8,45) at 19 by piece 45 dx -5.303 dy 0.000 dtheta -0.0; maxColumnRowWeightAtBreak=1.0394e+02; rowWeightsAtBreak=pair(2,8): 8.6898e+01, pair(8,45): 9.4475e+01, edge(2,B): 1.0394e+02, edge(45,T): 9.8259e+01
+    firstDisconnectedAt=8 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=30 lastIteration=30
+geom-b17-p2.json: probe=exponent:2 exponent=2.0 bite=17 proxyMarginUm=8 maxIterations=26 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=26 bandEnteredAtIteration=26 evaluationsToBand=262987 evaluationsTotal=262987 identity=26/26 PASS
+  column (entry graph): status=formed-at-entry formedAt=0 residence=16 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=25 release=pair(2,8) at 25 by piece 2 dx 0.075 dy 0.000 dtheta 0.0; maxColumnRowWeightAtBreak=1.4291e+05; rowWeightsAtBreak=pair(2,8): 5.4685e+04, pair(8,45): 3.7634e+04, edge(2,B): 1.2803e+05, edge(45,T): 1.4291e+05
+    firstDisconnectedAt=16 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=26 lastIteration=26
+  column (longest-lived): status=formed-at-entry formedAt=0 residence=16 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=25 release=pair(2,8) at 25 by piece 2 dx 0.075 dy 0.000 dtheta 0.0; maxColumnRowWeightAtBreak=1.4291e+05; rowWeightsAtBreak=pair(2,8): 5.4685e+04, pair(8,45): 3.7634e+04, edge(2,B): 1.2803e+05, edge(45,T): 1.4291e+05
+    firstDisconnectedAt=16 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=26 lastIteration=26
+geom-m0b17-p05.json: probe=exponent:0.5 exponent=0.5 bite=17 proxyMarginUm=0 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=45 bandEnteredAtIteration=45 evaluationsToBand=174352 evaluationsTotal=174352 identity=0/37 PASS
+  column (entry graph): status=avoided formedAt=None residence=0 paths=0 rows=[] coreMembers=[]
+    breakIteration=None (no permanent release disconnected the original rows)
+    firstDisconnectedAt=None reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=45 lastIteration=45
+  column (longest-lived): status=avoided formedAt=None residence=0 paths=0 rows=[] coreMembers=[]
+    breakIteration=None (no permanent release disconnected the original rows)
+    firstDisconnectedAt=None reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=45 lastIteration=45
+geom-m0b17-p075.json: probe=exponent:0.75 exponent=0.75 bite=17 proxyMarginUm=0 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=30 bandEnteredAtIteration=30 evaluationsToBand=175440 evaluationsTotal=175440 identity=0/30 PASS
+  column (entry graph): status=avoided formedAt=None residence=0 paths=0 rows=[] coreMembers=[]
+    breakIteration=None (no permanent release disconnected the original rows)
+    firstDisconnectedAt=None reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=30 lastIteration=30
+  column (longest-lived): status=avoided formedAt=None residence=0 paths=0 rows=[] coreMembers=[]
+    breakIteration=None (no permanent release disconnected the original rows)
+    firstDisconnectedAt=None reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=30 lastIteration=30
+geom-m0b17-p1.json: probe=exponent:1 exponent=1.0 bite=17 proxyMarginUm=0 maxIterations=50 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=19 bandEnteredAtIteration=19 evaluationsToBand=213938 evaluationsTotal=213938 identity=0/19 PASS
+  column (entry graph): status=formed-at-iteration formedAt=2 residence=1 paths=1 rows=[pair(2,8), pair(8,45), edge(2,B), edge(45,T)] coreMembers=[2, 8, 45]
+    breakIteration=17 release=pair(2,8) at 17 by piece 8 dx 881.814 dy 24.768 dtheta 78.8; maxColumnRowWeightAtBreak=1.2076e+02; rowWeightsAtBreak=pair(2,8): 8.1294e+01, pair(8,45): 1.2076e+02, edge(2,B): 1.1851e+02, edge(45,T): 7.6931e+01
+    firstDisconnectedAt=3 reformedAfterFirstDisconnection=True reformedAfterBreak=False bandEntryIteration=19 lastIteration=19
+  column (longest-lived): status=formed-at-iteration formedAt=8 residence=5 paths=1 rows=[pair(0,6), pair(6,43), edge(0,B), edge(43,T)] coreMembers=[0, 6, 43]
+    breakIteration=13 release=edge(0,B) at 13 by piece 0 dx 0.010 dy 0.005 dtheta 0.0; maxColumnRowWeightAtBreak=8.1979e+01; rowWeightsAtBreak=pair(0,6): 5.7601e+01, pair(6,43): 5.5544e+01, edge(0,B): 5.1927e+01, edge(43,T): 8.1979e+01
+    firstDisconnectedAt=13 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=19 lastIteration=19
+geom-m0b17-p2.json: probe=exponent:2 exponent=2.0 bite=17 proxyMarginUm=0 maxIterations=37 resolvedSeed=20 fork=None certify=False
+  stop=band-entry iterations=37 bandEnteredAtIteration=37 evaluationsToBand=500681 evaluationsTotal=500681 identity=37/37 PASS
+  column (entry graph): status=formed-at-iteration formedAt=4 residence=17 paths=3 rows=[pair(0,6), pair(2,8), pair(6,43), pair(6,48), pair(8,45), edge(0,B), edge(2,B), edge(43,T), edge(45,T), edge(48,T)] coreMembers=[0, 2, 6, 8, 43, 45, 48]
+    breakIteration=21 release=pair(0,6) at 21 by piece 6 dx -8.084 dy 19.011 dtheta 198.3; maxColumnRowWeightAtBreak=2.5547e+04; rowWeightsAtBreak=pair(0,6): 2.5547e+04, pair(2,8): 1.1779e+04, pair(6,43): 1.0867e+04, pair(6,48): 1.0869e+04, pair(8,45): 1.0700e+04, edge(0,B): 2.2082e+04, edge(2,B): 1.2718e+04, edge(43,T): 1.7606e+04, edge(45,T): 1.2366e+04, edge(48,T): 8.7539e+03
+    firstDisconnectedAt=21 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=37 lastIteration=37
+  column (longest-lived): status=formed-at-iteration formedAt=4 residence=17 paths=3 rows=[pair(0,6), pair(2,8), pair(6,43), pair(6,48), pair(8,45), edge(0,B), edge(2,B), edge(43,T), edge(45,T), edge(48,T)] coreMembers=[0, 2, 6, 8, 43, 45, 48]
+    breakIteration=21 release=pair(0,6) at 21 by piece 6 dx -8.084 dy 19.011 dtheta 198.3; maxColumnRowWeightAtBreak=2.5547e+04; rowWeightsAtBreak=pair(0,6): 2.5547e+04, pair(2,8): 1.1779e+04, pair(6,43): 1.0867e+04, pair(6,48): 1.0869e+04, pair(8,45): 1.0700e+04, edge(0,B): 2.2082e+04, edge(2,B): 1.2718e+04, edge(43,T): 1.7606e+04, edge(45,T): 1.2366e+04, edge(48,T): 8.7539e+03
+    firstDisconnectedAt=21 reformedAfterFirstDisconnection=False reformedAfterBreak=False bandEntryIteration=37 lastIteration=37
+GEOMETRY_DEMO_DONE
