@@ -134,3 +134,41 @@ outside the bench lock's serialization; or a seed outside `seeds.txt` appears.
 - Runner `evidence/…/spec-run.sh` (the v1 runner, unchanged) with `evidence/…/manifest-v2.txt`;
   cells `/var/lib/t3/tmp/astra/v2/v2-<A|B>-wall10s-r<rep>-s<seed>.json`, archived gzipped under
   `evidence/…/cells/` after the round with `load-v2.log`, `spec-run.log` and `contamination.txt`.
+
+# Result: NOT PROMOTED — the Wall10s tail fails on one of the thirty seeds (−4.380 mm); depth, engineering and integrity pass
+
+Appended 2026-09-07 after scoring; nothing above was edited. The round ran 11:24:21–11:54:29 UTC
+from the committed manifest, 180 cells, no pair re-run (maximum load inside any cell window 8.57;
+the only cargo invocations in the period ran under the bench lock and therefore outside every cell
+window; `evidence/contamination.txt`). Scored with the fixed command (`evidence/v2-score.txt`,
+`v2-score.json`; cells under `evidence/cells/`).
+
+| required, Wall10s | value | verdict |
+|---|---|---|
+| 1 depth: median g over 30 seeds | **+0.396 mm**, treatment deeper on 19/30 (> 0.001), shallower on 11/30 | PASS |
+| 2 tail: min g ≥ −1.000 | **−4.380 mm** on seed 10636268072709740349 (control 154.72 / 154.61 / 154.68, treatment 159.11 / 159.05 / 159.06); no other seed below −0.719 | **FAIL** |
+| 3 engineering | total evaluations per cell 45.21M → 40.83M (−9.7 %); explore evaluations per published explore bite 8 975 645 → 7 687 612 (−14.4 %); explore elapsed time per published bite 1.862 → 1.802 s (−3.2 %); published explore bites per cell 4.03 → 4.17; publication fraction 80.13 → 80.65 % | PASS |
+| 4 integrity | 180 verified documents, exactly three repetitions per seed and arm, zero invalid publications, executable `8734404a…` throughout | PASS |
+
+**Verdict under the specification: DO NOT PROMOTE** (failed: Wall10s tail).
+
+What the thirty seeds show. The seed medians are bimodal in both arms: the control sits at
+158.1–160.2 mm on 29 seeds and reaches 154.7 on one; the treatment sits at 158.4–159.9 on 25 seeds
+and reaches 153.4–154.7 on **five** (gains of +5.1 to +6.6 mm on four of them). The one failing
+seed is the control's own deep outcome, which the treatment does not reproduce (−4.380). Mean gain
++0.93 mm; seven seeds gain more than 1 mm, three lose more than 0.5 mm. Every one of the 180
+cells ends in an unpublished explore bite; those failed bites take 62.5 % (control) and 75.5 %
+(treatment) of the explore evaluations; explore disruptions 0 and 1 in the two arms. So at ten
+seconds on Wall10s the exponent changes which seeds reach the 153–155 mm basin, five for one, and
+the tail guard, registered to catch exactly a seed-level regression of this size, catches the one.
+
+**Reported, not required.** Sparrow (residual gap): treatment median of seed medians 159.033 mm,
+gap 8.868 mm; control 159.439, gap 9.274; reduction 0.406 mm; seed medians at or below 150.165:
+0/30 in both arms (the deepest treatment median 153.4). Forecast outcomes: the halving is missed
+(−14.4 %), the −30 % work target is missed. No package comparison exists on these seeds.
+
+**What this round establishes.** With thirty seeds the per-seed tail screen has the power review
+7 wanted (a 10 % seed-level regression rate escapes it 4.2 % of the time), and it found one
+regression of 4.4 mm against five basin gains of about 5 mm: p = 1 with margin 8 is not a uniform
+Wall10s improvement at the 1.000 mm guard, and the exponent line's promotion claim ends here on
+both profiles. The thirty seeds are now consumed by this candidate.

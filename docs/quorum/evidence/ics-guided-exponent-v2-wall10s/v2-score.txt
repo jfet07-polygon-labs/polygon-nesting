@@ -1,0 +1,69 @@
+spec-score: ICS-guided-exponent development screen / prospective specification ICS-guided-exponent-v1
+   dir /var/lib/t3/tmp/astra/v2  prefix v2  seeds 6185102792240140886..16197236351957724232 (30)  profiles wall10s  repetitions r0,r1,r2
+   arms: A = margin 8 um, p = 2 [control]; B = margin 8 um, p = 1
+====================================================================================================
+ARCHIVE archive: /var/lib/t3/tmp/astra/v2
+   executableSha256 8734404a249e06fb57c387a9e1d310147a5b924b255378ff880ed59f189227b2
+   request.sha256 ecfe126f431f08b817813d4af1ad438399585c6cc1c4f16b835e5b6874878bb3  path tests/fixtures/mixed-61/mixed61-request-exact-clearance.json
+   contract {"depthTopInsetMm": 5.0, "expansionMm": 2.5, "flatteningSagToleranceMm": 0.0, "pairClearanceMm": 5.0, "physicalEdgeClearanceMm": 5.0, "searchOffsetAllowanceMm": 0.002, "sheetEdgeClearanceMm": 5.0, "sheetInsetMm": 2.5, "twoRMicron": 5000.0}
+   wallIterationCap wall10s 0
+== wall10s: control A (margin 8 um, p = 2) vs treatment B (margin 8 um, p = 1); 90 + 90 cells
+   seed      D[A]        D[B]      g = D[A] - D[B]
+   245054974385835927    159.212     159.638      -0.425
+   1266588499924407455    160.203     159.637      +0.566
+   1401127988487338646    159.010     159.019      -0.008
+   2093561245321342307    159.017     159.254      -0.237
+   2526133772389730536    159.988     159.034      +0.954
+   2586638353860241226    159.956     158.761      +1.195
+   4481581871270843759    159.477     159.030      +0.448
+   4872519857840070441    159.583     153.830      +5.753
+   5671471283886933426    159.401     154.256      +5.146
+   6185102792240140886    159.658     159.047      +0.611
+   6460741950156061217    159.015     158.377      +0.638
+   7700681765202323159    159.015     159.353      -0.338
+   7797222088981460957    159.040     159.030      +0.009
+   8176539551367944027    159.912     159.938      -0.026
+   8755853977552987277    160.015     159.053      +0.962
+   9319425482262338153    159.484     159.676      -0.192
+   10636268072709740349    154.677     159.057      -4.380
+   10835273698295202758    158.114     158.764      -0.650
+   10882105840989348892    159.043     159.328      -0.285
+   11151532166486038253    159.647     154.658      +4.988
+   12153648923418518200    159.770     159.338      +0.432
+   13500830528455456567    160.076     159.025      +1.051
+   14782797682586776746    159.038     159.020      +0.017
+   15320042189458576624    159.048     159.032      +0.017
+   15807079958706394540    159.034     159.380      -0.346
+   16197236351957724232    160.138     159.778      +0.360
+   16914106676243337695    159.062     159.781      -0.719
+   17316774662183274765    160.063     153.418      +6.645
+   17380016107309069740    159.351     158.780      +0.571
+   18390115156762500293    159.691     154.555      +5.136
+   median g +0.396 mm, min g -4.380 mm, B wins 19/30 (> 0.001), losses 11/30 (< -0.001)
+   A: median of seed medians 159.439 mm (mean 159.291); gap to Sparrow 150.165 = +9.274 mm; seed medians <= 150.165: 0/30
+   B: median of seed medians 159.033 mm (mean 158.361); gap to Sparrow 150.165 = +8.868 mm; seed medians <= 150.165: 0/30
+   work, A -> B:
+      total evaluations per cell                           45.21M -> 40.83M  (-9.7 %)
+      explore evaluations per published explore bite       8,975,645 -> 7,687,612  (-14.4 %)
+      published explore bites per cell                     4.03 -> 4.17
+      explore bites started per cell                       5.03 -> 5.17
+      publication fraction                                 80.13 % -> 80.65 %
+      explore elapsed time per published explore bite      1.8620 s (1862.01 ms) -> 1.8018 s (1801.78 ms)  (-3.2 %)
+      master iterations per cell (all bites)               1035 -> 1483
+      give-ups (checkpoint refusals containing "band")     0 -> 0
+      checkpoint refusals, all reasons                     0 -> 0
+      publications per cell                                23.19 -> 28.08
+      explore elapsed seconds per cell                     7.510 -> 7.507
+      wall total seconds per cell                          10.007 -> 10.007
+   [PASS] 1 depth: median g = +0.396 mm > 0
+   [FAIL] 2 tail: min g = -4.380 mm >= -1.000
+   [PASS] 3 engineering:
+        [PASS] total evaluations per cell: 40.83M lower than 45.21M
+        [PASS] explore evaluations per published explore bite: 7,687,612 lower than 8,975,645
+        [PASS] explore elapsed time per published explore bite: 1.8018 s (1801.78 ms) lower than 1.8620 s (1862.01 ms)
+        [PASS] published explore bites per cell: 4.17 not lower than 4.03
+        [PASS] publication fraction: 80.65 % not lower than 80.13 %
+   [PASS] 4 integrity: invalid publications A 0 (0 cells), B 0 (0 cells); identity checks passed
+   B against A: all four conditions on both profiles: FAIL
+VERDICT (archive, treatment B vs control A): DO NOT PROMOTE; failed: wall10s/tail
+json written: /var/lib/t3/tmp/astra/v2/v2-score.json
