@@ -579,10 +579,39 @@ pub struct Capsule {
     pub raw: f64,
     pub guided: f64,
     pub max_mm: f64,
+    /// The guided exponent the capture ran under (`super::guided_exponent`),
+    /// present only when the knob was on. A replay's control folds at the
+    /// process knob and reproduces this trace only at the same `p`, so the
+    /// capsule says which `p` that is, and the benchmark refuses a
+    /// `--guidedexponent` that disagrees with the document. Absent at the
+    /// frozen engine's 2 so the default document is byte-identical.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub guided_exponent: Option<f64>,
 }
 
 impl Capsule {
-    fn capture(bite: u64, label: &'static str, state: &IcsState, descent: &Descent) -> Self {
+    /// The live capture: [`Capsule::capture_under`] at the process knob.
+    pub(super) fn capture(
+        bite: u64,
+        label: &'static str,
+        state: &IcsState,
+        descent: &Descent,
+    ) -> Self {
+        Self::capture_under(bite, label, state, descent, super::guided_exponent())
+    }
+
+    /// The capture at a named exponent. The live path passes the knob; a
+    /// test passes `p` directly, because holding the process knob at
+    /// `p != 2` for the length of a run makes every test that folds energy
+    /// without `knob_lock` in that window see `p`, and the suite runs on
+    /// parallel threads.
+    pub(super) fn capture_under(
+        bite: u64,
+        label: &'static str,
+        state: &IcsState,
+        descent: &Descent,
+        guided_exponent: f64,
+    ) -> Self {
         let totals = super::energy::fold(state);
         Self {
             bite,
@@ -605,6 +634,8 @@ impl Capsule {
             raw: totals.raw,
             guided: totals.guided,
             max_mm: totals.max_violation_mm,
+            guided_exponent: (guided_exponent != super::DEFAULT_GUIDED_EXPONENT)
+                .then_some(guided_exponent),
         }
     }
 }

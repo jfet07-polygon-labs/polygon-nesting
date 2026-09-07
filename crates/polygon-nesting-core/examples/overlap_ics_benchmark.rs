@@ -3966,9 +3966,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         //
         // FORBIDDEN AS A RESULT. A capsule is a known-good layout;
         // `docs/grok-review-12-reading-sparrow.md` §5.2 (row "fixture as a
-        // seed") forbids starting a scored cell from one. So this cell never
-        // publishes (no exact call: it stops at band entry), is never a
-        // default, and its document carries `replay.tripwire`.
+        // seed") forbids starting a scored cell from one. So this cell
+        // installs nothing, is never a default, and its document carries
+        // `replay.tripwire`. It stops at band entry; the exact call the
+        // live loop would make there is made only under `--certify=1`,
+        // once, after the stop, and its answer - a publication included -
+        // is recorded in `replay.certification` of this refused document
+        // and nowhere else.
         "replay" => {
             let capsule_path = options.required("capsule")?.to_owned();
             let capsule_bytes = fs::read(&capsule_path)
@@ -4136,6 +4140,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Err(format!(
                     "--capsuleindex={capsule_index} belongs to bite {:?}, not bite {bite_ordinal}",
                     capsule["bite"]
+                )
+                .into());
+            }
+            // The exponent the capture ran under: the capsule's own
+            // `guidedExponent` (the live capture writes it only when the
+            // knob was on) and the document's top-level field are the same
+            // process knob, so they must agree with each other as they were
+            // just made to agree with this run's; absence is the frozen
+            // engine's 2.
+            let captured_exponent = capsule["guidedExponent"]
+                .as_f64()
+                .unwrap_or(document_exponent);
+            if captured_exponent != document_exponent {
+                return Err(format!(
+                    "--capsuleindex={capsule_index}: the capsule was captured at \
+                     guidedExponent={captured_exponent} but the document says \
+                     {document_exponent}; a document does not disagree with its own capsule"
                 )
                 .into());
             }
@@ -4552,10 +4573,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "proxyMarginUm": document_margin,
                 "wallIterationCap": capsule_document["wallIterationCap"].clone(),
                 "explorePatience": capsule_document["explorePatience"].clone(),
-                // The exponent the frozen engine ran the capture under: the
-                // guided objective is `w v^2` and there is no live knob yet;
-                // when one exists this field reads it.
-                "capturedExponent": 2.0,
+                // The exponent the capture ran under, read from the capsule
+                // (or the document's top level; absent means the frozen
+                // engine's 2), never assumed: a capsule captured under
+                // `--guidedexponent=<p>` replays only at that `p`.
+                "capturedExponent": captured_exponent,
                 "pieces": pieces.len(),
             });
             replay["reconstruction"] = reconstruction;
@@ -4658,15 +4680,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         document["biteMicroscope"] = report;
     }
     // Same rule, and louder still: present exactly when `--cell=replay` ran.
-    // The replay started from a capsule's known-good layout and published
-    // nothing; its band entry is a diagnostic reading, never a depth
+    // The replay started from a capsule's known-good layout and installed
+    // nothing; its band entry is a diagnostic reading, never a depth, and
+    // under `--certify=1` the one live publication call made after that
+    // stop is recorded in `replay.certification` of this document only
     // (`overlap_ics::replay`).
     if let Some(mut report) = replay_document.take() {
         let probe_label = report["probe"].as_str().unwrap_or("?").to_owned();
+        let certify = report["params"]["certify"] == json!(true);
+        let exact_calls = report["params"]["exactCalls"].as_u64().unwrap_or(0);
         report["tripwire"] = json!(format!(
-            "DIAGNOSTIC ONLY: --cell=replay ran (probe {probe_label}); this trajectory started \
-             from a bite-microscope capsule (a known-good layout), published nothing and must \
-             never be scored (forbidden-rescue row: fixture as a seed)"
+            "DIAGNOSTIC ONLY: --cell=replay ran (probe {probe_label}, certify {certify}, \
+             {exact_calls} exact calls); this trajectory started from a bite-microscope \
+             capsule (a known-good layout) and installed nothing - under --certify=1 the live \
+             publication call is made once after band entry and its answer, a publication \
+             included, is recorded in replay.certification of this refused document only - \
+             and must never be scored (forbidden-rescue row: fixture as a seed)"
         ));
         report["flag"] = json!("--cell=replay");
         document["replay"] = report;

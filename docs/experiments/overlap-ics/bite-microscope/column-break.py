@@ -125,7 +125,15 @@ for path in sys.argv[1:]:
         for line in column_lines("column (longest-lived)", r["columnLongestLived"], count):
             print(line)
     fork = r.get("fork")
-    if fork:
+    # A fork the replay never reached is `{sweep, reached: false, stop,
+    # iterations}` and carries no relocates; documents written before the
+    # `reached` field existed only ever carried a reached fork.
+    if fork and fork.get("reached", True) is False:
+        print(
+            "  fork: sweep=%d NOT REACHED (stopped %s after %d iterations)"
+            % (fork["sweep"], fork["stop"], fork["iterations"])
+        )
+    elif fork:
         wm = fork["wouldMove"]
         print(
             "  fork: sweep=%d relocates=%d wouldMove p=2: %d, p=1: %d, p=0.75: %d, p=0.5: %d (decidingExponent=%s)"

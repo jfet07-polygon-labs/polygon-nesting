@@ -2928,6 +2928,11 @@ fn tournament_run(workers: usize) -> (ScheduleOutcome, usize) {
 /// deterministic too, and this is what tells the two apart.
 #[test]
 fn the_eight_worker_tournament_is_a_function_of_its_key() {
+    // Two runs compared for identity: the knob lock's own rule ("every test
+    // that asserts two runs identical holds this for its whole body"). The
+    // process knobs are read by every fold, so a writer's window inside this
+    // test's span - however short - makes the two runs see two engines.
+    let _knobs = knob_lock();
     let (first, count) = tournament_run(8);
     let (again, _) = tournament_run(8);
     assert!(
@@ -4218,15 +4223,23 @@ fn replay_first_capsule_under(
     probe: super::replay::ReplayProbe,
     max_iterations: u64,
 ) -> (super::replay::ReplayReport, Vec<super::microscope::SweepRecord>) {
-    replay_first_capsule_under_with(probe, max_iterations, None)
+    let (report, sweeps, _) = replay_first_capsule_under_with(probe, max_iterations, None, false);
+    (report, sweeps)
 }
 
-/// [`replay_first_capsule_under`] with `--fork=<sweep>`.
+/// [`replay_first_capsule_under`] with `--fork=<sweep>` and `--certify=1`,
+/// returning the capsule the replay started from as well (its `proposals`
+/// and piece count are what `identity_row` needs to be called by hand).
 fn replay_first_capsule_under_with(
     probe: super::replay::ReplayProbe,
     max_iterations: u64,
     fork: Option<u64>,
-) -> (super::replay::ReplayReport, Vec<super::microscope::SweepRecord>) {
+    certify: bool,
+) -> (
+    super::replay::ReplayReport,
+    Vec<super::microscope::SweepRecord>,
+    super::microscope::Capsule,
+) {
     use super::microscope::MicroscopeConfig;
     use super::replay::{ReplayParams, TracedSweep};
     let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
@@ -4290,9 +4303,116 @@ fn replay_first_capsule_under_with(
         traced,
         watch_rows: Vec::new(),
         fork,
-        certify: false,
+        certify,
     });
-    (replay, sweeps)
+    (replay, sweeps, capsule.clone())
+}
+
+/// The two-square banded deficit's bite-entry capsule
+/// (`microscope_publishing_run`: its bites are in the band at entry, publish
+/// there with a repair, and are retained by a zero trigger), replayed under
+/// the control with `certify` and `fork`. The engine is rebuilt exactly as
+/// [`replay_first_capsule_under_with`] rebuilds the twelve-square one - the
+/// same fixture at the capsule's poses, weights and stream restored, the
+/// replay's placeholder incumbent at infinite depth. Returns the report and
+/// the microscope report the capsule came from, so the live publication the
+/// trace recorded from this very state can be compared with the detached
+/// check's answer.
+fn replay_publishing_capsule(
+    certify: bool,
+    fork: Option<u64>,
+) -> (super::replay::ReplayReport, Box<super::microscope::MicroscopeReport>) {
+    use super::microscope::MicroscopeConfig;
+    use super::replay::{ReplayParams, ReplayProbe, TracedSweep};
+    let (_, _, _, _, _, report) = microscope_publishing_run(Some(MicroscopeConfig {
+        trigger_iterations: 0,
+        retain_after: 3,
+    }));
+    let report = report.expect("on means a report");
+    let bite = report
+        .bites
+        .iter()
+        .find(|bite| bite.published)
+        .expect("a retained bite published");
+    let capsule = &report.capsules[bite.capsule as usize];
+    assert_eq!(capsule.label, "bite-entry");
+    let traced: Vec<TracedSweep> = bite.separations[0].sweeps.iter().map(TracedSweep::from).collect();
+    let fixture = two_squares();
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses: Vec<Pose> = capsule
+        .poses
+        .iter()
+        .zip(&capsule.mirrored)
+        .map(|(pose, mirrored)| Pose {
+            tx_mm: pose[0],
+            ty_mm: pose[1],
+            theta_deg: pose[2],
+            mirrored: *mirrored,
+        })
+        .collect();
+    let config = IcsConfig {
+        target_depth_mm: capsule.target_depth_mm,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 0),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: f64::INFINITY,
+        from_constructor: false,
+        placement_fingerprint: "replay-capsule".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    engine
+        .restore_capsule_weights(&capsule.pair_weights, &capsule.edge_weights)
+        .expect("the capsule has this fixture's shape");
+    engine.restore_replay_stream(
+        capsule.bite,
+        traced.first().map_or(0, |sweep| u64::from(sweep.winner)),
+        capsule.stream.iteration,
+        capsule.proposals,
+    );
+    let replay = engine.replay_separation(&ReplayParams {
+        workers: 2,
+        bite: capsule.bite,
+        max_iterations: 2,
+        probe: ReplayProbe::None,
+        strikes: StrikeConfig::CONTROL,
+        traced,
+        watch_rows: Vec::new(),
+        fork,
+        certify,
+    });
+    (replay, report)
+}
+
+/// The refusal strings `publish::attempt` writes on a checkpoint it returns
+/// without a publication (`grep 'checkpoint.refusal = ' publish.rs`): the
+/// fixed strings exactly, the `format!`s by their fixed prefix. The two
+/// pass-throughs - a transform error and the contract validator's own
+/// message - have no fixed text and are not listed.
+fn is_a_publish_rs_refusal(refusal: &str) -> bool {
+    const EXACT: [&str; 6] = [
+        "the contract radius is not an integer micrometre; the round preflight is bypassed rather than rounded outward",
+        "the inset rectangle is outside the canonical grid",
+        "a transformed ring left the canonical grid; failing closed",
+        "a failing row is outside the 4 µm band or has no sheet slack; discarding the checkpoint",
+        "a repaired ring left the canonical grid",
+        "repair would have enlarged the locked strip; the target is immutable",
+    ];
+    const PREFIXES: [&str; 3] = [
+        "the round kernel does not certify at 2r = ",
+        "repair exceeded its ",
+        "publish-achieved: the layout is ",
+    ];
+    EXACT.contains(&refusal) || PREFIXES.iter().any(|prefix| refusal.starts_with(prefix))
 }
 
 /// **`--probe=exponent:2` is `--probe=none` to the bit.** The exponent
@@ -5335,14 +5455,19 @@ fn the_column_is_read_off_the_blocking_graph_and_its_releases() {
 #[test]
 fn the_fork_rescores_identical_candidates_under_four_exponents_and_changes_nothing() {
     use super::energy::guided_term_with_exponent;
-    use super::replay::{ForkRow, ReplayProbe, FORK_EXPONENTS};
+    use super::replay::{ForkOutcome, ForkRow, ReplayProbe, FORK_EXPONENTS};
     let _knobs = knob_lock();
     assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
-    let (forked, _) = replay_first_capsule_under_with(ReplayProbe::None, 3, Some(1));
+    let (forked, _, _) = replay_first_capsule_under_with(ReplayProbe::None, 3, Some(1), false);
     let (control, _) = replay_first_capsule_under(ReplayProbe::None, 3);
     assert_eq!(forked.stop, "fork");
     assert_eq!(forked.iterations.len(), 2);
-    let fork = forked.fork.as_ref().expect("the fork sweep's report");
+    let fork = forked
+        .fork
+        .as_ref()
+        .and_then(ForkOutcome::reached)
+        .expect("the fork sweep's report");
+    assert!(fork.reached);
     assert_eq!(fork.sweep, 2);
     assert_eq!(fork.exponents, FORK_EXPONENTS);
     assert_eq!(fork.deciding_exponent, 2.0);
@@ -5495,4 +5620,358 @@ fn a_nan_score_is_never_an_accepted_equality() {
     assert!(!super::guided_beats(1.0, 1.0));
     assert!(!super::guided_beats(2.0, 1.0));
     assert!(super::guided_beats(1.0, f64::INFINITY));
+/// **The detached publication check reports the live path's own answer and
+/// perturbs nothing.** The two-square banded deficit is in the band at its
+/// bite entry and publishes there live, after a repair
+/// (`microscope_publishing_run`), so its bite-entry capsule replayed with
+/// `certify: true` stops at band entry after zero iterations and makes the
+/// one call the live loop made from the same state through the same path:
+/// `attempted`, one exact checkpoint charged, and either a publication
+/// whose depth is the checkpoint's own `publishedRawDepthMm` - here the
+/// live trace's, bit for bit - or a refusal that is one of `publish.rs`'s
+/// own strings and never `LIVE_PATH_RETURNED_NOTHING`, which is reserved
+/// for the case where the live path pushed no checkpoint at all. Certify
+/// off, the same replay has `certification: null` and the same entry
+/// fingerprints. On the twelve-square fixture, which never enters the
+/// band, certify on is `attempted: false` with the stop named, no exact
+/// call and no refusal, and every iteration fingerprint is the certify-off
+/// run's: the call is made after the stop and cannot touch the trajectory.
+#[test]
+fn the_certify_call_reports_the_live_paths_own_answer_and_leaves_the_replay_unchanged() {
+    use super::replay::{ReplayProbe, LIVE_PATH_RETURNED_NOTHING};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    assert!(!super::publish_achieved(), "the knob must default to off");
+
+    let (certified, report) = replay_publishing_capsule(true, None);
+    let (plain, _) = replay_publishing_capsule(false, None);
+    let bite = report.bites.iter().find(|bite| bite.published).expect("a published bite");
+    let live = bite.publication.as_ref().expect("the live publication record");
+    assert_eq!(bite.separations[0].stop, Some("published"));
+    assert!(bite.separations[0].sweeps.is_empty(), "published at entry, before any sweep");
+    assert_eq!(certified.stop, "band-entry");
+    assert_eq!(certified.band_entered_at_iteration, Some(0));
+    assert!(certified.iterations.is_empty());
+    let certification = certified.certification.as_ref().expect("--certify=1 records");
+    assert!(certification.attempted, "{certification:?}");
+    assert_eq!(certification.reason, None);
+    assert!(certification.exact_calls >= 1, "{certification:?}");
+    assert_eq!(certification.exact_calls, 1, "one call, one checkpoint");
+    assert!(certification.max_violation_mm <= certified.band_mm);
+    assert!(certification.incumbent_depth_mm.is_infinite(), "the replay's placeholder incumbent");
+    let checkpoint = certification.checkpoint.as_ref().expect("the exact call pushed a checkpoint");
+    assert_eq!(checkpoint.target_depth_mm.to_bits(), certification.target_depth_mm.to_bits());
+    assert_eq!(checkpoint.proxy_raw_depth_mm.to_bits(), certification.proxy_depth_mm.to_bits());
+    if certification.published {
+        let depth = certification.depth_mm.expect("a publication has a depth");
+        assert!(depth.is_finite());
+        assert_eq!(
+            Some(depth.to_bits()),
+            checkpoint.published_raw_depth_mm.map(f64::to_bits),
+            "the depth is the checkpoint's own"
+        );
+        assert_eq!(certification.refusal, None);
+        assert_eq!(checkpoint.refusal, None);
+        assert!(checkpoint.kernel_exclusive_valid && checkpoint.contract_valid, "{checkpoint:?}");
+        assert!(certification.improved_incumbent, "anything beats infinite depth");
+    } else {
+        let refusal = certification.refusal.as_deref().expect("a refusal is named");
+        assert!(!refusal.is_empty());
+        assert_eq!(
+            Some(refusal),
+            checkpoint.refusal.as_deref(),
+            "the checkpoint's own string, not a re-derived one"
+        );
+        assert!(is_a_publish_rs_refusal(refusal), "{refusal}");
+        assert_eq!(certification.depth_mm, None);
+        assert!(!certification.improved_incumbent);
+    }
+    assert_ne!(certification.refusal.as_deref(), Some(LIVE_PATH_RETURNED_NOTHING));
+    // The live loop published from this very state through this very path,
+    // so the detached check's answer is the live answer, bit for bit.
+    assert!(certification.published, "{certification:?}");
+    assert_eq!(
+        certification.depth_mm.map(f64::to_bits),
+        Some(live.published_raw_depth_mm.to_bits()),
+        "replay {:?} vs live {}",
+        certification.depth_mm,
+        live.published_raw_depth_mm
+    );
+    assert_eq!(checkpoint.repair_rows, live.repair_rows);
+    assert!(checkpoint.repair_rows >= 1, "the deficit needs the repair");
+    assert_eq!(
+        checkpoint.repair_max_displacement_mm.to_bits(),
+        live.repair_max_displacement_mm.to_bits()
+    );
+    assert_eq!(
+        checkpoint.repair_depth_giveback_mm.to_bits(),
+        live.repair_depth_giveback_mm.to_bits()
+    );
+
+    // Certify off: nothing recorded, the same replay otherwise.
+    assert_eq!(plain.certification, None, "no --certify=1, no exact call");
+    assert_eq!(plain.stop, "band-entry");
+    assert!(plain.iterations.is_empty());
+    assert_eq!(plain.entry_poses_fingerprint, certified.entry_poses_fingerprint);
+    assert_eq!(plain.entry_weights_fingerprint, certified.entry_weights_fingerprint);
+    assert_eq!(plain.entry_stream_fingerprint, certified.entry_stream_fingerprint);
+    assert_eq!(plain.entry_raw.to_bits(), certified.entry_raw.to_bits());
+
+    // A stop that is not band entry: no call, the stop named, the
+    // trajectory the certify-off run's to the fingerprint.
+    let (capped, _, _) = replay_first_capsule_under_with(ReplayProbe::None, 3, None, true);
+    let (control, _) = replay_first_capsule_under(ReplayProbe::None, 3);
+    assert_eq!(capped.stop, "iteration-cap");
+    let certification = capped.certification.as_ref().expect("--certify=1 records the non-attempt too");
+    assert!(!certification.attempted);
+    let reason = certification.reason.as_deref().expect("why not");
+    assert!(reason.contains("stop = iteration-cap"), "{reason}");
+    assert!(!certification.published);
+    assert_eq!(certification.exact_calls, 0);
+    assert_eq!(certification.refusal, None);
+    assert_eq!(certification.depth_mm, None);
+    assert_eq!(certification.checkpoint, None);
+    assert_eq!(capped.iterations.len(), 3);
+    assert_eq!(capped.identity_pass, 3, "{:#?}", capped.identity);
+    assert_eq!(capped.entry_poses_fingerprint, control.entry_poses_fingerprint);
+    assert_eq!(capped.entry_weights_fingerprint, control.entry_weights_fingerprint);
+    assert_eq!(capped.entry_stream_fingerprint, control.entry_stream_fingerprint);
+    for (with, without) in capped.iterations.iter().zip(&control.iterations) {
+        assert_eq!(with.iteration, without.iteration);
+        assert_eq!(with.poses_fingerprint, without.poses_fingerprint);
+        assert_eq!(with.weights_fingerprint, without.weights_fingerprint);
+        assert_eq!(with.stream_fingerprint, without.stream_fingerprint);
+        assert_eq!(with.raw_after.to_bits(), without.raw_after.to_bits());
+        assert_eq!(with.winner, without.winner);
+        assert_eq!(with.evaluations_all_workers, without.evaluations_all_workers);
+        assert_eq!(with.relocates, without.relocates);
+    }
+}
+
+/// **A fork the replay never reaches says so.** `--fork=10` on the
+/// twelve-square capsule under a three-iteration cap stops on the cap
+/// before sweep 11, and `replay.fork` is `{sweep: 11, reached: false,
+/// stop: "iteration-cap", iterations: 3}` - those keys and no relocates -
+/// with the stderr line naming the same, while the trajectory is the
+/// unforked run's. The same fork on the two-square deficit, which is in the
+/// band at entry, reports `stop: "band-entry"` after zero iterations. The
+/// reached case keeps its document shape and gains `reached: true`.
+#[test]
+fn a_fork_the_replay_never_reaches_is_reported_with_its_stop() {
+    use super::replay::{ForkOutcome, ReplayProbe};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (capped, _, _) = replay_first_capsule_under_with(ReplayProbe::None, 3, Some(10), false);
+    let (control, _) = replay_first_capsule_under(ReplayProbe::None, 3);
+    assert_eq!(capped.stop, "iteration-cap");
+    assert_eq!(capped.iterations.len(), 3);
+    let fork = capped.fork.as_ref().expect("--fork named a sweep; the document says what became of it");
+    assert!(fork.reached().is_none());
+    let ForkOutcome::NotReached(unreached) = fork else {
+        panic!("sweep 11 cannot have run under a cap of 3: {fork:?}");
+    };
+    assert_eq!(unreached.sweep, 11);
+    assert!(!unreached.reached);
+    assert_eq!(unreached.stop, "iteration-cap");
+    assert_eq!(unreached.iterations, 3);
+    assert_eq!(
+        fork.summary(),
+        "replay fork (sweep 11 not reached: stopped iteration-cap after 3 iterations)"
+    );
+    let document = serde_json::to_value(fork).expect("serializes");
+    let keys: std::collections::BTreeSet<&str> = document
+        .as_object()
+        .expect("an object")
+        .keys()
+        .map(String::as_str)
+        .collect();
+    assert_eq!(keys, ["iterations", "reached", "stop", "sweep"].into_iter().collect());
+    assert_eq!(document["reached"], serde_json::json!(false));
+    assert_eq!(document["sweep"], serde_json::json!(11));
+    assert_eq!(document["stop"], serde_json::json!("iteration-cap"));
+    assert_eq!(document["iterations"], serde_json::json!(3));
+    assert_eq!(capped.identity_pass, 3, "{:#?}", capped.identity);
+    for (with, without) in capped.iterations.iter().zip(&control.iterations) {
+        assert_eq!(with.poses_fingerprint, without.poses_fingerprint);
+        assert_eq!(with.weights_fingerprint, without.weights_fingerprint);
+        assert_eq!(with.stream_fingerprint, without.stream_fingerprint);
+        assert_eq!(with.relocates, without.relocates);
+    }
+    assert_eq!(capped.evaluations_total, control.evaluations_total);
+
+    // Band entry first.
+    let (entered, _) = replay_publishing_capsule(false, Some(5));
+    assert_eq!(entered.stop, "band-entry");
+    assert!(entered.iterations.is_empty());
+    let fork = entered.fork.as_ref().expect("--fork named a sweep");
+    let ForkOutcome::NotReached(unreached) = fork else {
+        panic!("{fork:?}");
+    };
+    assert_eq!((unreached.sweep, unreached.stop, unreached.iterations), (6, "band-entry", 0));
+    assert_eq!(
+        fork.summary(),
+        "replay fork (sweep 6 not reached: stopped band-entry after 0 iterations)"
+    );
+
+    // The reached case: the same shape as before, plus `reached: true`.
+    let (forked, _, _) = replay_first_capsule_under_with(ReplayProbe::None, 3, Some(1), false);
+    assert_eq!(forked.stop, "fork");
+    let fork = forked.fork.as_ref().expect("the fork sweep's report");
+    let reached = fork.reached().expect("sweep 2 runs under a cap of 3");
+    assert!(reached.reached);
+    assert_eq!(reached.sweep, 2);
+    let document = serde_json::to_value(fork).expect("serializes");
+    assert_eq!(document["reached"], serde_json::json!(true));
+    assert_eq!(document["sweep"], serde_json::json!(2));
+    assert!(document["relocates"].is_array());
+    assert!(document["wouldMove"].is_object());
+    assert!(document["exponents"].is_array());
+    assert!(document.get("stop").is_none());
+    assert!(document.get("iterations").is_none());
+    assert!(fork.summary().starts_with("replay fork (sweep 2: "));
+
+    // And no fork asked for is no fork reported.
+    assert!(control.fork.is_none());
+}
+
+/// **The identity gate fails on a perturbed relocate, through the gate's
+/// own comparison.** The extended gate's negative was only ever shown as
+/// "the bits differ". Here the traced first sweep of the twelve-square
+/// capsule has the last relocate's `dxMm` flipped by one ULP, and
+/// `first_relocate_difference` - the function `identity_row`, and so
+/// `replay_separation`, compares relocates with - names that relocate and
+/// its piece, while the row `identity_row` builds has
+/// `relocatesEqual == false` and `equal == false` with the scalars and the
+/// evaluation counts still equal. The same with a changed row's after-
+/// violation flipped (the message names the relocate and the row) and with
+/// a relocate dropped (the count). Unperturbed, the same call is the
+/// replay's own `identity[0]`, field for field.
+#[test]
+fn a_perturbed_traced_relocate_fails_the_identity_gate_at_that_relocate() {
+    use super::replay::{first_relocate_difference, identity_row, ReplayProbe, TracedSweep};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (control, sweeps, capsule) =
+        replay_first_capsule_under_with(ReplayProbe::None, 3, None, false);
+    assert_eq!(control.identity_pass, 3, "{:#?}", control.identity);
+    let record = &control.iterations[0];
+    let pristine = TracedSweep::from(&sweeps[0]);
+    let pieces = capsule.poses.len();
+    assert!(pristine.relocates.len() >= 2, "the sweep relocates more than one piece");
+
+    // Unperturbed: the gate's own row.
+    assert_eq!(first_relocate_difference(&record.relocates, &pristine.relocates), None);
+    let row = identity_row(record, &pristine, capsule.proposals, pieces);
+    assert!(row.equal && row.relocates_equal && row.scalars_equal && row.evaluations_equal);
+    assert_eq!(row.stream_equal, Some(true));
+    assert_eq!(format!("{row:?}"), format!("{:?}", control.identity[0]));
+
+    // One ULP on the last relocate's displacement.
+    let mut traced = pristine.clone();
+    let index = traced.relocates.len() - 1;
+    let piece = traced.relocates[index].piece;
+    let dx = &mut traced.relocates[index].dx_mm;
+    *dx = f64::from_bits(dx.to_bits() ^ 1);
+    let difference = first_relocate_difference(&record.relocates, &traced.relocates)
+        .expect("one bit is a difference");
+    assert!(
+        difference.starts_with(&format!("relocate {index} (piece {piece}): displacement")),
+        "{difference}"
+    );
+    let row = identity_row(record, &traced, capsule.proposals, pieces);
+    assert!(!row.relocates_equal, "{row:?}");
+    assert!(!row.equal, "{row:?}");
+    assert!(row.scalars_equal, "the scalars were not touched");
+    assert!(row.evaluations_equal, "the counts were not touched");
+    assert_eq!(row.stream_equal, Some(true), "the stream was not touched");
+    assert_eq!(row.relocates_first_difference.as_deref(), Some(difference.as_str()));
+    assert_eq!(row.relocates_replay, row.relocates_trace);
+
+    // One ULP on a changed row's after-violation.
+    let mut traced = pristine.clone();
+    let (index, row_index) = traced
+        .relocates
+        .iter()
+        .enumerate()
+        .find_map(|(index, relocate)| {
+            (!relocate.rows.is_empty()).then_some((index, relocate.rows.len() - 1))
+        })
+        .expect("a traced relocate changes a row");
+    let piece = traced.relocates[index].piece;
+    let after = &mut traced.relocates[index].rows[row_index].2;
+    *after = f64::from_bits(after.to_bits() ^ 1);
+    let difference = first_relocate_difference(&record.relocates, &traced.relocates)
+        .expect("one bit is a difference");
+    assert!(
+        difference.starts_with(&format!("relocate {index} (piece {piece}), changed row {row_index}:")),
+        "{difference}"
+    );
+    let row = identity_row(record, &traced, capsule.proposals, pieces);
+    assert!(!row.relocates_equal && !row.equal, "{row:?}");
+    assert_eq!(row.relocates_first_difference.as_deref(), Some(difference.as_str()));
+
+    // A relocate dropped.
+    let mut traced = pristine.clone();
+    traced.relocates.pop();
+    let difference = first_relocate_difference(&record.relocates, &traced.relocates)
+        .expect("a missing relocate is a difference");
+    assert!(difference.starts_with("relocate count "), "{difference}");
+    let row = identity_row(record, &traced, capsule.proposals, pieces);
+    assert!(!row.relocates_equal && !row.equal, "{row:?}");
+    assert_eq!(row.relocates_trace + 1, row.relocates_replay);
+}
+
+/// **A capsule captured under the exponent knob carries it; the default
+/// capsule does not.** The replay's control folds at the process knob and
+/// reproduces a trace only at the same `p` (the benchmark refuses a
+/// `--guidedexponent` that disagrees with the document), so the live
+/// capture records the knob on the capsule itself - and only when it is not
+/// the frozen engine's 2, so the default microscope document is
+/// byte-identical: no `guidedExponent` key on any capsule of a default run.
+/// The `p != 2` captures are taken at a named exponent
+/// (`Capsule::capture_under`, which `Capsule::capture` calls at the process
+/// knob) and this test never writes the knob: every fold reads it, so even
+/// a one-call window at `p = 1` inside the span of a test that folds energy
+/// without `knob_lock` flips a winner there (the eight-worker determinism
+/// test failed six of six suite runs from exactly such a window).
+#[test]
+fn a_capsule_captured_under_the_exponent_knob_carries_it_and_the_default_does_not() {
+    use super::microscope::{Capsule, MicroscopeConfig};
+    let _knobs = knob_lock();
+    assert_eq!(super::guided_exponent(), 2.0, "the knob must default to off");
+    let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
+        trigger_iterations: 1,
+        retain_after: 3,
+    }));
+    let report = report.expect("on means a report");
+    assert!(!report.capsules.is_empty());
+    for capsule in &report.capsules {
+        assert_eq!(capsule.guided_exponent, None);
+        let document = serde_json::to_value(capsule).expect("serializes");
+        assert!(document.get("guidedExponent").is_none(), "absent at p = 2: {document}");
+    }
+
+    let fixture = two_squares();
+    let pieces = fixture.pieces();
+    let engine = banded_deficit_engine(&pieces, 60.0);
+    let at_two = Capsule::capture_under(1, "bite-entry", &engine.state, &engine.descent, 2.0);
+    assert_eq!(at_two.guided_exponent, None);
+    let document = serde_json::to_value(&at_two).expect("serializes");
+    assert!(document.get("guidedExponent").is_none(), "{document}");
+    for exponent in [1.0, 0.75] {
+        let capsule =
+            Capsule::capture_under(1, "bite-entry", &engine.state, &engine.descent, exponent);
+        assert_eq!(capsule.guided_exponent.map(f64::to_bits), Some(exponent.to_bits()));
+        let document = serde_json::to_value(&capsule).expect("serializes");
+        assert_eq!(document["guidedExponent"], serde_json::json!(exponent));
+        assert_eq!(capsule.poses, at_two.poses, "only the field differs");
+        assert_eq!(capsule.pair_weights, at_two.pair_weights);
+        assert_eq!(capsule.raw.to_bits(), at_two.raw.to_bits());
+        assert_eq!(capsule.proposals, at_two.proposals);
+    }
+    // The live capture at the default knob is `capture_under` at 2.
+    let live = Capsule::capture(1, "bite-entry", &engine.state, &engine.descent);
+    assert_eq!(live.guided_exponent, None);
+    assert_eq!(live.guided.to_bits(), at_two.guided.to_bits());
+    assert_eq!(super::guided_exponent(), 2.0, "nothing here writes the knob");
 }

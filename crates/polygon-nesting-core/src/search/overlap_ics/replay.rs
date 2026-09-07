@@ -98,9 +98,11 @@
 //! winner-take-all by minimum guided Φ stable by ordinal, one GLS pass, the
 //! band test at the top of every turn, the strike meter's snapshot, rollback
 //! and ladder. Two things differ from [`super::Engine::separate`], both
-//! stated: the replay **stops at band entry** and never calls the exact
-//! authorities (it publishes nothing), and its iteration cap is the caller's
-//! `--maxiters` rather than the profile's wall cap.
+//! stated: the replay **stops at band entry**, where the live loop would
+//! call `attempt_publication` - it makes that call only under `--certify=1`,
+//! once, after the stop (`certify_band_entry`, [`CertificationReport`]) -
+//! and its iteration cap is the caller's `--maxiters` rather than the
+//! profile's wall cap.
 //!
 //! # Control identity
 //!
@@ -118,12 +120,16 @@
 //! The forbidden-rescue table in `docs/grok-review-12-reading-sparrow.md`
 //! §5.2 (row "fixture as a seed") forbids starting a scored cell from a
 //! known-good layout, and a replay capsule is exactly such a layout. So this
-//! cell is never a default, it never publishes, and its document carries
+//! cell is never a default, it installs nothing, and its document carries
 //! `replay.tripwire` so `score.py` can refuse it. A replay's band entry is
-//! not a depth and not a treatment score. `--certify=1` calls the exact
-//! authorities once, after the replay has stopped, and records what they
-//! said; it installs nothing and the document stays refused by the same
-//! tripwire.
+//! not a depth and not a treatment score. Without `--certify=1` no exact
+//! authority is called and nothing is published. With it, the replay makes
+//! the live loop's one publication call after it has stopped at band entry;
+//! that call may publish, and the publication goes into
+//! `replay.certification` of the refused document only: no state is
+//! installed, the only incumbent that receives it is the replay engine's
+//! placeholder (infinite depth, never read again, never written out), and
+//! the document stays refused by the same tripwire.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -1438,6 +1444,10 @@ pub struct ForkSink {
 pub struct ForkReport {
     /// The sweep the fork ran in (`--fork + 1`).
     pub sweep: u64,
+    /// Always `true` here: the replay ran the fork sweep. The field exists
+    /// so a reader of `replay.fork` never infers reachability from the
+    /// presence of `relocates` ([`ForkNotReached`] carries `false`).
+    pub reached: bool,
     pub exponents: [f64; 4],
     pub relocates: Vec<ForkRelocate>,
     /// Relocates with a candidate beating the stay pose, per exponent.
@@ -1471,6 +1481,61 @@ impl ForkReport {
             self.would_move.p075,
             self.would_move.p05,
         )
+    }
+}
+
+/// **The fork the replay never reached.** `--fork=<sweep>` names a sweep the
+/// run may stop before - band entry, the iteration cap or a strike-out comes
+/// first - and a document that then carried `fork: null` beside
+/// `stop != "fork"` said so only by omission, which a reader scoring the
+/// fork's readings could mistake for "no fork was asked for". This says it:
+/// the sweep the fork would have run in, `reached: false`, the stop the
+/// replay made instead and how many iterations it ran. No relocates: none
+/// were forked.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ForkNotReached {
+    /// The sweep the fork would have run in (`--fork + 1`).
+    pub sweep: u64,
+    /// Always `false` here.
+    pub reached: bool,
+    /// The replay's own stop: `band-entry`, `iteration-cap` or `struck`.
+    pub stop: &'static str,
+    /// Iterations the replay ran before that stop.
+    pub iterations: u64,
+}
+
+/// `replay.fork` when `--fork=<sweep>` was named: the fork sweep's report,
+/// or the statement that the replay never reached it. Untagged, so the
+/// reached case's document shape is [`ForkReport`]'s (with `reached: true`)
+/// and the other is `{sweep, reached: false, stop, iterations}`;
+/// `docs/experiments/overlap-ics/bite-microscope/column-break.py` reads
+/// both.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(untagged)]
+pub enum ForkOutcome {
+    Reached(ForkReport),
+    NotReached(ForkNotReached),
+}
+
+impl ForkOutcome {
+    /// The fork sweep's report, when the replay ran it.
+    pub fn reached(&self) -> Option<&ForkReport> {
+        match self {
+            Self::Reached(report) => Some(report),
+            Self::NotReached(_) => None,
+        }
+    }
+
+    /// The benchmark's stderr line for either case.
+    pub fn summary(&self) -> String {
+        match self {
+            Self::Reached(report) => report.summary(),
+            Self::NotReached(fork) => format!(
+                "replay fork (sweep {} not reached: stopped {} after {} iterations)",
+                fork.sweep, fork.stop, fork.iterations
+            ),
+        }
     }
 }
 
@@ -1538,13 +1603,21 @@ impl From<&super::diagnostics::ExactCheckpoint> for CheckpointFields {
 /// comes first"), which runs `publish::attempt` and, inside it, the
 /// untouched `validate_placements_against_contract`. It reads the state
 /// through `&self.state`, so the state is not cloned and not moved; the
-/// engine's incumbent and checkpoint trace receive the result as they
-/// would live, and nothing is installed. The incumbent of a replay engine
-/// is a placeholder at infinite depth, so the improvement gate
+/// engine's checkpoint trace and its incumbent receive the result as they
+/// would live, and nothing is installed (`install_publication` is not
+/// called; the continuous state is the band-entry state afterwards). The
+/// incumbent of a replay engine is a placeholder at infinite depth that
+/// nothing reads again and nothing writes out, so the improvement gate
 /// (`proxy > incumbent - 1 um`) never refuses here and `improvedIncumbent`
 /// says only that the exact authorities accepted; the proxy-above-target
 /// refusal, the kernel, the repair and the contract validation are the
-/// live ones.
+/// live ones. A publication therefore exists in `replay.certification` of
+/// the refused document and nowhere else.
+///
+/// The `refusal` is read, never derived: it is the checkpoint's own string
+/// when the live path pushed a checkpoint and no publication, `null` when
+/// it published, and [`LIVE_PATH_RETURNED_NOTHING`] verbatim when the live
+/// path returned neither - see that constant for why no gate is named.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CertificationReport {
@@ -1552,8 +1625,9 @@ pub struct CertificationReport {
     /// Why not, when `attempted` is false.
     pub reason: Option<String>,
     pub published: bool,
-    /// The checkpoint's refusal, or the entry-gate reason when the live
-    /// path refused before calling the exact authorities.
+    /// The checkpoint's own refusal string; `null` when published;
+    /// [`LIVE_PATH_RETURNED_NOTHING`] when the live path pushed no
+    /// checkpoint (then `exactCalls` is 0 beside it).
     pub refusal: Option<String>,
     /// The published raw source depth, when published.
     pub depth_mm: Option<f64>,
@@ -1567,6 +1641,24 @@ pub struct CertificationReport {
     pub checkpoint: Option<CheckpointFields>,
     pub path: &'static str,
 }
+
+/// **What the live path returned when it returned neither a publication nor
+/// a checkpoint**, recorded verbatim as `replay.certification.refusal`.
+/// `Engine::attempt_publication` answers `CheckpointOutcome::none()` and
+/// pushes no checkpoint when `publish::attempt` returns `None` at one of
+/// its entry gates - the band test, the closed member's `proxy > T`, the
+/// improvement gate - before `work.exact_checkpoints` is charged, and when
+/// its own unchanged-pose digest skips the attempt. None of those gates
+/// produces a string, so the report cannot read one, and it must not
+/// re-derive one (a re-derivation would be this module's opinion of the
+/// gates, not the live path's answer, and could disagree with it). What is
+/// recorded is the return itself; the reader tells the case from
+/// `exactCalls == 0`, `checkpoint: null`, `proxyDepthMm` and
+/// `targetDepthMm` beside it.
+pub const LIVE_PATH_RETURNED_NOTHING: &str = "Engine::attempt_publication returned \
+    CheckpointOutcome { publication: None, improved: false } and pushed no checkpoint: \
+    publish::attempt refused at an entry gate before any exact call (or the unchanged-pose \
+    digest skipped the attempt); the live path names no reason there";
 
 /// The replay's result.
 #[derive(Clone, Debug, Serialize)]
@@ -1615,7 +1707,9 @@ pub struct ReplayReport {
     pub column: ColumnReport,
     /// The longest-lived column ([`analyse_longest_lived_column`]).
     pub column_longest_lived: ColumnReport,
-    pub fork: Option<ForkReport>,
+    /// `null` unless `--fork=<sweep>`; then the fork sweep's report or
+    /// [`ForkNotReached`] ([`ForkOutcome`]).
+    pub fork: Option<ForkOutcome>,
     /// `null` unless `--certify=1`.
     pub certification: Option<CertificationReport>,
 }
@@ -1860,6 +1954,7 @@ impl<'a> Engine<'a> {
                 }
                 fork_report = Some(ForkReport {
                     sweep: iterations,
+                    reached: true,
                     exponents: FORK_EXPONENTS,
                     relocates,
                     would_move,
@@ -1879,12 +1974,25 @@ impl<'a> Engine<'a> {
         // The detached publication check, after the stop.
         let certification = params.certify.then(|| self.certify_band_entry(stop));
 
+        // `--fork=<sweep>` names a sweep the run may never reach; say so
+        // rather than leave `fork: null` beside `stop != "fork"`.
+        let fork = match (fork_report, params.fork) {
+            (Some(report), _) => Some(ForkOutcome::Reached(report)),
+            (None, Some(sweep)) => Some(ForkOutcome::NotReached(ForkNotReached {
+                sweep: sweep + 1,
+                reached: false,
+                stop,
+                iterations,
+            })),
+            (None, None) => None,
+        };
+
         // The identity comparison against the trace.
         let mut identity = Vec::new();
         let mut identity_pass = 0u64;
         let mut identity_fail = 0u64;
         let mut diverges_at = None;
-        for (index, record) in records.iter().enumerate() {
+        for record in &records {
             let Some(traced) = params
                 .traced
                 .iter()
@@ -1892,34 +2000,8 @@ impl<'a> Engine<'a> {
             else {
                 continue;
             };
-            let scalars_equal = traced.raw_after.to_bits() == record.raw_after.to_bits()
-                && traced.max_after_mm.to_bits() == record.max_after_mm.to_bits()
-                && traced.winner == record.winner;
-            let evaluations_equal = traced.evaluations_all_workers
-                == record.evaluations_all_workers
-                && traced.evaluations_winner == record.evaluations_winner;
-            let relocates_first_difference =
-                first_relocate_difference(&record.relocates, &traced.relocates);
-            let relocates_equal = relocates_first_difference.is_none();
-            // The traced sweep's key is the one it drew from; after it the
-            // master holds the winner's clone one iteration on, and the
-            // proposal ordinal has advanced by one per piece per sweep.
-            let stream_fingerprint_trace = traced.stream.map(|key| {
-                stream_fingerprint(
-                    StreamKey {
-                        seed: key.seed,
-                        bite: key.bite,
-                        iteration: key.iteration + 1,
-                        worker: key.worker,
-                    },
-                    entry_proposals + (index as u64 + 1) * count as u64,
-                )
-            });
-            let stream_equal = stream_fingerprint_trace
-                .as_ref()
-                .map(|trace| *trace == record.stream_fingerprint);
-            let equal = scalars_equal && relocates_equal && evaluations_equal;
-            if equal {
+            let row = identity_row(record, traced, entry_proposals, count);
+            if row.equal {
                 identity_pass += 1;
             } else {
                 identity_fail += 1;
@@ -1927,31 +2009,7 @@ impl<'a> Engine<'a> {
                     diverges_at = Some(record.iteration);
                 }
             }
-            identity.push(IdentityRow {
-                iteration: record.iteration,
-                raw_trace: traced.raw_after,
-                raw_replay: record.raw_after,
-                max_trace: traced.max_after_mm,
-                max_replay: record.max_after_mm,
-                winner_trace: traced.winner,
-                winner_replay: record.winner,
-                scalars_equal,
-                poses_fingerprint: record.poses_fingerprint.clone(),
-                weights_fingerprint: record.weights_fingerprint.clone(),
-                stream_fingerprint: record.stream_fingerprint.clone(),
-                stream_fingerprint_trace,
-                stream_equal,
-                evaluations_all_workers: record.evaluations_all_workers,
-                evaluations_winner: record.evaluations_winner,
-                evaluations_all_workers_trace: traced.evaluations_all_workers,
-                evaluations_winner_trace: traced.evaluations_winner,
-                relocates_replay: record.relocates.len() as u64,
-                relocates_trace: traced.relocates.len() as u64,
-                relocates_equal,
-                relocates_first_difference,
-                evaluations_equal,
-                equal,
-            });
+            identity.push(row);
         }
 
         // The watched rows: blocking at entry (iteration 0) and after every
@@ -2072,7 +2130,7 @@ impl<'a> Engine<'a> {
             persistent_rows_cleared,
             column,
             column_longest_lived,
-            fork: fork_report,
+            fork,
             certification,
             iterations: records,
         }
@@ -2080,7 +2138,11 @@ impl<'a> Engine<'a> {
 
     /// The detached publication check of [`CertificationReport`]: the
     /// unchanged [`Engine::attempt_publication`] once, on the state the
-    /// replay stopped at, only when it stopped at band entry.
+    /// replay stopped at, only when it stopped at band entry. The refusal
+    /// it reports is the checkpoint's own string or, when the live path
+    /// pushed no checkpoint, [`LIVE_PATH_RETURNED_NOTHING`]; the gates are
+    /// never re-derived here, because a re-derivation is not what the live
+    /// path said and this report exists to say only that.
     fn certify_band_entry(&mut self, stop: &'static str) -> CertificationReport {
         let totals = energy::fold(&self.state);
         let proxy_depth_mm =
@@ -2115,22 +2177,18 @@ impl<'a> Engine<'a> {
         let exact_calls = self.trace.work.exact_checkpoints - exact_before;
         let checkpoint = (self.trace.checkpoints.len() > checkpoints_before)
             .then(|| CheckpointFields::from(&self.trace.checkpoints[checkpoints_before]));
+        // Read, never derived: the checkpoint's own string, or the verbatim
+        // record that the live path returned nothing to read.
         let refusal = match (&outcome.publication, &checkpoint) {
             (Some(_), _) => None,
             (None, Some(checkpoint)) => Some(checkpoint.refusal.clone().unwrap_or_else(|| {
-                "the exact authorities refused without a named reason".to_owned()
-            })),
-            (None, None) => Some(if !(totals.max_violation_mm <= self.config.limits.band_mm) {
-                "refused before the exact call: the band test failed".to_owned()
-            } else if proxy_depth_mm > target_depth_mm {
-                format!(
-                    "refused before the exact call: proxy depth {proxy_depth_mm:.6} is above the \
-                     target {target_depth_mm:.6} (the closed member's own refusal)"
-                )
-            } else {
-                "refused before the exact call: the improvement gate or the unchanged-state gate"
+                // `publish::attempt` sets a refusal on every checkpoint it
+                // returns without a publication; should that ever change,
+                // this records the checkpoint as it came.
+                "the live path pushed a checkpoint with no publication and `refusal: null`"
                     .to_owned()
-            }),
+            })),
+            (None, None) => Some(LIVE_PATH_RETURNED_NOTHING.to_owned()),
         };
         CertificationReport {
             attempted: true,
@@ -2272,10 +2330,82 @@ impl<'a> Engine<'a> {
     }
 }
 
+/// **The identity gate's one comparison**, of one replay iteration against
+/// the traced sweep with the same iteration number: the three scalars, the
+/// committed relocates through [`first_relocate_difference`], the
+/// evaluation counts, and the stream fingerprint against the one the traced
+/// sweep's key implies. `replay_separation` builds every `identity[]` row
+/// with this and nothing else, and it is `pub` so a test can run the very
+/// same comparison on a traced sweep it has perturbed and watch the gate
+/// fail - without that the gate's negative is never exercised, and a gate
+/// that cannot fail proves nothing. `entry_proposals` is the master
+/// descent's proposal ordinal at the capsule: the traced sweep's key is the
+/// one it drew from, after it the master holds the winner's clone one
+/// iteration on, and the ordinal has advanced by one per piece per sweep,
+/// so the fingerprint the trace implies is `(seed, bite, iteration + 1,
+/// worker)` at `entry + iteration * pieces`.
+pub fn identity_row(
+    record: &ReplayIteration,
+    traced: &TracedSweep,
+    entry_proposals: u64,
+    pieces: usize,
+) -> IdentityRow {
+    let scalars_equal = traced.raw_after.to_bits() == record.raw_after.to_bits()
+        && traced.max_after_mm.to_bits() == record.max_after_mm.to_bits()
+        && traced.winner == record.winner;
+    let evaluations_equal = traced.evaluations_all_workers == record.evaluations_all_workers
+        && traced.evaluations_winner == record.evaluations_winner;
+    let relocates_first_difference =
+        first_relocate_difference(&record.relocates, &traced.relocates);
+    let relocates_equal = relocates_first_difference.is_none();
+    let stream_fingerprint_trace = traced.stream.map(|key| {
+        stream_fingerprint(
+            StreamKey {
+                seed: key.seed,
+                bite: key.bite,
+                iteration: key.iteration + 1,
+                worker: key.worker,
+            },
+            entry_proposals + record.iteration * pieces as u64,
+        )
+    });
+    let stream_equal = stream_fingerprint_trace
+        .as_ref()
+        .map(|trace| *trace == record.stream_fingerprint);
+    let equal = scalars_equal && relocates_equal && evaluations_equal;
+    IdentityRow {
+        iteration: record.iteration,
+        raw_trace: traced.raw_after,
+        raw_replay: record.raw_after,
+        max_trace: traced.max_after_mm,
+        max_replay: record.max_after_mm,
+        winner_trace: traced.winner,
+        winner_replay: record.winner,
+        scalars_equal,
+        poses_fingerprint: record.poses_fingerprint.clone(),
+        weights_fingerprint: record.weights_fingerprint.clone(),
+        stream_fingerprint: record.stream_fingerprint.clone(),
+        stream_fingerprint_trace,
+        stream_equal,
+        evaluations_all_workers: record.evaluations_all_workers,
+        evaluations_winner: record.evaluations_winner,
+        evaluations_all_workers_trace: traced.evaluations_all_workers,
+        evaluations_winner_trace: traced.evaluations_winner,
+        relocates_replay: record.relocates.len() as u64,
+        relocates_trace: traced.relocates.len() as u64,
+        relocates_equal,
+        relocates_first_difference,
+        evaluations_equal,
+        equal,
+    }
+}
+
 /// Where the replay's committed relocates first differ from the traced
 /// sweep's: `None` when they match one for one (same piece order, same
 /// `dx/dy/dtheta` bits, same changed rows with the same before/after bits).
-fn first_relocate_difference(
+/// The message names the relocate's index and piece, and the changed row's
+/// index when that is where they part.
+pub fn first_relocate_difference(
     replay: &[ReplayRelocate],
     traced: &[TracedRelocate],
 ) -> Option<String> {
