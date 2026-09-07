@@ -198,3 +198,23 @@ both profiles. The thirty seeds are now consumed by this candidate.
   benefit margin, a one-sided 95 % exact binomial upper bound on the regression probability of at
   most 10 % (0/30 gives 9.50 %, 1/30 gives 14.86 %, 1/46 gives 9.90 %) and a separate severity
   ceiling, all from product policy, none from these thirty results.
+
+## Diagnostics from the archived cells (appended; unscored): the fifth cut plateaus far from the band
+
+Read from the 180 documents (`evidence/fifth-cut-rows.json`, the script in the commit): every cell
+attempts the fifth explore cut (about 160.6 → 155.5 mm). Treatment (p = 1): in the 15 cells that
+publish it, the parent near 160.6 mm was published at 0.78–1.22 s (median 0.86) with 7.27 s of
+explore allowance left, and the cut reached the band after 161–729 master iterations (median
+416, 14.6 M evaluations, zero strikes, zero retries); in the 75 that fail, the parent was
+published at 0.47–2.83 s (median 1.17) with 6.96 s left, and the cut ran 562–1035 iterations
+(median 772, 26.8 M evaluations) without reaching the band, its best raw Φ over the attempt
+staying at 19–97 mm² (median 72.7; quartiles 19.5 / 72.7 / 97.3), 20 of them with one to three
+strikes. Control (p = 2): the 3 successes (one seed) reached the band at 479 iterations from a
+parent published at 1.64 s; the 87 failures ran 126–520 iterations (median 335, the quadratic
+iterations being three to four times dearer) with a best raw Φ median of 24.8 mm². So the failed
+fifth cuts are not slow progress cut off by the allowance: with more than 6 s and hundreds of
+iterations they plateau at a residual of several millimetres of penetration. The successes are
+not distinguished by more remaining allowance (the failures' upper quartile of allowance equals
+the successes' median). This is what review 8's "conflict transfer or recreation" reading
+predicts and what the depth microscope is to read directly; it does not yet identify the
+geometric feature responsible.
