@@ -5620,6 +5620,8 @@ fn a_nan_score_is_never_an_accepted_equality() {
     assert!(!super::guided_beats(1.0, 1.0));
     assert!(!super::guided_beats(2.0, 1.0));
     assert!(super::guided_beats(1.0, f64::INFINITY));
+}
+
 /// **The detached publication check reports the live path's own answer and
 /// perturbs nothing.** The two-square banded deficit is in the band at its
 /// bite entry and publishes there live, after a repair
