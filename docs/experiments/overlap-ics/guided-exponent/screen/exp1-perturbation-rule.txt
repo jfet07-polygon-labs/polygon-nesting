@@ -1,0 +1,17 @@
+Registered 2026-09-07 08:20 UTC, before any exp1 cell was scored.
+The replay-geometry instrument agent (wf_9a73dad9) compiles in its own worktree without the
+bench lock while the exp1 screen runs; a 16-core cargo build overlapping a timed eight-worker
+cell starves that cell. Rule, fixed now: after the screen, a cell is RE-RUN (its document deleted
+and screen.sh re-invoked, which skips existing cells) iff the system load average (1-minute,
+sampled every 5 s into load-exp1.log) exceeded 10.0 at any sample inside the cell's ten-second
+window, as read from the document's own wall timestamps / file mtime. No other cell is touched;
+the rule does not look at depth. The list of re-run cells is recorded in the README.
+
+Applied 2026-09-07 08:30 UTC. The load sampler only started at 08:07 UTC, after the first
+cells; from 08:07 on, no 1-minute load sample exceeded 10.0 (a 16-second build does not move
+the 1-minute average that far), so the registered rule flags nothing. The instrument agent's
+transcript shows two real unlocked builds: 08:05:16-08:05:51 (library) and 08:21:17-08:21:33
+(example). Cells whose ten-second window overlaps either: A-legacy-r0-s18, s19, s20, s21, s22
+and B-legacy-r2-s24, s25 (seven). No cell of the 108 fell below 80 % of its arm's median
+sample evaluations, so the perturbation, if any, was mild. The seven originals are kept in
+exp1-perturbed-originals/ and re-run; the README reports the score both ways.

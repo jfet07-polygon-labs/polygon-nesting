@@ -1,0 +1,21 @@
+== exp1 legacy: A cells 27, B cells 27
+   depth: A median-of-medians 164.006 mean 163.863 | B 160.025 mean 160.386
+   paired gain (A-B) median +4.192 mm, B wins 9/9, worst +0.548, per seed: 18:+4.99 19:+5.10 20:+2.17 21:+5.84 22:+0.61 23:+4.19 24:+4.69 25:+0.55 26:+3.15
+   evaluations per explore bite: A 459062  B 371865  (-19 %); explore bites per cell: A 103.6  B 121.5; master iterations per cell: A 2107 B 2165
+   invalid publications: A 0 B 0; give-ups: A 0 B 0; publications per cell: A 108.3 B 135.7
+   [PASS] depth: positive paired median
+   [PASS] tail: no per-seed-median regression > 1.000 mm
+   [PASS] integrity: zero invalid publications in B
+   [PASS] engineering: fewer evaluations per explore bite
+   [PASS] engineering: explore bites per cell not lower
+== exp1 wall10s: A cells 27, B cells 27
+   depth: A median-of-medians 159.867 mean 159.630 | B 158.745 mean 157.230
+   paired gain (A-B) median +1.078 mm, B wins 7/9, worst -0.627, per seed: 18:+1.08 19:+2.46 20:+0.31 21:+6.97 22:-0.63 23:+0.43 24:+9.98 25:-0.26 26:+1.26
+   evaluations per explore bite: A 9071040  B 7544341  (-17 %); explore bites per cell: A 5.0  B 5.3; master iterations per cell: A 957 B 1483
+   invalid publications: A 0 B 0; give-ups: A 0 B 0; publications per cell: A 21.0 B 33.8
+   [PASS] depth: positive paired median
+   [PASS] tail: no per-seed-median regression > 1.000 mm
+   [PASS] integrity: zero invalid publications in B
+   [PASS] engineering: fewer evaluations per explore bite
+   [PASS] engineering: explore bites per cell not lower
+SCREEN PASS (mechanism and halving gates are scored from the traces, not here)

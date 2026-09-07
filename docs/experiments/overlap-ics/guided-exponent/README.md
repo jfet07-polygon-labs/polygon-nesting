@@ -107,3 +107,88 @@ before further treatment results. The registered screen (control p = 2 against p
 8 and the profile caps in both arms, nine seeds, three repetitions, rotated order) runs as
 registered; its result is appended below when it lands, and the p = 0.75 finding goes to
 Astra as a development finding with the question of how to validate it prospectively.
+
+## The registered development screen: control p = 2 against p = 1, margin 8 and the profile caps in both arms
+
+Registered in review 5b Q7 before any cell ran, run on 2026-09-07 from 08:04 to 08:27 UTC with
+`screen/screen.sh` (`frozen-f856d19`, sha256 82c6d5b3ccc9, bit-identical to frozen-9c38526
+on the three bitcheck cells): two arms (A `--proxymargin=8`; B `--proxymargin=8
+--guidedexponent=1`), both profiles (Legacy cap 50, Wall10s unbounded), seeds 18–26, three
+repetitions, arm order A,B on even repetitions and B,A on odd, one fresh eight-worker process
+per cell holding the bench lock for the whole screen, ten seconds from the bare request.
+Scored with `screen/screen-score.py` against the five gates it can read (positive paired median
+of the per-seed repetition medians; no per-seed-median regression greater than 1.000 mm; zero
+invalid publications in B; fewer sample evaluations per explore bite; explore bites per cell
+not lower). The 108 documents are `screen/exp1-*.json.gz`.
+
+`screen/score-after-rerun.txt`, verbatim:
+
+```
+== exp1 legacy: A cells 27, B cells 27
+   depth: A median-of-medians 164.006 mean 163.863 | B 160.025 mean 160.386
+   paired gain (A-B) median +4.192 mm, B wins 9/9, worst +0.548, per seed: 18:+4.99 19:+5.10 20:+2.17 21:+5.84 22:+0.61 23:+4.19 24:+4.69 25:+0.55 26:+3.15
+   evaluations per explore bite: A 459062  B 371865  (-19 %); explore bites per cell: A 103.6  B 121.5; master iterations per cell: A 2107 B 2165
+   invalid publications: A 0 B 0; give-ups: A 0 B 0; publications per cell: A 108.3 B 135.7
+   [PASS] depth: positive paired median
+   [PASS] tail: no per-seed-median regression > 1.000 mm
+   [PASS] integrity: zero invalid publications in B
+   [PASS] engineering: fewer evaluations per explore bite
+   [PASS] engineering: explore bites per cell not lower
+== exp1 wall10s: A cells 27, B cells 27
+   depth: A median-of-medians 159.867 mean 159.630 | B 158.745 mean 157.230
+   paired gain (A-B) median +1.078 mm, B wins 7/9, worst -0.627, per seed: 18:+1.08 19:+2.46 20:+0.31 21:+6.97 22:-0.63 23:+0.43 24:+9.98 25:-0.26 26:+1.26
+   evaluations per explore bite: A 9071040  B 7544341  (-17 %); explore bites per cell: A 5.0  B 5.3; master iterations per cell: A 957 B 1483
+   invalid publications: A 0 B 0; give-ups: A 0 B 0; publications per cell: A 21.0 B 33.8
+   [PASS] depth: positive paired median
+   [PASS] tail: no per-seed-median regression > 1.000 mm
+   [PASS] integrity: zero invalid publications in B
+   [PASS] engineering: fewer evaluations per explore bite
+   [PASS] engineering: explore bites per cell not lower
+SCREEN PASS (mechanism and halving gates are scored from the traces, not here)
+```
+
+**The perturbation and the re-run.** The replay-geometry instrument's implementer compiled in
+its own worktree without the bench lock twice while the screen ran (08:05:16–08:05:51 a
+library build, 08:21:17–08:21:33 the example). `screen/exp1-perturbation-rule.txt` was
+registered before scoring: it names a load-average rule (1-minute average above 10.0 inside a
+cell's window), but the sampler only started at 08:07 and from then on no sample exceeded
+10.0 (a 16-second build does not move a 1-minute average that far), so the registered rule
+flags nothing; the transcript's build windows overlap seven cells (A-legacy-r0 seeds 18–22,
+B-legacy-r2 seeds 24–25), none of which fell below 80 % of its arm's median sample
+evaluations. Those seven were set aside (`screen/perturbed-originals/`) and re-run at
+08:30–08:32 with the same script (it skips existing cells). Both scores are archived: as run
+(`screen/score-as-run.txt`: Legacy +4.192 mm, 8/9, worst −0.002 on seed 25; Wall10s
+identical to the above) and after the re-run (above: Legacy +4.192 mm, 9/9, worst +0.548).
+Every gate passes either way; Wall10s has no re-run cell.
+
+**Per-seed medians (A | B).** Legacy: 18 164.00 | 159.02; 19 165.12 | 159.88; 20 164.00 |
+161.83; 21 165.87 | 160.02; 22 158.20 | 156.86; 23 164.01 | 159.81; 24 167.10 | 162.47;
+25 164.01 | 164.01 (as run; 163.46 after the re-run); 26 163.32 | 160.17. Wall10s: 18 160.09 |
+159.02; 19 159.98 | 157.53; 20 159.06 | 158.74; 21 160.00 | 153.03; 22 159.29 | 159.92;
+23 159.87 | 159.44; 24 160.02 | 150.04; 25 159.17 | 159.43; 26 159.19 | 157.92. The Wall10s
+seed-24 median of 150.04 is the first ten-second depth of ours at Sparrow's level (150.165
+from its own constructor, 149.195 from ours) on any seed.
+
+**What moved, bite by bite (all 108 cells, before the re-run).** Legacy: explore bites per
+cell 102.8 → 122.5 (bites per second 11.0 → 13.1), master iterations per explore bite median
+8 → 7 and 90th percentile 32 → 28, bites reaching 34 iterations 9.2 % → 6.8 % of bites, the
+share of all iterations spent in bites longer than 100 iterations 22 % → 25 %, publications
+per cell 107 → 136. Wall10s: explore bites per cell 5.0 → 5.3, iterations per explore bite
+median 53 → 47 but 90th percentile 335 → 718 (the failed bites run longer under p = 1: median
+335 → 719 iterations, 27 failed bites in each arm), publications per cell 21 → 34. So on
+Legacy the gain is more, slightly shorter bites and many more publications, not a shorter
+tail; on Wall10s the wins are two basin escapes (seeds 21 and 24) and the losses are within a
+millimetre.
+
+**Against the six gates of review 4 Q4 / 5b Q7.** The five the scorer reads pass on both
+profiles. The mechanism gate and the halving gate are for the traces: the replay-geometry
+instrument (column break from committed geometry, the sweep-24 fork under four exponents,
+the extended identity gate, the detached publication check) is built and its readings are
+appended below when they land.
+
+**What this screen does not say.** It is a development screen on consumed seeds. It compares
+p = 1 with margin 8 against p = 2 with margin 8; the no-margin measure above gave p = 1 only
++0.85 / +0.11, so the margin and the exponent interact (the margin removes the exact-call
+churn; the exponent shortens the trickle), and the prospective successor must carry margin 8
+in both arms as review 4 prescribed. The p = 0.75 development finding stands beside it, not
+in it.
