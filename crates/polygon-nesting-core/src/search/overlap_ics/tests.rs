@@ -3915,6 +3915,7 @@ fn the_bite_microscope_leaves_the_fixed_work_trajectory_identical() {
     let armed = Some(MicroscopeConfig {
         trigger_iterations: 1,
         retain_after: 3,
+        ..MicroscopeConfig::default()
     });
 
     let (poses_off, depth_off, published_off, iterations_off, work_off, report_off) =
@@ -4002,6 +4003,7 @@ fn the_bite_microscope_leaves_the_fixed_work_trajectory_identical() {
         microscope_publishing_run(Some(MicroscopeConfig {
             trigger_iterations: 0,
             retain_after: 3,
+            ..MicroscopeConfig::default()
         }));
     assert_eq!(poses_off, poses_on, "poses differ with the microscope on (publishing run)");
     assert_eq!(depth_off, depth_on);
@@ -4117,6 +4119,7 @@ fn a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit() {
     let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
         trigger_iterations: 1,
         retain_after: 3,
+        ..MicroscopeConfig::default()
     }));
     let report = report.expect("on means a report");
     let bite = &report.bites[0];
@@ -4182,6 +4185,7 @@ fn a_replay_from_the_first_capsule_reproduces_the_traced_sweeps_bit_for_bit() {
         workers: 8,
         bite: capsule.bite,
         max_iterations: 3,
+        live_horizon: false,
         probe: ReplayProbe::None,
         strikes: StrikeConfig::CONTROL,
         traced,
@@ -4245,6 +4249,7 @@ fn replay_first_capsule_under_with(
     let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
         trigger_iterations: 1,
         retain_after: 3,
+        ..MicroscopeConfig::default()
     }));
     let report = report.expect("on means a report");
     let bite = &report.bites[0];
@@ -4298,6 +4303,7 @@ fn replay_first_capsule_under_with(
         workers: 8,
         bite: capsule.bite,
         max_iterations,
+        live_horizon: false,
         probe,
         strikes: StrikeConfig::CONTROL,
         traced,
@@ -4327,6 +4333,7 @@ fn replay_publishing_capsule(
     let (_, _, _, _, _, report) = microscope_publishing_run(Some(MicroscopeConfig {
         trigger_iterations: 0,
         retain_after: 3,
+        ..MicroscopeConfig::default()
     }));
     let report = report.expect("on means a report");
     let bite = report
@@ -4383,6 +4390,7 @@ fn replay_publishing_capsule(
         workers: 2,
         bite: capsule.bite,
         max_iterations: 2,
+        live_horizon: false,
         probe: ReplayProbe::None,
         strikes: StrikeConfig::CONTROL,
         traced,
@@ -5944,6 +5952,7 @@ fn a_capsule_captured_under_the_exponent_knob_carries_it_and_the_default_does_no
     let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig {
         trigger_iterations: 1,
         retain_after: 3,
+        ..MicroscopeConfig::default()
     }));
     let report = report.expect("on means a report");
     assert!(!report.capsules.is_empty());
@@ -5976,4 +5985,442 @@ fn a_capsule_captured_under_the_exponent_knob_carries_it_and_the_default_does_no
     assert_eq!(live.guided_exponent, None);
     assert_eq!(live.guided.to_bits(), at_two.guided.to_bits());
     assert_eq!(super::guided_exponent(), 2.0, "nothing here writes the knob");
+}
+
+// --------------------------------------------------- the depth microscope --
+
+/// The twelve-square fixed-work trajectory of [`microscope_tournament_run`]
+/// as the whole outcome, for the tests that need the bite records beside
+/// the microscope report.
+fn microscope_tournament_outcome(
+    microscope: Option<super::microscope::MicroscopeConfig>,
+) -> super::ScheduleOutcome {
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses = (0..pieces.len())
+        .map(|index| Pose {
+            tx_mm: 20.0 + (index % 4) as f64 * 22.0,
+            ty_mm: 20.0 + (index / 4) as f64 * 22.0,
+            theta_deg: 0.0,
+            mirrored: false,
+        })
+        .collect::<Vec<_>>();
+    let config = IcsConfig {
+        target_depth_mm: 40.0,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: 40.0,
+        from_constructor: true,
+        placement_fingerprint: "the-constructor".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    let schedule = ScheduleConfig {
+        workers: 8,
+        bite_microscope: microscope,
+        ..ScheduleConfig::default()
+    };
+    engine.run_cutclose(
+        schedule,
+        Budget::FixedWork {
+            explore_bites: 2,
+            compress_bites: 1,
+            attempts_per_bite: 2,
+            iterations_per_separation: 3,
+        },
+    )
+}
+
+/// A retained bite's entry capsule of a twelve-square microscope report,
+/// replayed: the engine rebuilt from the same sources at the capsule's
+/// poses with the weights and the stream restored (exactly as
+/// [`replay_first_capsule_under_with`] builds it), under `probe`, capped at
+/// `max_iterations` or, with `live_horizon`, at the traced attempt's own
+/// sweep count. Returns the report and the traced sweeps.
+fn replay_retained_bite(
+    report: &super::microscope::MicroscopeReport,
+    bite_index: usize,
+    probe: super::replay::ReplayProbe,
+    max_iterations: u64,
+    live_horizon: bool,
+) -> (super::replay::ReplayReport, Vec<super::microscope::SweepRecord>) {
+    use super::replay::{ReplayParams, TracedSweep};
+    let bite = &report.bites[bite_index];
+    let capsule = &report.capsules[bite.capsule as usize];
+    assert_eq!(capsule.label, "bite-entry");
+    let sweeps = bite.separations[0].sweeps.clone();
+    let traced: Vec<TracedSweep> = sweeps.iter().map(TracedSweep::from).collect();
+    let fixture = Fixture::squares(12, 20.0);
+    let pieces = fixture.pieces();
+    let settings = test_settings();
+    let contract = Contract::from_settings(settings);
+    let sources = super::state::piece_sources(&pieces).expect("sources");
+    let poses: Vec<Pose> = capsule
+        .poses
+        .iter()
+        .zip(&capsule.mirrored)
+        .map(|(pose, mirrored)| Pose {
+            tx_mm: pose[0],
+            ty_mm: pose[1],
+            theta_deg: pose[2],
+            mirrored: *mirrored,
+        })
+        .collect();
+    let config = IcsConfig {
+        target_depth_mm: capsule.target_depth_mm,
+        proposal_budget: 0,
+        relocate_eval_budget: u64::MAX,
+        checkpoint_every_sweeps: u64::MAX,
+        descent: DescentConfig::derive(&contract, &sources, 4),
+        limits: PublicationLimits::default(),
+    };
+    let incumbent = super::state::ExactIncumbent {
+        placements: Vec::new(),
+        raw_source_depth_mm: f64::INFINITY,
+        from_constructor: false,
+        placement_fingerprint: "replay-capsule".to_owned(),
+    };
+    let mut engine = Engine::from_poses(
+        &pieces, settings, sources, contract, poses, incumbent, config,
+    );
+    engine
+        .restore_capsule_weights(&capsule.pair_weights, &capsule.edge_weights)
+        .expect("the capsule has this fixture's shape");
+    engine.restore_replay_stream(
+        capsule.bite,
+        traced.first().map_or(0, |sweep| u64::from(sweep.winner)),
+        capsule.stream.iteration,
+        capsule.proposals,
+    );
+    let max_iterations = if live_horizon {
+        traced.len() as u64
+    } else {
+        max_iterations
+    };
+    let replay = engine.replay_separation(&ReplayParams {
+        workers: 8,
+        bite: capsule.bite,
+        max_iterations,
+        live_horizon,
+        probe,
+        strikes: StrikeConfig::CONTROL,
+        traced,
+        watch_rows: Vec::new(),
+        fork: None,
+        certify: false,
+    });
+    (replay, sweeps)
+}
+
+/// **The depth trigger retains the first bite targeting at most the named
+/// depth, whole, and records absence without substitution.** Astra review
+/// 7 Q18's microscope on the banded two-square trajectory, which publishes
+/// two explore bites: with the threshold set to the second bite's own
+/// target the second bite is the trigger (kind `target`), retained with its
+/// separation call, actual stop, publication outcome and the wall fields
+/// (`null` without a clock); the first bite, which targets more, is not
+/// buffered. With a threshold no bite meets the report says `absent` and
+/// names the deepest target seen and the last published depth. The
+/// trajectory is identical to the flag off in both cases.
+#[test]
+fn the_depth_microscope_retains_the_first_bite_under_the_target_and_records_absence() {
+    use super::microscope::{MicroscopeConfig, TriggerSpec};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (poses_off, depth_off, published_off, iterations_off, work_off, _) =
+        microscope_publishing_run(None);
+    assert_eq!(published_off, 2, "the banded trajectory publishes both explore bites");
+    // The targets, read off a zero-trigger iteration run that retains both.
+    let (_, _, _, _, _, all) = microscope_publishing_run(Some(MicroscopeConfig {
+        trigger_iterations: 0,
+        retain_after: 3,
+        ..MicroscopeConfig::default()
+    }));
+    let all = all.expect("a report");
+    assert_eq!(all.bites.len(), 2);
+    assert_eq!(all.trigger, TriggerSpec::Iterations { trigger_iterations: 0, retain_after: 3 });
+    assert_eq!(all.exposure.trigger_iterations, Some(0));
+    let first_target = all.bites[0].target_depth_mm;
+    let second_target = all.bites[1].target_depth_mm;
+    assert!(second_target < first_target, "the second cut targets deeper");
+
+    // The threshold the second bite meets exactly and the first does not.
+    let config = MicroscopeConfig::target(second_target, None);
+    assert_eq!(config.retain_after, 1);
+    assert_eq!(
+        config.trigger(),
+        TriggerSpec::Target { target_mm: second_target, second_target_mm: None }
+    );
+    let (poses_on, depth_on, published_on, iterations_on, work_on, report) =
+        microscope_publishing_run(Some(config));
+    assert_eq!(poses_off, poses_on, "poses differ with the depth microscope on");
+    assert_eq!(depth_off, depth_on);
+    assert_eq!(published_off, published_on);
+    assert_eq!(iterations_off, iterations_on);
+    assert_eq!(work_off, work_on, "the work vector differs");
+    let report = report.expect("on means a report");
+    assert_eq!(report.trigger, config.trigger());
+    let document = serde_json::to_value(&report).expect("serializes");
+    assert_eq!(document["trigger"]["kind"], serde_json::json!("target"));
+    assert_eq!(document["trigger"]["targetMm"], serde_json::json!(second_target));
+    assert_eq!(document["trigger"]["secondTargetMm"], serde_json::Value::Null);
+    assert!(document["exposure"].get("triggerIterations").is_none());
+    assert!(report.exposure.triggered);
+    assert_eq!(report.exposure.trigger_bite, Some(2));
+    assert_eq!(report.exposure.retained_bites, vec![2], "bite 1 targets more: not retained");
+    assert_eq!(report.exposure.explore_bites_seen, 2);
+    assert_eq!(report.exposure.deepest_target_mm, Some(second_target));
+    assert!(report.exposure.last_published_depth_mm.is_some());
+    // The trigger published and no later bite exists: truncated, and said so.
+    assert_eq!(report.exposure.status, "truncated");
+    assert!(!report.exposure.complete);
+    let reason = report.exposure.reason.clone().expect("the depth trigger names a reason");
+    assert!(reason.contains("trigger bite 2") && reason.contains("published"), "{reason}");
+    let bite = &report.bites[0];
+    assert_eq!(bite.ordinal, 2);
+    assert_eq!(bite.retained_as, "trigger");
+    assert!(bite.published);
+    assert_eq!(bite.target_depth_mm.to_bits(), second_target.to_bits());
+    assert_eq!(bite.separations.len(), 1, "one call, which published");
+    let call = &bite.separations[0];
+    assert_eq!(call.stop, Some("published"));
+    assert_eq!(call.publication, "published");
+    assert_eq!(call.capsule, bite.capsule, "attempt 0 opens on the bite-entry capsule");
+    assert_eq!(call.strikes, 0);
+    assert_eq!(call.rollbacks.len(), 0);
+    assert!(call.exact_checkpoint_calls >= 1, "a publication asked the exact authorities");
+    // Fixed work has no clock: the wall fields are present and null.
+    assert_eq!(call.wall_at_entry.left_s, None);
+    assert_eq!(call.wall_at_stop.elapsed_s, None);
+    assert_eq!(call.wall_at_stop.phase_deadline_s, None);
+    let call_json = &document["bites"][0]["separations"][0];
+    assert!(call_json.get("wallAtEntry").is_some() && call_json.get("wallAtStop").is_some());
+    assert_eq!(call_json["wallAtEntry"]["leftS"], serde_json::Value::Null);
+    assert_eq!(report.capsules[bite.capsule as usize].label, "bite-entry");
+    assert_eq!(report.capsules[bite.capsule as usize].bite, 2);
+
+    // A threshold no bite meets: absent, with the deepest target recorded
+    // and nothing substituted.
+    let (poses_absent, _, _, _, work_absent, absent) =
+        microscope_publishing_run(Some(MicroscopeConfig::target(1.0, Some(0.5))));
+    assert_eq!(poses_off, poses_absent);
+    assert_eq!(work_off, work_absent);
+    let absent = absent.expect("on means a report");
+    assert_eq!(absent.exposure.status, "absent");
+    assert!(!absent.exposure.triggered);
+    assert_eq!(absent.exposure.trigger_bite, None);
+    assert!(absent.exposure.retained_bites.is_empty());
+    assert!(absent.bites.is_empty() && absent.capsules.is_empty(), "nothing substituted");
+    assert_eq!(absent.exposure.deepest_target_mm, Some(second_target));
+    assert_eq!(
+        absent.exposure.last_published_depth_mm,
+        report.exposure.last_published_depth_mm
+    );
+    let reason = absent.exposure.reason.clone().expect("a reason");
+    assert!(reason.starts_with("no explore bite targeted <= 1 mm"), "{reason}");
+    let document = serde_json::to_value(&absent).expect("serializes");
+    assert_eq!(document["exposure"]["status"], serde_json::json!("absent"));
+    assert_eq!(document["exposure"]["deepestTargetMm"], serde_json::json!(second_target));
+    assert_eq!(document["trigger"]["secondTargetMm"], serde_json::json!(0.5));
+}
+
+/// **The two microscope flags are refused together, and the depth
+/// argument is parsed strictly.** `resolve_flags` is what the benchmark
+/// calls with `--bitemicroscope` and `--microscopetarget`: one trigger per
+/// document.
+#[test]
+fn the_depth_microscope_and_the_iteration_microscope_are_refused_together() {
+    use super::microscope::{resolve_flags, MicroscopeConfig};
+    let both = resolve_flags(true, Some("156,151"));
+    assert!(both.is_err(), "{both:?}");
+    assert!(both.unwrap_err().contains("two triggers"));
+    assert_eq!(resolve_flags(false, None).expect("neither"), None);
+    assert_eq!(resolve_flags(true, None).expect("iteration trigger"), Some(MicroscopeConfig::default()));
+    let depth = resolve_flags(false, Some("156,151")).expect("depth trigger").expect("some");
+    assert_eq!(depth.target_mm, Some(156.0));
+    assert_eq!(depth.second_target_mm, Some(151.0));
+    assert_eq!(depth.retain_after, 1);
+    let one = MicroscopeConfig::parse_target(" 156 ").expect("one depth");
+    assert_eq!(one.target_mm, Some(156.0));
+    assert_eq!(one.second_target_mm, None);
+    for bad in ["", "abc", "156,abc", "0", "-1", "156,157", "156,0", "1,2,3", "inf", "nan"] {
+        assert!(MicroscopeConfig::parse_target(bad).is_err(), "`{bad}` must be refused");
+    }
+}
+
+/// **`--horizon=live` runs exactly the traced attempt's iteration count,
+/// and the control passes the identity gate on every one.** The
+/// twelve-square trigger bite's first attempt has three traced sweeps; the
+/// live horizon caps the replay at three, the report says so, and every
+/// iteration is bit-identical to the trace.
+#[test]
+fn the_live_horizon_replays_exactly_the_traced_attempts_iterations() {
+    use super::microscope::MicroscopeConfig;
+    use super::replay::{ReplayHorizon, ReplayProbe};
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig::target(40.0, None)));
+    let report = report.expect("on means a report");
+    assert_eq!(report.bites[0].retained_as, "trigger");
+    let (live, sweeps) = replay_retained_bite(&report, 0, ReplayProbe::None, 999, true);
+    assert_eq!(sweeps.len(), 3, "the first attempt runs to its three-iteration cap");
+    assert_eq!(live.horizon, ReplayHorizon { kind: "live", iterations: 3 });
+    assert_eq!(live.max_iterations, 3);
+    assert_eq!(live.stop, "iteration-cap");
+    assert_eq!(live.iterations.len(), 3, "exactly the traced count, no more");
+    assert_eq!(live.identity.len(), 3);
+    assert_eq!(live.identity_pass, 3, "{:#?}", live.identity);
+    assert_eq!(live.identity_fail, 0);
+    assert_eq!(live.diverges_from_trace_at_iteration, None);
+    let document = serde_json::to_value(&live).expect("serializes");
+    assert_eq!(document["horizon"]["kind"], serde_json::json!("live"));
+    assert_eq!(document["horizon"]["iterations"], serde_json::json!(3));
+    // `--maxiters` still names its own cap, and the report says which.
+    let (capped, _) = replay_retained_bite(&report, 0, ReplayProbe::None, 2, false);
+    assert_eq!(capped.horizon, ReplayHorizon { kind: "maxiters", iterations: 2 });
+    assert_eq!(capped.iterations.len(), 2);
+    assert_eq!(capped.identity_pass, 2);
+}
+
+/// **A p = 1 document's capsule replays under its own objective bit for
+/// bit and diverges under the other, both at the live horizon.** The
+/// twelve-square trajectory traced with the live knob at p = 1 (the
+/// capsules carry `guidedExponent: 1`); `--probe=exponent:1` reproduces
+/// every traced sweep, `--probe=exponent:2` - the control objective from
+/// the treatment's own entry, Astra review 7 Q18's "replay both objectives
+/// from each captured entry" - diverges. The knob is held at 1 for the
+/// replays too, as the benchmark holds it (`--guidedexponent=1` must agree
+/// with the document): the reconstruction folds at the capsule's exponent
+/// and the trajectory at the probe's.
+#[test]
+fn a_p1_capsule_replays_under_exponent_one_and_diverges_under_exponent_two() {
+    use super::microscope::MicroscopeConfig;
+    use super::replay::ReplayProbe;
+    struct KnobOff;
+    impl Drop for KnobOff {
+        fn drop(&mut self) {
+            super::clear_guided_exponent();
+        }
+    }
+    let _knobs = knob_lock();
+    assert_eq!(super::guided_exponent(), 2.0, "the knob must default to off");
+    super::set_guided_exponent(1.0).expect("p = 1");
+    let _off = KnobOff;
+    let (_, _, _, _, _, report) = microscope_tournament_run(Some(MicroscopeConfig::target(40.0, None)));
+    let report = report.expect("on means a report");
+    for capsule in &report.capsules {
+        assert_eq!(capsule.guided_exponent, Some(1.0), "a p = 1 capture carries its exponent");
+    }
+    let (at_one, sweeps) = replay_retained_bite(&report, 0, ReplayProbe::Exponent(1.0), 999, true);
+    assert_eq!(sweeps.len(), 3);
+    assert_eq!(at_one.horizon.kind, "live");
+    assert_eq!(at_one.iterations.len(), 3);
+    assert_eq!(at_one.identity_pass, 3, "{:#?}", at_one.identity);
+    assert_eq!(at_one.identity_fail, 0);
+    assert_eq!(at_one.entry_guided.to_bits(), report.capsules[0].guided.to_bits());
+    for (record, sweep) in at_one.iterations.iter().zip(&sweeps) {
+        assert_eq!(record.guided_after.to_bits(), sweep.guided_after.to_bits());
+    }
+    let (at_two, _) = replay_retained_bite(&report, 0, ReplayProbe::Exponent(2.0), 999, true);
+    assert_eq!(at_two.horizon.kind, "live");
+    assert_eq!(at_two.iterations.len(), 3, "the live horizon is the same budget");
+    assert_ne!(at_two.entry_guided.to_bits(), at_one.entry_guided.to_bits());
+    assert!(at_two.identity_fail >= 1, "p = 2 from the p = 1 entry must diverge: {:#?}", at_two.identity);
+    assert!(at_two.diverges_from_trace_at_iteration.is_some());
+    assert_eq!(super::guided_exponent(), 1.0, "the knob is held for the whole test");
+}
+
+/// **Every worker's sweep counters sum to the document's work counters.**
+/// The retained twelve-square trigger bite: per sweep the eight
+/// `workers[]` records' sample evaluations sum to `evaluationsAllWorkers`
+/// and the winner's equals `evaluationsWinner`; per bite the sum equals
+/// the bite record's own `profile.sampleEvaluations`; the discarded useful
+/// moves are the losers' and never the winner's, with the losers' whole
+/// expenditure.
+#[test]
+fn the_per_worker_sweep_counters_sum_to_the_bites_work_counters() {
+    use super::microscope::MicroscopeConfig;
+    let _knobs = knob_lock();
+    assert_eq!(super::proxy_margin_um(), 0, "the knob must default to off");
+    let outcome = microscope_tournament_outcome(Some(MicroscopeConfig::target(40.0, None)));
+    let report = outcome.bite_microscope.as_ref().expect("on means a report");
+    assert_eq!(report.exposure.status, "complete", "{:?}", report.exposure.reason);
+    assert_eq!(report.exposure.retained_bites, vec![1]);
+    let bite = &report.bites[0];
+    assert_eq!(bite.retained_as, "trigger");
+    assert!(!bite.published);
+    assert_eq!(bite.separations.len(), 2);
+    let mut bite_evaluations = 0u64;
+    for call in &bite.separations {
+        assert_eq!(call.stop, Some("work-cap"));
+        assert_eq!(call.publication, "no band entry: no exact attempt possible");
+        assert!(!call.entry_blocking.is_empty(), "an infeasible strip blocks at entry");
+        assert!(!call.stop_blocking.is_empty());
+        let mut call_evaluations = 0u64;
+        let mut discarded = 0u64;
+        let mut expenditure = 0u64;
+        for sweep in &call.sweeps {
+            assert_eq!(sweep.workers.len(), 8);
+            for (ordinal, worker) in sweep.workers.iter().enumerate() {
+                assert_eq!(worker.worker as usize, ordinal);
+                assert!(worker.relocates >= worker.moved);
+                assert!(worker.moved >= worker.useful_moves);
+                assert!(worker.sample_evaluations >= worker.useful_move_evaluations);
+            }
+            let all: u64 = sweep.workers.iter().map(|worker| worker.sample_evaluations).sum();
+            assert_eq!(all, sweep.evaluations_all_workers);
+            let winner = &sweep.workers[sweep.winner as usize];
+            assert_eq!(winner.sample_evaluations, sweep.evaluations_winner);
+            assert_eq!(winner.raw_after.to_bits(), sweep.raw_after.to_bits());
+            assert_eq!(winner.max_after_mm.to_bits(), sweep.max_after_mm.to_bits());
+            // The worker's guided is the pre-GLS reading the tournament
+            // ranked on (the sweep's is folded after the weight pass): the
+            // winner's is no worse than any slot's.
+            assert!(sweep
+                .workers
+                .iter()
+                .all(|worker| winner.guided_after <= worker.guided_after));
+            assert_eq!(
+                winner.moved as usize,
+                sweep.relocates.iter().filter(|relocate| relocate.moved).count()
+            );
+            let losers_useful: u64 = sweep
+                .workers
+                .iter()
+                .filter(|worker| worker.worker != sweep.winner)
+                .map(|worker| worker.useful_moves)
+                .sum();
+            assert_eq!(sweep.useful_moves_discarded, losers_useful);
+            assert_eq!(
+                sweep.discarded_expenditure,
+                sweep.evaluations_all_workers - sweep.evaluations_winner
+            );
+            call_evaluations += all;
+            discarded += sweep.useful_moves_discarded;
+            expenditure += sweep.discarded_expenditure;
+        }
+        assert_eq!(call.evaluations_all_workers, call_evaluations);
+        assert_eq!(call.useful_moves_discarded, discarded);
+        assert_eq!(call.discarded_expenditure, expenditure);
+        bite_evaluations += call_evaluations;
+    }
+    assert!(bite_evaluations > 0);
+    assert_eq!(
+        bite_evaluations, outcome.bites[0].profile.sample_evaluations,
+        "the per-worker counters are the bite's own sample evaluations"
+    );
+    assert!(
+        bite.separations.iter().any(|call| call.useful_moves_discarded > 0),
+        "eight workers on an infeasible strip: some loser committed a useful move"
+    );
 }

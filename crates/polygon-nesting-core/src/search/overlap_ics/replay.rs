@@ -102,7 +102,11 @@
 //! call `attempt_publication` - it makes that call only under `--certify=1`,
 //! once, after the stop (`certify_band_entry`, [`CertificationReport`]) -
 //! and its iteration cap is the caller's `--maxiters` rather than the
-//! profile's wall cap.
+//! profile's wall cap - or, under `--horizon=live`, the traced attempt's
+//! own iteration count: GPT-6 Astra review 7 Q18 asks that the treatment
+//! objective replayed from the control's entry (and vice versa) get exactly
+//! the live attempt's budget, no more, because "another 100-iteration
+//! horizon would censor much of the observed deeper work" ([`ReplayHorizon`]).
 //!
 //! # Control identity
 //!
@@ -434,6 +438,10 @@ pub struct ReplayParams {
     pub workers: usize,
     pub bite: u64,
     pub max_iterations: u64,
+    /// `--horizon=live`: `max_iterations` is the traced attempt's own
+    /// sweep count, so the replay runs exactly the live attempt's budget.
+    /// `false`: `--maxiters` named it.
+    pub live_horizon: bool,
     pub probe: ReplayProbe,
     pub strikes: StrikeConfig,
     /// The trace's sweeps for this separation, for the identity comparison
@@ -1660,6 +1668,25 @@ pub const LIVE_PATH_RETURNED_NOTHING: &str = "Engine::attempt_publication return
     publish::attempt refused at an entry gate before any exact call (or the unchanged-pose \
     digest skipped the attempt); the live path names no reason there";
 
+/// Where the replay's iteration cap came from: `live` (the traced
+/// attempt's own sweep count, `--horizon=live`) or `maxiters` (the
+/// caller's `--maxiters`), and the cap itself.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReplayHorizon {
+    pub kind: &'static str,
+    pub iterations: u64,
+}
+
+impl ReplayHorizon {
+    pub fn of(params: &ReplayParams) -> Self {
+        Self {
+            kind: if params.live_horizon { "live" } else { "maxiters" },
+            iterations: params.max_iterations,
+        }
+    }
+}
+
 /// The replay's result.
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -1668,6 +1695,7 @@ pub struct ReplayReport {
     pub workers: u32,
     pub bite: u64,
     pub max_iterations: u64,
+    pub horizon: ReplayHorizon,
     pub band_mm: f64,
     pub continuation: Option<ContinuationParams>,
     pub revisit: bool,
@@ -2102,6 +2130,7 @@ impl<'a> Engine<'a> {
             workers: workers as u32,
             bite: params.bite,
             max_iterations: params.max_iterations,
+            horizon: ReplayHorizon::of(params),
             band_mm: band,
             continuation: probe.continuation.map(ContinuationParams::from),
             revisit: probe.revisit,

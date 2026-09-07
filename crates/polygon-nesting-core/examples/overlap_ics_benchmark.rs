@@ -68,7 +68,6 @@ use polygon_nesting_core::search::overlap_ics::icscal::{
     BinaryKey, CurrencyVersion, Executor, PhasePlan, PlanKey, PlanPhase, WorkPlan,
 };
 use polygon_nesting_core::search::overlap_ics::icscal_read::plan_from_bytes;
-use polygon_nesting_core::search::overlap_ics::microscope::MicroscopeConfig;
 #[cfg(feature = "pool-retry-tracker-rebase")]
 use polygon_nesting_core::search::overlap_ics::pool_rebase::{
     apply_weight_policy, raw_row_digest as pool_raw_row_digest, PoolRebaseArm, PoolRebaseTrace,
@@ -1864,11 +1863,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             format!("--bitemicroscope is a cutclose-only diagnostic, not a `{cell}` option").into(),
         );
     }
-    // `--capsule`, `--bite`, `--probe`, `--capsuleindex` and `--maxiters`
-    // belong to the `replay` cell alone (`overlap_ics::replay`): a replay
-    // starts from a microscope capsule, which is a known-good layout, and the
-    // forbidden-rescue table forbids that on any scored cell.
-    for key in ["capsule", "bite", "probe", "capsuleindex", "maxiters", "fork", "certify"] {
+    // `--microscopetarget=<mm>[,<mm>]` is the same microscope with the depth
+    // trigger of GPT-6 Astra review 7 Q18 (`overlap_ics::microscope`, "the
+    // depth trigger"): the first explore cut targeting at most the first
+    // depth, followed to publication or its live stop, and if it publishes
+    // the next cut targeting at most the second. Cutclose only, never
+    // beside `--bitemicroscope`, and the same tripwire.
+    if options.get("microscopetarget").is_some() && cell != "cutclose" {
+        return Err(
+            format!("--microscopetarget is a cutclose-only diagnostic, not a `{cell}` option").into(),
+        );
+    }
+    let microscope_config = polygon_nesting_core::search::overlap_ics::microscope::resolve_flags(
+        options.integer("bitemicroscope", 0)? != 0,
+        options.get("microscopetarget"),
+    )?;
+    // `--capsule`, `--bite`, `--probe`, `--capsuleindex`, `--maxiters` and
+    // `--horizon` belong to the `replay` cell alone (`overlap_ics::replay`):
+    // a replay starts from a microscope capsule, which is a known-good
+    // layout, and the forbidden-rescue table forbids that on any scored cell.
+    for key in ["capsule", "bite", "probe", "capsuleindex", "maxiters", "fork", "certify", "horizon"] {
         if options.get(key).is_some() && cell != "replay" {
             return Err(format!("--{key} is a replay-only option, not a `{cell}` option").into());
         }
@@ -2893,9 +2907,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 explore_time_ratio: options
                     .number("exploreratio", homotopy::EXPLORE_TIME_RATIO)?,
                 // The bite microscope, at its prospectively fixed trigger
-                // (34 master iterations, three bites after). Diagnostic only.
-                bite_microscope: (options.integer("bitemicroscope", 0)? != 0)
-                    .then(MicroscopeConfig::default),
+                // (34 master iterations, three bites after) or at the depth
+                // trigger `--microscopetarget` names. Diagnostic only.
+                bite_microscope: microscope_config,
                 ..ScheduleConfig::default()
             };
             #[cfg(feature = "pool-retry-tracker-rebase")]
@@ -3985,7 +3999,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return Err("--bite=<ordinal> names the traced bite to replay".into());
             }
             let probe = ReplayProbe::parse(options.get("probe").unwrap_or("none"))?;
-            let max_iterations = options.integer("maxiters", 200)?;
+            // `--horizon=live`: the cap is the traced attempt's own sweep
+            // count, read below once the attempt is known (Astra review 7
+            // Q18: the replayed objective gets exactly the live attempt's
+            // budget). `--maxiters=<n>` is the fixed cap as before; naming
+            // both is refused rather than resolved.
+            let live_horizon = match options.get("horizon") {
+                None => false,
+                Some("live") => true,
+                Some(other) => {
+                    return Err(format!("--horizon must be `live` (or absent), not `{other}`").into())
+                }
+            };
+            if live_horizon && options.get("maxiters").is_some() {
+                return Err("--horizon=live and --maxiters name two caps; pass one of them".into());
+            }
+            let mut max_iterations = options.integer("maxiters", 200)?;
             let workers = options.integer("workers", 8)? as usize;
             // `--fork=<sweep>`: the fixed diagnostic fork of Astra 5b Q8, in
             // sweep <sweep> + 1; `--certify=1`: the detached publication check
@@ -4184,6 +4213,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let traced_sweeps: Vec<Value> = separation
                 .and_then(|call| call["sweeps"].as_array().cloned())
                 .unwrap_or_default();
+            if live_horizon {
+                max_iterations = traced_sweeps.len() as u64;
+            }
             let traced: Vec<TracedSweep> = traced_sweeps
                 .iter()
                 .map(|sweep| {
@@ -4421,8 +4453,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             });
             eprintln!(
                 "replay: capsule {capsule_index} ({capsule_label}) of bite {bite_ordinal}, \
-                 attempt {separation_attempt}, {} traced sweeps; reconstruction raw {} guided {} max {}",
+                 attempt {separation_attempt}, {} traced sweeps; horizon {} ({} iterations); \
+                 captured exponent {captured_exponent}, trajectory exponent {}; reconstruction \
+                 raw {} guided {} max {}",
                 traced.len(),
+                if live_horizon { "live" } else { "maxiters" },
+                max_iterations,
+                match probe {
+                    ReplayProbe::Exponent(exponent) => exponent,
+                    _ => guided_exponent,
+                },
                 if reconstruction["rawEqual"] == json!(true) { "EQUAL" } else { "DIFFERS" },
                 if reconstruction["guidedEqual"] == json!(true) { "EQUAL" } else { "DIFFERS" },
                 if reconstruction["maxEqual"] == json!(true) { "EQUAL" } else { "DIFFERS" },
@@ -4432,6 +4472,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 workers,
                 bite: bite_ordinal,
                 max_iterations,
+                live_horizon,
                 probe,
                 strikes: StrikeConfig::control_live(),
                 traced,
@@ -4584,6 +4625,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             replay["params"] = json!({
                 "probe": probe.label(),
                 "maxIterations": max_iterations,
+                "horizon": report.horizon,
+                // The objective the trajectory ran under: the probe's `p`,
+                // or the live knob (the document's own) for the control.
+                "trajectoryExponent": match probe {
+                    ReplayProbe::Exponent(exponent) => exponent,
+                    _ => guided_exponent,
+                },
                 "workers": workers,
                 "bandMm": report.band_mm,
                 "continuation": report.continuation,
@@ -4672,11 +4720,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ran. The `tripwire` field is what a scorer refuses on; the rest is the
     // trace (`overlap_ics::microscope`).
     if let Some(mut report) = bite_microscope.take() {
-        report["tripwire"] = json!(
-            "DIAGNOSTIC ONLY: --bitemicroscope=1 ran; this document carries replay capsules \
+        let flag = match options.get("microscopetarget") {
+            Some(value) => format!("--microscopetarget={value}"),
+            None => "--bitemicroscope=1".to_owned(),
+        };
+        report["tripwire"] = json!(format!(
+            "DIAGNOSTIC ONLY: {flag} ran; this document carries replay capsules \
              (known-good layouts) and must never be scored (forbidden-rescue row: fixture as a seed)"
-        );
-        report["flag"] = json!("--bitemicroscope=1");
+        ));
+        report["flag"] = json!(flag);
         document["biteMicroscope"] = report;
     }
     // Same rule, and louder still: present exactly when `--cell=replay` ran.

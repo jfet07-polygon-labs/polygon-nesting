@@ -87,6 +87,34 @@
 //! `f64` values are written as-is; `serde_json` with `float_roundtrip` emits
 //! the shortest representation that parses back to the same bits.
 //!
+//! # The depth trigger (`--microscopetarget=<mm>[,<mm>]`)
+//!
+//! GPT-6 Astra review 7 Q18 (`docs/astra-review-7-the-verdict.md`) reads the
+//! Wall10s screen and finds that the dominant unresolved work is not the
+//! first hard bite but the *last* one: the ten-second cell publishes four
+//! explore bites and then fails the cut targeting about 155.5 mm (seeds 27
+//! and 31 publish a fifth and fail the cut at about 150.5 mm); that final
+//! unpublished bite takes 79.5 % of the treatment's exploration evaluations,
+//! never reaches the proxy band, makes no exact attempt and ends at the
+//! wall. The iteration trigger cannot see it: by the time the deep cut
+//! starts, the four retained bites are long closed. Astra's specification
+//! is a **depth-triggered** microscope: capture the first explore cut
+//! targeting at most a named depth, follow the whole attempt to publication
+//! or its live stopping boundary, and if it publishes retain the next cut
+//! targeting at most a second depth; record absence without substitution.
+//! [`MicroscopeConfig::target_mm`] is that trigger, beside
+//! `trigger_iterations`; the trace format is the same, extended with what
+//! Astra's four questions need and the iteration trace lacked: every
+//! attempt's actual stop with the remaining wall allowance, strikes and
+//! rollbacks; the entry capsule of every attempt; every worker's per-sweep
+//! economics ([`WorkerSweepRecord`]), not only the winner's; and the useful
+//! moves the tournament discarded. `deep-cut.py` beside the README reads it.
+//! The reason is the same one that opened this module: the sparrow-warm-start
+//! comparison (`docs/experiments/overlap-ics/sparrow-warm-start/README.md`)
+//! shows the two engines parting on individual deep bites from the same
+//! layout, and the aggregate bite record cannot say why; the depth trigger
+//! puts the microscope on the one bite the Wall10s cell dies in.
+//!
 //! # Diagnostic only
 //!
 //! The forbidden-rescue table in `docs/grok-review-12-reading-sparrow.md`
@@ -118,10 +146,20 @@ pub const DEFAULT_RETAIN_AFTER: u64 = 3;
 
 /// The trigger. The benchmark always passes the defaults; a unit test lowers
 /// the threshold to exercise retention on a small fixture.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// With `target_mm` set the trigger is the **depth** one
+/// (`--microscopetarget`): the first explore bite whose target depth
+/// (`Bite::width_after_mm`) is at most `target_mm` is retained whole; if it
+/// publishes, the next explore bite whose target is at most
+/// `second_target_mm` (or simply the next explore bite when none is named)
+/// is retained too. `trigger_iterations` is not consulted then and
+/// `retain_after` is one.
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MicroscopeConfig {
     pub trigger_iterations: u64,
     pub retain_after: u64,
+    pub target_mm: Option<f64>,
+    pub second_target_mm: Option<f64>,
 }
 
 impl Default for MicroscopeConfig {
@@ -129,8 +167,112 @@ impl Default for MicroscopeConfig {
         Self {
             trigger_iterations: DEFAULT_TRIGGER_ITERATIONS,
             retain_after: DEFAULT_RETAIN_AFTER,
+            target_mm: None,
+            second_target_mm: None,
         }
     }
+}
+
+impl MicroscopeConfig {
+    /// The depth trigger at `target_mm`, with an optional second threshold.
+    pub fn target(target_mm: f64, second_target_mm: Option<f64>) -> Self {
+        Self {
+            trigger_iterations: DEFAULT_TRIGGER_ITERATIONS,
+            retain_after: 1,
+            target_mm: Some(target_mm),
+            second_target_mm,
+        }
+    }
+
+    /// `--microscopetarget=<mm>[,<mm>]`'s value: one or two positive
+    /// millimetre depths, the second at most the first.
+    pub fn parse_target(value: &str) -> Result<Self, String> {
+        let mut parts = value.split(',').map(str::trim);
+        let first = parts
+            .next()
+            .filter(|part| !part.is_empty())
+            .ok_or_else(|| "--microscopetarget=<mm>[,<mm>] names at least one depth".to_owned())?;
+        let first: f64 = first
+            .parse()
+            .map_err(|error| format!("--microscopetarget: `{first}` is not a number ({error})"))?;
+        let second = match parts.next() {
+            None => None,
+            Some(part) => Some(part.parse::<f64>().map_err(|error| {
+                format!("--microscopetarget: second depth `{part}` is not a number ({error})")
+            })?),
+        };
+        if parts.next().is_some() {
+            return Err("--microscopetarget takes at most two depths".to_owned());
+        }
+        if !first.is_finite() || first <= 0.0 {
+            return Err(format!("--microscopetarget: `{first}` must be a positive depth in mm"));
+        }
+        if let Some(second) = second {
+            if !second.is_finite() || second <= 0.0 || second > first {
+                return Err(format!(
+                    "--microscopetarget: the second depth {second} must be positive and at most \
+                     the first ({first})"
+                ));
+            }
+        }
+        Ok(Self::target(first, second))
+    }
+
+    /// Which trigger this configuration names.
+    pub fn trigger(&self) -> TriggerSpec {
+        match self.target_mm {
+            Some(target_mm) => TriggerSpec::Target {
+                target_mm,
+                second_target_mm: self.second_target_mm,
+            },
+            None => TriggerSpec::Iterations {
+                trigger_iterations: self.trigger_iterations,
+                retain_after: self.retain_after,
+            },
+        }
+    }
+}
+
+/// The benchmark's two microscope flags resolved into one configuration:
+/// `--bitemicroscope=1` (the iteration trigger at its prospectively fixed
+/// defaults) or `--microscopetarget=<mm>[,<mm>]` (the depth trigger), never
+/// both - two triggers would need two retention rules on one buffer, and a
+/// document that says which bite it retained and why must name one rule.
+pub fn resolve_flags(
+    bite_microscope: bool,
+    microscope_target: Option<&str>,
+) -> Result<Option<MicroscopeConfig>, String> {
+    match (bite_microscope, microscope_target) {
+        (true, Some(_)) => Err(
+            "--bitemicroscope=1 and --microscopetarget name two triggers for one microscope; \
+             pass one of them"
+                .to_owned(),
+        ),
+        (true, None) => Ok(Some(MicroscopeConfig::default())),
+        (false, Some(value)) => MicroscopeConfig::parse_target(value).map(Some),
+        (false, None) => Ok(None),
+    }
+}
+
+/// The trigger, as the report prints it under `biteMicroscope.trigger`.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase", tag = "kind")]
+pub enum TriggerSpec {
+    /// `--bitemicroscope=1`: the first explore bite reaching
+    /// `triggerIterations` master iterations and the `retainAfter` after it.
+    #[serde(rename = "iterations", rename_all = "camelCase")]
+    Iterations {
+        trigger_iterations: u64,
+        retain_after: u64,
+    },
+    /// `--microscopetarget`: the first explore bite targeting at most
+    /// `targetMm`; if it publishes, the next one targeting at most
+    /// `secondTargetMm` (the next explore bite when `null`).
+    #[serde(rename = "target", rename_all = "camelCase")]
+    Target {
+        target_mm: f64,
+        second_target_mm: Option<f64>,
+    },
 }
 
 // ------------------------------------------------------------- row identity --
@@ -463,6 +605,51 @@ pub fn row_changes(
         .collect()
 }
 
+/// One worker's economics for one sweep, winner and losers alike: Astra
+/// review 7 Q18's "where useful moves disappear: candidate discovery,
+/// refinement, worker commit and tournament retention, with all-worker
+/// expenditure". Counters per worker, never per candidate, so the document
+/// stays bounded. A **useful move** is a relocate that committed a pose
+/// different from its entry pose *and* lowered the piece's incident guided
+/// energy (`guidedAfter < guidedBefore` on the worker's own state); when
+/// the tournament retains another worker, every useful move of this one is
+/// discarded with the whole of this worker's evaluations.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkerSweepRecord {
+    pub worker: u32,
+    pub sample_evaluations: u64,
+    /// Relocates that ran (the piece was colliding when its turn came).
+    pub relocates: u64,
+    /// Relocates that committed a pose different from the entry pose.
+    pub moved: u64,
+    /// Moved relocates whose winner came from the container-wide samples.
+    pub container_commits: u64,
+    pub useful_moves: u64,
+    /// The sample evaluations of the useful moves' own relocates.
+    pub useful_move_evaluations: u64,
+    /// The worker's post-sweep fold, what the tournament ranked it on:
+    /// read *before* the master's Algorithm-8 weight pass, so the winner's
+    /// `guidedAfter` here is the merge's `guided` and differs from the
+    /// sweep record's post-GLS `guidedAfter`; `rawAfter` and `maxAfterMm`
+    /// carry no weight and agree with it.
+    pub raw_after: f64,
+    pub guided_after: f64,
+    pub max_after_mm: f64,
+}
+
+impl WorkerSweepRecord {
+    /// The useful-move counters read off a worker's own sweep trace.
+    pub fn count_useful(&mut self, trace: &SweepTrace) {
+        for relocate in &trace.relocates {
+            if relocate.moved && relocate.guided_after < relocate.guided_before {
+                self.useful_moves += 1;
+                self.useful_move_evaluations += relocate.sample_evaluations;
+            }
+        }
+    }
+}
+
 /// Record (c): the tournament winner's sweep, with every worker's work
 /// charged.
 #[derive(Clone, Debug, Serialize)]
@@ -481,6 +668,13 @@ pub struct SweepRecord {
     pub guided_after: f64,
     pub max_after_mm: f64,
     pub blocking: Vec<BlockingRow>,
+    /// Every worker's economics for this sweep, in ordinal order
+    /// ([`WorkerSweepRecord`]); the winner's is at `winner`.
+    pub workers: Vec<WorkerSweepRecord>,
+    /// Useful moves the losing workers committed and the tournament threw
+    /// away, and the losers' whole sample-evaluation expenditure.
+    pub useful_moves_discarded: u64,
+    pub discarded_expenditure: u64,
 }
 
 /// One master turn's reading at the band test: `[iteration, raw, guided,
@@ -492,6 +686,30 @@ pub struct IterationSample(pub u64, pub f64, pub f64, pub f64, pub bool, pub boo
 /// the one the trace recorded at `toIteration` (weights kept).
 #[derive(Clone, Copy, Debug, Serialize)]
 pub struct Rollback(pub u64, pub u64);
+
+/// The wall clock as the separation saw it, at its entry and at its stop:
+/// the pacer's elapsed seconds, the phase deadline, and what was left.
+/// `null` fields in fixed-work and calibrated modes, which have no clock.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WallReading {
+    pub elapsed_s: Option<f64>,
+    pub phase_deadline_s: Option<f64>,
+    pub left_s: Option<f64>,
+}
+
+impl WallReading {
+    pub fn of(elapsed_s: Option<f64>, deadline_s: Option<f64>) -> Self {
+        Self {
+            elapsed_s,
+            phase_deadline_s: deadline_s,
+            left_s: match (elapsed_s, deadline_s) {
+                (Some(elapsed), Some(deadline)) => Some(deadline - elapsed),
+                _ => None,
+            },
+        }
+    }
+}
 
 /// Record (g), one separation call.
 #[derive(Clone, Debug, Serialize)]
@@ -508,6 +726,31 @@ pub struct SeparationRecord {
     /// The iteration whose state the call handed back (the min-raw
     /// snapshot), or `null` when nothing was restored.
     pub restored_to_iteration: Option<u64>,
+    /// Index into the report's `capsules[]`: the state this call entered
+    /// (the bite-entry capsule for attempt 0, the after-disruption capsule
+    /// of the reset before it otherwise).
+    pub capsule: u32,
+    /// The strike meter's count at the stop.
+    pub strikes: u32,
+    /// Why the attempt ends, Astra review 7 Q18: the clock at entry and at
+    /// the stop.
+    pub wall_at_entry: WallReading,
+    pub wall_at_stop: WallReading,
+    /// The blocking rows of the state the call entered, and of the state it
+    /// handed back (the min-raw snapshot, or the band-entry state when it
+    /// published); the end-of-sweep sets are in `sweeps[].blocking`.
+    pub entry_blocking: Vec<BlockingRow>,
+    pub stop_blocking: Vec<BlockingRow>,
+    /// Sums over `sweeps[]`: every worker's evaluations, the useful moves
+    /// the tournament discarded and the losers' expenditure.
+    pub evaluations_all_workers: u64,
+    pub useful_moves_discarded: u64,
+    pub discarded_expenditure: u64,
+    /// The publication outcome, or the reason none was attempted:
+    /// `published`, `no band entry: no exact attempt possible`, `band
+    /// entered, exact authorities not called (entry gates refused)` or
+    /// `exact authorities called, publication refused`.
+    pub publication: &'static str,
     pub rollbacks: Vec<Rollback>,
     pub samples: Vec<IterationSample>,
     pub sweeps: Vec<SweepRecord>,
@@ -668,15 +911,30 @@ pub struct BiteTrace {
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Exposure {
-    pub trigger_iterations: u64,
-    pub retain_after: u64,
+    /// The iteration trigger's parameters; absent under the depth trigger.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trigger_iterations: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retain_after: Option<u64>,
     pub rule: &'static str,
     pub explore_bites_seen: u64,
     pub triggered: bool,
     pub trigger_bite: Option<u64>,
     pub retained_bites: Vec<u64>,
     pub complete: bool,
+    /// The iteration trigger: `absent: ...`, `truncated: ...` or
+    /// `complete: ...`. The depth trigger: exactly `absent`, `truncated`
+    /// or `complete`, with the sentence in `reason`.
     pub status: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The depth trigger's record of absence without substitution: the
+    /// deepest target any explore bite reached and the last published
+    /// depth, whatever the status.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deepest_target_mm: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_published_depth_mm: Option<f64>,
 }
 
 /// What the benchmark emits under `biteMicroscope`.
@@ -684,6 +942,7 @@ pub struct Exposure {
 #[serde(rename_all = "camelCase")]
 pub struct MicroscopeReport {
     pub schema_version: u32,
+    pub trigger: TriggerSpec,
     pub exposure: Exposure,
     pub pieces: u32,
     pub pair_count: u32,
@@ -724,6 +983,9 @@ pub struct BiteMicroscope {
     snapshot_iteration: u64,
     retained: Vec<BiteTrace>,
     capsules: Vec<Capsule>,
+    /// The depth trigger's absence record.
+    deepest_target_mm: Option<f64>,
+    last_published_depth_mm: Option<f64>,
 }
 
 impl BiteMicroscope {
@@ -739,7 +1001,13 @@ impl BiteMicroscope {
             snapshot_iteration: 0,
             retained: Vec::new(),
             capsules: Vec::new(),
+            deepest_target_mm: None,
+            last_published_depth_mm: None,
         }
+    }
+
+    fn depth_triggered(&self) -> bool {
+        self.config.target_mm.is_some()
     }
 
     /// `true` while a bite is being buffered: the tournament builds worker
@@ -759,9 +1027,36 @@ impl BiteMicroscope {
         descent: &Descent,
     ) {
         self.explore_bites_seen += 1;
+        let target = bite.width_after_mm;
+        self.deepest_target_mm =
+            Some(self.deepest_target_mm.map_or(target, |deepest| deepest.min(target)));
         if self.stage == Stage::Done {
             return;
         }
+        // The depth trigger decides at the cut, not at the end: a bite that
+        // does not qualify is not buffered at all, and a qualifying one is
+        // named now so a wall-interrupted attempt is still retained whole.
+        let retained_as = if let Some(target_mm) = self.config.target_mm {
+            match self.stage {
+                Stage::Armed if target <= target_mm => {
+                    self.trigger_bite = Some(ordinal);
+                    Some("trigger".to_owned())
+                }
+                Stage::Retaining { .. }
+                    if self.config.second_target_mm.map_or(true, |second| target <= second) =>
+                {
+                    Some("after-1".to_owned())
+                }
+                _ => None,
+            }
+        } else {
+            Some(String::new())
+        };
+        let Some(retained_as) = retained_as else {
+            self.current = None;
+            self.current_capsules.clear();
+            return;
+        };
         let cut_moved = poses_before
             .iter()
             .zip(&state.poses)
@@ -782,7 +1077,7 @@ impl BiteMicroscope {
             .push(Capsule::capture(ordinal, "bite-entry", state, descent));
         self.current = Some(BiteTrace {
             ordinal,
-            retained_as: String::new(),
+            retained_as,
             parent_depth_mm: bite.width_before_mm,
             target_depth_mm: bite.width_after_mm,
             split_y_mm: bite.split_y_mm,
@@ -797,7 +1092,11 @@ impl BiteMicroscope {
         });
     }
 
-    pub fn begin_separation(&mut self, attempt: u64) {
+    /// A separation call opens on `state`; `wall` is the pacer's clock as
+    /// the call read it at entry (`None` fields without a clock).
+    pub fn begin_separation(&mut self, attempt: u64, state: &IcsState, wall: WallReading) {
+        let entry_blocking = self.current.is_some().then(|| blocking_rows(state));
+        let capsule = self.current_capsules.len().saturating_sub(1) as u32;
         let Some(bite) = self.current.as_mut() else {
             return;
         };
@@ -810,6 +1109,16 @@ impl BiteMicroscope {
             band_entries: 0,
             exact_checkpoint_calls: 0,
             restored_to_iteration: None,
+            capsule,
+            strikes: 0,
+            wall_at_entry: wall,
+            wall_at_stop: WallReading::default(),
+            entry_blocking: entry_blocking.unwrap_or_default(),
+            stop_blocking: Vec::new(),
+            evaluations_all_workers: 0,
+            useful_moves_discarded: 0,
+            discarded_expenditure: 0,
+            publication: "unfinished",
             rollbacks: Vec::new(),
             samples: Vec::new(),
             sweeps: Vec::new(),
@@ -879,12 +1188,22 @@ impl BiteMicroscope {
         evaluations_winner: u64,
         totals: Totals,
         state: &IcsState,
+        workers: Vec<WorkerSweepRecord>,
     ) {
         let blocking = blocking_rows(state);
         let Some(separation) = self.separation() else {
             return;
         };
         let iteration = separation.sweeps.len() as u64 + 1;
+        let (useful_moves_discarded, discarded_expenditure) = workers
+            .iter()
+            .filter(|record| record.worker as usize != winner)
+            .fold((0u64, 0u64), |(moves, spend), record| {
+                (moves + record.useful_moves, spend + record.sample_evaluations)
+            });
+        separation.evaluations_all_workers += evaluations_all_workers;
+        separation.useful_moves_discarded += useful_moves_discarded;
+        separation.discarded_expenditure += discarded_expenditure;
         separation.sweeps.push(SweepRecord {
             iteration,
             winner: winner as u32,
@@ -899,22 +1218,43 @@ impl BiteMicroscope {
             guided_after: totals.guided,
             max_after_mm: totals.max_violation_mm,
             blocking,
+            workers,
+            useful_moves_discarded,
+            discarded_expenditure,
         });
     }
 
+    /// The call stopped; `state` is what it hands back and `wall` the clock
+    /// at the last barrier it read.
+    #[allow(clippy::too_many_arguments)]
     pub fn end_separation(
         &mut self,
         stop: SeparateStop,
         iterations: u64,
         min_raw: f64,
         restored: bool,
+        strikes: u32,
+        wall: WallReading,
+        state: &IcsState,
     ) {
         let restored_to = restored.then_some(self.snapshot_iteration);
+        let stop_blocking = self.current.is_some().then(|| blocking_rows(state));
         if let Some(separation) = self.separation() {
             separation.stop = Some(stop.label());
             separation.iterations = iterations;
             separation.min_raw = min_raw.is_finite().then_some(min_raw);
             separation.restored_to_iteration = restored_to;
+            separation.strikes = strikes;
+            separation.wall_at_stop = wall;
+            separation.stop_blocking = stop_blocking.unwrap_or_default();
+            separation.publication = match stop {
+                SeparateStop::Published => "published",
+                _ if separation.band_entries == 0 => "no band entry: no exact attempt possible",
+                _ if separation.exact_checkpoint_calls == 0 => {
+                    "band entered, exact authorities not called (entry gates refused)"
+                }
+                _ => "exact authorities called, publication refused",
+            };
         }
     }
 
@@ -995,14 +1335,30 @@ impl BiteMicroscope {
         });
     }
 
-    /// The bite's record is complete: retain or discard.
-    pub fn end_bite(&mut self, master_iterations: u64, published: bool) {
+    /// The bite's record is complete: retain or discard. `published` is
+    /// the published raw depth, `None` for a failed bite.
+    pub fn end_bite(&mut self, master_iterations: u64, published: Option<f64>) {
+        if published.is_some() {
+            self.last_published_depth_mm = published;
+        }
         let Some(mut bite) = self.current.take() else {
             return;
         };
         bite.master_iterations = master_iterations;
-        bite.published = published;
-        let retain = match self.stage {
+        bite.published = published.is_some();
+        let retain = if self.depth_triggered() {
+            // Named at the cut (`begin_bite`); only the stage moves here: a
+            // published trigger opens the wait for the second cut, anything
+            // else closes the microscope.
+            self.stage = match self.stage {
+                Stage::Armed if published.is_some() && self.config.retain_after > 0 => {
+                    Stage::Retaining { remaining: 1 }
+                }
+                _ => Stage::Done,
+            };
+            true
+        } else {
+            match self.stage {
             Stage::Armed if master_iterations >= self.config.trigger_iterations => {
                 self.trigger_bite = Some(bite.ordinal);
                 bite.retained_as = "trigger".to_owned();
@@ -1028,12 +1384,16 @@ impl BiteMicroscope {
                 true
             }
             Stage::Armed | Stage::Done => false,
+            }
         };
         if retain {
             let base = self.capsules.len() as u32;
             bite.capsule += base;
             for reset in &mut bite.resets {
                 reset.capsule += base;
+            }
+            for separation in &mut bite.separations {
+                separation.capsule += base;
             }
             self.capsules.append(&mut self.current_capsules);
             self.retained.push(bite);
@@ -1052,29 +1412,96 @@ impl BiteMicroscope {
 
     pub fn finish(self) -> MicroscopeReport {
         let retained_bites: Vec<u64> = self.retained.iter().map(|bite| bite.ordinal).collect();
-        let wanted = 1 + self.config.retain_after;
-        let complete = self.trigger_bite.is_some() && retained_bites.len() as u64 == wanted;
-        let status = match (self.trigger_bite, retained_bites.len() as u64) {
-            (None, _) => format!(
-                "absent: no explore bite reached {} master iterations in {} explore bites",
-                self.config.trigger_iterations, self.explore_bites_seen
-            ),
-            (Some(bite), retained) if retained < wanted => format!(
-                "truncated: trigger bite {bite} retained with {} of {} following explore bites; \
-                 exploration ended first",
-                retained - 1,
-                self.config.retain_after
-            ),
-            (Some(bite), _) => format!(
-                "complete: trigger bite {bite} and the {} explore bites after it",
-                self.config.retain_after
-            ),
-        };
-        MicroscopeReport {
-            schema_version: 1,
-            exposure: Exposure {
-                trigger_iterations: self.config.trigger_iterations,
-                retain_after: self.config.retain_after,
+        let exposure = if let Some(target_mm) = self.config.target_mm {
+            let second_text = self
+                .config
+                .second_target_mm
+                .map_or("the next explore bite".to_owned(), |second| {
+                    format!("the next explore bite targeting <= {second} mm")
+                });
+            let (status, reason, complete) = match self.retained.first() {
+                None => (
+                    "absent",
+                    format!(
+                        "no explore bite targeted <= {target_mm} mm before the wall ({} explore \
+                         bites seen)",
+                        self.explore_bites_seen
+                    ),
+                    false,
+                ),
+                Some(bite) if !bite.published => (
+                    "complete",
+                    format!(
+                        "trigger bite {} (target {} mm) did not publish (stop {}); no next cut \
+                         exists",
+                        bite.ordinal,
+                        bite.target_depth_mm,
+                        bite.separations
+                            .last()
+                            .and_then(|call| call.stop)
+                            .unwrap_or("unfinished")
+                    ),
+                    true,
+                ),
+                Some(bite) if retained_bites.len() < 2 => (
+                    "truncated",
+                    format!(
+                        "trigger bite {} (target {} mm) published; {second_text} did not exist \
+                         before the wall",
+                        bite.ordinal, bite.target_depth_mm
+                    ),
+                    false,
+                ),
+                Some(bite) => (
+                    "complete",
+                    format!(
+                        "trigger bite {} (target {} mm) published and bite {} ({second_text}) \
+                         is retained",
+                        bite.ordinal, bite.target_depth_mm, retained_bites[1]
+                    ),
+                    true,
+                ),
+            };
+            Exposure {
+                trigger_iterations: None,
+                retain_after: None,
+                rule: "first explore bite whose target depth is at most targetMm is retained \
+                       whole (every attempt to publication or its live stop); if it publishes, \
+                       the next explore bite whose target is at most secondTargetMm (the next \
+                       explore bite when null) is retained too; absence is recorded without \
+                       substitution",
+                explore_bites_seen: self.explore_bites_seen,
+                triggered: self.trigger_bite.is_some(),
+                trigger_bite: self.trigger_bite,
+                retained_bites,
+                complete,
+                status: status.to_owned(),
+                reason: Some(reason),
+                deepest_target_mm: self.deepest_target_mm,
+                last_published_depth_mm: self.last_published_depth_mm,
+            }
+        } else {
+            let wanted = 1 + self.config.retain_after;
+            let complete = self.trigger_bite.is_some() && retained_bites.len() as u64 == wanted;
+            let status = match (self.trigger_bite, retained_bites.len() as u64) {
+                (None, _) => format!(
+                    "absent: no explore bite reached {} master iterations in {} explore bites",
+                    self.config.trigger_iterations, self.explore_bites_seen
+                ),
+                (Some(bite), retained) if retained < wanted => format!(
+                    "truncated: trigger bite {bite} retained with {} of {} following explore \
+                     bites; exploration ended first",
+                    retained - 1,
+                    self.config.retain_after
+                ),
+                (Some(bite), _) => format!(
+                    "complete: trigger bite {bite} and the {} explore bites after it",
+                    self.config.retain_after
+                ),
+            };
+            Exposure {
+                trigger_iterations: Some(self.config.trigger_iterations),
+                retain_after: Some(self.config.retain_after),
                 rule: "first explore bite whose master-iteration count reaches triggerIterations; \
                        that bite and the next retainAfter explore bites (failures included) are \
                        retained; every other bite is discarded at its end",
@@ -1084,7 +1511,15 @@ impl BiteMicroscope {
                 retained_bites,
                 complete,
                 status,
-            },
+                reason: None,
+                deepest_target_mm: None,
+                last_published_depth_mm: None,
+            }
+        };
+        MicroscopeReport {
+            schema_version: 1,
+            trigger: self.config.trigger(),
+            exposure,
             pieces: self.count as u32,
             pair_count: pair_count(self.count) as u32,
             row_id_scheme: "id < pairCount: pair row at pair_index(count, i, j) = i*count - i*(i+1)/2 + \

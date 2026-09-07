@@ -365,3 +365,70 @@ which review 6 reads as changed trajectory formation, never as an escape or as e
 zero) and enter the band at 30 and 45. This document's column at p = 2 forms at iteration 4,
 not at entry: by review 6's Q14 the entry exposure is absent there and the formation depends
 on the trajectory, so its break at 21 is a trajectory description, not a matched escape.
+
+## The depth-triggered microscope (`--microscopetarget=<mm>[,<mm>]`, review 7 Q18)
+
+GPT-6 Astra review 7 Q18 (`docs/astra-review-7-the-verdict.md`) locates the dominant unresolved
+work of the Wall10s cell in its *last* bite, not its first hard one: the ten-second cell
+publishes four explore bites and fails the cut targeting about 155.5 mm (seeds 27 and 31 publish
+a fifth and fail the cut at about 150.5 mm); that unpublished bite takes 79.5 % of the
+treatment's exploration evaluations, never reaches the proxy band, makes no exact attempt and
+ends at the wall. The iteration trigger above cannot see it. Astra's specification: "capture the
+first explore cut targeting at most 156 mm; if it publishes, also retain the next cut targeting at
+most 151 mm. Record absence without substitution. Capture each arm's own entry and follow the
+actual attempt to publication or its live stopping boundary."
+
+The instrument (commit "The depth microscope"; `overlap_ics::microscope`, "the depth trigger") is
+the same microscope with a second trigger in `MicroscopeConfig`, cutclose only, refused beside
+`--bitemicroscope`, bit-identical off, the same `biteMicroscope` block with `trigger: {kind:
+"target", targetMm, secondTargetMm}` and the same tripwire. The trigger bite is the first explore
+bite whose `targetDepthMm` is at most the first threshold; it is retained whole - every separation
+attempt with the full per-sweep trace, the entry capsule of every attempt (`separations[].capsule`),
+the actual `SeparateStop`, the remaining wall allowance at entry and at the stop
+(`wallAtEntry.leftS`, `wallAtStop.leftS`), the strikes, the rollbacks, the exact calls and the
+publication outcome or the reason none was attempted (`publication`). If it publishes, the next
+explore bite targeting at most the second threshold is retained the same way. If no explore bite
+ever targets at most the first threshold, `exposure = {status: "absent", reason, deepestTargetMm,
+lastPublishedDepthMm}` and nothing is substituted.
+
+What the trace gains for Astra's four questions: per sweep, **every worker's** economics
+(`sweeps[].workers[]`: sample evaluations, relocates, moved relocates, container commits, useful
+moves, the post-sweep raw/guided/max the tournament ranked it on), the useful moves the tournament
+discarded (`usefulMovesDiscarded`: a losing worker committed a move that lowered its incident
+guided energy) with the losers' whole expenditure (`discardedExpenditure`); per attempt the
+blocking rows at entry and at the stop (`entryBlocking`, `stopBlocking`) beside the end-of-sweep
+sets. Counters per sweep and per worker, never per candidate, so a wall-long attempt of several
+hundred sweeps stays a few megabytes.
+
+The replay gains `--horizon=live`: the cap is the traced attempt's own sweep count, so the
+treatment objective replayed from the control's entry (and the control from the treatment's) gets
+exactly the live attempt's budget - "another 100-iteration horizon would censor much of the
+observed deeper work" - and the document records `horizon: {kind, iterations}`. A p = 1 document
+replays with `--guidedexponent=1` (the live knob must agree with the document, as before) and the
+probe names the objective: `--probe=exponent:1` reproduces the trace, `--probe=exponent:2` is the
+control objective from the treatment's entry; the reconstruction folds at the capsule's exponent
+and the trajectory at the probe's.
+
+`deep-cut.py <microscope.json>... [--replays <dir>]` prints all of it; print only, no scoring.
+The demonstration documents (seeds 27 and 31, Wall10s, margin 8, both arms, `--microscopetarget=156,151`)
+and their eight replays are under `/var/lib/t3/tmp/astra/deep/`; the full `deep-cut.py` reading is in
+the commit message of the instrument. What the four documents say, without interpretation:
+
+* Every arm's bite 5 is the trigger (target 155.48-155.49 mm from a 160.62 mm parent). The control
+  (p = 2) fails it at the wall on both seeds in one attempt with no band entry and no exact call
+  (seed 27: 230 iterations, 3.61 s left at entry; seed 31: 586 iterations, 5.68 s left), one or two
+  strike rollbacks, and the min-raw snapshot handed back is far from the band (max residual 1280 um
+  and 215 um). The treatment (p = 1) publishes it on both seeds (707 iterations with 2.11 s left;
+  186 iterations with 5.94 s left; repair rows 0) and then fails bite 6 at 150.50 mm at the wall the
+  same way (203 and 634 iterations, no band entry).
+* The blocking set at a failed stop is mostly *new*: of the 33-51 entry rows, 0-8 persist to the
+  last sweep; the rest were released and 23-79 rows were created since entry. The most persistent rows
+  are present in 100-160 of the sweeps of a failed attempt.
+* Seven of eight workers lose every sweep, so 87.3-87.6 % of all committed useful moves are
+  discarded with 87.5 % of all evaluations (8.9-21.6 million per failed attempt).
+* Replays at the live horizon: the same-objective replay of each trigger entry passes the identity
+  gate on every iteration (230/230, 586/586, 707/707, 186/186) and `--certify=1` reproduces both
+  treatment publications to the bit (155.4735 and 155.4747 mm); the other objective diverges at
+  iteration 1. From the treatment's entry the p = 2 objective spends 2.9-3.2x the evaluations of
+  the live p = 1 attempt in the same iteration count without entering the band; from the control's
+  entry the p = 1 objective does not enter the band in the live count either.

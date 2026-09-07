@@ -1047,6 +1047,35 @@ impl<'a> Engine<'a> {
         // every slot, read only when a bite is being buffered.
         let evaluations_all_workers = microscope_on
             .then(|| slots.iter().map(|slot| slot.work.sample_evaluations).sum::<u64>());
+        // Every worker's economics for the microscope (Astra review 7 Q18,
+        // "where useful moves disappear ... with all-worker expenditure"):
+        // read off each slot's own outcome, work vector and private trace
+        // before the losers are dropped. Nothing here is read back.
+        let worker_records: Option<Vec<microscope::WorkerSweepRecord>> = microscope_on.then(|| {
+            slots
+                .iter()
+                .zip(&outcomes)
+                .enumerate()
+                .map(|(ordinal, (slot, outcome))| {
+                    let mut record = microscope::WorkerSweepRecord {
+                        worker: ordinal as u32,
+                        sample_evaluations: slot.work.sample_evaluations,
+                        relocates: outcome.relocated as u64,
+                        moved: outcome.accepted as u64,
+                        container_commits: outcome.container_commits as u64,
+                        useful_moves: 0,
+                        useful_move_evaluations: 0,
+                        raw_after: outcome.totals.raw,
+                        guided_after: outcome.totals.guided,
+                        max_after_mm: outcome.totals.max_violation_mm,
+                    };
+                    if let Some(trace) = slot.trace.as_ref() {
+                        record.count_useful(trace);
+                    }
+                    record
+                })
+                .collect()
+        });
 
         // Steps 5-7: the ordinal merge, the install, and one Algorithm-8 pass.
         // Timed as one region because a persistent executor changes none of it
@@ -1096,10 +1125,11 @@ impl<'a> Engine<'a> {
         // worker's evaluations, and the blocking rows of the state the winner
         // installed. Read after the merge; the weights the GLS pass just
         // changed are not part of a violation.
-        if let (Some(microscope), Some(trace), Some(all)) = (
+        if let (Some(microscope), Some(trace), Some(all), Some(workers)) = (
             self.microscope.as_mut(),
             winner_trace,
             evaluations_all_workers,
+            worker_records,
         ) {
             microscope.observe_sweep(
                 trace,
@@ -1109,6 +1139,7 @@ impl<'a> Engine<'a> {
                 winner_evaluations,
                 result.totals,
                 &self.state,
+                workers,
             );
         }
         (result, merge)
@@ -1224,7 +1255,11 @@ impl<'a> Engine<'a> {
         // only the failed ones `attempts` counts. A no-op unless a bite is
         // being buffered.
         if let Some(microscope) = self.microscope.as_mut() {
-            microscope.begin_separation(attempt);
+            microscope.begin_separation(
+                attempt,
+                &self.state,
+                microscope::WallReading::of(elapsed_s, deadline_s),
+            );
         }
         #[cfg(not(feature = "pool-retry-tracker-rebase"))]
         let iteration_cap = pacer.iteration_cap();
@@ -1360,6 +1395,9 @@ impl<'a> Engine<'a> {
                             iterations,
                             meter.min_raw(),
                             false,
+                            meter.strikes(),
+                            microscope::WallReading::of(elapsed_s, deadline_s),
+                            &self.state,
                         );
                     }
                     return SeparateOutcome {
@@ -1499,7 +1537,15 @@ impl<'a> Engine<'a> {
             restore_keeping_weights(&mut self.state, &snapshot);
         }
         if let Some(microscope) = self.microscope.as_mut() {
-            microscope.end_separation(stop, iterations, meter.min_raw(), meter.min_raw().is_finite());
+            microscope.end_separation(
+                stop,
+                iterations,
+                meter.min_raw(),
+                meter.min_raw().is_finite(),
+                meter.strikes(),
+                microscope::WallReading::of(elapsed_s, deadline_s),
+                &self.state,
+            );
         }
         SeparateOutcome {
             published: None,
@@ -2251,14 +2297,14 @@ impl<'a> Engine<'a> {
                     }
                     record.published = Some(row);
                     if let Some(microscope) = self.microscope.as_mut() {
-                        microscope.end_bite(record.master_iterations, true);
+                        microscope.end_bite(record.master_iterations, Some(depth_mm));
                     }
                     bites.push(record);
                     explore_bites += 1;
                 }
                 None => {
                     if let Some(microscope) = self.microscope.as_mut() {
-                        microscope.end_bite(record.master_iterations, false);
+                        microscope.end_bite(record.master_iterations, None);
                     }
                     bites.push(record);
                     break;
@@ -2993,11 +3039,15 @@ pub struct ScheduleConfig {
     /// deterministic replay cells leave it absent.
     #[cfg(feature = "pool-retry-tracker-rebase")]
     pub record_pool_rebase_timing: bool,
-    /// **The bite microscope** (`--bitemicroscope=1`, [`microscope`]).
-    /// `None` by default: no buffer exists and the trajectory is the frozen
-    /// engine to the byte. `Some` buffers every explore bite and retains the
-    /// first hard one and the three after it; the trajectory is identical.
-    /// Diagnostic only; never a default; refused off the cutclose cell.
+    /// **The bite microscope** (`--bitemicroscope=1` or
+    /// `--microscopetarget=<mm>[,<mm>]`, [`microscope`]). `None` by default:
+    /// no buffer exists and the trajectory is the frozen engine to the byte.
+    /// `Some` buffers explore bites and retains the first hard one and the
+    /// three after it (the iteration trigger) or the first cut targeting at
+    /// most a named depth and, if it publishes, the next cut below a second
+    /// depth (the depth trigger, Astra review 7 Q18); the trajectory is
+    /// identical either way. Diagnostic only; never a default; refused off
+    /// the cutclose cell.
     pub bite_microscope: Option<microscope::MicroscopeConfig>,
 }
 
