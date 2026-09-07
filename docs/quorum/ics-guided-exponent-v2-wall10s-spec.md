@@ -172,3 +172,29 @@ gap 8.868 mm; control 159.439, gap 9.274; reduction 0.406 mm; seed medians at or
 regression of 4.4 mm against five basin gains of about 5 mm: p = 1 with margin 8 is not a uniform
 Wall10s improvement at the 1.000 mm guard, and the exponent line's promotion claim ends here on
 both profiles. The thirty seeds are now consumed by this candidate.
+
+## Corrections and readings from review 8 (appended; the result above is not edited)
+
+- The failed-explore shares summed over the archived charged evaluations are 62.51 % (control)
+  and 75.65 % (treatment), not the rounded 62.5 / 75.5 quoted above.
+- Provenance: one fixed-work sanity cell (budget 40 000, seed 6185102792240140886) ran before the
+  freeze, as the population section records; "untouched by any treatment, diagnostic or
+  baseline" holds for the other twenty-nine seeds and for every ten-second cell. It does not
+  bear on the tail failure, which is on a different seed.
+- What separates the depth groups, from the bite histories (verified from the archived cells):
+  the fifth scheduled explore cut (about 160.6 → 155.5 mm) is published in 3 of 90 control cells
+  (all three repetitions of one seed) and in 15 of 90 treatment cells (five seeds); the sixth cut
+  (155.5 → 150.5) is attempted in those 3 and 15 cells and published in none. Completing one
+  additional scheduled cut, followed by compression from that parent, already explains the
+  endpoint groups; "geometric basins" remains a hypothesis that needs geometry and continuation
+  evidence. Astra's amended statement: "On this fixture under Wall10s, p = 1 changes which seeds
+  complete the next large explore cut, with favourable observed median and mean depth effects. It
+  also loses a deeper control outcome by 4.380 mm, failing the registered seed-level regression
+  guard."
+- The candidate's promotion track is closed on both profiles without another prospective round,
+  with the v1 joint failure, this Wall10s failure and the v1 package comparison (with its
+  qualification) as its record. The guard is retained for the next candidate: a "basin-changer"
+  is not an eligibility category; tolerating occasional losses would require a predeclared
+  benefit margin, a one-sided 95 % exact binomial upper bound on the regression probability of at
+  most 10 % (0/30 gives 9.50 %, 1/30 gives 14.86 %, 1/46 gives 9.90 %) and a separate severity
+  ceiling, all from product policy, none from these thirty results.
