@@ -201,3 +201,31 @@ within review 5b's column-break deadlines; the fork at the end of control sweep 
 pose under p = 1 and 2 under p = 2, at the same poses and weights; the band-entry states
 certify through the unchanged publication path. The band-entry deadlines and, at p = 1, the
 evaluation halving are missed.
+
+## The selection between p = 1 and p = 0.75 (review 6 Q12; `selection-rule.md`, frozen first)
+
+The p = 0.75 arm (`exp1-C`, 54 cells, same frozen executable, 09:54–10:03 UTC, three cells
+re-run by the registered load rule and their originals kept in `screen/contaminated-originals/`)
+and the corrected scorer `screen/spec-score.py` (explore-only evaluations and elapsed time per
+*published* explore bite with failed bites charged, exact repetition and identity checks, refusal
+instead of defaults; it reproduces every figure of Astra's recomputation) give, on both archives
+(`screen/selection.txt`, `selection.json`):
+
+| against the margin-8 control | p = 1 (B) Legacy / Wall10s | p = 0.75 (C) Legacy / Wall10s |
+|---|---|---|
+| paired median gain | +4.192 / +1.078 mm | +3.094 / +0.135 mm |
+| worst seed | +0.548 (as run −0.002) / −0.627 | −1.542 (as run −0.818) / **−4.161** |
+| explore evaluations per published explore bite | −19.7 % / −19.5 % | −24.9 % / −16.5 % |
+| explore elapsed time per published explore bite | −14.8 % / −7.8 % | −12.4 % / **+10.0 %** |
+| published explore bites per cell | 102.7 → 120.5 / 4.00 → 4.33 | 102.7 → 117.2 / 4.00 → **3.63** |
+| publication fraction | 99.07 → 99.18 % / 80.0 → 81.3 % | 99.07 → 99.15 % / 80.0 → **78.4 %** |
+| the four required conditions | PASS on both profiles | FAIL: Wall10s tail and engineering (and the Legacy tail on the replacement archive) |
+
+`H = D_1 − D_0.75` per seed: Legacy median −1.373 mm (min −4.985), Wall10s median −3.935 /
+−4.590 mm (min −9.050): p = 0.75 is deeper than p = 1 on most seeds of both profiles, but its
+Wall10s losses of 4 mm on seeds 18 and 23 against the control, its longer failed bites and its
+lower publication fraction there fail the eligibility conditions. **Decision, identical on the
+as-run (primary) and the replacement archive: p = 1 (only p = 1 is eligible).** The
+single-repetition, no-margin finding of +4.26 mm at p = 0.75 on three Legacy seeds did not
+survive three repetitions with the margin on both profiles, which is what the rule was for.
+The prospective specification names p = 1.
