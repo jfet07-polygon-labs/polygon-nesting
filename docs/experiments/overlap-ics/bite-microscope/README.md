@@ -235,3 +235,17 @@ evaluations it is exceeded everywhere. The exponent is one parameter fitted on t
 of one seed, which is why the live knob is `--guidedexponent=<p>` with p fixed prospectively
 and screened on seeds 18-26 at more than one value before any prospective specification names
 one.
+
+The ordinary bites under the same probe (the three retained after each trigger; evaluations to
+band, all workers; `replay-easy-*.json.gz`):
+
+| capsule | p = 2 | p = 1 | p = 0.75 | p = 0.5 |
+|---|---|---|---|---|
+| margin 8, bite 16 (easy) | 4 it / 60 262 | 5 / 59 229 | 4 / 45 204 | 3 / 38 368 |
+| margin 8, bite 18 | 16 / 184 129 | 19 / 164 488 | 22 / 115 518 | 15 / 74 032 |
+| margin 0, bite 18 | 11 / 137 747 | 7 / 70 588 | 4 / 33 810 | 9 / 50 481 |
+| margin 0, bite 19 | 10 / 113 209 | 5 / 67 686 | 5 / 61 707 | 5 / 38 669 |
+| margin 0, bite 20 | 14 / 146 453 | 6 / 67 978 | 7 / 54 254 | 14 / 66 627 |
+
+The easy bites stay easy or get cheaper; no capsule of the eight costs more evaluations at
+p = 0.75 than at p = 2, and only bite 16 at p = 1 costs one iteration more.
