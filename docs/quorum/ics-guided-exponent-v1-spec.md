@@ -280,3 +280,49 @@ exactly this and it is not amended.
 request sha256 and contract equal across the 108 cells and the frozen record; exactly three
 repetitions per (arm, profile, seed); zero invalid publications; zero checkpoint refusals of any
 kind in both arms; the three identity checks passed before the first cell.
+
+## Diagnostics (appended after the result; unscored)
+
+The 18 unscored control-arm cells (`--proxymargin=8 --bitemicroscope=1`, one per profile and
+seed, run after the 108 scored cells, refused by the scorer through their tripwire) all found a
+trigger bite: on Legacy the first explore bite reaching 34 master iterations is bite 15–21 on
+every seed, on Wall10s it is bite 1 (its bites are all long). Each trigger bite's entry capsule
+was then replayed from the same state at p = 2 (the control, identity gate live) and at p = 1
+(the treatment on the *same* bite), 100 iterations maximum, `--certify=1`
+(`evidence/ics-guided-exponent-v1/diagnostics/`, `v1-replay-diag.sh`):
+
+| profile, seed (bite) | p = 2: band entry, evaluations, column break, max column-row weight at break | p = 1: band entry, evaluations, column break, weight |
+|---|---|---|
+| Legacy 27 (21) | none in 100, —, 21, 1.5e4 | 85, 1 427 804, 50, 7.9e2 |
+| Legacy 28 (15) | 43, 596 758, 21, 1.5e4 | 16, 198 496, 14, 7.0e1 |
+| Legacy 29 (21) | 89, 1 836 564, 32, 3.0e5 | 72, 1 388 091, 4, 9.8 |
+| Legacy 30 (16) | 38, 822 400, 16, 1.1e4 | 42, 487 031, 16, 2.2e2 |
+| Legacy 31 (16) | 61, 1 054 359, 25, 3.7e4 | 39, 542 011, 13, 7.2e1 |
+| Legacy 32 (21) | 80, 1 510 451, 19, 6.1e3 | none in 100, —, 12, 4.1e1 |
+| Legacy 33 (15) | 46, 658 152, 26, 4.2e4 | 25, 253 389, column avoided |
+| Legacy 34 (21) | none in 100, —, 22, 4.8e4 | 69, 1 112 194, 20, 2.8e2 |
+| Legacy 35 (21) | 95, 2 162 463, 20, 6.2e4 | 83, 1 464 325, 19, 3.5e2 |
+| Wall10s 27 (1) | 50, 1 361 098, 16, 7.1e2 | 32, 947 257, 4, 6.4 |
+| Wall10s 28 (1) | 35, 1 225 751, 12, 1.9e2 | 85, 1 475 577, 5, 3.8 |
+| Wall10s 29 (1) | 81, 2 489 046, 31, 8.8e3 | 20, 559 070, 3, 1.9 |
+| Wall10s 30 (1) | 46, 1 323 581, 22, 1.9e3 | 68, 1 323 528, 15, 6.4e1 |
+| Wall10s 31 (1) | 47, 1 912 544, 14, 2.6e2 | 31, 1 015 555, 7, 1.1e1 |
+| Wall10s 32 (1) | 62, 2 666 422, 14, 3.8e2 | 42, 1 161 794, 5, 7.7 |
+| Wall10s 33 (1) | 50, 1 528 653, 27, 2.9e3 | 35, 680 495, 2, 3.0 |
+| Wall10s 34 (1) | 87, 2 017 083, 17, 6.2e2 | 57, 1 239 302, 12, 4.7e1 |
+| Wall10s 35 (1) | 51, 1 371 452, 13, 2.6e2 | 34, 938 910, 11, 2.2e1 |
+
+Over the 15 bites where both exponents reach the band within 100 iterations, p = 1 enters the
+band earlier on 12 (median ratio 0.67 of the control's iterations) and with fewer evaluations
+on 14 (median ratio 0.59); two Legacy bites the control cannot finish in 100 iterations (seeds
+27, 34) the treatment finishes, and one (seed 32) the reverse. The column (entry-graph reading;
+here it forms at iteration 1–4 rather than at entry on all but two capsules, so these are
+trajectory descriptions in review 6's sense) breaks at p = 1 at weights one to four orders of
+magnitude below the control's on every bite, and on Legacy seed 33 never forms. The band-entry
+states certify through the unchanged publication path in 16/18 (p = 2) and 17/18 (p = 1) cases;
+the misses are the no-band cases. Temporary releases are again more frequent under p = 1 on
+most bites. This is the mechanism gate's evidence across seeds: the repricing is not one seed's
+accident. It does not speak to the two failing Legacy seeds' verdicts, which are decided over
+the whole ten seconds by which basin the trajectory reaches, not by this one bite: on seed 29
+the treatment resolves the control's hard bite in 72 iterations against 89, and still finishes
+the cell 3.3 mm shallower.
