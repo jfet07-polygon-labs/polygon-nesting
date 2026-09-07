@@ -3372,6 +3372,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             document["outcome"] = outcome_json(&outcome, &constructor_fingerprint);
         }
         "corpus" => {
+            // The corpus cell's force-correlation clause
+            // (`corpus::gradient_probe_step`) walks the gradient of
+            // `sum w v^2` and accepts a rung on the incident guided energy,
+            // which under `--guidedexponent != 2` is `sum w v^p`. Rather than
+            // audit a `v^2` direction against a `v^p` acceptance, the cell
+            // refuses the knob (the knob commit's verifier named this).
+            let guided_exponent = options.guided_exponent()?;
+            if guided_exponent != polygon_nesting_core::search::overlap_ics::DEFAULT_GUIDED_EXPONENT {
+                return Err(format!(
+                    "--cell=corpus: the force-correlation clause is defined for the quadratic \
+                     guided objective; --guidedexponent={guided_exponent} is refused here"
+                )
+                .into());
+            }
             let constructor_started = Instant::now();
             let placements = ShortSideFirst.layout(&pieces, settings)?;
             wall.insert(

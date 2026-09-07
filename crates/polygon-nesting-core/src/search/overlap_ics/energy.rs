@@ -442,7 +442,11 @@ pub fn incident_raw(state: &IcsState, piece: usize) -> f64 {
 /// three traced bites at 685 980 / 262 987 / 500 681 all-worker evaluations
 /// at `p = 2` against 462 936 / 212 530 / 213 938 at `p = 1` and 288 357 /
 /// 64 418 / 175 440 at `p = 0.75` (GPT-6 Astra review 5 Q3, review 5b). This
-/// term is the one place the exponent enters. Raw Φ (`v^2`), the band, the
+/// term is the one place the exponent enters: [`fold_with_exponent`] and
+/// [`incident_totals_with_exponent`] hoist its `p == 2` branch out of their
+/// loops and instantiate the same two expressions per row, so this function
+/// is the definition and the tests' oracle, not a call site on the hot path.
+/// Raw Φ (`v^2`), the band, the
 /// strike meter's minimum and the `v / v_max` weight growth stay on the
 /// violation itself. The exponent is a landscape change of our own design
 /// (Grok review 12 line 188 chose `v^2` for "one guided path"), not

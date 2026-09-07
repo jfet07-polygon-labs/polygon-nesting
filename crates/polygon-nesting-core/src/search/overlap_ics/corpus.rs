@@ -58,7 +58,11 @@ pub const LADDER_BOTTOM_MM: f64 = 0.00025;
 /// direction under the metric `|dt|² + (R dθ)²`, rungs halving from
 /// `ladder_top_mm` to `ladder_bottom_mm`, and the first rung that strictly
 /// lowers the incident guided energy wins. Nothing in `search::overlap_ics`
-/// outside this function can reach it.
+/// outside this function can reach it. The direction is the gradient of
+/// `sum w v^2` while the acceptance reads `incident_guided`, which is
+/// `sum w v^p` at the process knob (`super::guided_exponent`); the benchmark's
+/// corpus cell therefore refuses `--guidedexponent != 2` instead of auditing
+/// a quadratic direction against a non-quadratic acceptance.
 pub fn gradient_probe_step(
     state: &mut IcsState,
     sources: &[PieceSource],
