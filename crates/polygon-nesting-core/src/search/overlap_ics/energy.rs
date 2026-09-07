@@ -460,8 +460,25 @@ pub fn guided_term_with_exponent(weight: f64, violation: f64, exponent: f64) -> 
     if exponent == 2.0 {
         weight * (violation * violation)
     } else {
-        weight * violation.powf(exponent)
+        weight * guided_power(violation, exponent)
     }
+}
+
+/// **The pinned fractional power: `v^p` through one call that the compiler
+/// cannot specialise on a constant `p`.** GPT-6 Astra review 5b Q7 item 3
+/// asked to "pin fractional-power arithmetic before replay". The reason is
+/// concrete: LLVM rewrites `powf(x, 0.5)` into a (correctly rounded) square
+/// root when the exponent is a compile-time constant, while `pow` with a
+/// run-time exponent is the libm routine, which may differ in the last bit;
+/// the fork's readings at the constant `FORK_EXPONENTS` disagreed with the
+/// same rows folded at a run-time `p` by one ULP on a finalist. Every path
+/// that raises a violation to a non-quadratic power - the live knob, the
+/// replay probe, the fork's four readings, the tests' oracle - goes through
+/// this one non-inlined function, so the arithmetic is the same routine
+/// with the same run-time argument everywhere.
+#[inline(never)]
+pub fn guided_power(violation: f64, exponent: f64) -> f64 {
+    violation.powf(exponent)
 }
 
 /// The one fold, generic in the guided term so the `p = 2` instantiation
@@ -539,7 +556,7 @@ pub fn fold_with_exponent(state: &IcsState, exponent: f64) -> Totals {
     if exponent == 2.0 {
         fold_by(state, |weight, violation| weight * (violation * violation))
     } else {
-        fold_by(state, |weight, violation| weight * violation.powf(exponent))
+        fold_by(state, |weight, violation| weight * guided_power(violation, exponent))
     }
 }
 
@@ -554,7 +571,7 @@ pub fn incident_totals_with_exponent(state: &IcsState, piece: usize, exponent: f
     if exponent == 2.0 {
         incident_by(state, piece, |weight, violation| weight * (violation * violation))
     } else {
-        incident_by(state, piece, |weight, violation| weight * violation.powf(exponent))
+        incident_by(state, piece, |weight, violation| weight * guided_power(violation, exponent))
     }
 }
 
