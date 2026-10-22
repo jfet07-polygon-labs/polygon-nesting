@@ -103,7 +103,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             executable-suffix: ''
     runs-on: ${{ matrix.runner }}
-    container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3
+    container: ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:86ec354b025a7120492b58eaa17e07ce00ea2d000e25d249e6d7ec3ae3c252fe
     env:
       CARGO_TERM_COLOR: always
       PARITY_BUNDLE_ROOT: ${{ inputs.parity-bundle-path || 'artifacts/trusted-parity-bundle' }}

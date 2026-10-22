@@ -13,7 +13,7 @@ const runtimePublicationRequest = existsSync(runtimePublicationRequestPath) ? re
 const runtimePublicationPath = join(REPOSITORY_ROOT, '.github', 'workflows', 'publish-runtime-image.yml')
 const runtimePublication = existsSync(runtimePublicationPath) ? readFileSync(runtimePublicationPath, 'utf8') : ''
 const rustCacheAction = readFileSync(join(REPOSITORY_ROOT, '.github', 'actions', 'setup-rust-cache', 'action.yml'), 'utf8')
-const CI_IMAGE_REFERENCE = 'ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3'
+const CI_IMAGE_REFERENCE = 'ghcr.io/jfet07-polygon-labs/polygon-nesting-ci@sha256:86ec354b025a7120492b58eaa17e07ce00ea2d000e25d249e6d7ec3ae3c252fe'
 
 function remoteActionReferences(workflow) {
   return [...workflow.matchAll(/^\s*uses:\s+([^\s]+)\s*$/gm)]
