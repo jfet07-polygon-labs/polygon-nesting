@@ -15,7 +15,7 @@ const RUST_BASE_IMAGE = 'rust:1.95.0-bookworm@sha256:6258907abe69656e41cd992e0b7
 const DEBIAN_BASE_IMAGE = 'debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818'
 const CI_IMAGE = 'ghcr.io/jfet07-polygon-labs/polygon-nesting-ci'
 const CI_IMAGE_TAG = 'ci-v1.0.1'
-const CI_IMAGE_REFERENCE = `${CI_IMAGE}@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3`
+const CI_IMAGE_REFERENCE = `${CI_IMAGE}@sha256:86ec354b025a7120492b58eaa17e07ce00ea2d000e25d249e6d7ec3ae3c252fe`
 const NODE_22 = {
   version: '22.23.4',
   archive: 'node-v22.23.4-linux-x64.tar.xz',
