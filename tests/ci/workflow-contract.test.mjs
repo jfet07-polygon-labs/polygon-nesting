@@ -360,7 +360,7 @@ test('compatible Linux jobs use the immutable CI image and native jobs stay outs
   assert.match(workflowJob(parity, 'parity-linux'), /key: linux-x64[\s\S]*target: x86_64-unknown-linux-gnu/)
   assert.doesNotMatch(`${ci}\n${parity}`, /blacksmith-2vcpu-windows|x86_64-pc-windows-msvc/)
   assert.doesNotMatch(workflowJob(parity, 'parity-linux'), /actions\/setup-node|dtolnay\/rust-toolchain/)
-  assert.match(workflowJob(parity, 'parity-linux'), /PATH: \/opt\/node-v24\.19\.0\/bin:/)
+  assert.match(workflowJob(parity, 'parity-linux'), /PATH: \/opt\/node-v24\.22\.1\/bin:/)
 })
 
 test('CI image container jobs trust the checked-out workspace before invoking Git', () => {

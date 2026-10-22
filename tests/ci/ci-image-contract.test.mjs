@@ -14,17 +14,17 @@ const PARITY_WORKFLOW_PATH = join(REPOSITORY_ROOT, '.github', 'workflows', 'stan
 const RUST_BASE_IMAGE = 'rust:1.95.0-bookworm@sha256:6258907abe69656e41cd992e0b705cdcfabcbbe3db374f92ed2d47121282d4a1'
 const DEBIAN_BASE_IMAGE = 'debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818'
 const CI_IMAGE = 'ghcr.io/jfet07-polygon-labs/polygon-nesting-ci'
-const CI_IMAGE_TAG = 'ci-v1.0.0'
+const CI_IMAGE_TAG = 'ci-v1.0.1'
 const CI_IMAGE_REFERENCE = `${CI_IMAGE}@sha256:66a7ca95c13074714135ad840465834e60797ddd45d13d130e0e5c6077b950f3`
 const NODE_22 = {
-  version: '22.22.0',
-  archive: 'node-v22.22.0-linux-x64.tar.xz',
-  checksum: '9aa8e9d2298ab68c600bd6fb86a6c13bce11a4eca1ba9b39d79fa021755d7c37'
+  version: '22.23.4',
+  archive: 'node-v22.23.4-linux-x64.tar.xz',
+  checksum: '1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce'
 }
 const NODE_24 = {
-  version: '24.19.0',
-  archive: 'node-v24.19.0-linux-x64.tar.xz',
-  checksum: '14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647'
+  version: '24.22.1',
+  archive: 'node-v24.22.1-linux-x64.tar.xz',
+  checksum: '6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6'
 }
 const SCCACHE = {
   version: '0.10.0',
@@ -90,16 +90,16 @@ function assertDockerfileContract(dockerfile) {
 
   const ci = stage(dockerfile, 'ci')
   assert.match(ci, /org\.opencontainers\.image\.source="https:\/\/github\.com\/jfet07-polygon-labs\/polygon-nesting"/)
-  assert.match(ci, /org\.opencontainers\.image\.version="ci-v1\.0\.0"/)
+  assert.match(ci, /org\.opencontainers\.image\.version="ci-v1\.0\.1"/)
   assert.match(ci, /org\.opencontainers\.image\.title="polygon-nesting-ci"/)
   assert.doesNotMatch(ci, /jfet97/)
   for (const artifact of [NODE_22, NODE_24, SCCACHE, GITHUB_CLI]) assertCheckedDownload(ci, artifact)
   assert.match(ci, /rustup component add --toolchain 1\.95\.0-x86_64-unknown-linux-gnu rustfmt clippy/)
   assert.ok(ci.includes("rustfmt --version | grep -Eq '^rustfmt 1\\.9\\.0-stable '"), 'rustfmt must be the reviewed Rust 1.95 component release')
   assert.match(ci, /rustup target add --toolchain 1\.95\.0-x86_64-unknown-linux-gnu x86_64-unknown-linux-gnu/)
-  assert.match(ci, /ENV NODE_22_HOME=\/opt\/node-v22\.22\.0/)
-  assert.match(ci, /NODE_24_HOME=\/opt\/node-v24\.19\.0/)
-  assert.match(ci, /PATH="\/opt\/node-v22\.22\.0\/bin:/)
+  assert.match(ci, /ENV NODE_22_HOME=\/opt\/node-v22\.23\.4/)
+  assert.match(ci, /NODE_24_HOME=\/opt\/node-v24\.22\.1/)
+  assert.match(ci, /PATH="\/opt\/node-v22\.23\.4\/bin:/)
   assert.match(ci, /\/etc\/profile\.d\/ci-image-path\.sh/, 'Bash login shells must preserve the CI tool path')
   assert.match(ci, /install -m 0755 \/tmp\/sccache-v0\.10\.0-x86_64-unknown-linux-musl\/sccache \/usr\/local\/bin\/sccache/)
   assert.match(ci, /install -m 0755 \/tmp\/gh_2\.97\.0_linux_amd64\/bin\/gh \/usr\/local\/bin\/gh/)

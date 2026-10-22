@@ -9,7 +9,7 @@ FROM base AS ci
 
 LABEL org.opencontainers.image.title="polygon-nesting-ci" \
       org.opencontainers.image.source="https://github.com/jfet07-polygon-labs/polygon-nesting" \
-      org.opencontainers.image.version="ci-v1.0.0"
+      org.opencontainers.image.version="ci-v1.0.1"
 
 USER root
 RUN apt-get update \
@@ -38,20 +38,20 @@ RUN rustc --version | grep -Eq '^rustc 1\.95\.0 ' \
     && cargo clippy --version | grep -Eq '^clippy 0\.1\.95 '
 
 RUN set -eux; \
-    curl --fail --location --show-error --silent --output /tmp/node-v22.22.0-linux-x64.tar.xz https://nodejs.org/dist/v22.22.0/node-v22.22.0-linux-x64.tar.xz; \
-    printf '%s\n' '9aa8e9d2298ab68c600bd6fb86a6c13bce11a4eca1ba9b39d79fa021755d7c37  /tmp/node-v22.22.0-linux-x64.tar.xz' | sha256sum --check --strict; \
-    tar -xJf /tmp/node-v22.22.0-linux-x64.tar.xz -C /opt; \
-    test -x /opt/node-v22.22.0-linux-x64/bin/node; \
-    mv /opt/node-v22.22.0-linux-x64 /opt/node-v22.22.0; \
-    rm /tmp/node-v22.22.0-linux-x64.tar.xz
+    curl --fail --location --show-error --silent --output /tmp/node-v22.23.4-linux-x64.tar.xz https://nodejs.org/dist/v22.23.4/node-v22.23.4-linux-x64.tar.xz; \
+    printf '%s\n' '1805bcd35e6815559bd2eb97db438d3fdb0eb3a5e6a977b7c1badca76337e9ce  /tmp/node-v22.23.4-linux-x64.tar.xz' | sha256sum --check --strict; \
+    tar -xJf /tmp/node-v22.23.4-linux-x64.tar.xz -C /opt; \
+    test -x /opt/node-v22.23.4-linux-x64/bin/node; \
+    mv /opt/node-v22.23.4-linux-x64 /opt/node-v22.23.4; \
+    rm /tmp/node-v22.23.4-linux-x64.tar.xz
 
 RUN set -eux; \
-    curl --fail --location --show-error --silent --output /tmp/node-v24.19.0-linux-x64.tar.xz https://nodejs.org/dist/v24.19.0/node-v24.19.0-linux-x64.tar.xz; \
-    printf '%s\n' '14b342e71204f811bde6153be8e04b62aef63c236fef92b55f9c83154b409647  /tmp/node-v24.19.0-linux-x64.tar.xz' | sha256sum --check --strict; \
-    tar -xJf /tmp/node-v24.19.0-linux-x64.tar.xz -C /opt; \
-    test -x /opt/node-v24.19.0-linux-x64/bin/node; \
-    mv /opt/node-v24.19.0-linux-x64 /opt/node-v24.19.0; \
-    rm /tmp/node-v24.19.0-linux-x64.tar.xz
+    curl --fail --location --show-error --silent --output /tmp/node-v24.22.1-linux-x64.tar.xz https://nodejs.org/dist/v24.22.1/node-v24.22.1-linux-x64.tar.xz; \
+    printf '%s\n' '6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6  /tmp/node-v24.22.1-linux-x64.tar.xz' | sha256sum --check --strict; \
+    tar -xJf /tmp/node-v24.22.1-linux-x64.tar.xz -C /opt; \
+    test -x /opt/node-v24.22.1-linux-x64/bin/node; \
+    mv /opt/node-v24.22.1-linux-x64 /opt/node-v24.22.1; \
+    rm /tmp/node-v24.22.1-linux-x64.tar.xz
 
 RUN set -eux; \
     curl --fail --location --show-error --silent --output /tmp/sccache-v0.10.0-x86_64-unknown-linux-musl.tar.gz https://github.com/mozilla/sccache/releases/download/v0.10.0/sccache-v0.10.0-x86_64-unknown-linux-musl.tar.gz; \
@@ -70,11 +70,11 @@ RUN set -eux; \
     gh attestation --help >/dev/null; \
     rm -rf /tmp/gh_2.97.0_linux_amd64 /tmp/gh_2.97.0_linux_amd64.tar.gz
 
-ENV NODE_22_HOME=/opt/node-v22.22.0 \
-    NODE_24_HOME=/opt/node-v24.19.0 \
-    PATH="/opt/node-v22.22.0/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ENV NODE_22_HOME=/opt/node-v22.23.4 \
+    NODE_24_HOME=/opt/node-v24.22.1 \
+    PATH="/opt/node-v22.23.4/bin:/usr/local/cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-RUN printf '%s\n' 'export PATH="/opt/node-v22.22.0/bin:/usr/local/cargo/bin:$PATH"' > /etc/profile.d/ci-image-path.sh
+RUN printf '%s\n' 'export PATH="/opt/node-v22.23.4/bin:/usr/local/cargo/bin:$PATH"' > /etc/profile.d/ci-image-path.sh
 
 CMD ["sleep", "infinity"]
 
